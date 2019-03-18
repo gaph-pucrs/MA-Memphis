@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+import os
+import sys
+import subprocess
+from time import sleep
+
+#1. This script encapsulate the call for testcase_builder.py
+#2. Call the makefile (make all) inside the created testcase direcoty. This make call all the scripts to build apps, hw, kernel
+#3. Simulate the system, if sc(gcc) it execute ./Memphis, is scmod or vhdl it open ModelSim/Questa
+
+
+ENABLE_GUI=1
+
+def call_debugger(testacase_path):
+    tarffic_router_path = testacase_path+"/debug/traffic_router.txt"
+    platform_path = testacase_path+"/debug/platform.cfg"
+    
+    try_number = 0
+    not_found = False
+    
+    while (os.path.exists(platform_path) == False or os.path.exists(tarffic_router_path) == False):
+        if try_number == 10:
+            not_found = True
+            break;
+        sleep(0.5)
+        try_number = try_number + 1
+        
+    if not_found == False:
+        os.system("java -jar "+MEMPHIS_PATH+"/build_env/Memphis_Debugger.jar "+platform_path)
+
+
+MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
+if MEMPHIS_PATH == 0:
+    sys.exit("ENV PATH ERROR: MEMPHIS_PATH not defined")
+    
+try:
+    INPUT_TESTCASE_FILE_PATH = sys.argv[1]
+    if os.path.exists(INPUT_TESTCASE_FILE_PATH) == False:
+        raise Exception()
+except:
+    sys.exit("\nERROR: Invalid testcase file path passed as 1st argument, e.g: memphis-run <my_testcase_file>.yaml\n")
+
+try:
+    IMPUT_SCENARIO_FILE_PATH = sys.argv[2]
+except:
+    sys.exit("\nERROR: Missing scenario file passed as 2nd argument, e.g: memphis-run example.yaml <my_scenario.yaml>\n")
+    
+try:
+    SIM_TIME = int(sys.argv[3])
+    if SIM_TIME < 0:
+        raise Exception()
+except:
+    sys.exit("ERROR: Invalid simulation time passed as 3rd argument, e.g: memphis-run example.yaml scenario1.yaml 5")
+    
+
+MEMPHIS_HOME  = os.getenv("MEMPHIS_HOME", 0)
+if MEMPHIS_HOME == 0:
+    MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+path_list = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
+input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
+TESTCASE_PATH = MEMPHIS_HOME + "/" + input_yaml_name.split(".")[0] #Creates a new path using the MEMPHIS_HOME + the YAML name
+path_list = IMPUT_SCENARIO_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
+input_yaml_name = path_list[len(path_list)-1]
+SCENARIO_NAME = input_yaml_name.split(".")[0]
+SCENARIO_PATH = TESTCASE_PATH + "/" + SCENARIO_NAME
+
+if os.path.exists(TESTCASE_PATH+"/base_scenario") == False:
+    sys.exit("\nERROR: Testcase not generated yet, use memphis-gen to generate it!")
+
+exit_code = os.system("python "+ MEMPHIS_PATH+"/build_env/scripts/scenario_builder.py "+ INPUT_TESTCASE_FILE_PATH + " "+ IMPUT_SCENARIO_FILE_PATH + " " + str(SIM_TIME))
+
+if exit_code != 0:
+    exit(1)
+ 
+ #Runs the scenario
+sys.path.insert(0, MEMPHIS_PATH+"/build_env/scripts")
+from yaml_intf import *
+
+yaml_testase_r = get_yaml_reader(INPUT_TESTCASE_FILE_PATH)
+ 
+system_model = get_model_description(yaml_testase_r)
+
+if system_model == "sc":
+     
+    os.system("cd "+SCENARIO_PATH+";./"+SCENARIO_NAME+" -c "+str(SIM_TIME)+" &" )
+     
+elif system_model == "scmod" or system_model == "vhdl":
+     
+    #Append the simulation time at the end of sim.do file
+    sim_file = open(SCENARIO_PATH+"/sim.do", "a")
+    sim_file.write("\nrun "+str(SIM_TIME)+"ms")
+    sim_file.close()
+    
+    #Runs Questa in with GUI enabled
+    subprocess.call("cd "+SCENARIO_PATH+"; vsim -do sim.do", shell=True)
+    
+    #Runs Questa in command line
+    #subprocess.call("cd "+testacase_dir+"; vsim -c -do sim.do", shell=True)
+    
+if ENABLE_GUI == 1:
+    call_debugger(SCENARIO_PATH)
+        
+        

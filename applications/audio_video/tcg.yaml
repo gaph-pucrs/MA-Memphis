@@ -1,0 +1,15 @@
+real-time: 1 #If task is a real-time (1) or best-effort (0)
+#Lines below informs the communication task pairs 
+split:
+ - ivlc
+ - adpcm_dec
+ivlc:
+ - iquant
+iquant:
+ - idct
+idct:
+ - join
+adpcm_dec:
+ - FIR
+FIR:
+ - join

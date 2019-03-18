@@ -1,0 +1,32 @@
+TC_NAME=$(notdir ${CURDIR})
+YAML_FILE=$(TC_NAME).yaml
+
+default: all
+
+all: banner kernel hw
+
+update:
+	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);
+	
+banner:
+	@python build/banner.py
+	
+kernel:
+	@python build/kernel_builder.py $(YAML_FILE)
+	
+hw:
+	@python build/hw_builder.py $(YAML_FILE)
+	
+
+clean-kernel:
+	@make clean -C software/
+	@rm -rf log/*
+	
+clean-hw:
+	@make clean -C hardware/
+	@rm -rf log/*
+	
+clean: clean-apps clean-kernel clean-hw
+	@rm -rf *.txt
+	@rm -f $(TC_NAME)
+	@rm -rf log/*

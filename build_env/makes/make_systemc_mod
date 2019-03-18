@@ -1,0 +1,82 @@
+COR  = \033[0;32m
+NC   = \033[0m
+
+LIB = work
+CC = sccom
+SC_C = @ $(CC) -work $(LIB) -g -Wno-write-strings -B/usr/bin/
+
+#SystemC files
+TOP 		=memphis test_bench
+IO			=app_injector
+PE	 		=pe
+DMNI 		=dmni
+MEMORY 		=ram
+PROCESSOR 	=mlite_cpu
+ROUTER	 	=queue switchcontrol router_cc
+
+TOP_SRC	    	= $(addprefix sc/, 						$(TOP:=.cpp) $(TOP:=.h) 			)
+IO_SRC			= $(addprefix sc/peripherals/, 			$(IO:=.cpp) $(IO:=.h)				)
+PE_SRC			= $(addprefix sc/pe/, 					$(PE:=.cpp) $(PE:=.h)  				)
+DMNI_SRC		= $(addprefix sc/pe/dmni/, 				$(DMNI:=.cpp) $(DMNI:=.h)			)
+MEMORY_SRC		= $(addprefix sc/pe/memory/,			$(MEMORY:=.cpp) $(MEMORY:=.h)		) 
+PROCESSOR_SRC	= $(addprefix sc/pe/processor/plasma/, 	$(PROCESSOR:=.cpp) $(PROCESSOR:=.h)	)
+ROUTER_SRC		= $(addprefix sc/pe/router/, 			$(ROUTER:=.cpp) $(ROUTER:=.h)		)
+
+#This target dir $(TGT_SCCOM_PATH) is created automatically by questa or modelsim, please ensures that you have a valid path
+TGT_SCCOM_PATH = $(LIB)/_sc/linux_x86_64_gcc-4.7.4/
+
+
+TOP_TGT 		=$(addprefix $(TGT_SCCOM_PATH), $(TOP:=.o))
+IO_TGT	 		=$(addprefix $(TGT_SCCOM_PATH), $(IO:=.o))
+PE_TGT	 		=$(addprefix $(TGT_SCCOM_PATH), $(PE:=.o))
+DMNI_TGT 		=$(addprefix $(TGT_SCCOM_PATH), $(DMNI:=.o))
+MEMORY_TGT 		=$(addprefix $(TGT_SCCOM_PATH), $(MEMORY:=.o))
+PROCESSOR_TGT 	=$(addprefix $(TGT_SCCOM_PATH), $(PROCESSOR:=.o))
+ROUTER_TGT	 	=$(addprefix $(TGT_SCCOM_PATH), $(ROUTER:=.o))
+
+
+default: lib $(ROUTER_TGT) $(PROCESSOR_TGT) $(DMNI_TGT) $(MEMORY_TGT) $(PE_TGT) $(IO_TGT) $(TOP_TGT)
+	@ $(CC) -link -B/usr/bin/
+
+lib:
+	@ vlib $(LIB)
+	@ vmap $(LIB) $(LIB)
+
+$(TOP_TGT): $(TOP_SRC)
+	@ printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+	
+$(IO_TGT): $(IO_SRC)
+	@ printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(PE_TGT): $(PE_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(DMNI_TGT): $(DMNI_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(MEMORY_TGT): $(MEMORY_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(PROCESSOR_TGT): $(PROCESSOR_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(ROUTER_TGT): $(ROUTER_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+clean:
+	@printf "Cleaning up\n"
+	@rm -f *~
+	@rm -f *.o
+	@rm -f *.exe
+	@rm -f Memphis
+	@rm -f repository*
+	@rm -f ../modelsim.ini
+	@rm -rf ../work
+	@rm -rf ../transcript

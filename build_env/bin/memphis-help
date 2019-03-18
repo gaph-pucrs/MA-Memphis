@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+import os
+import sys
+
+
+os.system("cat $MEMPHIS_PATH/README.txt")
+

@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+import os
+import sys
+
+#This script encapsulate the call of the Memphis_Debugger.jar
+
+platform_path = ""
+
+try:
+    platform_path = sys.argv[1]
+except:
+    pass
+
+os.system("java -jar $MEMPHIS_PATH/build_env/Memphis_Debugger.jar "+platform_path+"/debug/platform.cfg")

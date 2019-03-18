@@ -1,0 +1,88 @@
+COR  =\033[0;32m
+NC   =\033[0m # No Color
+
+LIB=work
+CC = sccom
+SC_C = @ $(CC) -work $(LIB) -g -Wno-write-strings -B/usr/bin/
+
+COMP =vcom -work $(LIB)
+
+#VHDL files
+MEMPHIS_PKG	=memphis_pkg
+STAND		=standards
+TOP 		=memphis test_bench
+IO			=app_injector
+PE	 		=pe
+DMNI 		=dmni
+MEMORY 		=ram_master ram_slave
+PROCESSOR 	=mlite_pack UartFile alu bus_mux control mem_ctrl mult pc_next pipeline reg_bank shifter mlite_cpu
+ROUTER	 	=Hermes_buffer Hermes_crossbar Hermes_switchcontrol RouterCC
+
+MEMPHIS_PKG_SRC	= $(addprefix ../include/, 					$(MEMPHIS_PKG:=.vhd) 	)
+STAND_SRC	    = $(addprefix vhdl/, 						$(STAND:=.vhd) 		)
+TOP_SRC	    	= $(addprefix vhdl/, 						$(TOP:=.vhd) 		)
+IO_SRC			= $(addprefix sc/peripherals/, 				$(IO:=.cpp) $(IO:=.h))
+PE_SRC			= $(addprefix vhdl/pe/, 					$(PE:=.vhd)   		)
+DMNI_SRC		= $(addprefix vhdl/pe/dmni/, 				$(DMNI:=.vhd) 		)
+MEMORY_SRC		= $(addprefix ../base_scenario/ram_pe/,		$(MEMORY:=.vhd) 	) 
+PROCESSOR_SRC	= $(addprefix vhdl/pe/processor/plasma/, 	$(PROCESSOR:=.vhd) 	)
+ROUTER_SRC		= $(addprefix vhdl/pe/router/, 				$(ROUTER:=.vhd) 	)
+
+#This target dir $(TGT_SCCOM_PATH) is created automatically by questa or modelsim, please ensures that your path math it the following 
+TGT_SCCOM_PATH = $(LIB)/_sc/linux_x86_64_gcc-4.7.4/
+
+IO_TGT	 		=$(addprefix $(TGT_SCCOM_PATH), $(IO:=.o))
+
+default: lib $(MEMPHIS_PKG) $(STAND) $(ROUTER) $(PROCESSOR) $(DMNI) $(MEMORY) $(PE) $(IO_TGT) $(TOP)
+	@ $(CC) -link -B/usr/bin/
+
+lib:
+	@vlib $(LIB)
+	@vmap $(LIB) $(LIB)
+
+$(MEMPHIS_PKG): $(MEMPHIS_PKG_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(STAND): $(STAND_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(TOP): $(TOP_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+	
+$(IO_TGT): $(IO_SRC)
+	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	$(SC_C) $(dir $<)$(notdir $*).cpp
+
+$(PE): $(PE_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(DMNI): $(DMNI_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(MEMORY): $(MEMORY_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(PROCESSOR): $(PROCESSOR_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(ROUTER): $(ROUTER_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+clean:
+	@printf "Cleaning up\n"
+	@rm -f *~
+	@rm -f *.o
+	@rm -f *.exe
+	@rm -f Memphis
+	@rm -f repository*
+	@rm -f ../modelsim.ini
+	@rm -rf ../work
+	@rm -rf ../transcript

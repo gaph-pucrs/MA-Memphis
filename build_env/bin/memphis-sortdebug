@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import sys
+import os
+import subprocess
+import filecmp
+
+def main():
+    MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
+
+    if MEMPHIS_PATH == 0:
+        sys.exit("ENV PATH ERROR: MEMPHIS_PATH not defined")
+
+     #Test if testcase file is passed as arg1 by testing the lenght of argv list
+    if len(sys.argv) <= 1 :
+        sys.exit("ARG ERROR: arg1 must be a valid testcase name (memphis-sortdebug my_testcase")
+
+     #testcase name without .yaml
+    TESTCASE_NAME = sys.argv[1]
+
+    TRAFFIC_ROUTER_FILE = MEMPHIS_PATH+"/testcases/"+TESTCASE_NAME+"/debug/traffic_router.txt"
+
+    if os.path.exists(TRAFFIC_ROUTER_FILE) == False:
+        sys.exit("Attention, traffic router file not created yet")
+
+    traffic_router = open(TRAFFIC_ROUTER_FILE, 'r')
+
+    lines = traffic_router.readlines()
+
+    traffic_router.close()
+
+    #output_path = MEMPHIS_PATH+"/testcases/"+TESTCASE_NAME+"/debug/traffic_router_sorted.txt"
+
+    output_file = open(TRAFFIC_ROUTER_FILE, "w")
+
+    for line in sorted(lines, key=lambda line: int(line.split("\t")[0])):
+        output_file.write(line)
+
+    output_file.close()
+
+
+#Call of function main, this aproaches enables to call a fucntion before it declaration
+main()

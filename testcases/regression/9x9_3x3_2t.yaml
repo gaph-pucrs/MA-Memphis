@@ -1,0 +1,189 @@
+hw:
+   page_size_KB:  32
+   tasks_per_PE: 2     
+   repository_size_MB:  1
+   model_description: sc    # sc (gcc) | scmod (questa) | vhdl
+   noc_buffer_size: 8       # must be power of 2 
+   mpsoc_dimension: [9,9]     # for while, must be a square shape
+   cluster_dimension: [3,3] # for while, must be a square shape
+   master_location: LB      # LB
+sw:
+   mapping_algorithm: WithLoad  # WithLoad
+   task_scheduler:  round_robin # round_robing | lst
+apps:                #Using static mapping, the apps must be manually sorted by start time
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number
+  - name: mpeg
+    start_time_ms: 1 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 1 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 1 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 1 #any unsigned integer number

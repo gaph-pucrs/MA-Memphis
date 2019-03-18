@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+import os
+import sys
+from time import sleep
+
+#memphis-all example.yaml 2
+
+#call memphis-gen example.yaml
+#for each app in example,yaml do
+    # memphis-app example.yaml app1 app2 app3
+#memphis-run example.yaml example.yaml 2
+
+MEMPHIS_PATH  = os.getenv("MEMPHIS_PATH", 0)
+MEMPHIS_HOME  = os.getenv("MEMPHIS_HOME", 0)
+if MEMPHIS_PATH == 0:
+    sys.exit("ENV PATH ERROR: MEMPHIS_PATH not defined")
+
+#Test if testcase file MEMPHIS_PATH is valid
+if MEMPHIS_HOME == 0:
+    MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+    
+try:
+    INPUT_TESTCASE_FILE_PATH = sys.argv[1]
+    if os.path.exists(INPUT_TESTCASE_FILE_PATH) == False:
+        raise Exception()
+except:
+    sys.exit("\nERROR: Invalid testcase file path passed as 1st argument, e.g: memphis-run <my_testcase_file>.yaml\n")
+
+try:
+    IMPUT_SCENARIO_FILE_PATH = sys.argv[2]
+except:
+    sys.exit("\nERROR: Missing scenario file passed as 2nd argument, e.g: memphis-run example.yaml <my_scenario.yaml>\n")
+
+try:
+    SIM_TIME = int(sys.argv[3])
+    if SIM_TIME < 0:
+        raise Exception()
+except:
+    sys.exit("ERROR: Invalid simulation time passed as 3rd argument, e.g: memphis-run example.yaml scenario1.yaml 5")
+    
+path_list = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
+input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
+TESTCASE_PATH = MEMPHIS_HOME + "/" + input_yaml_name.split(".")[0] #Creates a new path using the MEMPHIS_HOME + the YAML name
+    
+exit_status = os.system("memphis-gen "+ INPUT_TESTCASE_FILE_PATH)
+if exit_status != 0:
+	sys.exit("\nError in memphis-gen")
+	
+exit_status = os.system("memphis-app "+ INPUT_TESTCASE_FILE_PATH + " -all "+IMPUT_SCENARIO_FILE_PATH)
+if exit_status != 0:
+	sys.exit("\nError in memphis-app")
+exit_status = os.system("memphis-run "+ INPUT_TESTCASE_FILE_PATH + " " + IMPUT_SCENARIO_FILE_PATH + " " + str(SIM_TIME))
+if exit_status != 0:
+	sys.exit("\nError in memphis-run")
+ 
+        
+        
