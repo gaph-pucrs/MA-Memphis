@@ -50,8 +50,8 @@ extern int SystemCall();
  *    This is not the same structure used in the kernels.
  *
  *--------------------------------------------------------------------*/
-//#define MSG_SIZE 128
-#define MSG_SIZE 72
+#define MSG_SIZE 128
+//#define MSG_SIZE 72
 
 typedef struct {
 	int length;
