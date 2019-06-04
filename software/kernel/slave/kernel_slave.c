@@ -590,11 +590,6 @@ int handle_packet(volatile ServiceHeader * p) {
 		//Gets the location of the producer task
 		task_loc = get_task_location(p->producer_task);
 
-		if (task_loc == -1){
-			puts("ERROR\n");
-			while(1);
-		}
-
 		//Test if the task was migrated to this processor but have message produced in the old processor
 		//In this case is necessary to forward the message request to the old processor
 		if (searchTCB(p->producer_task) && task_loc != net_address){
