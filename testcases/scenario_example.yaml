@@ -1,10 +1,9 @@
-apps:                
+apps:
+  - name: prod_cons                
   - name: mpeg        #(mandatory) name of application, must be equal to the application folder name
     cluster: 0        #(optinal) index of the statically mapped cluster - dynamic mapping by default
     start_time_ms: 15 #(optinal) any unsigned integer number - 0 by default
     static_mapping:   #(optinal) field, used to store static mapping information of tasks
-      print: [1,1]    # Task print from app mpeg will be mapped as static at address X=1, Y=1
-      start: [0,1]    # Task start from app mpeg will be mapped as static at address X=0, Y=1
-  - name: prod_cons
-  - name: dijkstra
-  - name: dtw
+      start: [2,2]    # Task start from app mpeg will be mapped as static at address X=0, Y=1
+      print: [2,0]    # Task print from app mpeg will be mapped as static at address X=1, Y=1
+     
