@@ -590,6 +590,11 @@ int handle_packet(volatile ServiceHeader * p) {
 		//Gets the location of the producer task
 		task_loc = get_task_location(p->producer_task);
 
+		if (task_loc == -1){
+			puts("ERROR\n");
+			while(1);
+		}
+
 		//Test if the task was migrated to this processor but have message produced in the old processor
 		//In this case is necessary to forward the message request to the old processor
 		if (searchTCB(p->producer_task) && task_loc != net_address){
@@ -700,6 +705,8 @@ int handle_packet(volatile ServiceHeader * p) {
 			need_scheduling = 1;
 		}
 
+		add_task_location(p->task_ID, net_address);
+
 		putsv("Code lenght: ", code_lenght);
 		putsv("Master ID: ", p->master_ID);
 
@@ -726,10 +733,8 @@ int handle_packet(volatile ServiceHeader * p) {
 
 		DMNI_read_data( (unsigned int) app_tasks_location, p->app_task_number);
 
-		if (get_task_location(tcb_ptr->id) == -1){
-			for (int i = 0; i < p->app_task_number; i++){
-				add_task_location(app_ID << 8 | i, app_tasks_location[i]);
-			}
+		for (int i = 0; i < p->app_task_number; i++){
+			add_task_location(app_ID << 8 | i, app_tasks_location[i]);
 		}
 
 		if (current == &idle_tcb){

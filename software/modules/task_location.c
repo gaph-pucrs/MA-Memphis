@@ -47,6 +47,15 @@ int get_task_location(int task_ID){
  */
 void add_task_location(int task_ID, int proc){
 
+	//Ensure to remove all older instances of locations for this task_id
+	for(int i=0; i<MAX_TASK_LOCATION; i++) {
+		if (task_location[i].id == task_ID){
+			task_location[i].id = -1;
+			task_location[i].proc_address = -1;
+		}
+	}
+
+	//Insert the task location in the first free position
 	for(int i=0; i<MAX_TASK_LOCATION; i++) {
 		if (task_location[i].id == -1){
 			task_location[i].id = task_ID;
