@@ -27,7 +27,7 @@
  * \param cluster_index Index of cluster to allocate the resources
  * \param nro_resources Number of resource to allocated. Normally is the number of task of an application
  */
-inline void allocate_cluster_resource(int cluster_index, int nro_resources){
+void allocate_cluster_resource(int cluster_index, int nro_resources){
 
 	puts("\n\n Cluster address "); puts(itoh(cluster_info[cluster_index].master_x << 8 | cluster_info[cluster_index].master_y)); puts(" resources "); puts(itoa(cluster_info[cluster_index].free_resources));
 
@@ -46,7 +46,7 @@ inline void allocate_cluster_resource(int cluster_index, int nro_resources){
  * \param cluster_index Index of cluster to allocate the resources
  * \param nro_resources Number of resource to release. Normally is the number of task of an application
  */
-inline void release_cluster_resources(int cluster_index, int nro_resources){
+void release_cluster_resources(int cluster_index, int nro_resources){
 
 	//puts(" Cluster address "); puts(itoh(cluster_info[cluster_index].master_x << 8 | cluster_info[cluster_index].master_y)); puts(" resources "); puts(itoa(cluster_info[cluster_index].free_resources));
 

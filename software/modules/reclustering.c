@@ -61,7 +61,7 @@ void reclustering_setup(int c_id){
 /**Test if the reclustering is not active
  * \return 1 if is not active, 0 if is active
  */
-inline int is_reclustering_NOT_active(){
+int is_reclustering_NOT_active(){
 	return !reclustering.active;
 }
 

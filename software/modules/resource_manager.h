@@ -14,9 +14,9 @@
 #ifndef RESOURCE_MANAGER_H_
 #define RESOURCE_MANAGER_H_
 
-inline void allocate_cluster_resource(int, int);
+void allocate_cluster_resource(int, int);
 
-inline void release_cluster_resources(int, int);
+void release_cluster_resources(int, int);
 
 void page_used(int, int, int);
 
