@@ -4,9 +4,9 @@
  *  Created on: 17 de set de 2018
  *      Author: mruaro
  */
-#include "sorting_util.h"
 #include <api.h>
 #include <stdlib.h>
+#include "../sorting_single_task/sorting_util.h"
 
 
 // Merges two subarrays of arr[].

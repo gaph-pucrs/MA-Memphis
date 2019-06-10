@@ -3,6 +3,8 @@ import sys
 import math
 import os
 import commands
+import Tkinter as tkinter
+import tkMessageBox as mbox
 from yaml_intf import *
 from build_utils import *
 
@@ -111,6 +113,12 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
     task_name_list = get_app_task_name_list(testcase_dir, app_name)
     
     app_tasks_number = len(task_name_list)
+    
+    ######################################################################################
+    ######### Check if task number is compatible to kernel max task number ###############
+    ######################################################################################
+    check_application_task_number(testcase_dir, app_tasks_number, app_name)
+    ######################################################################################
     
     #Used for point the next free address to fill with a given task code (task.txt file)
     initial_address = 0 
@@ -266,5 +274,26 @@ def get_task_comp_load(app_name, task_name):
 
 def get_task_dependence_list(app_name, task_name):
     return [] #TO DO
+
+
+#This function compares the number of tasks of the application with the number of the MAXIMUM task for one application that is supported by the kernel
+def check_application_task_number(testcase_dir, app_task_number, app_name):
+    
+    kernel_max_app = 0
+    
+    #Useful function that serach a value of a #define is for a given file_path
+    with open(testcase_dir+"/include/kernel_pkg.h") as search:
+        for line in search:
+            line = line.rstrip()  # remove '\n' at end of line
+            if "#define MAX_TASKS_APP" in line:
+                kernel_max_app = int(line.split(" ")[16])
+                break
+    if kernel_max_app == 0:
+        sys.exit("ERROR in app_builder: impossible to determine the max number of application task\n")
+    
+    if app_task_number > kernel_max_app:
+        tkinter.Tk().wm_withdraw()
+        mbox.showinfo('ERROR', "Applicaiton: "+app_name+" has "+str(app_task_number)+" tasks but kernel support MAX_TASKS_APP of "+str(kernel_max_app)+". Please change this kernel constraint inside the file build_env/scripts/kernel_builder.py")
+        sys.exit("\nMAX_TASKS_APP boundary exceeded\n")
 
 main()

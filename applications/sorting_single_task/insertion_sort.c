@@ -5,9 +5,9 @@
  *      Author: mruaro
  */
 
-#include "sorting_util.h"
 #include <api.h>
 #include <stdlib.h>
+#include "../sorting_single_task/sorting_util.h"
 
 /* Function to sort an array using insertion sort*/
 void insertionSort(int arr[], int n)

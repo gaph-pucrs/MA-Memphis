@@ -26,7 +26,7 @@ def call_debugger(testacase_path):
         try_number = try_number + 1
         
     if not_found == False:
-        os.system("java -jar "+MEMPHIS_PATH+"/build_env/Memphis_Debugger.jar "+platform_path)
+        os.system("java -jar "+MEMPHIS_PATH+"/build_env/Memphis_Debugger.jar "+platform_path + " &")
 
 
 MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
@@ -80,6 +80,10 @@ yaml_testase_r = get_yaml_reader(INPUT_TESTCASE_FILE_PATH)
  
 system_model = get_model_description(yaml_testase_r)
 
+#Open the graphical debugger
+if ENABLE_GUI == 1:
+	call_debugger(SCENARIO_PATH)
+    
 if system_model == "sc":
      
     os.system("cd "+SCENARIO_PATH+";./"+SCENARIO_NAME+" -c "+str(SIM_TIME)+" &" )
@@ -92,12 +96,10 @@ elif system_model == "scmod" or system_model == "vhdl":
     sim_file.close()
     
     #Runs Questa in with GUI enabled
-    subprocess.call("cd "+SCENARIO_PATH+"; vsim -do sim.do", shell=True)
+    os.system("cd "+SCENARIO_PATH+"; vsim -do sim.do")
     
     #Runs Questa in command line
-    #subprocess.call("cd "+testacase_dir+"; vsim -c -do sim.do", shell=True)
+    #os.system("cd "+SCENARIO_PATH+"; vsim -c -do sim.do")
     
-if ENABLE_GUI == 1:
-    call_debugger(SCENARIO_PATH)
         
         

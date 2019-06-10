@@ -5,9 +5,9 @@
  *      Author: mruaro
  */
 
-#include "sorting_util.h"
 #include <api.h>
 #include <stdlib.h>
+#include "../sorting_single_task/sorting_util.h"
 
 // C program for implementation of selection sort
 void selectionSort(int arr[], int n)

@@ -5,8 +5,8 @@
  *      Author: mruaro
  */
 
-#ifndef APPLICATIONS_SORTING_SORTING_UTIL_H_
-#define APPLICATIONS_SORTING_SORTING_UTIL_H_
+#ifndef APPLICATIONS_SORTING_SINGLE_TASK_SORTING_UTIL_H_
+#define APPLICATIONS_SORTING_SINGLE_TASK_SORTING_UTIL_H_
 
 #include <api.h>
 #include <stdlib.h>
@@ -130,4 +130,4 @@ void swap(int *xp, int *yp)
 
 
 
-#endif /* APPLICATIONS_SORTING_SORTING_UTIL_H_ */
+#endif /* APPLICATIONS_SORTING_SINGLE_TASK_SORTING_UTIL_H_ */

@@ -5,9 +5,9 @@
  *      Author: mruaro
  */
 
-#include "sorting_util.h"
 #include <api.h>
 #include <stdlib.h>
+#include "../sorting_single_task/sorting_util.h"
 
 /* This function takes last element as pivot, places
    the pivot element at its correct position in sorted

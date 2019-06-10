@@ -19,6 +19,10 @@ def generate_deloream_env(testcase_path, yaml_testcase_r, scenario_path, yaml_sc
     
     os.mkdir(debug_path)
     
+    #Create traffic_router file inside debug directory
+    with open(os.path.join(dir, debug_path+"/traffic_router.txt"), 'w'):
+        pass
+    
     os.mkdir(debug_path+"/pipe")
     
     os.mkdir(debug_path+"/request")

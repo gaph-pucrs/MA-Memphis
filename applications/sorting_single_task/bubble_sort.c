@@ -5,9 +5,9 @@
  *      Author: mruaro
  */
 
-#include "sorting_util.h"
 #include <api.h>
 #include <stdlib.h>
+#include "../sorting_single_task/sorting_util.h"
 
 // A function to implement bubble sort
 void bubbleSort(int arr[], int n)

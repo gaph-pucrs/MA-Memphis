@@ -115,7 +115,12 @@ void send_message_delivery(int producer_task, int consumer_task, int consumer_PE
 
 	p->msg_lenght = msg_ptr->length;
 
+	while (msg_ptr->length > MSG_SIZE)
+		puts("ERROR: message lenght higher than MSG_SIZE\n");
+
+	putsv("Send delivery: ", msg_ptr->length);
 	send_packet(p, (unsigned int)msg_ptr->msg, msg_ptr->length);
+	puts("End delivery\n");
 
 }
 
@@ -316,8 +321,8 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			msg_read = (Message *)((current->offset) | arg0);
 
 			//Test if the application passed a invalid message lenght
-			while (msg_read->length > MSG_SIZE){
-				putsv("ERROR: task with msg lenght higher than MSG_SIZE", msg_read->length);
+			while (msg_read->length > MSG_SIZE || msg_read->length < 0){
+				putsv("ERROR: Message lenght must be higher than -1 and lower MSG_SIZE", msg_read->length);
 			}
 
 			//Searches if there is a message request to the produced message

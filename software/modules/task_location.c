@@ -41,7 +41,7 @@ int get_task_location(int task_ID){
 	return -1;
 }
 
-/**Add a task_locaiton instance
+/**Add a task_locaiton instance, removing, previously, any trash of task location for the same ID
  * \param task_ID Task ID
  * \param proc Location (address) of the task
  */
