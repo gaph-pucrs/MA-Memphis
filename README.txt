@@ -1,7 +1,7 @@
 *************************************************
 MEMPHIS - Many-core Modeling Platform in SoC	*	
 												*
-Version: 1.0 - sep/2018							*
+Version: 1.2 - jun/2019							*
 												*
 Authors: Marcelo Ruaro and Fernando Moraes      *
 *************************************************
