@@ -1,91 +1,64 @@
-#include "../matrix_multi_master_slave/multME.h"
+/*
+autor: Geaninne Marchezan
+contato: geaninne.mnl@gmail.com
+*/
+#include "multME.h"
 
 Message msg;
 
-void enviaMaster(int numMSG, int d,int tamMatR, int *matrizR){
-int i, j,k,auxd,auxd2;
-	for(j=0;j<numMSG;j++){
-	
-			if(j==0){
-			
-				msg.msg[0] = numMSG;
-			
-				for(k=0;k<d-1;k++){
-				  
-				  msg.msg[k+1] = matrizR[k];
-				  
-				}
-			}else if(j==1){
-				//Echo("if2");
-			
-				for(k=0;k<d;k++){
-			 		msg.msg[k]=matrizR[((d-1)+k)];
-
-					//Echo(itoa(msg.msg[k]));
-				}
-
-			}else if((j > 1) && (j < (numMSG-1))){
-			//Echo("if3");
-			//Echo(itoa(j));
-				for(k=0;k<d;k++){
-			 		msg.msg[k]=matrizR[((j*d)+k-1)];
-
-					//Echo(itoa(msg.msg[k]));
-				}
-
-			}else if(j==(numMSG-1)){
-			//Echo("else");
-				 auxd = d*numMSG;
-				//Echo("antesdo if");
-				if(auxd>tamMatR){
-				//Echo("entrou if");
-					auxd2=auxd-tamMatR;
-					for(k=0;k<(d-auxd2)+1;k++){
-			 			msg.msg[k]=matrizR[((j*d)+k-1)];
-
-						//Echo(itoa(msg.msg[k]));
-					}
-				}
-
-
-			}
-		msg.length = d;
-
-		Send(&msg,master);
-
-	}
-}
-
 void receiveB(int *B){
 
-	int i,j,k;
+	int i,j,sizeMSG;
 
-	Echo("Recebendo matriz B");	
+	//Echo("Recebendo matriz B");	
 	Receive(&msg, master);
 
 	int numMSG = msg.msg[0];
 
+	sizeMSG= getSizeMSG(numMSG,N*N);
 	for(i=0;i<numMSG;i++){
 
 		if(i==0){
+
+
 			for(j=1;j<msg.length;j++){
-				B[j-1] = msg.msg[j];
+					B[j-1] = msg.msg[j];
+				
 			}
-		}else{
+
+		
+		}else if(i==(numMSG - 1)){
+			
+			sizeMSG = getSizeLastMSG(numMSG,sizeMSG,N*N);
 			Receive(&msg,master);
 			for(j=0;j<msg.length;j++){
 
-				B[(i * (msg.length - 1)) + j] = msg.msg[j];
+				B[(i* sizeMSG )  + j] = msg.msg[j];
+			//	Echo(itoa(i* (sizeMSG ) -1 + j));
+				//Echo(itoa(A[(i*sizeMSG) -3 + j]));
+
+			
 			}
+		}else{			
 
+
+			Receive(&msg,master);
+			//Echo(itoa(msg.length));
+			for(j=0;j<msg.length;j++){
+				B[(i * (msg.length)) -1 + j] = msg.msg[j];
+			//	Echo(itoa((i * (msg.length)) + j));
+			}
+		
+			sizeMSG = msg.length;
 		}
-
 	}
+
+
 }
 
 void sendR(int *R, int sizeR){
 
-	int i, j, aux, aux2;
+	int i, j;
 
 
     /*retorna o número de mensagens necessarias para enviar R*/
@@ -97,12 +70,15 @@ void sendR(int *R, int sizeR){
 	for(j=0;j<numMSG;j++){
 
 		/*verifica se está na ultima mensagem e recalcula o tamannho da mesma*/
-		if(sizeLastMSG(j,numMSG,sizeMSG,sizeR)){
+		if(j==(numMSG-1)){
 				sizeMSG = getSizeLastMSG(numMSG,sizeMSG,sizeR);
+			//	Echo("ultima mensagem");
+			//	Echo(itoa(sizeMSG));
 
 		}
 		for(i=0;i<sizeMSG;i++){
 			msg.msg[i] = R[(j * sizeMSG) +i];
+			//Echo(itoa(msg.msg[i]));
 		}	
 
 		
@@ -112,21 +88,33 @@ void sendR(int *R, int sizeR){
 	}
 }
 
+void mult(int* A, int* B, int* R, int numLinhasA){
+	int i,j,k;
+	for(i=0; i<numLinhasA; i++){
+		for(j=0; j<N;j++){
+		 	for(k=0;k<N;k++){
+		 		R[((i*N)+j)] += A[(i*N)+k] * B[(k*N)+j];
+	
+			}
+		}
+	}
+
+}
 
 
  int main() {
 
- 	Echo("Inicio da aplicacao task1");
+ 	Echo("Inicio da aplicação slave1");
 	Echo(itoa(GetTick()));
 	
-	int ini, fim, qtdElem, numLinhasA,k;
-	int i,j,numMSG,sizeMSG;
+	int ini, fim, qtdElem, numLinhasA;
+	int i,j,k,numMSG;
 
-	int B [MATRIX_SIZE];
-
-	int tamMSG,auxd2,auxd;
-	 	
+	int B [SIZE];
+	 Echo("Recebendo B");
 	receiveB(B);
+
+
 
 	Echo("Recebendo matriz A");	
 	Receive(&msg,master);
@@ -135,6 +123,7 @@ void sendR(int *R, int sizeR){
 	fim = msg.msg[1];
 	numMSG = msg.msg[2];
 	qtdElem = msg.msg[3];
+	int sizeMSG;
 	int A[qtdElem];
 	numLinhasA = fim - ini + 1;
 	
@@ -142,40 +131,63 @@ void sendR(int *R, int sizeR){
 
 		if(i==0){
 
-			for(j=1;j<msg.length;j++){
-				A[j-1] = msg.msg[j];
+			for(j=4;j<msg.length;j++){
+				A[j-4] = msg.msg[j];
+				//Echo(itoa(j-4));
 			}
-		}else{
+
+
+		}else if(i==(numMSG - 1)){
+			
 
 			Receive(&msg,master);
 			for(j=0;j<msg.length;j++){
-				A[(i * (msg.length - 1)) + j] = msg.msg[j];
-			}
 
+				A[(i* sizeMSG ) - 3+ j] = msg.msg[j];
+				//Echo(itoa(i* (sizeMSG ) - 3 + j));
+				//Echo(itoa(A[(i*sizeMSG) -3 + j]));
+
+			
+			}
+		}else{			
+
+
+			Receive(&msg,master);
+			//Echo(itoa(msg.length));
+			for(j=0;j<msg.length;j++){
+				A[(i * (msg.length)) + j] = msg.msg[j];
+			//	Echo(itoa((i * (msg.length)) - 3 + j));
+			}
+		
+			sizeMSG = msg.length;
 		}
 	}
+
+	/*Echo("matriz A");
+	for(i=0;i<numLinhasA*N;i++){
+		Echo(itoa(A[i]));
+	}*/
+
+	/*Echo("matriz B");
+	for(i=0;i<N*N;i++){
+		Echo(itoa(B[i]));
+	}*/
 	
-	Echo(itoa(GetTick()));
 	int tamMatR = numLinhasA*N;
 	int R[tamMatR];
-	Echo("Multiplicacao");
-	Echo(itoa(GetTick()));
+	//Echo("tamanho da matriz R");
+	//Echo(itoa(tamMatR));
+	/*Echo("Multiplicacao");
+	Echo(itoa(GetTick()));*/
 
-	for(i=0; i<numLinhasA; i++){
-		for(j=0; j<N;j++){
-		 	for(k=0;k<N;k++){
-		 		R[((i*N)+j)] += A[(i*N)+k] * B[(k*N)+j];
+	Echo("Multiplicando Matrizes");
+	mult(A,B,R, numLinhasA);
 	
-			}
-								//Echo(itoa(matrizR1[((i*N)+j)]));
-		}
-	}
-
-	Echo("Enviando resultado");
-	Echo(itoa(GetTick()));
+	//Echo("Enviando resultado");
+	//Echo(itoa(GetTick()));
 	sendR(R,tamMatR);
 	
-	Echo("Fim da aplicação task1");
+	Echo("Fim da aplicação slave1");
 	Echo(itoa(GetTick()));
 
 	exit();

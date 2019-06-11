@@ -104,7 +104,7 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 
  int main() {
 
- 	Echo("Inicio da aplicação slave2");
+ 	Echo("Inicio da aplicação slave5");
 	Echo(itoa(GetTick()));
 	
 	int ini, fim, qtdElem, numLinhasA;
@@ -187,7 +187,7 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 	//Echo(itoa(GetTick()));
 	sendR(R,tamMatR);
 	
-	Echo("Fim da aplicação slave2");
+	Echo("Fim da aplicação slave5");
 	Echo(itoa(GetTick()));
 
 	exit();
