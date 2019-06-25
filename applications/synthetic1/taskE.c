@@ -1,6 +1,7 @@
 #include <api.h>
 #include <stdlib.h>
-#include "syn_std.h"
+
+#include "../synthetic1/syn_std.h"
 
 Message msg;
 

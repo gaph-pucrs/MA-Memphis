@@ -119,82 +119,84 @@ begin
       								SM_traffic_monitor <= cont_payload;
       								
       			when cont_payload =>
-      								SM_traffic_monitor <= cont_payload;
+      								if payload_counter = x"00000001" then
+            
+						               newAdress := to_integer(unsigned(address));
+						
+						               file_open(fstatus, traf_router, "debug/traffic_router.txt", append_mode);
+						               
+						               if service /= x"40" and service /= x"70" and service /= x"221" and
+						                  service /= x"10" and service /= x"20" then
+						               
+						                     write(outline, header_time);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, newAdress);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, payload);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, bandwidth_allocation);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, ID);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(target_router));
+						
+						               elsif  service = x"10" or service = x"20"  then
+						               
+						                     write(outline, header_time);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, newAdress);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, payload);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, bandwidth_allocation);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, ID);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(target_router));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(task_id));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(consumer_id));
+						               
+						               else
+						                  
+						                     write(outline, header_time);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, newAdress);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, payload);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, bandwidth_allocation);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, ID);
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(target_router));
+						                     write(outline, HT); -- <<< horizontal tab
+						                     write(outline, conv_integer(task_id));
+						                  
+						               end if;
+						               
+						               writeline(traf_router, outline);
+						               file_close(traf_router);
+						               bandwidth_allocation <= 0; 
+						               SM_traffic_monitor <= Hheader;
+							        
+							        else
+      			
+      									SM_traffic_monitor <= cont_payload;
+      								
+      								end if;
 
             end case; 
       		
       	elsif bandwidth_allocation > 0 then
       			bandwidth_allocation <= bandwidth_allocation + 1;         
-         
-         end if;
-      	
-         if rx = '0' and payload_counter = x"00000000" and SM_traffic_monitor = cont_payload then
-            
-               newAdress := to_integer(unsigned(address));
-
-               file_open(fstatus, traf_router, "debug/traffic_router.txt", append_mode);
-               
-               if service /= x"40" and service /= x"70" and service /= x"221" and
-                  service /= x"10" and service /= x"20" then
-               
-                     write(outline, header_time);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, newAdress);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, payload);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, bandwidth_allocation);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, ID);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(target_router));
-
-               elsif  service = x"10" or service = x"20"  then
-               
-                     write(outline, header_time);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, newAdress);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, payload);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, bandwidth_allocation);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, ID);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(target_router));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(task_id));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(consumer_id));
-               
-               else
-                  
-                     write(outline, header_time);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, newAdress);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, CONV_STRING_16BITS(service(15 downto 0)));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, payload);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, bandwidth_allocation);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, ID);
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(target_router));
-                     write(outline, HT); -- <<< horizontal tab
-                     write(outline, conv_integer(task_id));
-                  
-               end if;
-               
-               writeline(traf_router, outline);
-               file_close(traf_router);
-               bandwidth_allocation <= 0; 
-               SM_traffic_monitor <= Hheader;
          
          end if;
          

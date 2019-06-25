@@ -118,9 +118,7 @@ void send_message_delivery(int producer_task, int consumer_task, int consumer_PE
 	while (msg_ptr->length > MSG_SIZE)
 		puts("ERROR: message lenght higher than MSG_SIZE\n");
 
-	putsv("Send delivery: ", msg_ptr->length);
 	send_packet(p, (unsigned int)msg_ptr->msg, msg_ptr->length);
-	puts("End delivery\n");
 
 }
 

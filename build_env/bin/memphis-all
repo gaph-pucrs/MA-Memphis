@@ -41,7 +41,14 @@ except:
 path_list = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
 input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
 TESTCASE_PATH = MEMPHIS_HOME + "/" + input_yaml_name.split(".")[0] #Creates a new path using the MEMPHIS_HOME + the YAML name
-    
+
+#Clean testcase and delete scenario   
+os.system("killall "+IMPUT_SCENARIO_FILE_PATH.split(".")[0])
+#Commented for a while
+#os.system("cd  "+ TESTCASE_PATH+"; make clean")
+#os.system("rm -rf "+TESTCASE_PATH+"/"+IMPUT_SCENARIO_FILE_PATH.split(".")[0])
+
+
 exit_status = os.system("memphis-gen "+ INPUT_TESTCASE_FILE_PATH)
 if exit_status != 0:
 	sys.exit("\nError in memphis-gen")

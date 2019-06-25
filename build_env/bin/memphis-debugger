@@ -11,4 +11,4 @@ try:
 except:
     pass
 
-os.system("java -jar $MEMPHIS_PATH/build_env/Memphis_Debugger.jar "+platform_path+"/debug/platform.cfg")
+os.system("java -jar $MEMPHIS_PATH/build_env/Memphis_Debugger.jar "+platform_path+"/debug/platform.cfg &")

@@ -20,7 +20,7 @@ app_list = []
 try:
     arg2 = sys.argv[2]
 except:
-    sys.exit("ERROR: Missing 2nd argument, e.g: memphis-app example.yaml mpeg\n")
+    sys.exit("ERROR: Missing 2nd argument. You have two options\n\t1 - Compile one single app: memphis-app my_testcase.yaml mpeg\n\t2 - Compile all apps of your scenario: memphis-app my_testcase.yaml -all my_scenario.yaml\n")
 
 
 if arg2 == "-all":

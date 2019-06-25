@@ -9,7 +9,15 @@
 #define SYN_STD_H_
 
 
-#define SYNTHETIC_ITERATIONS	10
+#define SYNTHETIC_ITERATIONS	100
+
+void compute(unsigned int * data){
+	volatile int t;
+	for(t=0; t<1000; t++);
+	for (int i=0; i<128; i++){
+		data[i] = i;
+	}
+}
 
 
 #endif /* SYN_STD_H_ */

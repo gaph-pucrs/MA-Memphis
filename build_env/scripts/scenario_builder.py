@@ -43,8 +43,9 @@ def main():
     os.system("rm -rf "+SCENARIO_PATH+"/*")
     create_ifn_exists(SCENARIO_PATH+"/log")
     
-    #Copy scenario.yaml to scenario dir
+    #Copy scenario.yaml to scenario dir and testcase dir
     copyfile(INPUT_SCENARIO_FILE_PATH, SCENARIO_PATH+"/"+SCENARIO_NAME+".yaml")
+    copyfile(INPUT_SCENARIO_FILE_PATH, TESTCASE_PATH+"/"+SCENARIO_NAME+".yaml")
 
     
     system_model = get_model_description(yaml_testcase_r)
@@ -81,6 +82,8 @@ def main():
     
     #Calls the deloream_env.py to generate all necessary debugging dir and files
     generate_deloream_env(TESTCASE_PATH, yaml_testcase_r, SCENARIO_PATH, yaml_scenario_r)
+    
+    print SCENARIO_NAME+" successfully generated!"
     
 
 #Receives a int, convert to string and fills to a 32 bits word

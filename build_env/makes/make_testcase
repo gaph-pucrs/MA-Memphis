@@ -1,7 +1,8 @@
 TC_NAME=$(notdir ${CURDIR})
 YAML_FILE=$(TC_NAME).yaml
+APPS_DIR=$(dir $(wildcard applications/*/.))
 
-default: all
+default: $(MY_SCENARIO)
 
 all: banner kernel hw
 
@@ -16,17 +17,30 @@ kernel:
 	
 hw:
 	@python build/hw_builder.py $(YAML_FILE)
-	
+
+apps: $(APPS_DIR)
+
+scenario:
+	@echo "To make a scenario please use: make MY_SCENARIO=your_scenario.yaml"
 
 clean-kernel:
 	@make clean -C software/
-	@rm -rf log/*
 	
 clean-hw:
 	@make clean -C hardware/
-	@rm -rf log/*
+
+clean-apps:
+	@make clean -C applications/
 	
 clean: clean-apps clean-kernel clean-hw
 	@rm -rf *.txt
 	@rm -f $(TC_NAME)
-	@rm -rf log/*
+
+$(MY_SCENARIO):
+	@python build/scenario_builder.py $(YAML_FILE) $(MY_SCENARIO) 1
+
+$(APPS_DIR):
+	@#							 testcase     -----------app name ------------
+	@python build/app_builder.py $(YAML_FILE) $(shell echo $@ | cut -d"/" -f2)
+	
+.PHONY: $(APPS_DIR) $(MY_SCENARIO)

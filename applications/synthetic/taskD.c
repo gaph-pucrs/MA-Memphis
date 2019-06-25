@@ -1,31 +1,31 @@
 #include <api.h>
 #include <stdlib.h>
+
 #include "syn_std.h"
 
+//Message structure of MEMPHIS, provided by api.h
 Message msg;
 
-int main()
+void main()
 {
-
-	int i, j,t;
-
-    Echo("synthetic task D started.");
+    Echo("Task D started at time ");
 	Echo(itoa(GetTick()));
 
-for(i=0;i<SYNTHETIC_ITERATIONS;i++){
-	msg.length = 30;
-	for(j=0;j<30;j++) msg.msg[j]=i;
-	
-		Receive(&msg,taskC);
-			for(t=0;t<1000;t++){
-		}
-		Send(&msg,taskF);
+	for(int i=0;i<SYNTHETIC_ITERATIONS;i++)
+	{
+
+		Receive(&msg, taskB);
+		Receive(&msg, taskC);
 
 	}
 
-	Echo(itoa(GetTick()));
-    Echo("synthetic task D finished.");
+	Echo("Final message");
+	for(int j=0; j<msg.length; j++){
+		Echo(itoa(msg.msg[j]));
+	}
 
+
+    Echo("Task D finished at time");
+    Echo(itoa(GetTick()));
 	exit();
-
 }
