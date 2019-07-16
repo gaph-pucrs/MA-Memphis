@@ -207,9 +207,9 @@ begin
         case( SR ) is           
            when HEADER =>
              intr_counter_temp <= intr_counter_temp + 1;
-             assert address_router = x"0000"
-               report   "Master receiving msg"                     
-             severity note;
+             --assert address_router = x"0000"
+             --  report   "Master receiving msg"                     
+             --severity note;
              is_header(CONV_INTEGER(last)) <= '1';
              SR <= PAYLOAD;
            when PAYLOAD =>
@@ -289,9 +289,9 @@ begin
             send_size_2 <= size_2;              
             send_active_2 <= '1';
             DMNI_Send <= LOAD;           
-            assert address_router = x"0000"
-              report   "Master sending msg"                     
-            severity note;
+            --assert address_router = x"0000"
+            --  report   "Master sending msg"                     
+            --severity note;
           end if ;
 
         when LOAD =>

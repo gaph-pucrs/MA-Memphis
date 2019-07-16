@@ -137,7 +137,7 @@ void send_task_release(Application * app){
 
 		app->tasks[i].status = TASK_RUNNING;
 
-		putsv("\n -> send TASK_RELEASE to task ", p->task_ID);
+		putsv("-> send TASK_RELEASE to task ", p->task_ID);
 		//puts(" in proc "); puts(itoh(p->header)); puts("\n----\n");
 	}
 
@@ -243,7 +243,7 @@ void request_application(Application *app){
 	unsigned int task_info[app->tasks_number*4];
 	int index_counter;
 
-	puts("\nRequest APP\n");
+	//puts("\nRequest APP\n");
 
 	pending_app_to_map--;
 
@@ -358,14 +358,14 @@ void handle_packet() {
 
 	case TASK_ALLOCATED:
 
-		putsv("\n -> TASK ALLOCATED from task ", p.task_ID);
+		putsv("-> TASK ALLOCATED from task ", p.task_ID);
 		app_id = p.task_ID >> 8;
 
 		app = get_application_ptr(app_id);
 
 		allocated_tasks = set_task_allocated(app, p.task_ID);
 
-		putsv("Allocated tasks: ", allocated_tasks);
+		//putsv("Allocated tasks: ", allocated_tasks);
 
 		if (allocated_tasks == app->tasks_number){
 
@@ -407,11 +407,10 @@ void handle_packet() {
 			index_counter++; //Skips address
 			index_counter++; //Skips size
 
-			puts("New task mapping report: "); puts(itoa(task_id)); puts(" mapped at proc ");
-			puts(itoh(allocated_proc)); puts("\n");
-
 			/*These lines above mantain the cluster resource control at a global master perspective*/
 			master_addr = get_master_address(allocated_proc);
+
+			puts("Task ID "); puts(itoa(task_id)); puts(" mapped at proc "); puts(itoh(allocated_proc)); puts(" and cluster "); puts(itoh(master_addr)); puts("\n");
 
 			//net_address is equal to global master address, it is necessary to verifies if is master because the master controls the cluster resources by gte insertion of new tasks request
 			if (master_addr != net_address){
@@ -419,7 +418,7 @@ void handle_packet() {
 				//Reuse of the variable master_addr to store the cluster ID
 				master_addr = get_cluster_ID(master_addr >> 8, master_addr & 0xFF);
 
-				putsv("New resource allocated to cluster ", master_addr);
+				//putsv("New resource allocated to cluster ", master_addr);
 				allocate_cluster_resource(master_addr, 1);
 			}
 
@@ -512,7 +511,7 @@ void handle_packet() {
 		//If 0 then there is no application to be allocated, otherwise, stores the number of application tasks and cluster ID
 		waiting_app_allocation = p.app_task_number << 16 | master_addr;
 
-		puts("-----> NEW_APP_REQ from app injector. Task number is "); puts(itoa(p.app_task_number)); putsv(". App mapped at cluster ", p.cluster_ID);
+		puts("\n-----> NEW_APP_REQ from app injector. Task number is "); puts(itoa(p.app_task_number)); putsv(". App mapped at cluster ", p.cluster_ID);
 
 		break;
 
@@ -616,20 +615,16 @@ void handle_new_app(int app_ID, volatile unsigned int *ref_address, unsigned int
 	//Cuidado com app_descriptor_size muito grande, pode estourar a memoria
 	unsigned int app_descriptor[app_descriptor_size];
 
-	puts("programming DMNI\n");
-
 	DMNI_read_data( (unsigned int) app_descriptor, app_descriptor_size);
 
 	ref_address = app_descriptor;
-
-	puts("DNNI reading complete\n");
 
 	//Creates a new app by reading from ref_address
 	application = read_and_create_application(app_ID, ref_address);
 
 	pending_app_to_map++;
 
-	mapping_completed = application_mapping(clusterID, application->app_ID);
+	mapping_completed = application_mapping(application->app_ID);
 
 	if (mapping_completed){
 
@@ -658,13 +653,13 @@ void handle_app_request(){
 	num_app_tasks = waiting_app_allocation >> 16;
 
 	if (num_app_tasks > total_mpsoc_resources){
-		puts("Cluster full\n");
+		//puts("Cluster full\n");
 		return;
 	}
 
 	cluster_static = waiting_app_allocation & 0xFFFF;
 
-	puts("\nNew app req handled! - cluster mapping is ");
+	puts("\nHandled new app with cluster mapping ");
 
 	if (cluster_static >= CLUSTER_NUMBER){
 
@@ -679,7 +674,7 @@ void handle_app_request(){
 
 	waiting_app_allocation = 0;
 
-	putsv("\nApplication ID: ", app_id_counter);
+	putsv("Application ID: ", app_id_counter);
 
 	//putsv("Global Master reserve application: ", num_app_tasks);
 	//putsv("total_mpsoc_resources ", total_mpsoc_resources);

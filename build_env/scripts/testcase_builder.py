@@ -89,9 +89,10 @@ def main():
     
     if exit_status == 0:
         print "\n\nMemphis platform generated and compiled successfully at:\n-"+TESTCASE_PATH+"\n"
+        sys.exit(0)
     else:
         print "\n*** ERROR: Memphis compilation not completed, process stopped!!!\n"
-    
+        sys.exit(1)
 # ----------------------------------------- FUNCTIONS ---------------------------------------------
 
 def copy_scripts(memphis_path, testcase_path):

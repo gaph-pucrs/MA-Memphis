@@ -20,6 +20,7 @@
 #include "utils.h"
 #include "processors.h"
 #include "applications.h"
+#include "reclustering.h"
 
 /** Allocate resources to a Cluster by decrementing the number of free resources. If the number of resources
  * is higher than free_resources, then free_resourcers receives zero, and the remaining of resources are allocated
@@ -29,7 +30,7 @@
  */
 void allocate_cluster_resource(int cluster_index, int nro_resources){
 
-	puts("\n\n Cluster address "); puts(itoh(cluster_info[cluster_index].master_x << 8 | cluster_info[cluster_index].master_y)); puts(" resources "); puts(itoa(cluster_info[cluster_index].free_resources));
+	//puts("\n\n Cluster address "); puts(itoh(cluster_info[cluster_index].master_x << 8 | cluster_info[cluster_index].master_y)); puts(" resources "); puts(itoa(cluster_info[cluster_index].free_resources));
 
 	if (cluster_info[cluster_index].free_resources > nro_resources){
 		cluster_info[cluster_index].free_resources -= nro_resources;
@@ -37,8 +38,8 @@ void allocate_cluster_resource(int cluster_index, int nro_resources){
 		cluster_info[cluster_index].free_resources = 0;
 	}
 
-	putsv(" ALLOCATE - nro resources : ", cluster_info[cluster_index].free_resources);
-	puts("\n\n");
+	//putsv(" ALLOCATE - nro resources : ", cluster_info[cluster_index].free_resources);
+	//puts("\n\n");
 }
 
 /** Release resources of a Cluster by incrementing the number of free resources according to the nro of resources
@@ -86,93 +87,181 @@ void page_released(int cluster_id, int proc_address, int task_ID){
 }
 
 
-
-
-/** Maps a task into a cluster processor. This function only selects the processor not modifying any management structure
- * The mapping heuristic is based on the processor's utilization (slack time) and the number of free_pages
- * \param task_id ID of the task to be mapped
- * \return Address of the selected processor
+/** Searches following the diamond search paradigm. The search occurs only inside cluster
+ * \param current_allocated_pe Current PE of the target task
+ * \param last_proc The last proc returned by diamond_search function. 0 if is the first call
+ * \return The selected processor address. -1 if not found
  */
-int map_task(int task_id){
+int diamond_search_initial(int begining_core){
 
-	int proc_address;
-	int canditate_proc = -1;
-	int max_slack_time = -1;
-	int slack_time;
+	int ref_x, ref_y, max_round, hop_count, max_tested_proc;//XY address of the current processor of the task
+	int proc_x, proc_y, proc_count;
+	int candidate_proc, test_proc;
+	int max_x, max_y, min_x, min_y, master_addr;
 
-	//putsv("Mapping call for task id ", task_id);
+	ref_x = (begining_core >> 8);
+	ref_y = (begining_core & 0xFF);
 
-#if MAX_STATIC_TASKS
-	//Test if the task is statically mapped
-	for(int i=0; i<MAX_STATIC_TASKS; i++){
+	//Return the own beggining core if it is free
+	if(get_proc_free_pages(begining_core)){
+		//puts("Mapped at beggining core\n");
+		return begining_core;
+	}
 
-		//Test if task_id is statically mapped
-		if (static_map[i][0] == task_id){
-			puts("Task id "); puts(itoa(static_map[i][0])); puts(" statically mapped at processor"); puts(itoh(static_map[i][1])); puts("\n");
+	//puts("xi: "); puts(itoh(cluster_x_offset));
 
-			proc_address = static_map[i][1];
+	max_x = (XCLUSTER + cluster_info[clusterID].xi);
+	max_y = (YCLUSTER + cluster_info[clusterID].yi);
+	min_x = cluster_info[clusterID].xi;
+	min_y = cluster_info[clusterID].yi;
+	master_addr = ( (cluster_info[clusterID].master_x << 8) | cluster_info[clusterID].master_y);
 
-			if (get_proc_free_pages(proc_address) <= 0){
-				puts("ERROR: Processor not have free resources\n");
-				while(1);
+	max_round = 0;
+	hop_count = 0;
+	proc_count = 1;
+
+	max_tested_proc = MAX_CLUSTER_SLAVES;
+
+	//Search candidate algorithm
+	while(proc_count < max_tested_proc){
+
+		//max_round count the number of processor of each round
+		max_round+=4;
+		hop_count++; //hop_count is used to position the proc_y at the top of the task's processor
+
+		proc_x = ref_x;
+		proc_y = ref_y + hop_count;
+
+		//puts(itoa(proc_x)); putsv("x", proc_y);
+
+		candidate_proc = -1;//Init the variable to start the looping below
+		//putsv("-------- New round: ", max_round);
+
+		//Walks for all processor of the round
+		for(int r=0; r<max_round; r++){
+
+			//puts("Testando addr: "); puts(itoa(proc_x)); puts("x"); puts(itoa(proc_y)); puts("\n");
+
+			test_proc = proc_x << 8 | proc_y;
+
+			//Test if the current processor is out of the system dimension
+			if (test_proc != master_addr && min_x <= proc_x && max_x > proc_x && min_y <= proc_y && max_y > proc_y){ // Search all PEs
+
+				//puts("Entrou addr: "); puts(itoa(proc_x)); puts("x"); puts(itoa(proc_y)); puts("\n");
+				//Increment the number of valid processors visited
+				proc_count++;
+
+				//Tests if the processor is available, if yes, mark it as used in free_core_map and return
+				if(get_proc_free_pages(test_proc)){
+				//if (free_core_map[proc_x][proc_y] == 1){
+					candidate_proc = test_proc;
+					//puts("Proc selected: "); puts(itoh(candidate_proc)); puts("\n");
+					return candidate_proc;
+				}
+
 			}
 
-			return proc_address;
-		}
-	}
-#endif
-
-	//Else, map the task following a CPU utilization based algorithm
-	for(int i=0; i<MAX_CLUSTER_SLAVES; i++){
-
-		proc_address = get_proc_address(i);
-
-		if (get_proc_free_pages(proc_address) > 0){
-
-			slack_time = get_proc_slack_time(proc_address);
-
-			if (max_slack_time < slack_time){
-				canditate_proc = proc_address;
-				max_slack_time = slack_time;
+			//These if walk over the processor addresses
+			if (proc_y > ref_y && proc_x <= ref_x){ //up to left
+					proc_y--;
+					proc_x--;
+					//puts("up left\n");
+			} else if (proc_y <= ref_y && proc_x < ref_x){//left to bottom
+					proc_y--;
+					proc_x++;
+					//puts("left to bottom\n");
+			} else if (proc_x >= ref_x && proc_y < ref_y){//bottom to right
+					proc_y++;
+					proc_x++;
+					//puts("bottom to right\n");
+			} else {//right to up
+					proc_y++;
+					proc_x--;
+					//puts("right to up\n");
 			}
 		}
+
 	}
 
-	if (canditate_proc != -1){
-
-		puts("Task mapping for task "), puts(itoa(task_id)); puts(" maped at proc "); puts(itoh(canditate_proc)); puts("\n");
-
-		return canditate_proc;
-	}
-
-	putsv("WARNING: no resources available in cluster to map task ", task_id);
 	return -1;
 }
 
-/**This heuristic maps all task of an application
- * Note that some task can not be mapped due the cluster is full or the processors not satisfies the
- * task requiriments. In this case, the reclustering will be used after the application_mapping funcion calling
- * into the kernel_master.c source file
- * Clearly the tasks that need reclustering are those one that have he allocated_processor equal to -1
- * \param cluster_id ID of the cluster where the application will be mapped
- * \param app_id ID of the application to be mapped
- * \return 1 if mapping OK, 0 if there are no available resources
-*/
-int application_mapping(int cluster_id, int app_id){
+
+int application_mapping(int app_id){
 
 	Application * app;
 	Task *t;
 	int proc_address;
+	int initial_pe_list[MAX_CLUSTER_APP];
+	int initial_size;
+	int initial_app_pe;
+	int proc_addr;
+	int max_avg_manhatam;
+	int man_sum, man_count, man_curr;
+	int xi, yi, xj, yj;
 
 	app = get_application_ptr(app_id);
 
 	//puts("\napplication_mapping\n");
 
+	max_avg_manhatam = -1;
+	initial_app_pe = -1;
+
+	//puts("\n----------------Defining list of initial PE------------\n");
+	get_initial_pe_list(initial_pe_list, &initial_size);
+
+	if (initial_size){
+
+		//For each free PE of the cluster
+		for(int i=0; i<MAX_CLUSTER_SLAVES; i++){
+
+			proc_addr = get_proc_address(i);
+
+			if(get_proc_free_pages(proc_addr) > 0){
+
+				man_sum = 0;
+				man_count = 0;
+
+				xi = proc_addr >> 8;
+				yi = proc_addr & 0xFF;
+				//For each initial_PE compute  the avg manhatam from the proc_addr
+				for(int j=0; j<initial_size; j++){
+
+					xj = initial_pe_list[j] >> 8;
+					yj = initial_pe_list[j] & 0xFF;
+
+					//Computes the manhatam distance
+					man_curr = (abs(xi - xj) + abs(yi - yj));
+
+					man_sum = man_sum + man_curr;
+					man_count++;
+				}
+
+				//After the for computes the mean
+				man_curr = (man_sum / man_count);
+				//puts("Current Avg mean for PE "); puts(itoh(proc_addr)); putsv(" is ", man_curr);
+
+				if (man_curr > max_avg_manhatam){
+					max_avg_manhatam = man_curr;
+					initial_app_pe = proc_addr;
+					//puts("PE selected\n");
+				}
+			}
+
+		}
+
+	} else {
+		initial_app_pe = cluster_info[clusterID].xi << 8 | cluster_info[clusterID].yf;
+		//puts("Very first time\n"); puts(itoh(initial_app_pe)); puts("\n");
+	}
+
+	puts("Seleted initial PE at: "); puts(itoh(initial_app_pe)); puts("\n");
+
+
+
 	for(int i=0; i<app->tasks_number; i++){
 
 		t = &app->tasks[i];
-
-		//putsv("Vai mapear task id: ", t->id);
 
 		//Search for static mapping
 		if (t->allocated_proc != -1){
@@ -180,8 +269,7 @@ int application_mapping(int cluster_id, int app_id){
 			puts("Task id "); puts(itoa(t->id)); puts(" statically mapped at processor "); puts(itoh(proc_address)); puts("\n");
 		} else
 			//Calls task mapping algorithm
-			proc_address = map_task(t->id);
-
+			proc_address = diamond_search_initial(initial_app_pe);
 
 		if (proc_address == -1){
 
@@ -191,7 +279,9 @@ int application_mapping(int cluster_id, int app_id){
 
 			t->allocated_proc = proc_address;
 
-			page_used(cluster_id, proc_address, t->id);
+			page_used(clusterID, proc_address, t->id);
+
+			puts("Task id "); puts(itoa(t->id)); puts(" dynamically mapped at processor "); puts(itoh(proc_address)); puts("\n");
 
 		}
 	}
@@ -200,6 +290,46 @@ int application_mapping(int cluster_id, int app_id){
 
 	return 1;
 }
+
+
+/** Maps a task into a cluster processor. This function only selects the processor not modifying any management structure
+ * The mapping heuristic is based on the processor's utilization (slack time) and the number of free_pages
+ * \param task_id ID of the task to be mapped
+ * \return Address of the selected processor
+ */
+int reclustering_map(int ref_proc){
+
+	int ref_x, ref_y, curr_x, curr_y, proc_address;
+	int curr_man, min_man, sel_proc;
+
+	ref_x = ref_proc >> 8;
+	ref_y = ref_proc & 0xFF;
+
+	min_man = (XDIMENSION*YDIMENSION);
+	sel_proc = -1;
+
+	//Else, selects the pe with the minimal manhatam to the initial proc
+	for(int i=0; i<MAX_CLUSTER_SLAVES; i++){
+
+		proc_address = get_proc_address(i);
+
+		curr_x = proc_address >> 8;
+		curr_y = proc_address & 0xFF;
+
+		if (get_proc_free_pages(proc_address) > 0){
+
+			curr_man = (abs(ref_x - curr_x) + abs(ref_y - curr_y));
+
+			if (curr_man < min_man){
+				min_man = curr_man;
+				sel_proc = proc_address;
+			}
+		}
+	}
+
+	return sel_proc;
+}
+
 
 /**Selects a cluster to insert an application
  * \param GM_cluster_id cluster ID of the global manager processor

@@ -57,6 +57,9 @@ for app_name in app_list:
 	
 print "\nApps" +app_names[1:]+ " generated and compiled successfully!!!\n"
 	
+if exit_status != 0:
+	raise Exception()
+	
 sys.exit(exit_status)
     
 

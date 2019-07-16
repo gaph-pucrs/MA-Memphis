@@ -152,9 +152,9 @@ void dmni::receive(){
 			switch (SR.read()) {
 				case HEADER:
 					intr_counter_temp = intr_counter_temp + 1;
-					if(address_router == 0){
+					/*if(address_router == 0){
 						cout<<"Master receiving msg "<<endl;
-					}
+					}*/
 					is_header[last.read()] = 1;
 					SR.write(PAYLOAD);
 				break;
@@ -252,9 +252,9 @@ void dmni::send(){
 					send_size_2.write(size_2.read());
 					send_active.write(1);
 					DMNI_Send.write(LOAD);
-					if(address_router == 0){
+					/*if(address_router == 0){
 						cout<<"Master sending msg "<<endl;
-					}
+					}*/
 				}
 			break;
 

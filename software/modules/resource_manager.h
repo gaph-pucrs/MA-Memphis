@@ -22,9 +22,9 @@ void page_used(int, int, int);
 
 void page_released(int, int, int);
 
-int map_task(int);
+int reclustering_map(int);
 
-int application_mapping(int, int);
+int application_mapping(int);
 
 int SearchCluster(int, int);
 

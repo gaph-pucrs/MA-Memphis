@@ -29,7 +29,7 @@ Processor * search_processor(int proc_address){
 		}
 	}
 
-	putsv("ERROR: Processor not found ", proc_address);
+	puts("ERROR: Processor not found "); puts(itoh(proc_address)); puts("\n");
 	while(1);
 	return 0;
 }

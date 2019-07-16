@@ -87,6 +87,8 @@ void set_task_migrated(int, int);
 
 unsigned int get_app_id_counter();
 
+void get_initial_pe_list(int *, int *);
+
 Application * read_and_create_application(unsigned int, volatile unsigned int *);
 
 void remove_application(int);

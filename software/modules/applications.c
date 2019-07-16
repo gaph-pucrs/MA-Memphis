@@ -82,6 +82,26 @@ Application * get_next_pending_app(){
 	return older_app;
 }
 
+/** Create a list of initial PEs. A initial PE is the one that task ID 0 of each app is mapped
+ *  \return Void
+ *  \param initial_list array pointer which cointas the list of initial PE addresses
+ *  \param size variable pointer that stores the size of the list
+ */
+void get_initial_pe_list(int * initial_list, int * size){
+
+	*size = 0;
+
+	for(int i=0; i<MAX_CLUSTER_APP; i++){
+
+		if (applications[i].status == RUNNING){
+			initial_list[*size] = applications[i].tasks[0].allocated_proc;
+			//Puts("Task id 0 from app "); Puts(itoa(applications[i].app_ID)); Puts(" mapped at ");
+			//Puts(itoh(initial_list[*size])); Puts("\n");
+			*size = *size + 1;
+		}
+	}
+}
+
 /** Set a task status as allocated and verifies the number of allocated task for the application
  * \param app Application pointer of the task
  * \param task_id ID of the allocated task

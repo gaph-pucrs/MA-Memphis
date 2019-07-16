@@ -47,6 +47,8 @@ void reclustering_setup(int c_id){
 
 #if RECLUSTERING_DEBUG
 	putsv("CLuster id: ", clusterID);
+	putsv("starting_x_cluster_size: ", starting_x_cluster_size);
+	putsv("starting_y_cluster_size: ", starting_y_cluster_size);
 #endif
 
 	reclustering.active = 0;
@@ -71,7 +73,20 @@ int is_reclustering_NOT_active(){
  */
 void send_loan_proc_request(int address, int taskID){
 
-	ServiceHeader *p = get_service_header_slot();
+	ServiceHeader *p;
+	Application * app_ptr;
+	int initial_proc;
+
+	app_ptr = get_application_ptr(taskID >> 8);
+
+	if (app_ptr->tasks[0].allocated_proc == -1){
+		initial_proc = (cluster_info[clusterID].master_x << 8) | cluster_info[clusterID].master_y;
+	} else {
+		initial_proc = app_ptr->tasks[0].allocated_proc;
+	}
+
+
+	p = get_service_header_slot();
 
 	p->header = address;
 
@@ -79,12 +94,12 @@ void send_loan_proc_request(int address, int taskID){
 
 	p->task_ID = taskID;
 
-	p->allocated_processor = (cluster_info[clusterID].master_x << 8) | cluster_info[clusterID].master_y;
+	p->allocated_processor = initial_proc;
 
 	send_packet(p, 0, 0);
 
 #if RECLUSTERING_DEBUG
-	puts("-> send loan proc REQUEST para proc "); puts(itoh(address)); putsv(" task id ", taskID);
+	puts("-> send loan proc REQUEST para proc "); puts(itoh(address)); puts(" task id "); puts(itoa(taskID)); puts(" initial proc "); puts(itoh(initial_proc)); puts("\n");
 #endif
 
 }
@@ -211,7 +226,7 @@ void handle_reclustering(ServiceHeader * p){
 
 	int mapped_proc;
 	Application *app;
-	int hops;
+	int hops, ref_x, ref_y, curr_x, curr_y;
 
 	switch(p->service){
 
@@ -228,13 +243,17 @@ void handle_reclustering(ServiceHeader * p){
 		} else {
 
 			//Procura pelo processador mais proximo do processador requisitnate
-			mapped_proc = map_task(p->task_ID);
+			mapped_proc = reclustering_map(p->allocated_processor);
 
-			hops = (p->allocated_processor >> 8) + (mapped_proc >> 8);
-			hops += (p->allocated_processor & 0xFF) + (mapped_proc & 0xFF);
+			ref_x = (p->allocated_processor >> 8);
+			ref_y = (p->allocated_processor & 0xFF);
+			curr_x = (mapped_proc >> 8);
+			curr_y = (mapped_proc & 0xFF);
+
+			hops = (abs(ref_x - curr_x) + abs(ref_y - curr_y));
 
 #if RECLUSTERING_DEBUG
-			puts("Alocou proc "); puts(itoh(mapped_proc)); puts("\n");
+			puts("Alocou proc "); puts(itoh(mapped_proc)); putsv(" hops ", hops); puts("\n");
 #endif
 
 			send_loan_proc_delivery(p->source_PE, p->task_ID, mapped_proc, hops);

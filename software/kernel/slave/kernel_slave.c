@@ -144,9 +144,12 @@ void send_task_real_time_change(TCB * tcb_ptr){
 	send_packet(p, 0, 0);
 }
 
-/** Assembles and sends a SLACK_TIME_REPORT packet to the master kernel
+/** Assembles and sends a SLACK_TIME_REPORT packet to the master kernel. ATTENTION: currently
+ * slack time report to manager is disabled because only disturbs the debuggability of the system
  */
 void send_slack_time_report(){
+
+	return; //Remove this line to restore the slack time report send to manager
 
 	ServiceHeader * p = get_service_header_slot();
 

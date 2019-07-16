@@ -18,4 +18,7 @@ except:
 #Generates the testcase directory
 exit_status = os.system("python "+ MEMPHIS_PATH+"/build_env/scripts/testcase_builder.py "+ INPUT_TESTCASE_FILE_PATH)
 
+if exit_status != 0:
+	raise Exception()
+
 sys.exit(exit_status)

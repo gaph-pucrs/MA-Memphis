@@ -210,6 +210,7 @@ void app_injector::task_allocation_loader(){
 			packet[ptr_index++] = code_size; //Code size
 			ptr_index 			= ptr_index + 2; //Jumps to the end of ServiceHeader
 
+			cout << "Loading task ID " << id << " to PE " << (allocated_proc >> 8) << "x" << (allocated_proc & 0xFF) << endl;
 			//Assembles txt
 			for(unsigned int i=0; i<code_size; i++){
 				getline (repo_file,line);
@@ -342,14 +343,14 @@ void app_injector::receive_packet(){
 
 			case HEADER:
 
-				if (rx.read() == 1)
+				if (rx.read() == 1 && sig_credit_out.read() == 1)
 					EA_receive_packet = PAYLOAD_SIZE;
 
 				break;
 
 			case PAYLOAD_SIZE:
 
-				if (rx.read() == 1){
+				if (rx.read() == 1 && sig_credit_out.read() == 1){
 					payload_size = data_in.read();
 					flit_counter = 2;
 					EA_receive_packet = SERVICE;
@@ -358,7 +359,7 @@ void app_injector::receive_packet(){
 				break;
 			case SERVICE:
 
-				if (rx.read() == 1){
+				if (rx.read() == 1 && sig_credit_out.read() == 1){
 					if (data_in.read() == APP_REQ_ACK)
 						EA_receive_packet = RECEIVE_APP_ACK;
 					else if (data_in.read() == APP_ALLOCATION_REQUEST)
@@ -369,7 +370,7 @@ void app_injector::receive_packet(){
 
 			case RECEIVE_APP_ACK: //APP_REQ_ACK:
 
-				if (rx.read() == 1){
+				if (rx.read() == 1 && sig_credit_out.read() == 1){
 
 					if(flit_counter == 4){ //Reads app_ID flit from ServiceHeader
 
@@ -393,7 +394,7 @@ void app_injector::receive_packet(){
 
 			case RECEIVE_APP_ALLOCATION:
 
-				if (rx.read() == 1){
+				if (rx.read() == 1 && sig_credit_out.read() == 1){
 
 					if (flit_counter == 9){// Gets task number from flit 9
 
