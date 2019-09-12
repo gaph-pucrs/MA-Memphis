@@ -199,8 +199,14 @@ int application_mapping(int app_id){
 	int max_avg_manhatam;
 	int man_sum, man_count, man_curr;
 	int xi, yi, xj, yj;
-
 	app = get_application_ptr(app_id);
+	
+	//Define the mapping order, this is only used to allow static map first
+	int mapping_order[app->tasks_number];
+	int mapping_order_count = 0;
+	for(int i=0; i<app->tasks_number; i++){
+		mapping_order[i] = -1;
+	}
 
 	//puts("\napplication_mapping\n");
 
@@ -258,10 +264,31 @@ int application_mapping(int app_id){
 	puts("Seleted initial PE at: "); puts(itoh(initial_app_pe)); puts("\n");
 
 
-
+	/*First add to mapping_order the statically mapped tasks */
 	for(int i=0; i<app->tasks_number; i++){
-
 		t = &app->tasks[i];
+		if (t->allocated_proc != -1){
+			mapping_order[mapping_order_count] = i;
+			mapping_order_count++;
+		}
+	}
+
+	/*Secondly add to mapping_order the dynamically mapped tasks */
+	for(int i=0; i<app->tasks_number; i++){
+		t = &app->tasks[i];
+		if (t->allocated_proc == -1){
+			mapping_order[mapping_order_count] = i;
+			mapping_order_count++;
+		}
+	}
+	
+
+
+	for(int i=0, task_i; i<app->tasks_number; i++){
+		
+		task_i = mapping_order[i];
+		
+		t = &app->tasks[task_i];
 
 		//Search for static mapping
 		if (t->allocated_proc != -1){
