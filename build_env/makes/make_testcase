@@ -4,7 +4,7 @@ APPS_DIR=$(dir $(wildcard applications/*/.))
 
 default: $(MY_SCENARIO)
 
-all: banner kernel hw
+all: banner kernel hw apps
 
 update:
 	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);

@@ -44,8 +44,11 @@ def main():
     create_ifn_exists(SCENARIO_PATH+"/log")
     
     #Copy scenario.yaml to scenario dir and testcase dir
-    copyfile(INPUT_SCENARIO_FILE_PATH, SCENARIO_PATH+"/"+SCENARIO_NAME+".yaml")
-    copyfile(INPUT_SCENARIO_FILE_PATH, TESTCASE_PATH+"/"+SCENARIO_NAME+".yaml")
+    try:
+        copyfile(INPUT_SCENARIO_FILE_PATH, SCENARIO_PATH+"/"+SCENARIO_NAME+".yaml")
+        copyfile(INPUT_SCENARIO_FILE_PATH, TESTCASE_PATH+"/"+SCENARIO_NAME+".yaml")
+    except:
+        pass
 
     
     system_model = get_model_description(yaml_testcase_r)
