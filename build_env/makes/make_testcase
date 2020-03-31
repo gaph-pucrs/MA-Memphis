@@ -10,13 +10,13 @@ update:
 	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);
 	
 banner:
-	@python build/banner.py
+	@python2 build/banner.py
 	
 kernel:
-	@python build/kernel_builder.py $(YAML_FILE)
+	@python2 build/kernel_builder.py $(YAML_FILE)
 	
 hw:
-	@python build/hw_builder.py $(YAML_FILE)
+	@python2 build/hw_builder.py $(YAML_FILE)
 
 apps: $(APPS_DIR)
 
@@ -37,10 +37,10 @@ clean: clean-apps clean-kernel clean-hw
 	@rm -f $(TC_NAME)
 
 $(MY_SCENARIO):
-	@python build/scenario_builder.py $(YAML_FILE) $(MY_SCENARIO) 1
+	@python2 build/scenario_builder.py $(YAML_FILE) $(MY_SCENARIO) 1
 
 $(APPS_DIR):
 	@#							 testcase     -----------app name ------------
-	@python build/app_builder.py $(YAML_FILE) $(shell echo $@ | cut -d"/" -f2)
+	@python2 build/app_builder.py $(YAML_FILE) $(shell echo $@ | cut -d"/" -f2)
 	
 .PHONY: $(APPS_DIR) $(MY_SCENARIO)

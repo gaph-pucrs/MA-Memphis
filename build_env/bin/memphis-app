@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import os
 import sys
 
@@ -45,7 +45,7 @@ for app_name in app_list:
 	
 	#Generates and compile the app directory
 	
-	exit_status = os.system("python "+ MEMPHIS_PATH+"/build_env/scripts/app_builder.py "+ INPUT_TESTCASE_FILE_PATH + " " + app_name)
+	exit_status = os.system("python2 "+ MEMPHIS_PATH+"/build_env/scripts/app_builder.py "+ INPUT_TESTCASE_FILE_PATH + " " + app_name)
 
 	if exit_status == 0:
 	    print "App " +app_name+ " generated and compiled successfully!!!"

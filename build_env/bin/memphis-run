@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import os
 import sys
 import subprocess
@@ -67,7 +67,7 @@ SCENARIO_PATH = TESTCASE_PATH + "/" + SCENARIO_NAME
 if os.path.exists(TESTCASE_PATH+"/base_scenario") == False:
     sys.exit("\nERROR: Testcase not generated yet, use memphis-gen to generate it!")
 
-exit_code = os.system("python "+ MEMPHIS_PATH+"/build_env/scripts/scenario_builder.py "+ INPUT_TESTCASE_FILE_PATH + " "+ IMPUT_SCENARIO_FILE_PATH + " " + str(SIM_TIME))
+exit_code = os.system("python2 "+ MEMPHIS_PATH+"/build_env/scripts/scenario_builder.py "+ INPUT_TESTCASE_FILE_PATH + " "+ IMPUT_SCENARIO_FILE_PATH + " " + str(SIM_TIME))
 
 if exit_code != 0:
     exit(1)
