@@ -26,11 +26,11 @@ boot_task.o: $(BOOT_TASK_SRC)
 $(TASK_OBJ): $(TASK_SRC) 
 	@printf "${GREEN}Compiling task: %s ...${NC}\n" "$*.c"
 	$(GCC_MIPS) $(CFLAGS) $*.c -o $*.o --include id_tasks.h -I $(INCLUDE)
-	$(LD_MIPS) -Ttext 0 -eentry -Map $*.map -s -N -o $*.bin $(BOOT_TASK).o $*.o
-	$(LD_MIPS) -Ttext 0 -eentry -Map $*_debug.map -o $*_debug.bin $(BOOT_TASK).o $*.o
-	$(DUMP_MIPS) -S $*_debug.bin > $*.lst
-	$(COPY_MIPS) $*.bin $*.dump
-	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $*.dump > $*.txt
+	$(LD_MIPS) --section-start=".init"=0 -Map $*.map -s -N -o $*.elf $(BOOT_TASK).o $*.o
+	$(LD_MIPS) --section-start=".init"=0 -Map $*_debug.map -o $*_debug.elf $(BOOT_TASK).o $*.o
+	$(DUMP_MIPS) -S $*_debug.elf > $*.lst
+	$(COPY_MIPS) -R .MIPS.abiflags -R .reginfo $*.elf $*.bin
+	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $*.bin > $*.txt
 
 clean:
 	@printf "Cleaning up\n"

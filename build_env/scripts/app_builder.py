@@ -163,7 +163,7 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
         
         txt_source_file = app_path + "/" + task_name + ".txt"
         
-        bin_source_file = app_path + "/" + task_name + ".bin"
+        bin_source_file = app_path + "/" + task_name + ".elf"
         
         check_mem_size(bin_source_file, get_page_size_KB(yaml_r) )
         
@@ -226,7 +226,7 @@ def get_task_txt_size(app_path, task_name):
     
 def get_task_DATA_size(app_path, task_name):
     
-    source_file = app_path + "/" + task_name + ".bin"
+    source_file = app_path + "/" + task_name + ".elf"
     
     #This command gets the bss data and size of the binary file
     #https://www.quora.com/What-is-a-convenient-way-to-execute-a-shell-command-in-Python-and-retrieve-its-output
@@ -241,7 +241,7 @@ def get_task_DATA_size(app_path, task_name):
     
 def get_task_BSS_size(app_path, task_name):
     
-    source_file = app_path + "/" + task_name + ".bin"
+    source_file = app_path + "/" + task_name + ".elf"
     
     #This command gets the bss data and size of the binary file
     #https://www.quora.com/What-is-a-convenient-way-to-execute-a-shell-command-in-Python-and-retrieve-its-output

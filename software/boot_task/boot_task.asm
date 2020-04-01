@@ -10,11 +10,11 @@
 
 
 
-        .text
+        .section .init
         .align  2
-        .globl  entry
-        .ent    entry
-entry:
+        .globl  _start
+        .ent    _start
+_start:
    .set noreorder
 
    li $sp,sp_addr # new initialization
@@ -30,9 +30,10 @@ $L1:
    j $L1
    nop
 
-        .end entry
-  
+        .end _start
+    
 ###################################################
+.section .text
 
    .globl SystemCall
    .ent SystemCall
