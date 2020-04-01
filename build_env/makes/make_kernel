@@ -4,10 +4,10 @@ NC   =\033[0m # No Color
 KERNEL_PKG_TGT    = ../include/kernel_pkg.o
 KERNEL_PKG_SRC    = $(KERNEL_PKG_TGT:.o=.c) $(KERNEL_PKG_TGT:.o=.h)
 
-CFLAGS            = -O2 -Wall -c -std=c99 -G 0
+CFLAGS            = -O2 -Wall -fms-extensions -c -std=c99 -G 0
 GCC_MIPS          = mips-elf-gcc $(CFLAGS)
 AS_MIPS           = mips-elf-as
-LD_MIPS           = mips-elf-ld --no-relax
+LD_MIPS           = mips-elf-ld
 DUMP_MIPS         = mips-elf-objdump
 COPY_MIPS         = mips-elf-objcopy -I elf32-bigmips -O binary
 
