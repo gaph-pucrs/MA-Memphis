@@ -75,5 +75,5 @@ clean:
 	@rm -rf *.map
 	@rm -rf *.lst
 	@rm -rf *.txt
-	@rm -rf *.dump
+	@rm -rf *.elf
 
