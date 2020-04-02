@@ -5,7 +5,7 @@ Biblioteca aplicação multiplicação de matrizes paradigma mestre-escravo
 */
 
 #include <stdlib.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <api.h>
 #define N 10
 #define SIZE N*N

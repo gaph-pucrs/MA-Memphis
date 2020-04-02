@@ -1,6 +1,6 @@
 #include <api.h>
 #include <stdlib.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 #define NUM_NODES                  16		//16 for small input; 160 for large input; 30 for medium input;
 #define MAXPROCESSORS			   64		//The amount of processor
