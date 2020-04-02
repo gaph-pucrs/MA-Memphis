@@ -32,7 +32,7 @@ int main(){
 	msg.length = SIZE*SIZE; //SIZE*SIZE nao pode ser maior que 128, senao usar o SendData
 
 	Echo("Rec ola\n");
-	Echo(itoa(GetTick());
+	Echo(itoa(GetTick()));
 	memcpy(msg.msg, test, sizeof(test));
 
 	for(i=0; i<TOTAL_TASKS; i++){
