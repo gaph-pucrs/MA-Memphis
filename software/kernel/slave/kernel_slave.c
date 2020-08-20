@@ -214,11 +214,11 @@ void send_data_av(int producer_task, int consumer_task, unsigned int targetPE, u
 
 	p->service = DATA_AV;
 
-	p->requesting_processor = requestingPE;
-
 	p->producer_task = producer_task;
 
 	p->consumer_task = consumer_task;
+
+	p->requesting_processor = requestingPE;
 
 	send_packet(p, 0, 0);
 }
@@ -824,6 +824,17 @@ int handle_packet(volatile ServiceHeader * p) {
 		cluster_master_address = p->source_PE;
 
 		putsv("Slave initialized by cluster address: ", cluster_master_address);
+
+		break;
+
+	case DATA_AV:
+		/* Insert the packet received */
+		insert_data_av(p->producer_task, p->consumer_task, p->requesting_processor);
+
+		/* If the consumer task is waiting for a DATA_AV, release it */
+		TCB *consumer_tcb = searchTCB(p->consumer_task);
+		if(consumer_tcb && consumer_tcb->scheduling_ptr->waiting_msg == WAITING_DATA_AV)
+			consumer_tcb->scheduling_ptr->waiting_msg = 0;
 
 		break;
 
