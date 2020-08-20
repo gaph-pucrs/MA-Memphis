@@ -200,6 +200,29 @@ void send_update_task_location(unsigned int target_proc, unsigned int task_id, u
 	}
 }
 
+/** Assembles and sends a DATA_AV packet to producer task into a slave processor
+ * \param producer_task Producer task ID (Send())
+ * \param consumer_task Consumer task ID (Receive())
+ * \param targetPE Processor address of the consumer task
+ * \param requestingPE Processor address of the producer task
+ */
+void send_data_av(int producer_task, int consumer_task, unsigned int targetPE, unsigned int requestingPE)
+{
+	ServiceHeader *p = get_service_header_slot();
+
+	p->header = targetPE;
+
+	p->service = DATA_AV;
+
+	p->requesting_processor = requestingPE;
+
+	p->producer_task = producer_task;
+
+	p->consumer_task = consumer_task;
+
+	send_packet(p, 0, 0);
+}
+
 /** Assembles and sends a MESSAGE_REQUEST packet to producer task into a slave processor
  * \param producer_task Producer task ID (Send())
  * \param consumer_task Consumer task ID (Receive())
@@ -297,61 +320,67 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				clear_app_tasks_locations(appID);
 			}
 
-		return 1;
+			return 1;
 
 		case WRITEPIPE:
 
 			producer_task =  current->id;
 			consumer_task = (int) arg1;
 
-			appID = producer_task >> 8;
-			consumer_task = (appID << 8) | consumer_task;
+			if(!arg2)	/* Synced write must send complete app|task id */
+				consumer_task |= (producer_task & 0xF0);
 
-			//puts("WRITEPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task);
+			// puts("WRITEPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task); putsv(" synced=", arg2);
 
 			consumer_PE = get_task_location(consumer_task);
 
-			//Test if the consumer task is not allocated
-			if (consumer_PE == -1){
-				//Task is blocked until its a TASK_RELEASE packet
-				current->scheduling_ptr->status = BLOCKED;
+			/* Check if consumer task is allocated */
+			if(consumer_PE == -1){
+				// schedule_after_syscall = 1;
+				
+				/* @todo Discuss */
+				if(!arg2){	/* Synced write can send to other apps and cannot wait for TASK_RELEASE */
+					/* Task is blocked until a TASK_RELEASE packet is received */
+					current->scheduling_ptr->status = BLOCKED;
+				}
 				return 0;
 			}
 
-			/*Points the message in the task page. Address composition: offset + msg address*/
+			/* Points the message in the task page. Address composition: offset + msg address */
 			msg_read = (Message *)((current->offset) | arg0);
 
-			//Test if the application passed a invalid message lenght
-			while (msg_read->length > MSG_SIZE || msg_read->length < 0){
-				putsv("ERROR: Message lenght must be higher than -1 and lower MSG_SIZE", msg_read->length);
+			/* Test if the application passed a invalid message lenght */
+			if(msg_read->length > MSG_SIZE || msg_read->length < 0){
+				putsv("ERROR: Message lenght must be 0 or higher and lower than MSG_SIZE", msg_read->length);
+				while(1);
 			}
 
-			//Searches if there is a message request to the produced message
+			/* Searches if there is a message request to the produced message */
 			msg_req_ptr = remove_message_request(producer_task, consumer_task);
 
-			if (msg_req_ptr){
+			if(msg_req_ptr){	/* Message request found! */
 
-				if (msg_req_ptr->requester_proc == net_address){ //Test if the consumer is local or remote
+				if(msg_req_ptr->requester_proc == net_address){ /* Local consumer */
 
-					//Writes to the consumer page address (local consumer)
+					/* Writes to the consumer page address */
 					TCB * requesterTCB = searchTCB(consumer_task);
 
 					write_local_msg_to_task(requesterTCB, msg_read->length, msg_read->msg);
 
-#if MIGRATION_ENABLED
-					if (requesterTCB->proc_to_migrate != -1){
-
+				#if MIGRATION_ENABLED
+					if(requesterTCB->proc_to_migrate != -1){
 						migrate_dynamic_memory(requesterTCB);
-
 						schedule_after_syscall = 1;
 					}
-#endif
+				#endif
 
-				} else { //Send a mesage delivery (remote consumer)
+				} else {	/* Remote consumer */
 
-					//Deadlock avoidance: voids to send a packet when the DMNI is busy in send process
-					if ( MemoryRead(DMNI_SEND_ACTIVE) ){
-						//Restore the message request
+					/* Send a MESSAGE_DELIVERY */
+
+					/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
+					if(MemoryRead(DMNI_SEND_ACTIVE)){
+						/* Restore the message request */
 						msg_req_ptr->requested = producer_task;
 						msg_req_ptr->requester = consumer_task;
 						return 0;
@@ -359,26 +388,54 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 
 					msg_write_pipe.length = msg_read->length;
 
-					//Avoids message overwriting by the producer task
-					for (int i=0; i < msg_read->length; i++)
+					/* Copy to pipe to avoid message going out of scope */
+					for(int i=0; i < msg_read->length; i++)
 						msg_write_pipe.msg[i] = msg_read->msg[i];
 
 					send_message_delivery(producer_task, consumer_task, msg_req_ptr->requester_proc, &msg_write_pipe);
 
 				}
-			} else { //message not requested yet, stores into PIPE
+			} else { /* Message not requested yet */
+				TCB *consumer_tcb = 0;
+				if(consumer_PE == net_address)
+					consumer_tcb = searchTCB(consumer_task);
 
-				//########################### ADD PIPE #################################
-				ret = add_PIPE(producer_task, consumer_task, msg_read);
-				//########################### ADD PIPE #################################
+				if(arg2 && consumer_tcb && consumer_tcb->scheduling_ptr->waiting_msg == WAITING_DATA_AV){	/* Local consumer waiting DATA_AV packet */
+					/* Bypass and write directly to buffer */
+					write_local_msg_to_task(consumer_tcb, msg_read->length, msg_read->msg);
+					
+				#if MIGRATION_ENABLED
+					if(requesterTCB->proc_to_migrate != -1){
+						migrate_dynamic_memory(requesterTCB);
+						schedule_after_syscall = 1;
+					}
+				#endif
+				} else if (get_PIPE_free_position){	/* Pipe has slot */
+					if(arg2){
+						if(consumer_PE == net_address){
+							/* Insert a DATA_AV to consumer table */
+							insert_data_av(producer_task, consumer_task, net_address);
+						} else {
+							/* Send DATA_AV to consumer PE */
+							
+							/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
+							if(MemoryRead(DMNI_SEND_ACTIVE))
+								return 0;
 
-				if (ret == 0){
+							send_data_av(producer_task, consumer_task, consumer_PE, net_address);
+						}
+					}
+
+					/* Store message in Pipe. Will be sent when a REQUEST is received */
+					add_PIPE(producer_task, consumer_task, msg_read);
+				} else {
+					/* No PIPE space. Must retry */
 					schedule_after_syscall = 1;
 					return 0;
 				}
 			}
 
-		return 1;
+			return 1;
 
 		case READPIPE:
 
@@ -437,7 +494,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			}
 
 			//Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY
-			current->scheduling_ptr->waiting_msg = 1;
+			current->scheduling_ptr->waiting_msg = WAITING_DELIVERY;
 
 			schedule_after_syscall = 1;
 

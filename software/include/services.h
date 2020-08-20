@@ -46,5 +46,6 @@
 #define 	REAL_TIME_CHANGE				0x00000280
 #define		NEW_APP_REQ						0x00000290 //Injector to Mestre (carries num_tasks)
 #define		APP_REQ_ACK						0x00000300 //Mestre to Injector (carries cluster addr)
+#define 	DATA_AV							0x00000310
 
 #endif

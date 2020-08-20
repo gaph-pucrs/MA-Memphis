@@ -44,6 +44,10 @@
 #define BLOCKED			4		//!<Task is blocked waiting for the manager send a TASK_RELEASE packet
 #define SLEEPING	  	5		//!<Task already executed all its execution time and is sleeping until the end of period
 
+/* Task message waiting types */
+#define WAITING_DELIVERY	1
+#define WAITING_DATA_AV		2
+#define WAITING_REQUEST		3
 
 //Auxiliary RT defines
 #define DEBUG					0			//!<When enabled shows the puts placed within local_scheduler.c

@@ -38,6 +38,7 @@ extern int SystemCall();
 #define GetTick() SystemCall(GETTICK,0,0,0)
 #define Echo(str) SystemCall(ECHO, (char*)str,0,0)
 #define exit() while(!SystemCall(EXIT, 0, 0, 0))
+#define SSend(msg, app_target) while(!SystemCall(WRITEPIPE, (unsigned int*)msg, app_target, 1))
 
 //Real-Time API - time represented in microseconds
 #define RealTime(period, deadline, execution_time) while(!SystemCall(REALTIME, period, deadline, execution_time))
