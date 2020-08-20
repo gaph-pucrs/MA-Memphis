@@ -311,7 +311,7 @@ MessageRequest *get_data_av_entry()
 {
 	/* @todo: Change to FIFO */
 	for(int i = 0; i < DATA_AV_SIZE; i++){
-		if(data_av[i].requester == -1)
+		if(data_av[i].requested == -1)
 			return &data_av[i];
 	}
 	return NULL;
@@ -336,7 +336,27 @@ int insert_data_av(int producer_task, int consumer_task, int requester_proc)
 	entry->requester_proc = requester_proc;
 
 	/* Only for debug purposes */
-	MemoryWrite(ADD_REQUEST_DEBUG, (producer_task << 16) | (consumer_task & 0xFFFF));
+	// MemoryWrite(ADD_DATA_AV_DEBUG, (producer_task << 16) | (consumer_task & 0xFFFF));
 
 	return 1;
+}
+
+/** Remove a message request
+ *  \param consumer_task ID of the consumer task of the message
+ *  \return NULL if the message was not found or the pointer to the DATA_AV structure
+ */
+MessageRequest *remove_data_av(int consumer_task) {
+
+    for(int i = 0; i<DATA_AV_SIZE; i++) {
+        if(data_av[i].requested == consumer_task){
+			data_av[i].requested = -1;
+
+			//Only for debug purposes
+			// MemoryWrite(REM_DATA_AV_DEBUG, (data_av[i].requester << 16) | (consumer_task & 0xFFFF));
+
+        	return &data_av[i];
+        }
+    }
+
+    return NULL;
 }

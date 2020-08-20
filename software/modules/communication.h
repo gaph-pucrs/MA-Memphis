@@ -75,6 +75,11 @@ MessageRequest * remove_message_request(int, int);
 
 int remove_all_requested_msgs(int, unsigned int *);
 
+MessageRequest *get_data_av_entry();
+
+int insert_data_av(int, int, int);
+
+MessageRequest *remove_data_av(int);
 
 
 
