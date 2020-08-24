@@ -328,7 +328,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			consumer_task = (int) arg1;
 
 			if(!arg2)	/* Synced write must send complete app|task id */
-				consumer_task |= (producer_task & 0xF0);
+				consumer_task |= (producer_task & 0xFF00);
 
 			// puts("WRITEPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task); putsv(" synced=", arg2);
 
@@ -430,11 +430,11 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 
 		case READPIPE:
 
-			consumer_task =  current->id;
+			consumer_task = current->id;
 
 			if(!arg2){	/* Not synced READ must define the producer */
 				producer_task = (int)arg1;
-				producer_task |= (consumer_task & 0xF0);
+				producer_task |= (consumer_task & 0xFF00);
 
 				producer_PE = get_task_location(producer_task);
 
@@ -452,7 +452,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				if(!msg_req_ptr){	/* No data available for requesting */
 					/* Block task and wait for DATA_AV packet */
 					current->scheduling_ptr->waiting_msg = WAITING_DATA_AV;
-					schedule_after_syscall = 1;
+					// schedule_after_syscall = 1;
 					return 0;
 				}
 
