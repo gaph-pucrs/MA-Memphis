@@ -579,6 +579,9 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			 */
 
 			break;
+		
+		case APPID:
+			return current->id >> 8;
 	}
 
 	return 0;
