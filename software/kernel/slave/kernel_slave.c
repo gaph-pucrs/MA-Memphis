@@ -395,7 +395,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 					send_message_delivery(producer_task, consumer_task, msg_req_ptr->requester_proc, &msg_write_pipe);
 
 				}
-			} else if (get_PIPE_free_position){	/* Pipe has slot */
+			} else if(get_PIPE_free_position()){	/* Pipe has slot */
 				if(arg2){
 					if(consumer_PE == net_address){
 						/* Insert a DATA_AV to consumer table */
