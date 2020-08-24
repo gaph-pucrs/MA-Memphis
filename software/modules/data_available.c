@@ -4,8 +4,8 @@
  * @file data_available.c
  * 
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
- * GAPH - 
- * PUCRS -
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  *  
  * @brief Defines the DATA_AV fifo functions.
  */
