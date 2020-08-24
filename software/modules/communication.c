@@ -314,7 +314,7 @@ MessageRequest *get_data_av_entry()
 		if(data_av[i].requested == -1)
 			return &data_av[i];
 	}
-	return NULL;
+	return 0;
 }
 
 /** Inserts a data_av into the data_av array
@@ -358,5 +358,5 @@ MessageRequest *remove_data_av(int consumer_task) {
         }
     }
 
-    return NULL;
+    return 0;
 }
