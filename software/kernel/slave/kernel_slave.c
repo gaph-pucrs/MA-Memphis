@@ -492,19 +492,24 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			} else { /* Remote producer : Sends the message request (remote producer) */
 
 				/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-				if(MemoryRead(DMNI_SEND_ACTIVE))
+				if(MemoryRead(DMNI_SEND_ACTIVE)){
+					/* Restore DATA_AV packet */
+					if(arg2)
+						msg_req_ptr->requested = consumer_task;
+
 					return 0;
+				}
 
 				send_message_request(producer_task, consumer_task, producer_PE, net_address, 0);
 
 			}
 
-			//Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY
+			/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
 			current->scheduling_ptr->waiting_msg = WAITING_DELIVERY;
 
 			schedule_after_syscall = 1;
 
-			return 0;
+			return 1;
 
 		case GETTICK:
 
@@ -718,7 +723,7 @@ int handle_packet(volatile ServiceHeader * p) {
 
 		DMNI_read_data((unsigned int)msg_ptr->msg, msg_ptr->length);
 
-		tcb_ptr->reg[0] = 1;
+		// tcb_ptr->reg[0] = 1;
 
 		//Release task to execute
 		tcb_ptr->scheduling_ptr->waiting_msg = 0;
