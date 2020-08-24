@@ -35,6 +35,12 @@ void init_communication(){
 		message_request[i].requester = -1;
 		message_request[i].requester_proc = -1;
 	}
+
+	for(int i = 0; i < DATA_AV_SIZE; i++){
+		data_av[i].requested = -1;
+		data_av[i].requester = -1;
+		data_av[i].requester_proc = -1;
+	}
 }
 
 /** Add a message to the PIPE if it have available space
@@ -327,7 +333,7 @@ int insert_data_av(int producer_task, int consumer_task, int requester_proc)
 {
 	MessageRequest *entry = get_data_av_entry();
 	if(!entry){
-		puts("ERROR - request table if full\n");
+		puts("ERROR - data_av table full\n");
 		return 0;	/*no space in table*/
 	}
 
