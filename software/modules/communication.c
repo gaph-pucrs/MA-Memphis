@@ -11,17 +11,17 @@
  * This module is only used by slave kernel
  */
 
+#include <stdbool.h>
+
 #include "communication.h"
 #include "../include/plasma.h"
 #include "utils.h"
+#include "data_available.h"
 
 PipeSlot pipe[PIPE_SIZE];						//!< pipe array
-
 MessageRequest message_request[REQUEST_SIZE];	//!< message request array
-MessageRequest data_av[DATA_AV_SIZE];
 
 unsigned int pipe_free_positions = PIPE_SIZE;	//!< Stores the number of free position in the pipe
-
 
 /** Initializes the message request and the pipe array
  */
@@ -36,11 +36,6 @@ void init_communication(){
 		message_request[i].requester_proc = -1;
 	}
 
-	for(int i = 0; i < DATA_AV_SIZE; i++){
-		data_av[i].requested = -1;
-		data_av[i].requester = -1;
-		data_av[i].requester_proc = -1;
-	}
 }
 
 /** Add a message to the PIPE if it have available space
@@ -307,62 +302,4 @@ int remove_all_requested_msgs(int requested_task, unsigned int * removed_msgs){
 	}
 
 	return request_index;
-}
-
-/**
- * Get a pointer to the first available DATA_AV entry
- * \return Pointer to the entry or NULL if no entries left
- */
-MessageRequest *get_data_av_entry()
-{
-	/* @todo: Change to FIFO */
-	for(int i = 0; i < DATA_AV_SIZE; i++){
-		if(data_av[i].requested == -1)
-			return &data_av[i];
-	}
-	return 0;
-}
-
-/** Inserts a data_av into the data_av array
- *  \param producer_task ID of the producer task of the message
- *  \param consumer_task ID of the consumer task of the message
- *  \param requester_proc Processor of the producer task
- *  \return 0 if the data_av array is full, 1 if the message was successfully inserted
- */
-int insert_data_av(int producer_task, int consumer_task, int requester_proc)
-{
-	MessageRequest *entry = get_data_av_entry();
-	if(!entry){
-		puts("ERROR - data_av table full\n");
-		return 0;	/*no space in table*/
-	}
-
-	entry->requester = producer_task;
-	entry->requested = consumer_task;
-	entry->requester_proc = requester_proc;
-
-	/* Only for debug purposes */
-	// MemoryWrite(ADD_DATA_AV_DEBUG, (producer_task << 16) | (consumer_task & 0xFFFF));
-
-	return 1;
-}
-
-/** Remove a message request
- *  \param consumer_task ID of the consumer task of the message
- *  \return NULL if the message was not found or the pointer to the DATA_AV structure
- */
-MessageRequest *remove_data_av(int consumer_task) {
-
-    for(int i = 0; i<DATA_AV_SIZE; i++) {
-        if(data_av[i].requested == consumer_task){
-			data_av[i].requested = -1;
-
-			//Only for debug purposes
-			// MemoryWrite(REM_DATA_AV_DEBUG, (data_av[i].requester << 16) | (consumer_task & 0xFFFF));
-
-        	return &data_av[i];
-        }
-    }
-
-    return 0;
 }

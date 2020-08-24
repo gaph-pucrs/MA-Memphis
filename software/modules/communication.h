@@ -25,7 +25,6 @@
 #define PIPE_SIZE		MAX_LOCAL_TASKS * 3 //24				//!< Size of the pipe array in fucntion of the maximum number of local task
 #define REQUEST_SIZE	MAX_LOCAL_TASKS*(MAX_TASKS_APP-1) //50	//!< Size of the message request array in fucntion of the maximum number of local task and max task per app
 #define MAX_TASK_SLOTS	PIPE_SIZE/MAX_LOCAL_TASKS				//!< Maximum number of pipe slots that a task have
-#define DATA_AV_SIZE	MAX_LOCAL_TASKS*(MAX_TASKS_APP-1)		//!< Size of the data_av array
 
 /**
  * \brief This enum stores the pipe status
@@ -52,8 +51,6 @@ typedef struct {
     int requested;             	//!< Stores the requested task id ( task that performs the Send() API )
     int requester_proc;			//!< Stores the requester processor address
 } MessageRequest;
-
-
 
 void init_communication();
 

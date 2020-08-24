@@ -399,15 +399,17 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				if(arg2){
 					if(consumer_PE == net_address){
 						/* Insert a DATA_AV to consumer table */
-						insert_data_av(producer_task, consumer_task, net_address);
-
-						/* If consumer waiting for a DATA_AV, release the task */
 						TCB *consumer_tcb = searchTCB(consumer_task);
-						if(consumer_tcb && consumer_tcb->scheduling_ptr->waiting_msg == WAITING_DATA_AV)
-							consumer_tcb->scheduling_ptr->waiting_msg = 0;
 
+						if(consumer_tcb){	/* Ensure it's here */
+							data_av_insert(&(consumer_tcb->data_av), producer_task, net_address);
+							
+							/* If consumer waiting for a DATA_AV, release the task */
+							if(consumer_tcb && consumer_tcb->scheduling_ptr->waiting_msg == WAITING_DATA_AV)
+								consumer_tcb->scheduling_ptr->waiting_msg = 0;
+						}
 					} else {
-						/* Send DATA_AV to consumer PE *
+						/* Send DATA_AV to consumer PE */
 						
 						/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
 						if(MemoryRead(DMNI_SEND_ACTIVE))
@@ -447,17 +449,17 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				}
 			} else {
 				/* Synced READ, must see what applications have data available for it */
-				msg_req_ptr = remove_data_av(consumer_task);
+				data_av_t *data_av = data_av_peek(&(current->data_av));
 				
-				if(!msg_req_ptr){	/* No data available for requesting */
+				if(!data_av){	/* No data available for requesting */
 					/* Block task and wait for DATA_AV packet */
 					current->scheduling_ptr->waiting_msg = WAITING_DATA_AV;
 					// schedule_after_syscall = 1;
 					return 0;
 				}
 
-				producer_task = msg_req_ptr->requester;
-				producer_PE = msg_req_ptr->requester_proc;
+				producer_task = data_av->requester;
+				producer_PE = data_av->requester_pe;
 			}
 
 			// puts("READPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task); putsv(" synced=", arg2);
@@ -492,16 +494,13 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			} else { /* Remote producer : Sends the message request (remote producer) */
 
 				/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-				if(MemoryRead(DMNI_SEND_ACTIVE)){
-					/* Restore DATA_AV packet */
-					if(arg2)
-						msg_req_ptr->requested = consumer_task;
-
+				if(MemoryRead(DMNI_SEND_ACTIVE))
 					return 0;
-				}
+				
+				/* DATA_AV is processed, erase it */
+				data_av_pop(&(current->data_av));
 
 				send_message_request(producer_task, consumer_task, producer_PE, net_address, 0);
-
 			}
 
 			/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
@@ -512,10 +511,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			return 1;
 
 		case GETTICK:
-
 			return MemoryRead(TICK_COUNTER);
-
-		break;
 
 		case ECHO:
 
@@ -526,14 +522,13 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 			puts((char *)((current->offset) | (unsigned int) arg0));
 			puts("\n");
 
-		break;
+			break;
 
 		case REALTIME:
 
 			//Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process
-			if (MemoryRead(DMNI_SEND_ACTIVE)){
+			if (MemoryRead(DMNI_SEND_ACTIVE))
 				return 0;
-			}
 
 			//putsv("\nReal-time to task: ", current->id);
 
@@ -545,13 +540,10 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 
 			return 1;
 
-		break;
-
 		case IOSEND:
 
-			if ( MemoryRead(DMNI_SEND_ACTIVE) ){
+			if(MemoryRead(DMNI_SEND_ACTIVE))
 				return 0;
-			}
 
 			producer_task =  current->id;
 			consumer_task = (int) arg1; //In this case the consumer is not a task but a peripheral
@@ -567,9 +559,8 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 
 		case IORECEIVE:
 
-			if ( MemoryRead(DMNI_SEND_ACTIVE) ){
+			if(MemoryRead(DMNI_SEND_ACTIVE))
 				return 0;
-			}
 
 			puts("Nothing to be done! System ReceiveIO not implemented yet!\n");
 
@@ -784,6 +775,9 @@ int handle_packet(volatile ServiceHeader * p) {
 
 		//printTaskInformations(tcb_ptr, 1, 1, 0);
 
+		/* Clear the DATA_AV fifo of the task */
+		data_av_init(&(tcb_ptr->data_av));
+
 		break;
 
 	case TASK_RELEASE:
@@ -836,13 +830,17 @@ int handle_packet(volatile ServiceHeader * p) {
 		break;
 
 	case DATA_AV:
-		/* Insert the packet received */
-		insert_data_av(p->producer_task, p->consumer_task, p->requesting_processor);
 
-		/* If the consumer task is waiting for a DATA_AV, release it */
-		TCB *consumer_tcb = searchTCB(p->consumer_task);
-		if(consumer_tcb && consumer_tcb->scheduling_ptr->waiting_msg == WAITING_DATA_AV)
-			consumer_tcb->scheduling_ptr->waiting_msg = 0;
+		/* Insert the packet received */
+		tcb_ptr = searchTCB((unsigned int)(p->consumer_task));
+
+		if(tcb_ptr){	/* Ensure task is allocated here */
+			data_av_insert(&(tcb_ptr->data_av), p->producer_task, p->requesting_processor);
+
+			/* If the consumer task is waiting for a DATA_AV, release it */
+			if(tcb_ptr->scheduling_ptr->waiting_msg == WAITING_DATA_AV)
+				tcb_ptr->scheduling_ptr->waiting_msg = 0;
+		}
 
 		break;
 

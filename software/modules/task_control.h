@@ -18,6 +18,7 @@
 #define TASK_CONTROL_H_
 
 #include "task_scheduler.h"
+#include "data_available.h"
 
 /**
  * \brief This structure stores information of the user's task
@@ -36,6 +37,7 @@ typedef struct {
 
     Scheduling * scheduling_ptr;	//!<Scheduling structure used by task scheduler
 
+	data_av_fifo_t data_av;
 } TCB;
 
 void init_TCBs();

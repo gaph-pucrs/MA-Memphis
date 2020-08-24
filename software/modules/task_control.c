@@ -24,7 +24,6 @@ TCB tcbs[MAX_LOCAL_TASKS];			//!<Local task TCB array
  */
 void init_TCBs(){
 
-
 	for(int i=0; i<MAX_LOCAL_TASKS; i++) {
 		tcbs[i].id = -1;
 		tcbs[i].pc = 0;
@@ -35,9 +34,10 @@ void init_TCBs(){
 
 		tcbs[i].scheduling_ptr->tcb_ptr = (unsigned int) &tcbs[i];
 
-		clear_scheduling( tcbs[i].scheduling_ptr );
+		clear_scheduling(tcbs[i].scheduling_ptr);
 
 	}
+
 }
 
 /**Search from a tcb position with status equal to FREE
