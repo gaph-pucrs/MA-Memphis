@@ -65,17 +65,35 @@ int main()
 	TUNUE = TOTAL_EDGES;
 	BK_ADDR = NODE_M;
 
+#if DEBUG == 1
+	Echo("DEBUG: SEND FORWARD TO START NODE");
+#endif
 	Echo(start_msg[start]);
 	SSend(&msg, (appid << 8) | P[start]);
+#if DEBUG == 1
+	Echo("DEBUG: SENT FORWARD TO START NODE");
+#endif
 
+#if DEBUG == 1
+	Echo("DEBUG: WAITING EXIT MESSAGE");
+#endif
 	SReceive(&msg);
+#if DEBUG == 1
+	Echo("DEBUG: RECEIVED EXIT MESSAGE");
+#endif
 
 	Echo(exit_msg[MSG_SRC]);
 	MSG_OP = EXIT; //Exit
 	MSG_SRC = NODE_M; //From manager
 	Echo("Exiting nodes.");
 	for(int i = 1; i < TOTAL_TASKS; i++){
+	#if DEBUG == 1
+		Echo("DEBUG: SEND EXIT TO NODE");
+	#endif
 		SSend(&msg, (appid << 8) | P[i]);
+	#if DEBUG == 1
+		Echo("DEBUG: SENT EXIT TO NODE");
+	#endif
 	}
 	
 	Echo("Exiting main");

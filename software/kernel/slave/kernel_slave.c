@@ -339,10 +339,10 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				// schedule_after_syscall = 1;
 				
 				/* @todo Discuss */
-				if(!arg2){	/* Synced write can send to other apps and cannot wait for TASK_RELEASE */
+				// if(!arg2){	/* Synced write can send to other apps and cannot wait for TASK_RELEASE */
 					/* Task is blocked until a TASK_RELEASE packet is received */
 					current->scheduling_ptr->status = BLOCKED;
-				}
+				// }
 				return 0;
 			}
 
@@ -454,7 +454,7 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 				if(!data_av){	/* No data available for requesting */
 					/* Block task and wait for DATA_AV packet */
 					current->scheduling_ptr->waiting_msg = WAITING_DATA_AV;
-					// schedule_after_syscall = 1;
+					schedule_after_syscall = 1;
 					return 0;
 				}
 
@@ -762,6 +762,9 @@ int handle_packet(volatile ServiceHeader * p) {
 
 		tcb_ptr->scheduling_ptr->status = BLOCKED;
 
+		/* Clear the DATA_AV fifo of the task */
+		data_av_init(&(tcb_ptr->data_av));
+
 		send_task_allocated(tcb_ptr);
 
 		if (current == &idle_tcb){
@@ -774,9 +777,6 @@ int handle_packet(volatile ServiceHeader * p) {
 		putsv("Master ID: ", p->master_ID);
 
 		//printTaskInformations(tcb_ptr, 1, 1, 0);
-
-		/* Clear the DATA_AV fifo of the task */
-		data_av_init(&(tcb_ptr->data_av));
 
 		break;
 

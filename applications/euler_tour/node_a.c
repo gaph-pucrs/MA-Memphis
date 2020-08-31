@@ -45,15 +45,27 @@ void next_hop(int appid)
 		for(int i = 0; i < N_ADJ; i++){
 			if(!weight[i]){
 				weight[i] = ++counterf;
+			#if DEBUG == 1
+				Echo("DEBUG: SEND FORWARD");
+			#endif
 				Echo(fwd_msg[atop[THIS_NODE][i]]);
 				SSend(&msg, (appid << 8) | P[atop[THIS_NODE][i]]);
+			#if DEBUG == 1
+				Echo("DEBUG: SENT FORWARD");
+			#endif
 				break;
 			}
 		}
 	} else { // Send Backtrack
 		MSG_OP = BACKTRACK;
+	#if DEBUG == 1
+		Echo("DEBUG: SEND BACKTRACK");
+	#endif
 		Echo(bkt_msg[BK_ADDR]);
 		SSend(&msg, (appid << 8) | P[BK_ADDR]);
+	#if DEBUG == 1
+		Echo("DEBUG: SENT BACKTRACK");
+	#endif
 	}
 }
 
@@ -63,15 +75,27 @@ int main()
 	int appid = get_appid();    
 	Echo(start_msg[THIS_NODE]);
 	while(true){
+	#if DEBUG == 1
+		Echo("DEBUG: WAITING COMMAND");
+	#endif
 		SReceive(&msg);
+	#if DEBUG == 1
+		Echo("DEBUG: COMMAND RECEIVED");
+	#endif
 
 		if(!MSG_OP){        // Exit
 			Echo(exit_msg[THIS_NODE]);
 			exit();
 		} else if(!TUNUE){
 			MSG_OP = EXIT;
+		#if DEBUG == 1
+			Echo("DEBUG: SEND EXIT REQUEST TO MANAGER");
+		#endif
 			Echo("No more unused edges. Exiting.");
 			SSend(&msg, (appid << 8) | P[0]);
+		#if DEBUG == 1
+			Echo("DEBUG: SENT EXIT REQUEST TO MANAGER");
+		#endif
 		} else if(MSG_OP == FORWARD){
 			Echo(rcv_msg[MSG_SRC]);
 			if(MSG_SRC)
