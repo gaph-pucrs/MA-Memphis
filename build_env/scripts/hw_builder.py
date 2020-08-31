@@ -2,6 +2,7 @@
 import sys
 import math
 import os
+import multiprocessing
 from yaml_intf import *
 from build_utils import *
 
@@ -14,9 +15,9 @@ def main():
     yaml_r = get_yaml_reader(testcase_name)
 
     generate_hw_pkg( yaml_r )
-    
+    NCPU = multiprocessing.cpu_count()
     #compile_hw
-    exit_status = os.system("cd hardware/; make")
+    exit_status = os.system("cd hardware/; make "+"-j"+str(NCPU))
     
     if exit_status != 0:
         sys.exit("\nError compiling hardware source code\n");

@@ -2,6 +2,7 @@
 import sys
 import math
 import os
+import multiprocessing
 from yaml_intf import *
 from build_utils import *
 
@@ -16,9 +17,9 @@ def main():
     yaml_r = get_yaml_reader(testcase_name)
     
     generate_sw_pkg( yaml_r )
-    
+    NCPU = multiprocessing.cpu_count()
     #compile_kernel master and slave and if exit status is equal to 0 (ok) then check page_size
-    exit_status = os.system("cd software/; make")
+    exit_status = os.system("cd software/; make "+"-j"+str(NCPU))
         
     if exit_status != 0:
         sys.exit("\nError compiling kernel source code\n");

@@ -5,6 +5,7 @@ import os
 import commands
 import Tkinter as tkinter
 import tkMessageBox as mbox
+import multiprocessing
 from yaml_intf import *
 from build_utils import *
 
@@ -65,9 +66,9 @@ def main():
     
     #Copies the app make from MEMPHIS_PATH to the application folder
     copy_app_make(MEMPHIS_PATH, APP_PATH, page_size_KB)
-    
+    NCPU = multiprocessing.cpu_count()
     #Compiles the application
-    exit_status = os.system("cd "+APP_PATH+"; make")
+    exit_status = os.system("cd "+APP_PATH+"; make "+"-j"+str(NCPU))
 
     if exit_status != 0:
         sys.exit("\nError compiling applications' source code\n");
