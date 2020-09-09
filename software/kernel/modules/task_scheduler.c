@@ -1,28 +1,147 @@
-/*!\file task_scheduler.c
- * MEMPHIS VERSION - 8.0 - support for RT applications
+/**
+ * 
+ * @file task_scheduler.c
  *
- * Distribution:  June 2016
- *
- * Created by: Marcelo Ruaro - contact: marcelo.ruaro@acad.pucrs.br
- *
- * Research group: GAPH-PUCRS   -  contact:  fernando.moraes@pucrs.br
- *
- * \brief task_scheduler is a kernel module in charge of implementing
- * task scheduling following a LST (Least Slack Time) algorithm.
- *
- * \detailed The main function of this module is the LST algorithm, which is called by kernel_slave. It
- * returns the pointer for the selected task to execute into the processor.
- * This module is used only by the slave kernel
+ * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date June 2016
+ * 
+ * @brief Defines the scheduling structures.
+ * 
+ * @details The main function of this module is the LST algorithm, which is 
+ * called by kernel. It returns the pointer for the selected task to execute 
+ * by the processor.
  */
 
 #include "task_scheduler.h"
-#include "../../include/kernel_pkg.h"
-#include "../include/plasma.h"
-#include "../include/services.h"
+#include "task_control.h"
+#include "services.h"
 #include "packet.h"
-#include "utils.h"
 
-Scheduling scheduling[MAX_LOCAL_TASKS];		//!<Scheduling array with its size equal to the max number of task that can execute into the processor
+tcb_t *current;	//!< TCB pointer used to store the current task executing into processor
+unsigned int total_slack_time;	//!< Store the total of the processor idle time
+unsigned int last_idle_time; 	//!< Store the last idle time duration
+
+void sched_init()
+{
+	tcb_t *tcbs = tcb_get();
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+		tcbs[i].scheduler.deadline = SCHED_NO_DEADLINE;
+		sched_clear(&(tcbs[i].scheduler));
+	}
+
+	current = tcb_get_idle();
+	total_slack_time = 0;
+	last_idle_time = *HAL_TICK_COUNTER;
+}
+
+void sched_clear(tcb_t *tcb)
+{
+	if(tcb->scheduler.deadline != SCHED_NO_DEADLINE){
+		cpu_utilization -= tcb->scheduler.utilization;
+		putsv(" ----> CPU utilization decremented: ", cpu_utilization);
+	}
+
+	tcb->scheduler.ready_time = 0;
+	tcb->scheduler.status = SCHED_FREE;
+	tcb->scheduler.remaining_exec_time = 0;
+	tcb->scheduler.execution_time = 0;
+	tcb->scheduler.period = 0;
+	tcb->scheduler.deadline = SCHED_NO_DEADLINE;
+	tcb->scheduler.slack_time = 0;
+	tcb->scheduler.running_start_time = 0;
+	tcb->scheduler.utilization = 0;
+	tcb->scheduler.waiting_msg = 0;
+}
+
+tcb_t *sched_get_current()
+{
+	return current;
+}
+
+bool sched_is_idle()
+{
+	return (current == tcb_get_idle());
+}
+
+void sched_update_slack_time()
+{
+	total_slack_time += *HAL_TICK_COUNTER - last_idle_time;
+}
+
+bool sched_is_waiting_request(tcb_t *tcb)
+{
+	return tcb->scheduler.waiting_msg == SCHED_WAIT_REQUEST;
+}
+
+bool sched_is_waiting_request(tcb_t *tcb)
+{
+	return tcb->scheduler.waiting_msg == SCHED_WAIT_DATA_AV;
+}
+
+bool sched_is_blocked(tcb_t *tcb)
+{
+	return tcb->scheduler.status == SCHED_BLOCKED;
+}
+
+void sched_release_wait(tcb_t *tcb)
+{
+	tcb->scheduler.waiting_msg = 0;
+}
+
+void sched_release(tcb_t *tcb)
+{
+	tcb->scheduler.status = SCHED_READY;
+}
+
+void sched_report_slack_time()
+{
+	packet_t *packet = pkt_slot_get();
+
+	// packet->header = cluster_master_address;
+	packet->service = SLACK_TIME_REPORT;
+	packet->cpu_slack_time = ((total_slack_time*100) / PKG_SLACK_TIME_WINDOW);
+
+	send_packet(packet, 0, 0);
+
+	total_slack_time = 0;
+}
+
+void sched_update_idle_time()
+{
+	last_idle_time = *HAL_TICK_COUNTER;
+}
+
+int sched_get_current_id()
+{
+	if(sched_is_idle())
+		return -1;
+	else
+		return current->id;
+}
+
+void sched_block(tcb_t *tcb)
+{
+	tcb->scheduler.status = SCHED_BLOCKED;
+}
+
+void sched_set_wait_request(tcb_t *tcb)
+{
+	tcb->scheduler.waiting_msg = SCHED_WAIT_REQUEST;
+}
+
+void sched_set_wait_data_av(tcb_t *tcb)
+{
+	tcb->scheduler.waiting_msg = SCHED_WAIT_DATA_AV;
+}
+
+void sched_set_wait_delivery(tcb_t *tcb)
+{
+	tcb->scheduler.waiting_msg = SCHED_WAIT_DELIVERY;
+}
+
 
 unsigned int time_slice;					//!<Time slice used to configure the processor to generate an interruption
 unsigned int schedule_overhead = 500;		//!<Used to dynamically estimate the scheduler overhead
@@ -54,45 +173,6 @@ unsigned int cpu_utilization = 0;			//!<RT CPU utilization, only filled with RT 
  */
 unsigned int get_time_slice(){
 	return time_slice;
-}
-
-/**Initializes the scheduling array with valid pointers
- *  \param sched_ptr Pointer to pointer of the scheduler variable into TCB structure
- *  \param tcb_index TCB array index
- */
-void init_scheduling_ptr(Scheduling ** sched_ptr, int tcb_index){
-
-	Scheduling * sched_p;
-
-	*sched_ptr = &scheduling[tcb_index];
-
-	sched_p = *sched_ptr;
-
-	sched_p->deadline = NO_DEADLINE;
-}
-
-/**Clear a scheduling instance, used when the task is removed from slave processor
- *  \param scheduling_tcb Scheduling pointer to be cleared
- */
-void clear_scheduling(Scheduling * scheduling_tcb){
-
-	if (scheduling_tcb->deadline != NO_DEADLINE){
-
-		cpu_utilization -= scheduling_tcb->utilization;
-
-		putsv(" ----> CPU utilization decremented: ", cpu_utilization);
-	}
-
-	scheduling_tcb->ready_time = 0;
-	scheduling_tcb->status = FREE;
-	scheduling_tcb->remaining_exec_time = 0;
-	scheduling_tcb->execution_time = 0;
-	scheduling_tcb->period = 0;
-	scheduling_tcb->deadline = NO_DEADLINE;
-	scheduling_tcb->slack_time = 0;
-	scheduling_tcb->running_start_time = 0;
-	scheduling_tcb->utilization = 0;
-	scheduling_tcb->waiting_msg = 0;
 }
 
 /**Updates the task slack time. The slack time is the time until the task start the next period,

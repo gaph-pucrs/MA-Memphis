@@ -32,10 +32,6 @@ extern void ASM_SaveRemainingContext(TCB*);
 extern void ASM_RunScheduledTask(TCB*);
 void OS_InterruptServiceRoutine(unsigned int);
 
-// ISR
-unsigned int OS_InterruptMaskSet(unsigned int);
-unsigned int OS_InterruptMaskClear(unsigned int);
-
 void OS_Init();
 void OS_Idle();
 

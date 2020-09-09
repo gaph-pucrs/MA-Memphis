@@ -1,0 +1,134 @@
+/**
+ * 
+ * @file task_control.h
+ *
+ * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date June 2016
+ * 
+ * @brief This module declares the task control block (TCB) functions.
+ * 
+ * @details This structure stores information of the user's tasks that are 
+ * running.
+ */
+
+#pragma once
+
+#include "hal.h"
+#include "task_location.h"
+#include "pkg.h"
+#include "pipe.h"
+#include "message_request.h"
+#include "data_available.h"
+#include "task_scheduler.h"
+
+/** @brief This structure stores information of the running tasks */
+typedef struct _tcb {
+	hal_word_t registers[HAL_MAX_REGISTERS];	//!< Register bank
+	hal_word_t pc;								//!< Register file
+	hal_word_t offset;			//!< Initial address of the task code in page
+
+	int id;					//!< TCB identifier
+	hal_word_t text_lenght;		//!< Memory TEXT section lenght in bytes
+	hal_word_t data_lenght;		//!< Memory DATA section lenght in bytes
+	hal_word_t bss_lenght;		//!< Memory BSS section lenght in bytes
+
+	int mapper_address;
+	int mapper_task;
+
+	int proc_to_migrate;	//!< Processor to migrate the task
+
+	int task_location[PKG_MAX_TASKS_APP];	//!< Location of app tasks
+
+	pipe_t pipe;											//!< Temporary buffer for outbound messages.
+	message_request_t message_request[PKG_MAX_TASKS_APP];	//!< Message request array
+	data_av_fifo_t data_av;									//!< Data available fifo
+
+	scheduler_t scheduler;	//!< Scheduling control structure
+} tcb_t;
+
+/**
+ * @brief Idle function.
+ */
+void tcb_idle_task();
+
+/**
+ * @brief Initializes the TCB structures
+ */
+void tcb_init();
+
+/**
+ * @brief Gets the TCB array
+ * 
+ * @return Pointer to the first element of the TCB array.
+ */
+tcb_t *tcb_get();
+
+/**
+ * @brief Gets the idle task TCB
+ * 
+ * @return Pointer to the idle task TCB
+ */
+tcb_t *tcb_get_idle();
+
+/**
+ * @brief Searches for the TCB of a given task ID
+ * 
+ * @param task The ID of the task.
+ * 
+ * @return Pointer to the TCB of the task.
+ */
+tcb_t *tcb_search(int task);
+
+/**
+ * @brief Searches for a free TCB
+ * 
+ * @return Pointer to the free TCB. NULL case it's full.
+ */
+tcb_t *tcb_free_get();
+
+/**
+ * @brief Clears the TCB to allocate a new task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param id ID of the task
+ * @param code_sz Size of the code section
+ * @param mapper_task ID of the mapper task
+ * @param mapper_addr Address of the mapper task
+ */
+void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+
+/**
+ * @brief Updates the TCB with proper section sizes
+ * 
+ * @param tcb Pointer to the TCB
+ * @param data_sz Size of the section data
+ * @param bss_sz Size of the section bss
+ */
+void tcb_update_sections(tcb_t *tcb, hal_word_t data_sz, hal_word_t bss_sz);
+
+/**
+ * @brief Gets the pointer to the message variable
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Pointer to the message structure
+ */
+message_t *tcb_get_message(tcb_t *tcb);
+
+/**
+ * @brief Gets the offset of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Address of the task offset
+ */
+hal_word_t tcb_get_offset(tcb_t *tcb);
+
+// TCB * searchTCB(unsigned int);
+
+// int is_another_task_running(int app_id);
+
+// TCB * get_tcb_index_ptr(unsigned int);

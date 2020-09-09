@@ -75,12 +75,6 @@
 #define PENDING_SERVICE_INTR	0x20000400
 
 #define SLACK_TIME_WINDOW		50000 // half milisecond
-
-/*********** Interrupt bits **************/
-#define IRQ_PENDING_SERVICE			0x01 //bit 0
-#define IRQ_SLACK_TIME				0x02 //bit 1
-#define IRQ_SCHEDULER				0x08 //bit 3
-#define IRQ_NOC					 	0x20 //bit 5
          
 /*Memory Access*/
 #define MemoryRead(A) (*(volatile unsigned int*)(A))
