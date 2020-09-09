@@ -53,6 +53,4 @@ const uint32_t READPIPE = 2;
 const uint32_t GETTICK = 3;
 const uint32_t ECHO = 4;
 const uint32_t REALTIME = 5;
-const uint32_t IOSEND = 6;
-const uint32_t IORECEIVE = 7;
 const uint32_t APPID = 8;

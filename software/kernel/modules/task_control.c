@@ -100,26 +100,7 @@ hal_word_t tcb_get_offset(tcb_t *tcb)
 	return tcb->offset;
 }
 
-/**Gets the TCB pointer from a index
- * \param i Index of TCB
- * \return The respective TCB pointer
- */
-TCB * get_tcb_index_ptr(unsigned int i){
-	return &(tcbs[i]);
+int tcb_get_appid(tcb_t *tcb)
+{
+	return tcb->id >> 8;
 }
-
-/**Test if there is another task of the same application running in the same slave processor
- * \param app_id Appliation ID
- * \return 1 - if YES, 0 if NO
- */
-int is_another_task_running(int app_id){
-
-	for (int i = 0; i < MAX_LOCAL_TASKS; i++){
-		if (tcbs[i].scheduling_ptr->status != FREE && (tcbs[i].id >> 8) == app_id){
-			return 1;
-		}
-	}
-	return 0;
-}
-
-

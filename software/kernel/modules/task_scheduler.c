@@ -200,13 +200,6 @@ void inline update_slack_time(Scheduling * input_task, unsigned int current_time
 
 }
 
-/**Funcion called by kernel slave when a task call the primitive RealTime.
- * This function set the real-time paramenters for the task.
- *  \param real_time_task Task pointer that change or is setting its RT parameters
- *  \param period Task period in clock cycles
- *  \param deadline Task deadline in clock cycles
- *  \param execution_time Task execution time in clock cycles
- */
 void real_time_task(Scheduling * real_time_task, unsigned int period, int deadline, unsigned int execution_time){
 
 	unsigned int current_time, ready_time = 0;

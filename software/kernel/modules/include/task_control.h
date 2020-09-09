@@ -127,8 +127,11 @@ message_t *tcb_get_message(tcb_t *tcb);
  */
 hal_word_t tcb_get_offset(tcb_t *tcb);
 
-// TCB * searchTCB(unsigned int);
-
-// int is_another_task_running(int app_id);
-
-// TCB * get_tcb_index_ptr(unsigned int);
+/**
+ * @brief Gets the application ID of a running task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return The ID of the application
+ */
+int tcb_get_appid(tcb_t *tcb);

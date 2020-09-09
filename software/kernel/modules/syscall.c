@@ -19,19 +19,8 @@
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
-int Syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3)
+int os_syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3)
 {
-	// Message *msg_read;
-	// Message *msg_write;
-	// PipeSlot *pipe_ptr;
-	// MessageRequest * msg_req_ptr;
-	// int consumer_task;
-	// int producer_task;
-	// int producer_PE;
-	// int consumer_PE;
-	// int appID;
-	// int ret;
-
 	schedule_after_syscall = false;
 	switch(service){
 		case EXIT:
@@ -39,74 +28,16 @@ int Syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3)
 		case WRITEPIPE:
 			return os_writepipe(a1, a2, a3);
 		case READPIPE:
-			return os_readpipe();
-
-		// case GETTICK:
-		// 	return MemoryRead(TICK_COUNTER);
-
-		// case ECHO:
-
-		// 	puts("$$$_");
-		// 	puts(itoa(net_address>>8));puts("x");puts(itoa(net_address&0xFF)); puts("_");
-		// 	puts(itoa(current->id >> 8)); puts("_");
-		// 	puts(itoa(current->id & 0xFF)); puts("_");
-		// 	puts((char *)((current->offset) | (unsigned int) arg0));
-		// 	puts("\n");
-
-		// 	break;
-
-		// case REALTIME:
-
-		// 	//Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process
-		// 	if (MemoryRead(DMNI_SEND_ACTIVE))
-		// 		return 0;
-
-		// 	//putsv("\nReal-time to task: ", current->id);
-
-		// 	real_time_task(current->scheduling_ptr, arg0, arg1, arg2);
-
-		// 	//send_task_real_time_change(current);
-
-		// 	schedule_after_syscall = 1;
-
-		// 	return 1;
-
-		// case IOSEND:
-
-		// 	if(MemoryRead(DMNI_SEND_ACTIVE))
-		// 		return 0;
-
-		// 	producer_task =  current->id;
-		// 	consumer_task = (int) arg1; //In this case the consumer is not a task but a peripheral
-
-		// 	puts("Nothing to be done! System SendIO not implemented yet!\n");
-
-		// 	/*TODO: implement the protocol between the distributed usage of peripheral among applications
-		// 	 * Such protocol must ensure synchronization between requesting task to create a fair peripheral access
-		// 	 * Distributed mutual exclusion algorithm should be investigated.
-		// 	 */
-
-		// 	break;
-
-		// case IORECEIVE:
-
-		// 	if(MemoryRead(DMNI_SEND_ACTIVE))
-		// 		return 0;
-
-		// 	puts("Nothing to be done! System ReceiveIO not implemented yet!\n");
-
-		// 	/*TODO: implement the protocol between the distributed usage of peripheral among applications
-		// 	 * Such protocol must ensure synchronization between requesting task to create a fair peripheral access
-		// 	 * Distributed mutual exclusion algorithm should be investigated.
-		// 	 */
-
-		// 	break;
-		
-		// case APPID:
-		// 	return current->id >> 8;
+			return os_readpipe(a1, a2, a3);
+		case GETTICK:
+			return os_get_tick();
+		case APPID:
+			return os_get_appid();
+		case ECHO:
+			return os_echo(a1);
+		case REALTIME:
+			return os_realtime(a1, a2, a3);
 	}
-
-	return 0;
 }
 
 bool os_exit()
@@ -138,7 +69,6 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 	if(!sync)	/* Synced write must send complete app|task id */
 		cons_task |= (current->id & 0xFF00);
 
-	// puts("WRITEPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task); putsv(" synced=", arg2);
 
 	int cons_addr = get_task_location(cons_task);
 
@@ -274,8 +204,6 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 		prod_addr = data_av->requester_addr;
 	}
 
-	// puts("READPIPE - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task); putsv(" synced=", arg2);
-
 	if(prod_addr == *HAL_NI_CONFIG){	/* Local producer */
 
 		/* Get the producer TCB */
@@ -318,6 +246,50 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 
 	/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
 	sched_set_wait_delivery(current);
+	schedule_after_syscall = 1;
+
+	return true;
+}
+
+hal_word_t os_get_tick()
+{
+	return *HAL_TICK_COUNTER;
+}
+
+int os_get_appid()
+{
+	tcb_t *current = sched_get_current();
+	return tcb_get_appid(current);
+}
+
+bool os_echo(hal_word_t msg_ptr)
+{
+	/** 
+	 * @todo Add a printf function that calls the os_echo and a "backend" for 
+	 * OS messages
+	 */
+	tcb_t *current = sched_get_current_id();
+	int id = sched_get_current_id();
+	puts("$$$_");
+	puts(itoa(*HAL_NI_CONFIG >> 8));
+	puts("x");
+	puts(itoa(*HAL_NI_CONFIG & 0xFF));
+	puts("_");
+	puts(itoa(id >> 8));
+	puts("_");
+	puts(itoa(id & 0xFF));
+	puts("_");
+	puts(tcb_get_offset(current) | msg_ptr);
+	puts("\n");
+
+	return true;
+}
+
+bool os_realtime(hal_word_t period, int deadline, hal_word_t exec_time)
+{
+	tcb_t *current = sched_get_current();
+	sched_set_real_time(current, period, deadline, exec_time);
+
 	schedule_after_syscall = 1;
 
 	return true;
