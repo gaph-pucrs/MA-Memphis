@@ -135,3 +135,73 @@ hal_word_t tcb_get_offset(tcb_t *tcb);
  * @return The ID of the application
  */
 int tcb_get_appid(tcb_t *tcb);
+
+/**
+ * @brief Identifies if the process need to be migrated
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return True if needs to be migrated, otherwise false.
+ */
+bool tcb_need_migration(tcb_t *tcb);
+
+/**
+ * @brief Gets the address to migrate to
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return The address of the migration target
+ */
+int tcb_get_migrate_addr(tcb_t *tcb);
+
+/**
+ * @brief Sets the migration address target
+ * 
+ * @param tcb Pointer to the TCB
+ * @param addr Address of the target. -1 to disable.
+ */
+void tcb_set_migrate_addr(tcb_t *tcb, int addr);
+
+/**
+ * @brief Gets the stack pointer of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the stack pointer
+ */
+hal_word_t tcb_get_sp(tcb_t *tcb);
+
+/**
+ * @brief Gets the id of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Number of the complete ID
+ */
+int tcb_get_id(tcb_t *tcb);
+
+/**
+ * @brief Gets a register from the task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param idx Index of the register
+ * 
+ * @return Value of the register
+ */
+hal_word_t tcb_get_reg(tcb_t *tcb, int idx);
+
+/**
+ * @brief Gets the pointer to the message request
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Pointer to the message request array
+ */
+message_request_t *tcb_get_mr(tcb_t *tcb);
+
+/**
+ * @brief Clears the TCB and make it ready to receive a new task
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tcb_clear(tcb_t *tcb);

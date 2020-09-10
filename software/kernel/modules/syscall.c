@@ -59,6 +59,10 @@ bool os_exit()
 
 	sched_clear(current);
 
+	/**
+	 * @todo Should not it clean the TCB too?
+	 */
+
 	return true;
 }
 
@@ -109,11 +113,10 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 			/* Release consumer task */
 			sched_release_wait(cons_tcb);
 
-			/** @todo Rework Migration */
-			// if(cons_tcb->proc_to_migrate != -1){
-			// 	migration_dynamic_memory(cons_tcb);
-			// 	schedule_after_syscall = 1;
-			// }
+			if(tcb_need_migration(cons_tcb)){
+				migration_dynamic_memory(cons_tcb);
+				schedule_after_syscall = 1;
+			}
 		} else {	/* Remote consumer */
 
 			/* Send a MESSAGE_DELIVERY */
@@ -138,7 +141,6 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 			int prod_task = sched_get_current_id();
 			if(cons_addr == *HAL_NI_CONFIG){
 				/* Insert a DATA_AV to consumer table */
-				/** @todo It is always here. When migrated from/to here, update all TCBs */
 				tcb_t *cons_tcb = tcb_search(cons_task);
 
 				/* Insert DATA_AV to the consumer TCB */

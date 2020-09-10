@@ -194,9 +194,29 @@ void sched_set_wait_data_av(tcb_t *tcb);
  */
 void sched_set_wait_delivery(tcb_t *tcb);
 
+/**
+ * @brief Gets the period constraint of a RT task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the period
+ */
+hal_word_t sched_get_period(tcb_t *tcb);
 
-void real_time_task(Scheduling *, unsigned int, int, unsigned int);
+/**
+ * @brief Gets the deadline constraint of a RT task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the deadline
+ */
+int sched_get_deadline(tcb_t *tcb);
 
-unsigned int get_time_slice();
-
-Scheduling * LST(unsigned int);
+/**
+ * @brief Gets the execution time constraint of a RT task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the execution time
+ */
+hal_word_t sched_get_exec_time(tcb_t *tcb);

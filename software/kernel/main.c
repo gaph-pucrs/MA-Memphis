@@ -15,6 +15,7 @@
 #include "packet.h"
 #include "task_control.h"
 #include "pending_service.h"
+#include "task_migration.h"
 
 int main()
 {
@@ -29,6 +30,8 @@ int main()
 	pending_svc_init();
 
 	sched_init();
+
+	tm_init();
 
 	*HAL_IRQ_MASK = (
 		HAL_IRQ_SCHEDULER | 

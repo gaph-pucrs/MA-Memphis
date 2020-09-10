@@ -46,6 +46,8 @@ const uint32_t REAL_TIME_CHANGE = 0x00000280;
 const uint32_t NEW_APP_REQ = 0x00000290;
 const uint32_t APP_REQ_ACK = 0x00000300;
 const uint32_t DATA_AV = 0x00000310;
+const uint32_t MIGRATION_DATA_AV = 0x00000320;
+const uint32_t MIGRATION_PIPE = 0x00000330;
 
 const uint32_t EXIT = 0;
 const uint32_t WRITEPIPE = 1;

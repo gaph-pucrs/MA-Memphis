@@ -67,12 +67,28 @@ void tl_send_terminated(tcb_t *tcb);
  */
 int tl_search(tcb_t *tcb, int task);
 
-// void init_task_location();
+/**
+ * @brief Gets the number of tasks of the app
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Number of tasks in the task location array
+ */
+hal_word_t tl_get_len(tcb_t *tcb);
 
-// int get_task_location(int);
+/**
+ * @brief Gets the pointer to the task location array
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Address of the task location array
+ */
+int *tl_get_ptr(tcb_t *tcb);
 
-// void add_task_location(int, int);
-
-// int remove_task_location(int);
-
-// void clear_app_tasks_locations(int);
+/**
+ * @brief Update all local tasks of an app with a new location of a task
+ * 
+ * @param id Complete ID of the task that has migrated
+ * @param addr New address of the application
+ */
+void tl_update_local(int id, int addr);

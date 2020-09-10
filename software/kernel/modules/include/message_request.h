@@ -67,3 +67,12 @@ message_request_t *mr_peek(tcb_t *tcb, int cons_task);
  * @param request Pointer to the request structure
  */
 void mr_pop(message_request_t *request);
+
+/**
+ * @brief Defragments the message request structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Number of pending requests
+ */
+hal_word_t mr_defrag(tcb_t *tcb);

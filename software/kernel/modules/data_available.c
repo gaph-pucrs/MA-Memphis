@@ -86,3 +86,35 @@ data_av_t *data_av_peek(tcb_t *tcb)
 
 	return &(tcb->data_av.buffer[tcb->data_av.head]);
 }
+
+hal_word_t data_av_get_len_head_end(tcb_t *tcb)
+{
+	if(tcb->data_av.empty)
+		return 0;
+
+	if(tcb->data_av.tail > tcb->data_av.head){
+		/* Tail is after head in memory */
+		return tcb->data_av.tail - tcb->data_av.head;
+	} else {
+		/* Size until the ending of the buffer */
+		return PKG_MAX_LOCAL_TASKS - tcb->data_av.head;
+	}
+}
+
+hal_word_t data_av_get_len_start_tail(tcb_t *tcb)
+{
+	if(tcb->data_av.empty || tcb->data_av.tail > tcb->data_av.head)
+		return 0;
+
+	return tcb->data_av.tail;
+}
+
+data_av_t *data_av_get_buffer_head(tcb_t *tcb)
+{
+	return &(tcb->data_av.buffer[tcb->data_av.head]);
+}
+
+data_av_t *data_av_get_buffer_start(tcb_t *tcb)
+{
+	return tcb->data_av.buffer;
+}

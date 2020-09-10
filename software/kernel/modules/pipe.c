@@ -81,3 +81,13 @@ message_t *pipe_get_message(pipe_t *pipe)
 {
 	return &(pipe->message);
 }
+
+int pipe_get_cons_task(tcb_t *tcb)
+{
+	return tcb->pipe.consumer_task;
+}
+
+hal_word_t pipe_get_message_len(tcb_t *tcb)
+{
+	return tcb->pipe.message.length;
+}

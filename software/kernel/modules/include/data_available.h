@@ -76,3 +76,39 @@ data_av_t *data_av_pop(tcb_t *tcb);
  * @return Pointer to the oldest element or null if empty
  */
 data_av_t *data_av_peek(tcb_t *tcb);
+
+/**
+ * @brief Gets the length between the head and the ending of the fifo
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Lenght of the fifo from head to end
+ */
+hal_word_t data_av_get_len_head_end(tcb_t *tcb);
+
+/**
+ * @brief Gets the length between the start and the tail of the fifo
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Lenght of the fifo from start to tail
+ */
+hal_word_t data_av_get_len_start_tail(tcb_t *tcb);
+
+/**
+ * @brief Get the pointer to the head of the fifo
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Pointer to head of fifo
+ */
+data_av_t *data_av_get_buffer_head(tcb_t *tcb);
+
+/**
+ * @brief Get the pointer to the start of the fifo buffer
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Pointer to the start of the fifo buffer
+ */
+data_av_t *data_av_get_buffer_start(tcb_t *tcb);

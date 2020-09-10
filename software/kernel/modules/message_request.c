@@ -69,3 +69,22 @@ void mr_pop(message_request_t *request)
 {
 	request->requester = -1;
 }
+
+hal_word_t mr_defrag(tcb_t *tcb)
+{
+	hal_word_t size = PKG_MAX_LOCAL_TASKS;
+	hal_word_t last_found = PKG_MAX_LOCAL_TASKS;
+	for(int i = 0; i < last_found; i++){
+		if(tcb->message_request[i].requester == -1){
+			/* Slot found */
+			for(int j = last_found - 1; j > i; j++){
+				size = j;
+				if(tcb->message_request[j].requester != -1){
+					last_found = j;
+					tcb->message_request[i] = tcb->message_request[j];
+				}
+			}
+		}
+	}
+	return size;
+}

@@ -16,8 +16,9 @@
 typedef uint32_t hal_word_t;	//!< Register size
 
 const hal_word_t HAL_MAX_REGISTERS = 30;	//!< Number of registers the context switching procedure must save 
-const hal_word_t HAL_REG_A1 = 3;			//!< Second argument register
-const hal_word_t HAL_REG_V0 = 0;			//!< First return value register
+const hal_word_t HAL_REG_A1 = 3;			//!< Second argument register (is register 5)
+const hal_word_t HAL_REG_V0 = 0;			//!< First return value register (is register 2)
+const hal_word_t HAL_REG_SP = 27;			//!< Stack Pointer (is register 29)
 
 const hal_word_t HAL_IRQ_PENDING_SERVICE = 0x01;
 const hal_word_t HAL_IRQ_SLACK_TIME = 0x02;

@@ -142,6 +142,33 @@ void sched_set_wait_delivery(tcb_t *tcb)
 	tcb->scheduler.waiting_msg = SCHED_WAIT_DELIVERY;
 }
 
+hal_word_t sched_get_period(tcb_t *tcb)
+{
+	return tcb->scheduler.period;
+}
+
+int sched_get_deadline(tcb_t *tcb)
+{
+	return tcb->scheduler.deadline;
+}
+
+hal_word_t sched_get_exec_time(tcb_t *tcb)
+{
+	return tcb->scheduler.execution_time;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 unsigned int time_slice;					//!<Time slice used to configure the processor to generate an interruption
 unsigned int schedule_overhead = 500;		//!<Used to dynamically estimate the scheduler overhead

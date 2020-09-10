@@ -15,6 +15,7 @@
 #include "services.h"
 #include "interrupts.h"
 #include "dmni.h"
+#include "task_migration.h"
 
 void os_isr(hal_word_t status)
 {
@@ -112,7 +113,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 
 	if(!prod_tcb){
 		/* Task is not here. Probably migrated. */
-		int migrated_addr; /** @todo Make a way to check were migrated task is */
+		int migrated_addr = tm_get_migrated_addr(cons_task);
 
 		/* Update the task location in the consumer */
 		tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
@@ -160,11 +161,10 @@ bool os_message_delivery(int cons_task, hal_word_t length)
 	/* Release task to execute */
 	sched_release_wait(cons_tcb);
 
-	/** @todo Rework Migration */
-	// if(cons_tcb->proc_to_migrate != -1){
-	// 	migration_dynamic_memory(cons_tcb);
-	// 	return true;
-	// }
+	if(tcb_need_migration(cons_tcb)){
+		tm_migrate(cons_tcb);
+		return true;
+	}
 
 	return sched_is_idle();
 }
@@ -186,7 +186,7 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 
 	} else {
 		/* Task migrated? Forward. */
-		int migrated_addr; /** @todo Make a way to check were migrated task is */
+		int migrated_addr = tm_get_migrated_addr(cons_task);
 
 		/* Update the task location in the consumer */
 		tl_send_update(prod_task, prod_addr, cons_task, migrated_addr);

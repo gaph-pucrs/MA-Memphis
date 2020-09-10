@@ -95,3 +95,21 @@ bool pipe_push(tcb_t *tcb, message_t *message, int cons_task);
  * @return Pointer to message
  */
 message_t *pipe_get_message(pipe_t *pipe);
+
+/**
+ * @brief Gets the consumer task of the message in pipe
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return ID of the consumer task
+ */
+int pipe_get_cons_task(tcb_t *tcb);
+
+/**
+ * @brief Gets the message length in pipe
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the length of the message
+ */
+hal_word_t pipe_get_message_len(tcb_t *tcb);

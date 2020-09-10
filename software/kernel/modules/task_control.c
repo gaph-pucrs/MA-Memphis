@@ -104,3 +104,40 @@ int tcb_get_appid(tcb_t *tcb)
 {
 	return tcb->id >> 8;
 }
+
+bool tcb_need_migration(tcb_t *tcb)
+{
+	return tcb->proc_to_migrate != -1;
+}
+
+int tcb_get_migrate_addr(tcb_t *tcb)
+{
+	return tcb->proc_to_migrate;
+}
+
+void tcb_set_migrate_addr(tcb_t *tcb, int addr)
+{
+	tcb->proc_to_migrate = addr;
+}
+
+hal_word_t tcb_get_sp(tcb_t *tcb)
+{
+	return tcb->registers[HAL_REG_SP];
+}
+
+int tcb_get_id(tcb_t *tcb)
+{
+	return tcb->id;
+}
+
+hal_word_t tcb_get_reg(tcb_t *tcb, int idx)
+{
+	return tcb->registers[idx];
+}
+
+void tcb_clear(tcb_t *tcb)
+{
+	tcb->pc = 0;
+	tcb->id = -1;
+	tcb->proc_to_migrate = -1;
+}

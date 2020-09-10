@@ -69,9 +69,31 @@ int tl_search(tcb_t *tcb, int task)
 	return tcb->task_location[task & 0x00FF];
 }
 
+hal_word_t tl_get_len(tcb_t *tcb)
+{
+	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
+		if(tcb->task_location[i] == -1)
+			return i;
+	}
+	return PKG_MAX_TASKS_APP;
+}
 
+int *tl_get_ptr(tcb_t *tcb)
+{
+	return tcb->task_location;
+}
 
+void tl_update_local(int id, int addr)
+{
+	tcb_t *tcbs = tcb_get();
 
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+		if(tcbs[i].id & 0xFF00 == id & 0xFF00){
+			/* Task of the same app. Update. */
+			tcbs[i].task_location[id & 0x00FF] = addr;
+		}
+	}
+}
 
 
 
