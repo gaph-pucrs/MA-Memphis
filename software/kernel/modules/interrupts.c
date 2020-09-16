@@ -89,17 +89,24 @@ bool os_handle_pkt(packet_t *packet)
 			return os_task_release(packet->task_ID, packet->data_size, packet->bss_size, packet->app_task_number);
 		case UPDATE_TASK_LOCATION:
 			return os_update_task_location(packet->consumer_task, packet->task_ID, packet->allocated_processor);
-	// #if MIGRATION_ENABLED
-	// 	case TASK_MIGRATION:
-	// 	case MIGRATION_CODE:
-	// 	case MIGRATION_TCB:
-	// 	case MIGRATION_TASK_LOCATION:
-	// 	case MIGRATION_MSG_REQUEST:
-	// 	case MIGRATION_STACK:
-	// 	case MIGRATION_DATA_BSS:
-	// 		need_scheduling = handle_migration(p, cluster_master_address);
-	// 		break;
-	// #endif
+		case TASK_MIGRATION:
+			return os_task_migration(packet->task_ID, packet->allocated_processor);
+		case MIGRATION_CODE:
+			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
+		case MIGRATION_TCB:
+			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time);
+		case MIGRATION_TASK_LOCATION:
+			return os_migration_tl(packet->task_ID, packet->request_size);
+		case MIGRATION_MSG_REQUEST:
+			return os_migration_mr(packet->task_ID, packet->request_size);
+		case MIGRATION_DATA_AV:
+			return os_migration_data_av(packet->task_ID, packet->request_size);
+		case MIGRATION_PIPE:
+			return os_migration_pipe(packet->task_ID, packet->consumer_task, packet->msg_lenght);
+		case MIGRATION_STACK:
+			return os_migration_stack(packet->task_ID, packet->stack_size);
+		case MIGRATION_DATA_BSS:
+			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size, packet->source_PE);
 		default:
 			putsv("ERROR: service unknown: ", *HAL_TICK_COUNTER);
 			return false;
@@ -262,4 +269,137 @@ bool os_update_task_location(int dest_task, int updt_task, int updt_addr)
 	tl_insert_update(task, updt_task, updt_addr);
 
 	return false;
+}
+
+bool os_task_migration(int id, int addr)
+{
+	tcb_t *task = tcb_search(id);
+
+	if(task && !tcb_need_migration(task)){
+		tcb_set_migrate_addr(task, addr);
+
+		tm_send_code(task);
+
+		if(!sched_is_waiting_delivery(task)){
+			tm_migrate(task);
+			return true;
+		}
+	} else {
+		puts ("ERROR: task not found or proc_to_migrated already assigned\n");
+		while(1);
+	}
+
+	return false;
+}
+
+bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_addr)
+{
+	tcb_t *free_tcb = tcb_free_get();
+
+	/* Initializes the TCB */
+	tcb_alloc_migrated(free_tcb, id, code_sz);
+
+	/* Clear the DATA_AV fifo of the task */
+	data_av_init(free_tcb);
+
+	/* Clear the task location array of the task */
+	tl_init(free_tcb);
+
+	/* Initialize the pipe for the task */
+	pipe_init(free_tcb);
+
+	/* Clears the message request table */
+	mr_init(free_tcb);
+
+	/* Obtain the program code */
+	dmni_read(tcb_get_offset(free_tcb), code_sz);
+
+	return false;
+}
+
+bool os_migration_tcb(int id, hal_word_t pc, hal_word_t period, int deadline, hal_word_t exec_time)
+{
+	tcb_t *tcb = tcb_search(id);
+	/** @todo Check volatile for all messages read and written to/from dmni */
+
+	tcb_set_pc(tcb, pc);
+
+	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
+	tcb_set_sp(tcb, tcb_get_sp(tcb));
+
+	/** @todo Review Real Time */
+	// if(period) //This means that the task have RT parameters
+	// 	real_time_task(migrate_tcb->scheduling_ptr, p->period, p->deadline, p->execution_time);
+
+	return false;
+}
+
+bool os_migration_tl(int id, hal_word_t tl_len)
+{
+	tcb_t *tcb = tcb_search(id);
+
+	dmni_read(tcb->task_location, tl_len);
+
+	return false;
+}
+
+bool os_migration_mr(int id, hal_word_t mr_len)
+{
+	tcb_t *tcb = tcb_search(id);
+
+	dmni_read(tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
+
+	return false;
+}
+
+bool os_migration_data_av(int id , hal_word_t data_av_len)
+{
+	tcb_t *tcb = tcb_search(id);
+
+	dmni_read(data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+
+	data_av_add_tail(tcb, data_av_len);
+
+	return false;
+}
+
+bool os_migration_pipe(int id, int cons_task, hal_word_t msg_len)
+{
+	tcb_t *tcb = tcb_search(id);
+
+	pipe_set_cons_task(tcb, cons_task);
+	pipe_set_message_len(tcb, msg_len);
+	dmni_read(pipe_get_message(tcb), msg_len);
+
+	return false;
+}
+
+bool os_migration_stack(int id, hal_word_t stack_len)
+{
+	tcb_t *tcb = tcb_search(id);
+
+	dmni_read(tcb_get_sp(tcb), stack_len);
+
+	return false;
+}
+
+bool os_migration_data_bss(int id, hal_word_t data_len, hal_word_t bss_len, int source)
+{
+	tcb_t *tcb = tcb_search(id);
+	
+	tcb->data_lenght = data_len;
+	tcb->bss_lenght = bss_len;
+
+	/** @todo Review these sizes */
+	if(bss_len + data_len)
+		dmni_read(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4, bss_len + data_len);
+
+	sched_release(tcb);
+	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
+
+	/** @todo Confirm migration to whatever triggered it */
+
+	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" allocated by task migration at time "); puts(itoa(*HAL_TICK_COUNTER)); puts(" from processor "); puts(itoh(p->source_PE)); puts("\n");
+
+	return true;
 }

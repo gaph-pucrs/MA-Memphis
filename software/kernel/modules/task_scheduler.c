@@ -81,6 +81,11 @@ bool sched_is_waiting_request(tcb_t *tcb)
 	return tcb->scheduler.waiting_msg == SCHED_WAIT_DATA_AV;
 }
 
+bool sched_is_waiting_delivery(tcb_t *tcb)
+{
+	return tcb->scheduler.waiting_msg == SCHED_WAIT_DELIVERY;
+}
+
 bool sched_is_blocked(tcb_t *tcb)
 {
 	return tcb->scheduler.status == SCHED_BLOCKED;
@@ -157,7 +162,10 @@ hal_word_t sched_get_exec_time(tcb_t *tcb)
 	return tcb->scheduler.execution_time;
 }
 
-
+void sched_set_remaining_time(tcb_t *tcb, hal_word_t timeslice)
+{
+	tcb->scheduler.remaining_exec_time = timeslice;
+}
 
 
 

@@ -43,11 +43,18 @@ void tm_add(int task, int addr);
 int tm_get_migrated_addr(int task);
 
 /**
- * @brief Migrates a task
+ * @brief Migrates a task dynamic memory
  * 
  * @param tcb Pointer to the TCB
  */
 void tm_migrate(tcb_t *tcb);
+
+/**
+ * @brief Migrates the code section of the task
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tm_send_code(tcb_t *tcb);
 
 /**
  * @brief Migrates the TCB

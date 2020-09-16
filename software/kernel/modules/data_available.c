@@ -118,3 +118,17 @@ data_av_t *data_av_get_buffer_start(tcb_t *tcb)
 {
 	return tcb->data_av.buffer;
 }
+
+data_av_t *data_av_get_buffer_tail(tcb_t *tcb)
+{
+	return &tcb->data_av.buffer[tcb->data_av.tail];
+}
+
+void data_av_add_tail(tcb_t *tcb, hal_word_t len)
+{
+	tcb->data_av.tail += len;
+	tcb->data_av.tail %= PKG_MAX_LOCAL_TASKS;
+	if(tcb->data_av.tail == tcb->data_av.head)
+		tcb->data_av.full = true;
+	tcb->data_av.empty = false;
+}

@@ -112,3 +112,20 @@ data_av_t *data_av_get_buffer_head(tcb_t *tcb);
  * @return Pointer to the start of the fifo buffer
  */
 data_av_t *data_av_get_buffer_start(tcb_t *tcb);
+
+/**
+ * @brief Get the pointer to the tail of the fifo buffer
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Pointer to the tail of the fifo buffer
+ */
+data_av_t *data_av_get_buffer_tail(tcb_t *tcb);
+
+/**
+ * @brief Adds a value to the data available tail
+ * 
+ * @param tcb Pointer to the TCB
+ * @param len Value to add to the tail
+ */
+void data_av_add_tail(tcb_t *tcb, hal_word_t len);

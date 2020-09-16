@@ -87,7 +87,17 @@ int pipe_get_cons_task(tcb_t *tcb)
 	return tcb->pipe.consumer_task;
 }
 
+void pipe_set_cons_task(tcb_t *tcb, int cons_task)
+{
+	tcb->pipe.consumer_task = cons_task;
+}
+
 hal_word_t pipe_get_message_len(tcb_t *tcb)
 {
 	return tcb->pipe.message.length;
+}
+
+void pipe_set_message_len(tcb_t *tcb, hal_word_t len)
+{
+	tcb->pipe.message.length = len;
 }

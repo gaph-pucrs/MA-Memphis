@@ -102,3 +102,102 @@ bool os_task_release(int id, int data_sz, int bss_sz, uint16_t task_number);
  * @return False
  */
 bool os_update_task_location(int dest_task, int updt_task, int updt_addr);
+
+/**
+ * @brief Handles a task migration order
+ * @details This function is called by the source processor (the old processor)
+ * 
+ * @param id ID of the task to migrate
+ * @param addr Address to migrate
+ * 
+ * @return True if scheduler should be called
+ */
+bool os_task_migration(int id, int addr);
+
+/**
+ * @brief Handles the code received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param code_sz Size of the code
+ * @param mapper_task ID of the mapper task
+ * @param mapper_addr Address of the mapper task
+ * 
+ * @return False
+ */
+bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+
+/**
+ * @brief Handles the TCB received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param pc Address of the program counter
+ * @param period Period of a RT task
+ * @param deadline Deadline of a RT task
+ * @param exec_time Execution time of a RT task
+ *
+ * @return False
+ */
+bool os_migration_tcb(int id, hal_word_t pc, hal_word_t period, int deadline, hal_word_t exec_time);
+
+/**
+ * @brief Handles the task location received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param tl_len Number of entries in the task location
+ * 
+ * @return False
+ */
+bool os_migration_tl(int id, hal_word_t tl_len);
+
+/**
+ * @brief Handles the message request received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param mr_len Number of entries in the message request
+ * 
+ * @return False
+ */
+bool os_migration_mr(int id, hal_word_t mr_len);
+
+/**
+ * @brief Handles the data available received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param mr_len Number of entries in the data available
+ * 
+ * @return False
+ */
+bool os_migration_data_av(int id , hal_word_t data_av_len);
+
+/**
+ * @brief Handles the pipe received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param cons_task ID of the consumer task of the message
+ * @param msg_len Length of the message in pipe
+ * 
+ * @return False
+ */
+bool os_migration_pipe(int id, int cons_task, hal_word_t msg_len);
+
+/**
+ * @brief Handles the stack received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param stack_len Length of the stack
+ * 
+ * @return False
+ */
+bool os_migration_stack(int id, hal_word_t stack_len);
+
+/**
+ * @brief Handles the data and bss received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param data_len Length of the data section
+ * @param bss_len Length of the bss section
+ * @param source Address of the source processor
+ * 
+ * @return True
+ */
+bool os_migration_data_bss(int id, hal_word_t data_len, hal_word_t bss_len, int source);

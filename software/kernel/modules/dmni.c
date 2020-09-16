@@ -13,7 +13,7 @@
 
 #include "dmni.h"
 
-void dmni_read(hal_word_t payload_address, uint16_t payload_size)
+void dmni_read(hal_word_t *payload_address, uint16_t payload_size)
 {
 	*HAL_DMNI_SIZE = payload_size;
 	*HAL_DMNI_OP = HAL_DMNI_WRITE;

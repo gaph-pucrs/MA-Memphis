@@ -127,6 +127,15 @@ bool sched_is_waiting_request(tcb_t *tcb);
 bool sched_is_waiting_data_av(tcb_t *tcb);
 
 /**
+ * @brief Checks if the task is waiting for a message delivery
+ * 
+ * @param tcb Pointer to the task TCB
+ * 
+ * @return True if the task is waiting
+ */
+bool sched_is_waiting_delivery(tcb_t *tcb);
+
+/**
  * @brief Checks if the task is blocked
  * 
  * @param tcb Pointer to the TCB
@@ -220,3 +229,11 @@ int sched_get_deadline(tcb_t *tcb);
  * @return Value of the execution time
  */
 hal_word_t sched_get_exec_time(tcb_t *tcb);
+
+/**
+ * @brief Sets the remaining execution time of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param timeslice Value to set to the remaining execution time
+ */
+void sched_set_remaining_time(tcb_t *tcb, hal_word_t timeslice);

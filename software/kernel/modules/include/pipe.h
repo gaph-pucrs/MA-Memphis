@@ -106,6 +106,14 @@ message_t *pipe_get_message(pipe_t *pipe);
 int pipe_get_cons_task(tcb_t *tcb);
 
 /**
+ * @brief Sets the consumer task of the message in pipe
+ * 
+ * @param tcb Pointer to the TCB
+ * @param cons_task ID of the consumer task
+ */
+void pipe_set_cons_task(tcb_t *tcb, int cons_task);
+
+/**
  * @brief Gets the message length in pipe
  * 
  * @param tcb Pointer to the TCB
@@ -113,3 +121,11 @@ int pipe_get_cons_task(tcb_t *tcb);
  * @return Value of the length of the message
  */
 hal_word_t pipe_get_message_len(tcb_t *tcb);
+
+/**
+ * @brief Sets the message length in pipe
+ * 
+ * @param tcb Pointer to the TCB
+ * @param len Length of the message
+ */
+void pipe_set_message_len(tcb_t *tcb, hal_word_t len);

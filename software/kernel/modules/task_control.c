@@ -83,6 +83,15 @@ void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapp
 	tcb->mapper_task = mapper_task;
 }
 
+void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr)
+{
+	tcb->scheduler.status = SCHED_MIGRATING;
+	tcb->id = id;
+	tcb->text_lenght = code_sz;
+	tcb->mapper_task = mapper_task;
+	tcb->mapper_address = mapper_addr;
+}
+
 void tcb_update_sections(tcb_t *tcb, hal_word_t data_sz, hal_word_t bss_sz)
 {
 	tcb->data_lenght = data_sz;
@@ -140,4 +149,29 @@ void tcb_clear(tcb_t *tcb)
 	tcb->pc = 0;
 	tcb->id = -1;
 	tcb->proc_to_migrate = -1;
+}
+
+hal_word_t tcb_get_code_length(tcb_t *tcb)
+{
+	return tcb->text_lenght;
+}
+
+hal_word_t tcb_get_data_length(tcb_t *tcb)
+{
+	return tcb->data_lenght;
+}
+
+hal_word_t tcb_get_bss_length(tcb_t *tcb)
+{
+	return tcb->bss_lenght;
+}
+
+void tcb_set_pc(tcb_t *tcb, hal_word_t pc)
+{
+	tcb->pc = pc + tcb->offset;
+}
+
+void tcb_set_sp(tcb_t *tcb, hal_word_t sp)
+{
+	tcb->registers[HAL_REG_SP] = sp + tcb->offset;
 }

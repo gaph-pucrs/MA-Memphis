@@ -205,3 +205,50 @@ message_request_t *tcb_get_mr(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  */
 void tcb_clear(tcb_t *tcb);
+
+/**
+ * @brief Gets the length of the code/text section
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Length of the code
+ */
+hal_word_t tcb_get_code_length(tcb_t *tcb);
+
+/**
+ * @brief Gets the length of the data section
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Length of the data
+ */
+hal_word_t tcb_get_data_length(tcb_t *tcb);
+
+/**
+ * @brief Gets the length of the bss section
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Length of the bss
+ */
+hal_word_t tcb_get_bss_length(tcb_t *tcb);
+
+/**
+ * @brief Sets the program counter of a task
+ * 
+ * @details this will take in consideration the offset
+ * 
+ * @param tcb Pointer to the TCB
+ * @param pc Address to write to PC
+ */
+void tcb_set_pc(tcb_t *tcb, hal_word_t pc);
+
+/**
+ * @brief Sets the stack pointer of a task
+ * 
+ * @details This will take in consideration the offser
+ * 
+ * @param tcb Pointer to the TCB
+ * @param sp Value of the stack pointer
+ */
+void tcb_set_sp(tcb_t *tcb, hal_word_t sp);

@@ -82,6 +82,20 @@ void tm_migrate(tcb_t *tcb)
 	tcb_clear(tcb);
 }
 
+void tm_send_code(tcb_t *tcb)
+{
+	packet_t *packet = pkt_slot_get();
+
+	packet->header = tcb_get_migrate_addr(tcb);
+	packet->service = MIGRATION_CODE;
+	packet->task_ID = tcb_get_id(tcb);
+	packet->code_size = tcb_get_code_length(tcb);
+	packet->mapper_task = tcb->mapper_task;
+	packet->mapper_address = tcb->mapper_address;
+
+	pkt_send(packet, tcb_get_offset(tcb), tcb_get_code_length(tcb));
+}
+
 void tm_send_tcb(tcb_t *tcb, int addr)
 {
 	/* Send TCB */
