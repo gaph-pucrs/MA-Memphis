@@ -13,6 +13,8 @@
 
 #pragma once 
 
+#include <stdint.h>
+
 const uint32_t MESSAGE_REQUEST = 0x00000010;;
 const uint32_t MESSAGE_DELIVERY = 0x00000020;
 const uint32_t TASK_ALLOCATION = 0x00000040;

@@ -11,11 +11,9 @@
  * @brief Defines the interrupts procedures of the kernel.
  */
 
-#include "task_control.h"
 #include "services.h"
+#include "task_control.h"
 #include "interrupts.h"
-#include "dmni.h"
-#include "task_migration.h"
 
 void os_isr(hal_word_t status)
 {
@@ -327,9 +325,9 @@ bool os_migration_tcb(int id, hal_word_t pc, hal_word_t period, int deadline, ha
 	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
 	tcb_set_sp(tcb, tcb_get_sp(tcb));
 
-	/** @todo Review Real Time */
-	// if(period) //This means that the task have RT parameters
-	// 	real_time_task(migrate_tcb->scheduling_ptr, p->period, p->deadline, p->execution_time);
+	/* Check if task has real time parameters */
+	if(period)
+		sched_real_time_task(tcb, period, deadline, exec_time);
 
 	return false;
 }

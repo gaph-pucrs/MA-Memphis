@@ -26,6 +26,7 @@ const hal_word_t HAL_IRQ_SCHEDULER = 0x08;
 const hal_word_t HAL_IRQ_NOC = 0x20;
 
 const hal_word_t HAL_INTERRUPTION = 0x10000;
+const hal_word_t HAL_SCHEDULER = 0x40000;
 const hal_word_t HAL_IDLE = 0x80000;
 
 const hal_word_t HAL_DMNI_READ = 0;
@@ -48,3 +49,4 @@ volatile hal_word_t *HAL_DMNI_ADDRESS_2 = 0x20000215;	//!< Address of the packet
 volatile hal_word_t *HAL_ADD_REQUEST_DEBUG 	= 0x20000290;	//!< Produce debug message request
 volatile hal_word_t *HAL_REM_PIPE_DEBUG = 0x20000285;	//!< Produce debug remove pipe
 volatile hal_word_t *HAL_SLACK_TIME_MONITOR = 0x20000370;
+volatile hal_word_t *HAL_TIME_SLICE = 0x20000060;

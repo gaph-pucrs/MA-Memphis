@@ -31,7 +31,8 @@
 
 #include <stdbool.h>
 
-// const uint8_t SCHED_DEBUG = 0;		//!< When enabled shows the puts placed within local_scheduler.c
+#include "task_control.h"
+
 const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
 const int SCHED_MAX_TIME_SLICE = 16318;	//!< Standard time slice value for task execution
 
@@ -237,3 +238,69 @@ hal_word_t sched_get_exec_time(tcb_t *tcb);
  * @param timeslice Value to set to the remaining execution time
  */
 void sched_set_remaining_time(tcb_t *tcb, hal_word_t timeslice);
+
+/**
+ * @brief Runs the scheduler to set the current running task
+ */
+void sched_run();
+
+/**
+ * @brief Calls the scheduling algorithm
+ * 
+ * @details Selects the next real time task with the least slack time or the 
+ * next best effort task following a round-robin order
+ * 
+ * @param current_time Current system time
+ * 
+ * @return Pointer to the scheduled TCB
+ */
+tcb_t *sched_lst(unsigned int current_time);
+
+/**
+ * @brief Runs the round robin for the scheduler
+ * 
+ * @return The next round robin iterator
+ */
+unsigned int sched_round_robin();
+
+/**
+ * @brief Updates the dynamic RT parameters for all RT tasks. 
+ * 
+ * @details The dynamic RT parameters are: remaining execution time, status and 
+ * slack-time
+ * 
+ * @param current_time Current system time
+ * @param schedule_overhead Dynamic calculated scheduling overhead time
+ */
+void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead);
+
+/**
+ * @brief Updates the task slack time. 
+ * 
+ * @details The slack time is the time until the task starts the next period 
+ * once it finishes its execution time for the current period
+ * 
+ * @param task Pointer to the TCB
+ * @param current_time Current system time
+ */
+void sched_update_slack_time(tcb_t *task, unsigned int current_time){
+
+/**
+ * @brief This algorithm tries to give an extra time slice to task selected by LST.
+ * 
+ * @details The main approach is looking for the READY task slack time and the closer end of period
+ * 
+ * @param scheduled Pointer to the scheduled TCB
+ * @param time Current system time
+ */
+void sched_dynamic_slice_time(tcb_t *scheduled, unsigned int time);
+
+/**
+ * @brief ???
+ * 
+ * @param task Pointer to the TCB
+ * @param period ???
+ * @param deadline ???
+ * @param execution_time ???
+ */
+void sched_real_time_task(tcb_t *task, unsigned int period, int deadline, unsigned int execution_time);

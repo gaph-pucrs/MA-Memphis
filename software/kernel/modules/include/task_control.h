@@ -17,7 +17,6 @@
 #pragma once
 
 #include "hal.h"
-#include "task_location.h"
 #include "pkg.h"
 #include "pipe.h"
 #include "message_request.h"
