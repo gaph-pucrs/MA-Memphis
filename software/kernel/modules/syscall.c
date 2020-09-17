@@ -13,9 +13,9 @@
 
 #include <stdbool.h>
 
-#include "syscall.h"
 #include "services.h"
 #include "task_control.h"
+#include "syscall.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -290,7 +290,7 @@ bool os_echo(hal_word_t msg_ptr)
 bool os_realtime(hal_word_t period, int deadline, hal_word_t exec_time)
 {
 	tcb_t *current = sched_get_current();
-	sched_set_real_time(current, period, deadline, exec_time);
+	sched_real_time_task(current, period, deadline, exec_time);
 
 	schedule_after_syscall = 1;
 

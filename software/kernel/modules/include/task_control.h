@@ -16,12 +16,11 @@
 
 #pragma once
 
-#include "hal.h"
-#include "pkg.h"
+#include "data_available.h"
 #include "pipe.h"
 #include "message_request.h"
-#include "data_available.h"
 #include "task_scheduler.h"
+#include "pkg.h"
 
 /** @brief This structure stores information of the running tasks */
 typedef struct _tcb {
