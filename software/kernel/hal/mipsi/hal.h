@@ -50,3 +50,4 @@ volatile hal_word_t *HAL_ADD_REQUEST_DEBUG 	= 0x20000290;	//!< Produce debug mes
 volatile hal_word_t *HAL_REM_PIPE_DEBUG = 0x20000285;	//!< Produce debug remove pipe
 volatile hal_word_t *HAL_SLACK_TIME_MONITOR = 0x20000370;
 volatile hal_word_t *HAL_TIME_SLICE = 0x20000060;
+volatile hal_word_t *HAL_UART_DATA = 0x20000000;

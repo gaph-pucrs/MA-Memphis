@@ -11,11 +11,8 @@
  *
  */
 
-#include "../include/plasma.h"
 #include "utils.h"
-
-#define FALSE		0
-#define TRUE		1
+#include "hal.h"
 
 /**Print the string in the text file log
  * \param string array of chars
@@ -27,11 +24,11 @@ int puts(char *string) {
 	//This is the most crazy and complicated FOR declaration that I ever seen. For obviously purposes, I divided the FOR section in lines
 	//PS: This indicates a hardware developer putting its hands on software development
 	for(
-			str_part = (int*)string,  MemoryWrite(UART_WRITE,*str_part);
+			str_part = (int*)string,  *HAL_UART_DATA = *str_part;
 
 			!( ( (char*)str_part )[0] == 0 || ( (char*)str_part )[1] == 0 || ( (char*)str_part )[2] == 0 || ( (char*)str_part )[3] == 0);
 
-			*str_part++,MemoryWrite(UART_WRITE, *str_part)
+			*str_part++, *HAL_UART_DATA = *str_part
 	);
 	return 0;
 }
