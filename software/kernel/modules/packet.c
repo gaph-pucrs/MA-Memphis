@@ -61,7 +61,7 @@ packet_t *pkt_slot_get()
 	}
 }
 
-void pkt_send(packet_t *packet, hal_word_t address, hal_word_t size){
+void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size){
 
 	packet->payload_size = (PKT_SIZE - 2) + size;
 	packet->transaction = 0;
@@ -77,7 +77,7 @@ void pkt_send(packet_t *packet, hal_word_t address, hal_word_t size){
 
 	if(size > 0){
 		*HAL_DMNI_SIZE_2 = size;
-		*HAL_DMNI_ADDRESS_2 = address;
+		*HAL_DMNI_ADDRESS_2 = buffer;
 	}
 
 	*HAL_DMNI_OP = HAL_DMNI_READ;

@@ -30,6 +30,7 @@ void tcb_init()
 	idle_tcb.pc = (hal_word_t)&tcb_idle_task;
 	idle_tcb.id = 0;
 	idle_tcb.offset = 0;
+	idle_tcb.proc_to_migrate = -1;
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;

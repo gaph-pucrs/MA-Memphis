@@ -54,7 +54,7 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 		while(true);
 	}		
 
-	pkt_send(packet, (hal_word_t)&(message->message.msg), message->message.length);
+	pkt_send(packet, message->message.msg, message->message.length);
 }
 
 bool pipe_is_full(tcb_t *tcb)

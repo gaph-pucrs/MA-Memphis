@@ -34,7 +34,7 @@ void mr_send(int producer_task, int consumer_task, int producer_addr, int consum
 	packet->producer_task = producer_task;
 	packet->consumer_task = consumer_task;
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 }
 
 bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)

@@ -123,10 +123,10 @@ packet_t *pkt_slot_get();
  * by programming the DMNI.
  * 
  * @param packet	Packet pointer
- * @param address	Address of the packet payload
+ * @param buffer	Buffer to send. If single word, pointer to this word.
  * @param size		Size of the packet payload
  */
-void pkt_send(packet_t *packet, hal_word_t address, hal_word_t size){
+void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size){
 
 
 void DMNI_read_data(unsigned int, unsigned int);

@@ -57,7 +57,7 @@ void data_av_send(int consumer_task, int producer_task, int consumer_addr, int p
 	packet->consumer_task = consumer_task;
 	packet->requesting_processor = producer_addr;
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 }
 
 data_av_t *data_av_pop(tcb_t *tcb)

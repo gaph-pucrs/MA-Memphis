@@ -32,7 +32,7 @@ void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr)
 	packet->task_ID = updt_task;
 	packet->allocated_processor = updt_addr;
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 }
 
 void tl_send_allocated(tcb_t *allocated_task)
@@ -44,7 +44,7 @@ void tl_send_allocated(tcb_t *allocated_task)
 	packet->task_ID = allocated_task->id;
 	packet->mapper_task = allocated_task->mapper_task;
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 }
 
 void tl_insert_update(tcb_t *tcb, int id, int addr)
@@ -61,7 +61,7 @@ void tl_send_terminated(tcb_t *tcb)
 	packet->task_ID = tcb->id;
 	packet->mapper_task = tcb->mapper_task;
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 }
 
 int tl_search(tcb_t *tcb, int task)
