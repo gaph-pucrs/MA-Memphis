@@ -380,7 +380,7 @@ bool os_migration_stack(int id, hal_word_t stack_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((hal_word_t*)tcb_get_sp(tcb), stack_len);
+	dmni_read((hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len);
 
 	return false;
 }
