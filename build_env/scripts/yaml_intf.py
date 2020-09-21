@@ -18,7 +18,7 @@ def get_yaml_reader(yaml_path):
     except:
         sys.exit('ERROR: No such following testcase file or directory (%s)!' % yaml_path)
     try:
-        yaml_reader = yaml.load(file)
+        yaml_reader = yaml.safe_load(file)
     except:
         sys.exit('ERROR: Incorrent YAML sintax!!\nThe YAML file does not support the character tab (\\t) (%s)!\n' % yaml_path)
     
