@@ -15,8 +15,10 @@
 
 #include <stdbool.h>
 
-#include "task_control.h"
 #include "pkg.h"
+
+/* Forward declaration */
+typedef struct _tcb tcb_t;
 
 typedef struct _data_av {
 	int requester;

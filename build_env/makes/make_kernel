@@ -1,75 +1,68 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-KERNEL_PKG_TGT    = ../include/kernel_pkg.o
-KERNEL_PKG_SRC    = $(KERNEL_PKG_TGT:.o=.c) $(KERNEL_PKG_TGT:.o=.h)
+ifeq ($(ARCH),)
+	ARCH = mipsi
+endif
 
-CFLAGS            = -O2 -Wall -fms-extensions -c -std=c99 -G 0
-GCC_MIPS          = mips-elf-gcc $(CFLAGS)
-AS_MIPS           = mips-elf-as
-LD_MIPS           = mips-elf-ld
-DUMP_MIPS         = mips-elf-objdump
-COPY_MIPS         = mips-elf-objcopy -I elf32-bigmips -O binary
+CC = mips-elf-gcc
+AS = mips-elf-as
+LD = mips-elf-ld
+OBJDUMP = mips-elf-objdump
+OBJCOPY = mips-elf-objcopy
 
-BOOT_MASTER       = boot_master
-BOOT_MASTER_SRC   = kernel/master/boot.S
-KERNEL_MASTER 	  = kernel_master
-KERNEL_MASTER_SRC = kernel/master/kernel_master.c 
-KERNEL_MASTER_H	  = kernel/master/kernel_master.h
+TARGET = kernel
 
-BOOT_SLAVE        = boot_slave
-BOOT_SLAVE_SRC	  = kernel/slave/boot.S
-KERNEL_SLAVE 	  = kernel_slave
-KERNEL_SLAVE_SRC  = kernel/slave/kernel_slave.c 
-KERNEL_MASTER_H	  = kernel/slave/kernel_slave.h
+TGTDIR = kernel
+MODDIR = $(TGTDIR)/modules
+HALDIR = $(TGTDIR)/hal/$(ARCH)
 
+INCLUDE = -I$(MODDIR)/include -I$(HALDIR)
 
-#https://www.gnu.org/software/make/manual/make.html#Automatic-Variables
+CCSRC = $(wildcard $(TGTDIR)/*.c) $(wildcard $(MODDIR)/*.c)
+CCOBJ = $(patsubst %.c,%.o, $(CCSRC))
 
-MODULES_DIR = modules/
-MODULES_NAMES = utils packet applications pending_service reclustering communication data_available processors task_control task_location task_migration task_scheduler resource_manager
-MODULES_SRC = $(addsuffix .c, $(addprefix $(MODULES_DIR), $(MODULES_NAMES) ) ) $(addsuffix .h, $(addprefix $(MODULES_DIR), $(MODULES_NAMES) ) )
-MODULES_TGT = $(addsuffix .o, $(addprefix $(MODULES_DIR), $(MODULES_NAMES) ) )
+ASSRC = $(wildcard $(HALDIR)/*.s)
+ASOBJ = $(patsubst %.s,%.o, $(ASSRC))
 
-KERNEL_MASTER_MODULES = utils packet applications reclustering communication processors resource_manager
-KERNEL_MASTER_TGT     = $(addsuffix .o, $(addprefix $(MODULES_DIR), $(KERNEL_MASTER_MODULES) ) )
+CFLAGS = -O2 -Wall -Wno-unused-variable -fms-extensions -G 0 -std=c99
 
-KERNEL_SLAVE_MODULES = utils packet pending_service communication data_available task_control task_location task_migration task_scheduler
-KERNEL_SLAVE_TGT 	 = $(addsuffix .o, $(addprefix $(MODULES_DIR), $(KERNEL_SLAVE_MODULES) ) )
+all: $(TARGET).txt $(TARGET).lst
 
-default: $(KERNEL_MASTER).txt $(KERNEL_SLAVE).txt 
+$(TARGET).txt: $(TARGET).bin
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
 
-$(KERNEL_PKG_TGT): $(KERNEL_PKG_SRC)
-	@printf "${RED}Compiling Kernel Package: %s ...${NC}\n" "$*.c"
-	$(GCC_MIPS) -o $*.o $*.c
+$(TARGET).bin: $(TARGET).elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@ -I elf32-bigmips -O binary
 
-$(MODULES_TGT): $(MODULES_SRC)
-	@printf "${RED}Compiling Kernel %s ...${NC}\n" "$*.c"
-	$(GCC_MIPS) -o $*.o $*.c
+$(TARGET).elf: $(CCOBJ) $(ASOBJ)
+	@printf "${RED}Linking %s...${NC}\n" "$@"
+	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET).map -s -N -o $@
 
-$(KERNEL_MASTER).txt: $(KERNEL_PKG_TGT) $(MODULES_TGT) $(KERNEL_MASTER_SRC) $(KERNEL_MASTER_H) $(BOOT_MASTER_SRC)
-	@printf "${RED}Compiling Kernel Master: %s ...${NC}\n" "$(KERNEL_MASTER).c" 
-	$(AS_MIPS) --defsym sp_addr=$(MEM_SP_INIT) -o $(BOOT_MASTER).o $(BOOT_MASTER_SRC)
-	$(GCC_MIPS) -DHOP_NUMBER=1 -Dload -o $(KERNEL_MASTER).o $(KERNEL_MASTER_SRC) -D IS_MASTER
-	$(LD_MIPS) --section-start=".init"=0 -Map $(KERNEL_MASTER).map -s -N -o $(KERNEL_MASTER).elf $(BOOT_MASTER).o $(KERNEL_MASTER).o $(KERNEL_MASTER_TGT) $(KERNEL_PKG_TGT)
-	$(LD_MIPS) --section-start=".init"=0 -Map $(KERNEL_MASTER)_debug.map -o $(KERNEL_MASTER)_debug.elf $(BOOT_MASTER).o $(KERNEL_MASTER).o $(KERNEL_MASTER_TGT) $(KERNEL_PKG_TGT)
-	$(DUMP_MIPS) -S $(KERNEL_MASTER)_debug.elf > $(KERNEL_MASTER).lst
-	$(COPY_MIPS) -R .MIPS.abiflags -R .reginfo $(KERNEL_MASTER).elf $(KERNEL_MASTER).bin
-	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $(KERNEL_MASTER).bin > $(KERNEL_MASTER).txt
+$(TARGET).lst: $(TARGET)_debug.elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJDUMP) -S $< > $@
 
-$(KERNEL_SLAVE).txt: $(KERNEL_PKG_TGT) $(MODULES_TGT) $(KERNEL_SLAVE_SRC) $(KERNEL_SLAVE_H) $(BOOT_SLAVE_SRC)
-	@printf "${RED}Compiling Kernel Slave: %s ...${NC}\n" "$(KERNEL_SLAVE).c"
-	$(AS_MIPS) --defsym sp_addr=$(PAGE_SP_INIT) -o $(BOOT_SLAVE).o $(BOOT_SLAVE_SRC)
-	$(GCC_MIPS) -o $(KERNEL_SLAVE).o $(KERNEL_SLAVE_SRC) -D PLASMA
-	$(LD_MIPS) --section-start=".init"=0 -Map $(KERNEL_SLAVE).map -s -N -o $(KERNEL_SLAVE).elf $(BOOT_SLAVE).o $(KERNEL_SLAVE).o $(KERNEL_SLAVE_TGT) $(KERNEL_PKG_TGT)
-	$(LD_MIPS) --section-start=".init"=0 -Map $(KERNEL_SLAVE)_debug.map -o $(KERNEL_SLAVE)_debug.elf $(BOOT_SLAVE).o $(KERNEL_SLAVE).o $(KERNEL_SLAVE_TGT) $(KERNEL_PKG_TGT)
-	$(DUMP_MIPS) -S $(KERNEL_SLAVE)_debug.elf > $(KERNEL_SLAVE).lst
-	$(COPY_MIPS) -R .MIPS.abiflags -R .reginfo $(KERNEL_SLAVE).elf $(KERNEL_SLAVE).bin
-	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $(KERNEL_SLAVE).bin > $(KERNEL_SLAVE).txt
+$(TARGET)_debug.elf: $(CCOBJ) $(ASOBJ)
+	@printf "${RED}Linking %s...${NC}\n" "$@"
+	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET)_debug.map -s -N -o $@
+
+$(TGTDIR)/%.o: $(TGTDIR)/%.c
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE)
+
+$(MODDIR)/%.o: $(MODDIR)/%.c
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE)
+
+$(HALDIR)/%.o: $(HALDIR)/%.s
+	@printf "${RED}Assemblying %s...${NC}\n" "$<"
+	@$(AS) $< -o $@ --defsym sp_addr=$(PAGE_SP_INIT)
 
 clean:
 	@printf "Cleaning up\n"
-	@rm -rf modules/*.o
 	@rm -rf *.o
 	@rm -rf *.bin
 	@rm -rf *.map
@@ -77,3 +70,4 @@ clean:
 	@rm -rf *.txt
 	@rm -rf *.elf
 
+.PHONY: clean

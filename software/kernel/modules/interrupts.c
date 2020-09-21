@@ -14,6 +14,11 @@
 #include "services.h"
 #include "task_control.h"
 #include "interrupts.h"
+#include "pending_service.h"
+#include "utils.h"
+#include "task_migration.h"
+#include "task_location.h"
+#include "dmni.h"
 
 void os_isr(hal_word_t status)
 {
@@ -43,7 +48,7 @@ void os_isr(hal_word_t status)
 
 		packet_t *packet = pending_svc_pop();
 		if(packet)
-			call_scheduler = handle_packet(packet);
+			call_scheduler = os_handle_pkt(packet);
 		
 	} else if(status & HAL_IRQ_SLACK_TIME){
 		/* Send a monitoring packet */
@@ -69,7 +74,7 @@ void os_isr(hal_word_t status)
 	}
 
     /* Runs the scheduled task */
-    hal_run_task(sched_get_current());
+    hal_run_task((hal_word_t*)sched_get_current());
 }
 
 bool os_handle_pkt(packet_t *packet)
@@ -161,7 +166,7 @@ bool os_message_delivery(int cons_task, hal_word_t length)
 	message->length = length;
 
 	/* Obtain message from DMNI */
-	dmni_read((hal_word_t)message->msg, message->length);
+	dmni_read(message->msg, message->length);
 
 	/* Release task to execute */
 	sched_release_wait(cons_tcb);
@@ -225,7 +230,7 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	puts("Task id: "); puts(itoa(id)); putsv(" allocated at ", *HAL_TICK_COUNTER);	
 
 	/* Obtain the program code */
-	dmni_read(free_tcb->offset, length);
+	dmni_read((hal_word_t*)free_tcb->offset, length);
 
 	putsv("Code lenght: ", length);
 	putsv("Mapper task: ", mapper_task);
@@ -250,7 +255,7 @@ bool os_task_release(int id, int data_sz, int bss_sz, uint16_t task_number)
 	tcb_update_sections(task, data_sz, bss_sz);
 
 	/* Get the location of app's tasks */
-	dmni_read((hal_word_t)task->task_location, task_number);
+	dmni_read((hal_word_t*)task->task_location, task_number);
 
 	/* If the task is blocked, release it */
 	if(sched_is_blocked(task))
@@ -295,7 +300,7 @@ bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_a
 	tcb_t *free_tcb = tcb_free_get();
 
 	/* Initializes the TCB */
-	tcb_alloc_migrated(free_tcb, id, code_sz);
+	tcb_alloc_migrated(free_tcb, id, code_sz, mapper_task, mapper_addr);
 
 	/* Clear the DATA_AV fifo of the task */
 	data_av_init(free_tcb);
@@ -310,7 +315,7 @@ bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_a
 	mr_init(free_tcb);
 
 	/* Obtain the program code */
-	dmni_read(tcb_get_offset(free_tcb), code_sz);
+	dmni_read((hal_word_t*)tcb_get_offset(free_tcb), code_sz);
 
 	return false;
 }
@@ -336,7 +341,7 @@ bool os_migration_tl(int id, hal_word_t tl_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read(tcb->task_location, tl_len);
+	dmni_read((hal_word_t*)tcb->task_location, tl_len);
 
 	return false;
 }
@@ -345,7 +350,7 @@ bool os_migration_mr(int id, hal_word_t mr_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read(tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
+	dmni_read((hal_word_t*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
 
 	return false;
 }
@@ -354,7 +359,7 @@ bool os_migration_data_av(int id , hal_word_t data_av_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read(data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+	dmni_read((hal_word_t*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
 
 	data_av_add_tail(tcb, data_av_len);
 
@@ -367,7 +372,7 @@ bool os_migration_pipe(int id, int cons_task, hal_word_t msg_len)
 
 	pipe_set_cons_task(tcb, cons_task);
 	pipe_set_message_len(tcb, msg_len);
-	dmni_read(pipe_get_message(tcb), msg_len);
+	dmni_read(tcb->pipe.message.msg, msg_len);
 
 	return false;
 }
@@ -376,7 +381,7 @@ bool os_migration_stack(int id, hal_word_t stack_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read(tcb_get_sp(tcb), stack_len);
+	dmni_read((hal_word_t*)tcb_get_sp(tcb), stack_len);
 
 	return false;
 }
@@ -390,14 +395,14 @@ bool os_migration_data_bss(int id, hal_word_t data_len, hal_word_t bss_len, int 
 
 	/** @todo Review these sizes */
 	if(bss_len + data_len)
-		dmni_read(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4, bss_len + data_len);
+		dmni_read((hal_word_t*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), bss_len + data_len);
 
 	sched_release(tcb);
 	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
 
 	/** @todo Confirm migration to whatever triggered it */
 
-	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" allocated by task migration at time "); puts(itoa(*HAL_TICK_COUNTER)); puts(" from processor "); puts(itoh(p->source_PE)); puts("\n");
+	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" allocated by task migration at time "); puts(itoa(*HAL_TICK_COUNTER)); puts(" from processor "); puts(itoh(source)); puts("\n");
 
 	return true;
 }

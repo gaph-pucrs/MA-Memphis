@@ -12,6 +12,7 @@
  */
 
 #include "hal.h"
+#include "utils.h"
 #include "packet.h"
 #include "task_control.h"
 #include "pending_service.h"
@@ -40,7 +41,8 @@ int main()
 		HAL_IRQ_SLACK_TIME
 	);
 	
-	hal_run_task(sched_get_current());
+	hal_run_task((hal_word_t*)sched_get_current());
 
 	while(true);
+	return 0;
 }

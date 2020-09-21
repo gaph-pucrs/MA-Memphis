@@ -15,6 +15,7 @@
 #include <stddef.h>
 
 #include "task_control.h"
+#include "utils.h"
 
 tcb_t idle_tcb;						//!< TCB pointer used to run idle task
 tcb_t tcbs[PKG_MAX_LOCAL_TASKS];	//!< TCB array
@@ -102,7 +103,7 @@ void tcb_update_sections(tcb_t *tcb, hal_word_t data_sz, hal_word_t bss_sz)
 
 message_t *tcb_get_message(tcb_t *tcb)
 {
-	return tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1];
+	return (message_t*)(tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1]);
 }
 
 hal_word_t tcb_get_offset(tcb_t *tcb)
@@ -130,6 +131,11 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr)
 	tcb->proc_to_migrate = addr;
 }
 
+hal_word_t tcb_get_pc(tcb_t *tcb)
+{
+	return tcb->pc;
+}
+
 hal_word_t tcb_get_sp(tcb_t *tcb)
 {
 	return tcb->registers[HAL_REG_SP];
@@ -143,6 +149,11 @@ int tcb_get_id(tcb_t *tcb)
 hal_word_t tcb_get_reg(tcb_t *tcb, int idx)
 {
 	return tcb->registers[idx];
+}
+
+message_request_t *tcb_get_mr(tcb_t *tcb)
+{
+	return tcb->message_request;
 }
 
 void tcb_clear(tcb_t *tcb)

@@ -116,7 +116,7 @@ hal_syscall:
 	sw		$k0, 120($k1)	# Save epc
 
 	li		$sp, sp_addr	# Loads the kernel stack pointer base
-	jal		os_sycall
+	jal		os_syscall
 	nop
 
 	# Verifies if should schedule

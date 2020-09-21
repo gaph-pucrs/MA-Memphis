@@ -14,6 +14,8 @@
 #include "task_migration.h"
 #include "services.h"
 #include "packet.h"
+#include "task_location.h"
+#include "utils.h"
 
 typedef struct _tm_ring_t {
 	migrated_task_t tasks[PKG_MAX_LOCAL_TASKS];
@@ -93,7 +95,7 @@ void tm_send_code(tcb_t *tcb)
 	packet->mapper_task = tcb->mapper_task;
 	packet->mapper_address = tcb->mapper_address;
 
-	pkt_send(packet, tcb_get_offset(tcb), tcb_get_code_length(tcb));
+	pkt_send(packet, (hal_word_t*)tcb_get_offset(tcb), tcb_get_code_length(tcb));
 }
 
 void tm_send_tcb(tcb_t *tcb, int addr)
@@ -135,7 +137,7 @@ void tm_send_tl(tcb_t *tcb, int addr)
 	packet->service = MIGRATION_TASK_LOCATION;
 	packet->request_size = tl_get_len(tcb);
 
-	pkt_send(packet, tl_get_ptr(tcb), packet->request_size);
+	pkt_send(packet, (hal_word_t*)tl_get_ptr(tcb), packet->request_size);
 }
 
 void tm_send_mr(tcb_t *tcb, int addr)
@@ -150,7 +152,7 @@ void tm_send_mr(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->request_size = mr_len;
 
-		pkt_send(packet, tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
+		pkt_send(packet, (hal_word_t*)tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
 	}
 }
 
@@ -166,7 +168,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+		pkt_send(packet, (hal_word_t*)data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
 	}
 
 	data_av_len = data_av_get_len_start_tail(tcb);
@@ -179,7 +181,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+		pkt_send(packet, (hal_word_t*)data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
 	}
 }
 
@@ -194,7 +196,7 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 		packet->consumer_task = pipe_get_cons_task(tcb);
 		packet->msg_lenght = pipe_get_message_len(tcb);
 
-		pkt_send(packet, pipe_get_message(tcb)->msg, packet->msg_lenght);
+		pkt_send(packet, tcb->pipe.message.msg, packet->msg_lenght);
 	}
 }
 
@@ -217,7 +219,7 @@ void tm_send_stack(tcb_t *tcb, int addr)
 	packet->task_ID = pipe_get_cons_task(tcb);
 	packet->stack_size = stack_len;
 
-	pkt_send(packet, (tcb_get_offset(tcb) + sp), stack_len);
+	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len);
 }
 
 void tm_send_data_bss(tcb_t *tcb, int addr)
@@ -231,5 +233,5 @@ void tm_send_data_bss(tcb_t *tcb, int addr)
 	packet->bss_size = tcb_get_bss_length(tcb);
 
 	/** @todo This doesn't seems right. Let's investigate the sizes */
-	pkt_send(packet, tcb_get_offset(tcb) + (tcb_get_code_length(tcb) * 4), (packet->data_size + packet->bss_size));
+	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), (packet->data_size + packet->bss_size));
 }

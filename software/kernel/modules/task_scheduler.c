@@ -21,6 +21,10 @@
 #include "packet.h"
 #include "task_scheduler.h"
 #include "task_migration.h"
+#include "task_control.h"
+#include "utils.h"
+
+const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
 
 tcb_t *current;						//!< TCB pointer used to store the current task executing into processor
 unsigned int total_slack_time;		//!< Store the total of the processor idle time
@@ -33,7 +37,7 @@ void sched_init()
 	tcb_t *tcbs = tcb_get();
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].scheduler.deadline = SCHED_NO_DEADLINE;
-		sched_clear(&(tcbs[i].scheduler));
+		sched_clear(&tcbs[i]);
 	}
 
 	current = tcb_get_idle();
@@ -80,7 +84,7 @@ bool sched_is_waiting_request(tcb_t *tcb)
 	return tcb->scheduler.waiting_msg == SCHED_WAIT_REQUEST;
 }
 
-bool sched_is_waiting_request(tcb_t *tcb)
+bool sched_is_waiting_data_av(tcb_t *tcb)
 {
 	return tcb->scheduler.waiting_msg == SCHED_WAIT_DATA_AV;
 }
@@ -113,7 +117,7 @@ void sched_report_slack_time()
 	packet->service = SLACK_TIME_REPORT;
 	packet->cpu_slack_time = ((total_slack_time*100) / PKG_SLACK_TIME_WINDOW);
 
-	send_packet(packet, 0, 0);
+	pkt_send(packet, 0, 0);
 
 	total_slack_time = 0;
 }
@@ -312,7 +316,7 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 				tasks[i].scheduler.remaining_exec_time = 0;
 				tasks[i].scheduler.status = SCHED_SLEEPING;
 
-				sched_update_slack_time(&tasks[i], current_time);
+				sched_update_task_slack_time(&tasks[i], current_time);
 
 			} else {
 				/* However, if the task has not finished its execution, it goes to READY again */
@@ -335,12 +339,13 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 
 		/* For all real-time task that are not SLEEPING, the slack time must be updated at each scheduler call */
 		if(tasks[i].scheduler.status != SCHED_SLEEPING)
-			sched_update_slack_time(&tasks[i], current_time);
+			sched_update_task_slack_time(&tasks[i], current_time);
 		
 	}
 }
 
-void sched_update_slack_time(tcb_t *task, unsigned int current_time){
+void sched_update_task_slack_time(tcb_t *task, unsigned int current_time)
+{
 	int relative_deadline = task->scheduler.ready_time + task->scheduler.deadline;
 	int time_until_deadline = relative_deadline - current_time;
 

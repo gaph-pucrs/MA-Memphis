@@ -31,10 +31,10 @@
 
 #include <stdbool.h>
 
-#include "task_control.h"
+/* Forward Declaration */
+typedef struct _tcb tcb_t;
 
-const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
-const int SCHED_MAX_TIME_SLICE = 16318;	//!< Standard time slice value for task execution
+#define SCHED_MAX_TIME_SLICE 16318	//!< Standard time slice value for task execution
 
 /**
  * @brief Reasons the task can be blocked for a message synchronization.
@@ -283,7 +283,7 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead);
  * @param task Pointer to the TCB
  * @param current_time Current system time
  */
-void sched_update_slack_time(tcb_t *task, unsigned int current_time){
+void sched_update_task_slack_time(tcb_t *task, unsigned int current_time);
 
 /**
  * @brief This algorithm tries to give an extra time slice to task selected by LST.

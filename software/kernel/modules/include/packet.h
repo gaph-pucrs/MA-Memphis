@@ -18,8 +18,6 @@
 
 #include <stdbool.h>
 
-const uint8_t PKT_SLOTS = 2;
-
 /**
  * @brief This structure is to be filled by the software when needed to send a 
  * packet, or that will be read when the packet is received.
@@ -126,9 +124,4 @@ packet_t *pkt_slot_get();
  * @param buffer	Buffer to send. If single word, pointer to this word.
  * @param size		Size of the packet payload
  */
-void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size){
-
-
-void DMNI_read_data(unsigned int, unsigned int);
-
-void DMNI_send_data(unsigned int, unsigned int);
+void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size);

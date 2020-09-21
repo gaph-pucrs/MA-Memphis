@@ -15,10 +15,12 @@
 
 #include <stdbool.h>
 
-#include "task_control.h"
-
 /** @todo move to a proper API header */
-const uint16_t MSG_SIZE = 128;
+#define MSG_SIZE 128
+
+/* Forward declaration */
+typedef struct _tcb tcb_t;
+
 typedef struct _message {
 	uint16_t length;
 	hal_word_t msg[MSG_SIZE];

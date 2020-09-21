@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "data_available.h"
+#include "pkg.h"
 #include "pipe.h"
 #include "message_request.h"
+#include "data_available.h"
 #include "task_scheduler.h"
-#include "pkg.h"
 
 /** @brief This structure stores information of the running tasks */
 typedef struct _tcb {
@@ -99,6 +99,17 @@ tcb_t *tcb_free_get();
 void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
 
 /**
+ * @brief Clears the TCB to allocate a migrated task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param id ID of the task
+ * @param code_sz Size of the code section
+ * @param mapper_tak ID of the mapper task
+ * @param mapper_addr Address of the mapper task
+ */
+void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+
+/**
  * @brief Updates the TCB with proper section sizes
  * 
  * @param tcb Pointer to the TCB
@@ -159,6 +170,15 @@ int tcb_get_migrate_addr(tcb_t *tcb);
  * @param addr Address of the target. -1 to disable.
  */
 void tcb_set_migrate_addr(tcb_t *tcb, int addr);
+
+/**
+ * @brief Gets the program counter of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Value of the pc
+ */
+hal_word_t tcb_get_pc(tcb_t *tcb);
 
 /**
  * @brief Gets the stack pointer of a task

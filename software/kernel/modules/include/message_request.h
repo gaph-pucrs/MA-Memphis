@@ -13,7 +13,8 @@
 
 #pragma once
 
-#include "task_control.h"
+/* Forward Declaration */
+typedef struct _tcb tcb_t;
 
 /**
  * @brief This structure stores the message requests used to implement the blocking Receive MPI

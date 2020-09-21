@@ -55,6 +55,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task);
  * @param length Length of the message received
  * 
  * @return True if the scheduler should be called
+ */
 bool os_message_delivery(int cons_task, hal_word_t length);
 
 /**

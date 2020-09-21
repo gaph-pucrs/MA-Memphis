@@ -13,9 +13,11 @@
 
 #include <stddef.h>
 
+#include "task_control.h"
 #include "pipe.h"
 #include "services.h"
 #include "packet.h"
+#include "utils.h"
 
 void pipe_init(tcb_t *tcb)
 {

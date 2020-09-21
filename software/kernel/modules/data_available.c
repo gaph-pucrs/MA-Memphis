@@ -14,8 +14,10 @@
 #include <stddef.h>
 
 #include "data_available.h"
+#include "task_control.h"
 #include "services.h"
 #include "packet.h"
+#include "utils.h"
 
 void data_av_init(tcb_t *tcb)
 {

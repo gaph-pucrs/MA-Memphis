@@ -13,10 +13,12 @@
 
 #include <stddef.h>
 
+#include "task_control.h"
 #include "message_request.h"
 #include "pkg.h"
 #include "services.h"
 #include "packet.h"
+#include "utils.h"
 
 void mr_init(tcb_t *tcb)
 {

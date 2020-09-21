@@ -16,6 +16,9 @@
 #include "services.h"
 #include "task_control.h"
 #include "syscall.h"
+#include "task_location.h"
+#include "utils.h"
+#include "task_migration.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -37,6 +40,9 @@ int os_syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3)
 			return os_echo(a1);
 		case REALTIME:
 			return os_realtime(a1, a2, a3);
+		default:
+			puts("ERROR: Unknown service\n");
+			return 0;
 	}
 }
 
@@ -44,7 +50,7 @@ bool os_exit()
 {
 	schedule_after_syscall = true;
 
-	tcb_t *current = tcb_get_current();
+	tcb_t *current = sched_get_current();
 
 	/* Avoid sending a packet while DMNI is busy */
 	/* Don't erase task with message in pipe */
@@ -74,7 +80,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 		cons_task |= (current->id & 0xFF00);
 
 
-	int cons_addr = get_task_location(cons_task);
+	int cons_addr = tl_search(current, cons_task);
 
 	/* Check if consumer task is allocated */
 	if(cons_addr == -1){		
@@ -88,7 +94,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 	}
 
 	/* Points the message in the task page. Address composition: offset + msg address */
-	message_t *message = tcb_get_offset(current) | msg_ptr;
+	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 
 	/* Test if the application passed a invalid message lenght */
 	if(message->length > MSG_SIZE || message->length < 0){
@@ -114,7 +120,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 			sched_release_wait(cons_tcb);
 
 			if(tcb_need_migration(cons_tcb)){
-				migration_dynamic_memory(cons_tcb);
+				tm_migrate(cons_tcb);
 				schedule_after_syscall = 1;
 			}
 		} else {	/* Remote consumer */
@@ -220,7 +226,7 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 
 		} else {
 			/* Message was found in pipe, writes to the consumer page address (local producer) */
-			message_t *message = tcb_get_offset(current) | msg_ptr;
+			message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 			message_t *msg_src = pipe_get_message(pipe);
 
 			pipe_transfer(msg_src, message);
@@ -270,7 +276,7 @@ bool os_echo(hal_word_t msg_ptr)
 	 * @todo Add a printf function that calls the os_echo and a "backend" for 
 	 * OS messages
 	 */
-	tcb_t *current = sched_get_current_id();
+	tcb_t *current = sched_get_current();
 	int id = sched_get_current_id();
 	puts("$$$_");
 	puts(itoa(*HAL_NI_CONFIG >> 8));
@@ -281,7 +287,7 @@ bool os_echo(hal_word_t msg_ptr)
 	puts("_");
 	puts(itoa(id & 0xFF));
 	puts("_");
-	puts(tcb_get_offset(current) | msg_ptr);
+	puts((char*)(tcb_get_offset(current) | msg_ptr));
 	puts("\n");
 
 	return true;

@@ -17,6 +17,8 @@
 #include "hal.h"
 #include "packet.h"
 
+#define PKT_SLOTS 2
+
 enum {
 	PKT_SLOT_A,
 	PKT_SLOT_B
@@ -77,34 +79,9 @@ void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size){
 
 	if(size > 0){
 		*HAL_DMNI_SIZE_2 = size;
-		*HAL_DMNI_ADDRESS_2 = buffer;
+		*HAL_DMNI_ADDRESS_2 = (hal_word_t)buffer;
 	}
 
 	*HAL_DMNI_OP = HAL_DMNI_READ;
 	*HAL_DMNI_START = 1;
 }
-
-
-
-
-
-
-
-
-
-/**Function that abstracts the DMNI programming for send data from memory to NoC
- * \param initial_address Initial memory address that will be transmitted to NoC
- * \param dmni_msg_size Data size, is represented in memory word of 32 bits
- */
-void DMNI_send_data(unsigned int initial_address, unsigned int dmni_msg_size){
-
-	while (MemoryRead(DMNI_SEND_ACTIVE));
-
-	MemoryWrite(DMNI_SIZE, dmni_msg_size);
-	MemoryWrite(DMNI_OP, READ);
-	MemoryWrite(DMNI_ADDRESS, initial_address);
-	MemoryWrite(DMNI_START, 1);
-}
-
-
-

@@ -17,7 +17,7 @@ void dmni_read(hal_word_t *payload_address, uint16_t payload_size)
 {
 	*HAL_DMNI_SIZE = payload_size;
 	*HAL_DMNI_OP = HAL_DMNI_WRITE;
-	*HAL_DMNI_ADDRESS = payload_address;
+	*HAL_DMNI_ADDRESS = (hal_word_t)payload_address;
 	*HAL_DMNI_START = 1;
 	while(*HAL_DMNI_RECEIVE_ACTIVE);
 }

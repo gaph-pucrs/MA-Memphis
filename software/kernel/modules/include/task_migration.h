@@ -73,6 +73,14 @@ void tm_send_tcb(tcb_t *tcb, int addr);
 void tm_send_tl(tcb_t *tcb, int addr);
 
 /**
+ * @brief Migrates the message request
+ * 
+ * @param tcb Pointer to the TCB
+ * @param addr Target address
+ */
+void tm_send_mr(tcb_t *tcb, int addr);
+
+/**
  * @brief Migrate the data available fifo
  * 
  * @param tcb Pointer to the TCB
