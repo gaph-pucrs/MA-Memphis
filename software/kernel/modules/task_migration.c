@@ -219,7 +219,7 @@ void tm_send_stack(tcb_t *tcb, int addr)
 	packet->task_ID = pipe_get_cons_task(tcb);
 	packet->stack_size = stack_len;
 
-	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len);
+	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
 }
 
 void tm_send_data_bss(tcb_t *tcb, int addr)

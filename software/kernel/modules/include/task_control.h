@@ -27,7 +27,7 @@ typedef struct _tcb {
 	hal_word_t pc;								//!< Register file
 	hal_word_t offset;			//!< Initial address of the task code in page
 
-	int id;					//!< TCB identifier
+	int id;						//!< TCB identifier
 	hal_word_t text_lenght;		//!< Memory TEXT section lenght in bytes
 	hal_word_t data_lenght;		//!< Memory DATA section lenght in bytes
 	hal_word_t bss_lenght;		//!< Memory BSS section lenght in bytes

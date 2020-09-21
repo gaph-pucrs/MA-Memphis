@@ -116,7 +116,7 @@ void sched_report_slack_time()
 	packet->service = SLACK_TIME_REPORT;
 	packet->cpu_slack_time = ((total_slack_time*100) / PKG_SLACK_TIME_WINDOW);
 
-	pkt_send(packet, 0, 0);
+	pkt_send(packet, NULL, 0);
 
 	total_slack_time = 0;
 }

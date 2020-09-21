@@ -62,9 +62,7 @@ bool os_exit()
 
 	sched_clear(current);
 
-	/**
-	 * @todo Should not it clean the TCB too?
-	 */
+	tcb_clear(current);
 
 	return true;
 }

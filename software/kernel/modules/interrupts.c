@@ -52,6 +52,7 @@ void os_isr(hal_word_t status)
 	} else if(status & HAL_IRQ_SLACK_TIME){
 		/* Send a monitoring packet */
 
+		/** @todo Send to whom? */
 		// sched_report_slack_time();
 		*HAL_SLACK_TIME_MONITOR = 0;
 	}
@@ -380,7 +381,7 @@ bool os_migration_stack(int id, hal_word_t stack_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len);
+	dmni_read((hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
 
 	return false;
 }
