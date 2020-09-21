@@ -38,36 +38,36 @@ all: $(MEMPHIS_TGT)
 	@cp $(MEMPHIS_TGT) ../base_scenario
 
 $(MEMPHIS_TGT): $(ROUTER_TGT) $(PROCESSOR_TGT) $(DMNI_TGT) $(MEMORY_TGT) $(PE_TGT) $(IO_TGT) $(TOP_TGT)
-	@printf "${COR}Generating %s ...${NC}\n" "$@"
-	g++ -I./ -o $@ $^ -L. -L$(SYSTEMC_HOME)/lib-linux64 -lsystemc
+	@printf "${COR}Linking %s ...${NC}\n" "$@"
+	@g++ -I./ -o $@ $^ -L. -L$(SYSTEMC_HOME)/lib-linux64 -lsystemc
 	
 $(TOP_TGT): $(TOP_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 	
 $(IO_TGT): $(IO_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
-	$(SC_C) $(dir $<)$(notdir $*).cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$(notdir $*).cpp"
+	@$(SC_C) $(dir $<)$(notdir $*).cpp
 
 $(PE_TGT): $(PE_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 
 $(DMNI_TGT): $(DMNI_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 
 $(MEMORY_TGT): $(MEMORY_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 
 $(PROCESSOR_TGT): $(PROCESSOR_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 
 $(ROUTER_TGT): $(ROUTER_SRC)
-	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$*.cpp"
-	$(SC_C) $(dir $<)$*.cpp
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(SC_C) $(dir $<)$*.cpp
 	
 
 clean:
