@@ -13,8 +13,6 @@
 
 #pragma once 
 
-#include "hal.h"
-
 #define MESSAGE_REQUEST 				0x00000010
 #define MESSAGE_DELIVERY				0x00000020
 #define TASK_ALLOCATION					0x00000040

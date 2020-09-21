@@ -18,6 +18,8 @@
 
 #include <stdbool.h>
 
+#include "hal.h"
+
 /**
  * @brief This structure is to be filled by the software when needed to send a 
  * packet, or that will be read when the packet is received.

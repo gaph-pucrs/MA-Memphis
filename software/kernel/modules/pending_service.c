@@ -12,7 +12,6 @@
  */
 
 #include "pending_service.h"
-#include "pkg.h"
 #include "utils.h"
 
 pending_svc_t pending_svcs;

@@ -11,7 +11,6 @@
  * @brief This module defines the task control block (TCB) functions.
  */
 
-#include <stdbool.h>
 #include <stddef.h>
 
 #include "task_control.h"

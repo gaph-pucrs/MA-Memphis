@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "hal.h"
+
 /* Forward Declaration */
 typedef struct _tcb tcb_t;
 

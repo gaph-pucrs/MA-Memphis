@@ -14,7 +14,6 @@
  * receive packets. It defines the service header of each packets.
  */
 
-#include "hal.h"
 #include "packet.h"
 
 #define PKT_SLOTS 2

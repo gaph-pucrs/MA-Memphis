@@ -49,6 +49,3 @@ bool pending_svc_push(const packet_t *packet);
  * @return Pointer to the next service. NULL if no service is pending.
  */
 packet_t *pending_svc_pop();
-
-
-// unsigned char add_pending_service(ServiceHeader *);

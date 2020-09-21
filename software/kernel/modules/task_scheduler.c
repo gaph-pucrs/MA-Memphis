@@ -17,11 +17,10 @@
 
 #include <stddef.h>
 
-#include "services.h"
-#include "packet.h"
 #include "task_scheduler.h"
+#include "packet.h"
+#include "services.h"
 #include "task_migration.h"
-#include "task_control.h"
 #include "utils.h"
 
 const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1

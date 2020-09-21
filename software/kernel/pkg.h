@@ -13,10 +13,8 @@
 
 #pragma once
 
-#include "hal.h"
-
-const uint8_t PKG_MAX_LOCAL_TASKS	= 1;		//!> Max task allowed to execute into a single processor
-const hal_word_t PKG_PAGE_SIZE		= 32768;	//!> The page size each task will have (inc. kernel)
-const uint8_t PKG_MAX_TASKS_APP		= 10;		//!> Max number of tasks for the APPs described into testcase file
-//const uint8_t PKG_PENDING_SVC_MAX 	= 20;	//!< Pending service array size
-// const uint16_t PKG_SLACK_TIME_WINDOW	= 50000; //!< Half millisecond
+#define PKG_MAX_LOCAL_TASKS		1		//!> Max task allowed to execute into a single processor
+#define PKG_PAGE_SIZE			32768	//!> The page size each task will have (inc. kernel)
+#define PKG_MAX_TASKS_APP		10		//!> Max number of tasks for the APPs described into testcase file
+#define PKG_PENDING_SVC_MAX 	20		//!< Pending service array size
+#define PKG_SLACK_TIME_WINDOW	50000	//!< Half millisecond

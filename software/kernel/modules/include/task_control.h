@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "pkg.h"
 #include "pipe.h"
 #include "message_request.h"
 #include "data_available.h"

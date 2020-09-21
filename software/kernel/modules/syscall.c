@@ -11,14 +11,11 @@
  * @brief Defines the syscall procedures of the kernel.
  */
 
-#include <stdbool.h>
-
-#include "services.h"
-#include "task_control.h"
 #include "syscall.h"
+#include "services.h"
 #include "task_location.h"
-#include "utils.h"
 #include "task_migration.h"
+#include "utils.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 

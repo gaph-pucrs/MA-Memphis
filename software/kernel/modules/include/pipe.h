@@ -15,6 +15,8 @@
 
 #include <stdbool.h>
 
+#include "hal.h"
+
 /** @todo move to a proper API header */
 #define MSG_SIZE 128
 

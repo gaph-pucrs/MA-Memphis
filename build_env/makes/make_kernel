@@ -17,7 +17,7 @@ TGTDIR = kernel
 MODDIR = $(TGTDIR)/modules
 HALDIR = $(TGTDIR)/hal/$(ARCH)
 
-INCLUDE = -I$(MODDIR)/include -I$(HALDIR)
+INCLUDE = -I$(MODDIR)/include -I$(HALDIR) -I$(TGTDIR)
 
 CCSRC = $(wildcard $(TGTDIR)/*.c) $(wildcard $(MODDIR)/*.c)
 CCOBJ = $(patsubst %.c,%.o, $(CCSRC))

@@ -31,6 +31,8 @@
 
 #include <stdbool.h>
 
+#include "hal.h"
+
 /* Forward Declaration */
 typedef struct _tcb tcb_t;
 

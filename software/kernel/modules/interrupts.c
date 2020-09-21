@@ -11,14 +11,13 @@
  * @brief Defines the interrupts procedures of the kernel.
  */
 
-#include "services.h"
-#include "task_control.h"
 #include "interrupts.h"
-#include "pending_service.h"
-#include "utils.h"
+#include "services.h"
 #include "task_migration.h"
-#include "task_location.h"
+#include "pending_service.h"
 #include "dmni.h"
+#include "task_location.h"
+#include "utils.h"
 
 void os_isr(hal_word_t status)
 {

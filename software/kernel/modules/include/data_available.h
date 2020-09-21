@@ -15,6 +15,7 @@
 
 #include <stdbool.h>
 
+#include "hal.h"
 #include "pkg.h"
 
 /* Forward declaration */

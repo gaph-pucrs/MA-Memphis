@@ -12,11 +12,9 @@
  */
 
 #include "hal.h"
-#include "utils.h"
-#include "packet.h"
-#include "task_control.h"
 #include "pending_service.h"
 #include "task_migration.h"
+#include "utils.h"
 
 int main()
 {

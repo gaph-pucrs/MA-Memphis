@@ -39,7 +39,6 @@ def generate_sw_pkg( yaml_r ):
     file_lines = []
     #---------------- C SINTAX ------------------
     file_lines.append("#pragma once\n")
-    file_lines.append("#include \"hal.h\"\n")
     file_lines.append("#define PKG_MAX_LOCAL_TASKS "+str(max_local_tasks)+" //!> Max task allowed to execute into a single processor\n")
     file_lines.append("#define PKG_PAGE_SIZE "+str(page_size_KB*1024)+" //!> The page size each task will have (inc. kernel)\n")
     file_lines.append("#define PKG_MAX_TASKS_APP "+str(10)+" //!> Max number of tasks for the APPs described into testcase file\n")
@@ -47,7 +46,7 @@ def generate_sw_pkg( yaml_r ):
     file_lines.append("#define PKG_SLACK_TIME_WINDOW "+str(50000)+" //!< Half millisecond\n")
     
     #Use this function to create any file into testcase, it automatically only updates the old file if necessary
-    writes_file_into_testcase("software/kernel/modules/include/pkg.h", file_lines)
+    writes_file_into_testcase("software/kernel/pkg.h", file_lines)
 
 #Generates the memory symbolic link
 def generate_memory( yaml_r ):
