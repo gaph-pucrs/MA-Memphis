@@ -23,8 +23,8 @@
 int puts(char *string) {
 	char *ptr = string;
 	while(true){
-		*HAL_UART_DATA = *((hal_word_t*)ptr);
-		for(int i = 0; i < sizeof(hal_word_t); i++){
+		HAL_UART_DATA = *((unsigned int*)ptr);
+		for(int i = 0; i < sizeof(unsigned int); i++){
 			if(!ptr[i])
 				return 0;
 		}

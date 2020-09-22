@@ -15,8 +15,6 @@
 
 #include <stdbool.h>
 
-#include "hal.h"
-
 /**
  * @brief Syscall function call. It choses a service and pass the right arguments
  * 
@@ -27,7 +25,7 @@
  * @param a2		Argument in the A2 register
  * @param a3		Argument in the A3 register
  */
-int os_syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3);
+int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3);
 
 /**
  * @brief Exit the task and deallocate resources
@@ -45,7 +43,7 @@ bool os_exit();
  * 
  * @return True if message sent (including stored in pipe). False if must retry
  */
-bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync);
+bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
 
 /**
  * @brief Receives a message
@@ -57,14 +55,14 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync);
  * @return True if read is sucess (including if waiting for delivery). False if
  * must retry
  */
-bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync);
+bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync);
 
 /**
  * @brief Get the tick count
  * 
  * @return Value of tick count
  */
-hal_word_t os_get_tick();
+unsigned int os_get_tick();
 
 /**
  * @brief Gets the application ID of a running task
@@ -80,7 +78,7 @@ int os_get_appid();
  * 
  * @return True
  */
-bool os_echo(hal_word_t msg_ptr);
+bool os_echo(unsigned int msg_ptr);
 
 /**
  * @brief Configures a task real time
@@ -91,4 +89,4 @@ bool os_echo(hal_word_t msg_ptr);
  * 
  * @return True.
  */
-bool os_realtime(hal_word_t period, int deadline, hal_word_t exec_time);
+bool os_realtime(unsigned int period, int deadline, unsigned int exec_time);

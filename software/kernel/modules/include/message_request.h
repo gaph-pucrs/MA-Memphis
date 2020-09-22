@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include "hal.h"
-
 /* Forward Declaration */
 typedef struct _tcb tcb_t;
 
@@ -78,4 +76,4 @@ void mr_pop(message_request_t *request);
  * 
  * @return Number of pending requests
  */
-hal_word_t mr_defrag(tcb_t *tcb);
+unsigned int mr_defrag(tcb_t *tcb);

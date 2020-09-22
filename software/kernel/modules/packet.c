@@ -15,6 +15,7 @@
  */
 
 #include "packet.h"
+#include "hal.h"
 
 #define PKT_SLOTS 2
 
@@ -27,7 +28,7 @@ pkt_slot_t pkt_slots[PKT_SLOTS];		//!< Packet send control.
 
 // unsigned int global_inst = 0;			//!<Global CPU instructions counter
 
-const hal_word_t PKT_SIZE = 13; //!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
+const unsigned int PKT_SIZE = 13; //!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
 
 void pkt_init()
 {
@@ -38,13 +39,13 @@ void pkt_init()
 packet_t pkt_read(){
 	volatile packet_t packet;
 	
-	*HAL_DMNI_SIZE = PKT_SIZE;
-	*HAL_DMNI_OP = HAL_DMNI_WRITE;
-	*HAL_DMNI_ADDRESS = (hal_word_t)&packet;
-	*HAL_DMNI_START = 1;
+	HAL_DMNI_SIZE = PKT_SIZE;
+	HAL_DMNI_OP = HAL_DMNI_WRITE;
+	HAL_DMNI_ADDRESS = (unsigned int)&packet;
+	HAL_DMNI_START = 1;
 	
 	/* Wait for data transfer */
-	while(*HAL_DMNI_RECEIVE_ACTIVE);
+	while(HAL_DMNI_RECEIVE_ACTIVE);
 
 	return packet;
 }
@@ -62,25 +63,25 @@ packet_t *pkt_slot_get()
 	}
 }
 
-void pkt_send(packet_t *packet, hal_word_t *buffer, hal_word_t size){
+void pkt_send(packet_t *packet, unsigned int *buffer, unsigned int size){
 
 	packet->payload_size = (PKT_SIZE - 2) + size;
 	packet->transaction = 0;
-	packet->source_PE = *HAL_NI_CONFIG;
+	packet->source_PE = HAL_NI_CONFIG;
 
 	/* Wait for DMNI be release */
-	while(*HAL_DMNI_SEND_ACTIVE);
+	while(HAL_DMNI_SEND_ACTIVE);
 
-	packet->timestamp = *HAL_TICK_COUNTER;
+	packet->timestamp = HAL_TICK_COUNTER;
 
-	*HAL_DMNI_SIZE = PKT_SIZE;
-	*HAL_DMNI_ADDRESS = (hal_word_t)packet;
+	HAL_DMNI_SIZE = PKT_SIZE;
+	HAL_DMNI_ADDRESS = (unsigned int)packet;
 
 	if(size > 0){
-		*HAL_DMNI_SIZE_2 = size;
-		*HAL_DMNI_ADDRESS_2 = (hal_word_t)buffer;
+		HAL_DMNI_SIZE_2 = size;
+		HAL_DMNI_ADDRESS_2 = (unsigned int)buffer;
 	}
 
-	*HAL_DMNI_OP = HAL_DMNI_READ;
-	*HAL_DMNI_START = 1;
+	HAL_DMNI_OP = HAL_DMNI_READ;
+	HAL_DMNI_START = 1;
 }

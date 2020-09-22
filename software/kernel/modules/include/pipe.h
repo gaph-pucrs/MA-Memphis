@@ -15,8 +15,6 @@
 
 #include <stdbool.h>
 
-#include "hal.h"
-
 /** @todo move to a proper API header */
 #define MSG_SIZE 128
 
@@ -24,8 +22,8 @@
 typedef struct _tcb tcb_t;
 
 typedef struct _message {
-	uint16_t length;
-	hal_word_t msg[MSG_SIZE];
+	unsigned short length;
+	unsigned int msg[MSG_SIZE];
 } message_t;
 
 /**
@@ -124,7 +122,7 @@ void pipe_set_cons_task(tcb_t *tcb, int cons_task);
  * 
  * @return Value of the length of the message
  */
-hal_word_t pipe_get_message_len(tcb_t *tcb);
+unsigned int pipe_get_message_len(tcb_t *tcb);
 
 /**
  * @brief Sets the message length in pipe
@@ -132,4 +130,4 @@ hal_word_t pipe_get_message_len(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  * @param len Length of the message
  */
-void pipe_set_message_len(tcb_t *tcb, hal_word_t len);
+void pipe_set_message_len(tcb_t *tcb, unsigned int len);

@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "hal.h"
 #include "packet.h"
 
 /**
@@ -24,7 +23,7 @@
  * 
  * @param status Status of the interruption. Signals the interruption type.
  */
-void os_isr(hal_word_t status);
+void os_isr(unsigned int status);
 
 /** 
  * @brief Handles the packet coming from the NoC.
@@ -56,7 +55,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task);
  * 
  * @return True if the scheduler should be called
  */
-bool os_message_delivery(int cons_task, hal_word_t length);
+bool os_message_delivery(int cons_task, unsigned int length);
 
 /**
  * @brief Handles a data available packet
@@ -91,7 +90,7 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr);
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_release(int id, int data_sz, int bss_sz, uint16_t task_number);
+bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number);
 
 /**
  * @brief Handles a update task location packet
@@ -125,7 +124,7 @@ bool os_task_migration(int id, int addr);
  * 
  * @return False
  */
-bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper_addr);
 
 /**
  * @brief Handles the TCB received from migration
@@ -138,7 +137,7 @@ bool os_migration_code(int id, hal_word_t code_sz, int mapper_task, int mapper_a
  *
  * @return False
  */
-bool os_migration_tcb(int id, hal_word_t pc, hal_word_t period, int deadline, hal_word_t exec_time);
+bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time);
 
 /**
  * @brief Handles the task location received from migration
@@ -148,7 +147,7 @@ bool os_migration_tcb(int id, hal_word_t pc, hal_word_t period, int deadline, ha
  * 
  * @return False
  */
-bool os_migration_tl(int id, hal_word_t tl_len);
+bool os_migration_tl(int id, unsigned int tl_len);
 
 /**
  * @brief Handles the message request received from migration
@@ -158,7 +157,7 @@ bool os_migration_tl(int id, hal_word_t tl_len);
  * 
  * @return False
  */
-bool os_migration_mr(int id, hal_word_t mr_len);
+bool os_migration_mr(int id, unsigned int mr_len);
 
 /**
  * @brief Handles the data available received from migration
@@ -168,7 +167,7 @@ bool os_migration_mr(int id, hal_word_t mr_len);
  * 
  * @return False
  */
-bool os_migration_data_av(int id , hal_word_t data_av_len);
+bool os_migration_data_av(int id , unsigned int data_av_len);
 
 /**
  * @brief Handles the pipe received from migration
@@ -179,7 +178,7 @@ bool os_migration_data_av(int id , hal_word_t data_av_len);
  * 
  * @return False
  */
-bool os_migration_pipe(int id, int cons_task, hal_word_t msg_len);
+bool os_migration_pipe(int id, int cons_task, unsigned int msg_len);
 
 /**
  * @brief Handles the stack received from migration
@@ -189,7 +188,7 @@ bool os_migration_pipe(int id, int cons_task, hal_word_t msg_len);
  * 
  * @return False
  */
-bool os_migration_stack(int id, hal_word_t stack_len);
+bool os_migration_stack(int id, unsigned int stack_len);
 
 /**
  * @brief Handles the data and bss received from migration
@@ -201,4 +200,4 @@ bool os_migration_stack(int id, hal_word_t stack_len);
  * 
  * @return True
  */
-bool os_migration_data_bss(int id, hal_word_t data_len, hal_word_t bss_len, int source);
+bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, int source);

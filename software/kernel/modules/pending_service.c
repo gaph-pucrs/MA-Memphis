@@ -12,6 +12,7 @@
  */
 
 #include "pending_service.h"
+#include "hal.h"
 #include "utils.h"
 
 pending_svc_t pending_svcs;
@@ -39,7 +40,7 @@ bool pending_svc_push(const packet_t *packet){
 	pending_svcs.empty = false;
 
 	//puts("Interruption set ON\n");
-	*HAL_PENDING_SERVICE_INTR = 1;
+	HAL_PENDING_SERVICE_INTR = 1;
 
 	return true;
 }
@@ -56,7 +57,7 @@ packet_t *pending_svc_pop()
 		pending_svcs.empty = true;
 
 		/* No more pending packets. Unset interrupt flag */
-		*HAL_PENDING_SERVICE_INTR = 0;
+		HAL_PENDING_SERVICE_INTR = 0;
 	}
 
 	pending_svcs.full = false;

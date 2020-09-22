@@ -19,7 +19,7 @@
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
-int os_syscall(hal_word_t service, hal_word_t a1, hal_word_t a2, hal_word_t a3)
+int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
 {
 	schedule_after_syscall = false;
 	switch(service){
@@ -51,14 +51,14 @@ bool os_exit()
 
 	/* Avoid sending a packet while DMNI is busy */
 	/* Don't erase task with message in pipe */
-	if(*HAL_DMNI_SEND_ACTIVE || pipe_is_full(current))
+	if(HAL_DMNI_SEND_ACTIVE || pipe_is_full(current))
 		return false;
 
 	/* Send TASK_TERMINATED */
 	/** @todo Should be wrapped in a DATA_AV */
 	tl_send_terminated(current);
 
-	puts("Task id: "); puts(itoa(current->id)); putsv(" terminated at ", *HAL_TICK_COUNTER);
+	puts("Task id: "); puts(itoa(current->id)); putsv(" terminated at ", HAL_TICK_COUNTER);
 
 	sched_clear(current);
 
@@ -67,7 +67,7 @@ bool os_exit()
 	return true;
 }
 
-bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
+bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 {
 	tcb_t *current = sched_get_current();
 
@@ -101,7 +101,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 	message_request_t *request = mr_peek(current, cons_task);
 
 	if(request){	/* Message request found! */
-		if(request->requester_address == *HAL_NI_CONFIG){ /* Local consumer */
+		if(request->requester_address == HAL_NI_CONFIG){ /* Local consumer */
 			/* Writes to the consumer page address */
 			tcb_t *cons_tcb = tcb_search(cons_task);
 			message_t *msg_dst = tcb_get_message(cons_tcb);
@@ -124,7 +124,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 
 			/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
 			/* Also, don't send a message if the previous is still in pipe */
-			if(*HAL_DMNI_SEND_ACTIVE || pipe_is_full(current))
+			if(HAL_DMNI_SEND_ACTIVE || pipe_is_full(current))
 				return false;
 
 			/* Insert the message in the pipe to avoid overwrite by task */
@@ -137,15 +137,15 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 			mr_pop(request);
 		}
 
-	} else if(!pipe_is_full(current) && !*HAL_DMNI_SEND_ACTIVE){	/* Pipe is free */
+	} else if(!pipe_is_full(current) && !HAL_DMNI_SEND_ACTIVE){	/* Pipe is free */
 		if(sync){
 			int prod_task = sched_get_current_id();
-			if(cons_addr == *HAL_NI_CONFIG){
+			if(cons_addr == HAL_NI_CONFIG){
 				/* Insert a DATA_AV to consumer table */
 				tcb_t *cons_tcb = tcb_search(cons_task);
 
 				/* Insert DATA_AV to the consumer TCB */
-				data_av_insert(cons_tcb, prod_task, *HAL_NI_CONFIG);
+				data_av_insert(cons_tcb, prod_task, HAL_NI_CONFIG);
 				
 				/* If consumer waiting for a DATA_AV, release the task */
 				if(sched_is_waiting_data_av(cons_tcb))
@@ -153,7 +153,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 
 			} else {
 				/* Send DATA_AV to consumer PE */
-				data_av_send(cons_task, prod_task, cons_addr, *HAL_NI_CONFIG);
+				data_av_send(cons_task, prod_task, cons_addr, HAL_NI_CONFIG);
 			}
 		}
 
@@ -174,7 +174,7 @@ bool os_writepipe(hal_word_t msg_ptr, int cons_task, bool sync)
 	return true;
 }
 
-bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
+bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 {
 	tcb_t *current = sched_get_current();
 	int cons_task = sched_get_current_id();
@@ -207,7 +207,7 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 		prod_addr = data_av->requester_addr;
 	}
 
-	if(prod_addr == *HAL_NI_CONFIG){	/* Local producer */
+	if(prod_addr == HAL_NI_CONFIG){	/* Local producer */
 
 		/* Get the producer TCB */
 		tcb_t *prod_tcb = tcb_search(prod_task);
@@ -217,7 +217,7 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 
 		if(!pipe){
 			/* Stores the request into the message request table */
-			mr_insert(prod_tcb, cons_task, *HAL_NI_CONFIG);
+			mr_insert(prod_tcb, cons_task, HAL_NI_CONFIG);
 
 		} else {
 			/* Message was found in pipe, writes to the consumer page address (local producer) */
@@ -235,7 +235,7 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 	} else { /* Remote producer : Sends the message request */
 
 		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-		if(*HAL_DMNI_SEND_ACTIVE)
+		if(HAL_DMNI_SEND_ACTIVE)
 			return false;
 		
 		if(sync){
@@ -244,7 +244,7 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 		}
 
 		/* Send the message request through NoC */
-		mr_send(prod_task, cons_task, prod_addr, *HAL_NI_CONFIG);
+		mr_send(prod_task, cons_task, prod_addr, HAL_NI_CONFIG);
 	}
 
 	/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
@@ -254,9 +254,9 @@ bool os_readpipe(hal_word_t msg_ptr, int prod_task, bool sync)
 	return true;
 }
 
-hal_word_t os_get_tick()
+unsigned int os_get_tick()
 {
-	return *HAL_TICK_COUNTER;
+	return HAL_TICK_COUNTER;
 }
 
 int os_get_appid()
@@ -265,7 +265,7 @@ int os_get_appid()
 	return tcb_get_appid(current);
 }
 
-bool os_echo(hal_word_t msg_ptr)
+bool os_echo(unsigned int msg_ptr)
 {
 	/** 
 	 * @todo Add a printf function that calls the os_echo and a "backend" for 
@@ -274,9 +274,9 @@ bool os_echo(hal_word_t msg_ptr)
 	tcb_t *current = sched_get_current();
 	int id = sched_get_current_id();
 	puts("$$$_");
-	puts(itoa(*HAL_NI_CONFIG >> 8));
+	puts(itoa(HAL_NI_CONFIG >> 8));
 	puts("x");
-	puts(itoa(*HAL_NI_CONFIG & 0xFF));
+	puts(itoa(HAL_NI_CONFIG & 0xFF));
 	puts("_");
 	puts(itoa(id >> 8));
 	puts("_");
@@ -288,7 +288,7 @@ bool os_echo(hal_word_t msg_ptr)
 	return true;
 }
 
-bool os_realtime(hal_word_t period, int deadline, hal_word_t exec_time)
+bool os_realtime(unsigned int period, int deadline, unsigned int exec_time)
 {
 	tcb_t *current = sched_get_current();
 	sched_real_time_task(current, period, deadline, exec_time);

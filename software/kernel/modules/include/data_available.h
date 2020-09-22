@@ -15,7 +15,6 @@
 
 #include <stdbool.h>
 
-#include "hal.h"
 #include "pkg.h"
 
 /* Forward declaration */
@@ -28,8 +27,8 @@ typedef struct _data_av {
 
 typedef struct _data_av_fifo {
 	data_av_t buffer[PKG_MAX_TASKS_APP];
-	unsigned int head;
-	unsigned int tail;
+	unsigned char head;
+	unsigned char tail;
 	bool empty;
 	bool full;
 } data_av_fifo_t;
@@ -87,7 +86,7 @@ data_av_t *data_av_peek(tcb_t *tcb);
  * 
  * @return Lenght of the fifo from head to end
  */
-hal_word_t data_av_get_len_head_end(tcb_t *tcb);
+unsigned int data_av_get_len_head_end(tcb_t *tcb);
 
 /**
  * @brief Gets the length between the start and the tail of the fifo
@@ -96,7 +95,7 @@ hal_word_t data_av_get_len_head_end(tcb_t *tcb);
  * 
  * @return Lenght of the fifo from start to tail
  */
-hal_word_t data_av_get_len_start_tail(tcb_t *tcb);
+unsigned int data_av_get_len_start_tail(tcb_t *tcb);
 
 /**
  * @brief Get the pointer to the head of the fifo
@@ -131,4 +130,4 @@ data_av_t *data_av_get_buffer_tail(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  * @param len Value to add to the tail
  */
-void data_av_add_tail(tcb_t *tcb, hal_word_t len);
+void data_av_add_tail(tcb_t *tcb, unsigned int len);

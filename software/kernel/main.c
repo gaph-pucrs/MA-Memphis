@@ -20,7 +20,7 @@ int main()
 {
     hal_disable_interrupts();
 
-	puts("Initializing PE: "); puts(itoh(*HAL_NI_CONFIG)); puts("\n");
+	puts("Initializing PE: "); puts(itoh(HAL_NI_CONFIG)); puts("\n");
 
 	pkt_init();
 
@@ -32,14 +32,14 @@ int main()
 
 	tm_init();
 
-	*HAL_IRQ_MASK = (
+	HAL_IRQ_MASK = (
 		HAL_IRQ_SCHEDULER | 
 		HAL_IRQ_NOC | 
 		HAL_IRQ_PENDING_SERVICE | 
 		HAL_IRQ_SLACK_TIME
 	);
 	
-	hal_run_task((hal_word_t*)sched_get_current());
+	hal_run_task((void*)sched_get_current());
 
 	while(true);
 	return 0;

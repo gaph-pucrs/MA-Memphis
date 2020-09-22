@@ -41,7 +41,7 @@ void sched_init()
 
 	current = tcb_get_idle();
 	total_slack_time = 0;
-	last_idle_time = *HAL_TICK_COUNTER;
+	last_idle_time = HAL_TICK_COUNTER;
 }
 
 void sched_clear(tcb_t *tcb)
@@ -75,7 +75,7 @@ bool sched_is_idle()
 
 void sched_update_slack_time()
 {
-	total_slack_time += *HAL_TICK_COUNTER - last_idle_time;
+	total_slack_time += HAL_TICK_COUNTER - last_idle_time;
 }
 
 bool sched_is_waiting_request(tcb_t *tcb)
@@ -123,7 +123,7 @@ void sched_report_slack_time()
 
 void sched_update_idle_time()
 {
-	last_idle_time = *HAL_TICK_COUNTER;
+	last_idle_time = HAL_TICK_COUNTER;
 }
 
 int sched_get_current_id()
@@ -154,7 +154,7 @@ void sched_set_wait_delivery(tcb_t *tcb)
 	tcb->scheduler.waiting_msg = SCHED_WAIT_DELIVERY;
 }
 
-hal_word_t sched_get_period(tcb_t *tcb)
+unsigned int sched_get_period(tcb_t *tcb)
 {
 	return tcb->scheduler.period;
 }
@@ -164,21 +164,21 @@ int sched_get_deadline(tcb_t *tcb)
 	return tcb->scheduler.deadline;
 }
 
-hal_word_t sched_get_exec_time(tcb_t *tcb)
+unsigned int sched_get_exec_time(tcb_t *tcb)
 {
 	return tcb->scheduler.execution_time;
 }
 
-void sched_set_remaining_time(tcb_t *tcb, hal_word_t timeslice)
+void sched_set_remaining_time(tcb_t *tcb, unsigned int timeslice)
 {
 	tcb->scheduler.remaining_exec_time = timeslice;
 }
 
 void sched_run()
 {
-	hal_word_t scheduler_call_time = *HAL_TICK_COUNTER;
+	unsigned int scheduler_call_time = HAL_TICK_COUNTER;
 
-	*HAL_SCHEDULING_REPORT = HAL_SCHEDULER;
+	HAL_SCHEDULING_REPORT = HAL_SCHEDULER;
 
 	if(tcb_need_migration(current) && current->scheduler.status == SCHED_RUNNING && current->scheduler.waiting_msg == 0)
 		tm_migrate(current);
@@ -187,19 +187,19 @@ void sched_run()
 
 	if(scheduled){
 		current = scheduled;
-		*HAL_SCHEDULING_REPORT = tcb_get_id(current);
+		HAL_SCHEDULING_REPORT = tcb_get_id(current);
 
 	} else {
 		/* Schedules the idle task */
 		current = tcb_get_idle();
-		last_idle_time = *HAL_TICK_COUNTER;
-        *HAL_SCHEDULING_REPORT = HAL_IDLE;
+		last_idle_time = HAL_TICK_COUNTER;
+        HAL_SCHEDULING_REPORT = HAL_IDLE;
 	}
 
-	*HAL_TIME_SLICE = time_slice;
+	HAL_TIME_SLICE = time_slice;
 
 	/* Set the scheduler interrupt mask */
-	*HAL_IRQ_MASK |= HAL_IRQ_SCHEDULER;
+	HAL_IRQ_MASK |= HAL_IRQ_SCHEDULER;
 }
 
 tcb_t *sched_lst(unsigned int current_time)
@@ -251,7 +251,7 @@ tcb_t *sched_lst(unsigned int current_time)
 
 		if(scheduled->scheduler.deadline != SCHED_NO_DEADLINE){
 			/* Sets the task running start time to the current time */
-			scheduled->scheduler.running_start_time = *HAL_TICK_COUNTER;
+			scheduled->scheduler.running_start_time = HAL_TICK_COUNTER;
 		}
 
 	} else { 
@@ -275,7 +275,7 @@ tcb_t *sched_lst(unsigned int current_time)
 			time_slice = SCHED_MAX_TIME_SLICE;
 	}
 
-	instant_overhead = *HAL_TICK_COUNTER - instant_overhead;
+	instant_overhead = HAL_TICK_COUNTER - instant_overhead;
 	schedule_overhead = (schedule_overhead + instant_overhead) / 2;
 
 	return scheduled;
@@ -386,7 +386,7 @@ void sched_dynamic_slice_time(tcb_t *scheduled, unsigned int time)
 
 void sched_real_time_task(tcb_t *task, unsigned int period, int deadline, unsigned int execution_time)
 {
-	unsigned int current_time = *HAL_TICK_COUNTER;
+	unsigned int current_time = HAL_TICK_COUNTER;
 
 	task->scheduler.period = period;
 	task->scheduler.deadline = deadline;

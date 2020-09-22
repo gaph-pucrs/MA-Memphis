@@ -74,7 +74,7 @@ int tl_search(tcb_t *tcb, int task);
  * 
  * @return Number of tasks in the task location array
  */
-hal_word_t tl_get_len(tcb_t *tcb);
+unsigned int tl_get_len(tcb_t *tcb);
 
 /**
  * @brief Gets the pointer to the task location array

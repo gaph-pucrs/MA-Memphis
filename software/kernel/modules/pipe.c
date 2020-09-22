@@ -28,7 +28,7 @@ pipe_t *pipe_pop(tcb_t *producer_tcb, int consumer_task)
 {
 	if(producer_tcb->pipe.consumer_task == consumer_task){
 		/* Only for debug purposes */
-		*HAL_REM_PIPE_DEBUG = (producer_tcb->id << 16) | (consumer_task & 0xFFFF);
+		HAL_REM_PIPE_DEBUG = (producer_tcb->id << 16) | (consumer_task & 0xFFFF);
 
 		producer_tcb->pipe.consumer_task = -1;
 
@@ -94,12 +94,12 @@ void pipe_set_cons_task(tcb_t *tcb, int cons_task)
 	tcb->pipe.consumer_task = cons_task;
 }
 
-hal_word_t pipe_get_message_len(tcb_t *tcb)
+unsigned int pipe_get_message_len(tcb_t *tcb)
 {
 	return tcb->pipe.message.length;
 }
 
-void pipe_set_message_len(tcb_t *tcb, hal_word_t len)
+void pipe_set_message_len(tcb_t *tcb, unsigned int len)
 {
 	tcb->pipe.message.length = len;
 }

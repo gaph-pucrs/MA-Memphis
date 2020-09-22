@@ -13,12 +13,10 @@
 
 #pragma once
 
-#include "hal.h"
-
 /**
  * @brief Abstracts the DMNI programming for read data from NoC and copy to memory.
  * 
  * @param payload_address	Address where the payload will be saved
  * @param payload_size		Number of bytes to copy
  */
-void dmni_read(hal_word_t *payload_address, uint16_t payload_size);
+void dmni_read(unsigned int *payload_address, unsigned short payload_size);

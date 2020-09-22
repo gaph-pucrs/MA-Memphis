@@ -23,8 +23,8 @@
  */
 typedef struct _pending_svc {
 	packet_t buffer[PKG_PENDING_SVC_MAX];	//!<pending services array declaration
-	uint8_t head;
-	uint8_t tail;
+	unsigned char head;
+	unsigned char tail;
 	bool empty;
 	bool full;
 } pending_svc_t;

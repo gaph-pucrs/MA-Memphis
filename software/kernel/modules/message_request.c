@@ -47,7 +47,7 @@ bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)
     		producer_tcb->message_request[i].requester_address  = consumer_addr;
 
     		/* Only for debug purposes */
-    		*HAL_ADD_REQUEST_DEBUG = (producer_tcb->id << 16) | (consumer_task & 0xFFFF);
+    		HAL_ADD_REQUEST_DEBUG = (producer_tcb->id << 16) | (consumer_task & 0xFFFF);
 
     		return true;
 		}
@@ -72,10 +72,10 @@ void mr_pop(message_request_t *request)
 	request->requester = -1;
 }
 
-hal_word_t mr_defrag(tcb_t *tcb)
+unsigned int mr_defrag(tcb_t *tcb)
 {
-	hal_word_t size = PKG_MAX_LOCAL_TASKS;
-	hal_word_t last_found = PKG_MAX_LOCAL_TASKS;
+	unsigned int size = PKG_MAX_LOCAL_TASKS;
+	unsigned int last_found = PKG_MAX_LOCAL_TASKS;
 	for(int i = 0; i < last_found; i++){
 		if(tcb->message_request[i].requester == -1){
 			/* Slot found */

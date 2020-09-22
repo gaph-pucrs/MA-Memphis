@@ -20,17 +20,18 @@
 #include "message_request.h"
 #include "data_available.h"
 #include "task_scheduler.h"
+#include "hal.h"
 
 /** @brief This structure stores information of the running tasks */
 typedef struct _tcb {
-	hal_word_t registers[HAL_MAX_REGISTERS];	//!< Register bank
-	hal_word_t pc;								//!< Register file
-	hal_word_t offset;			//!< Initial address of the task code in page
+	unsigned int registers[HAL_MAX_REGISTERS];	//!< Register bank
+	unsigned int pc;								//!< Register file
+	unsigned int offset;			//!< Initial address of the task code in page
 
 	int id;						//!< TCB identifier
-	hal_word_t text_lenght;		//!< Memory TEXT section lenght in bytes
-	hal_word_t data_lenght;		//!< Memory DATA section lenght in bytes
-	hal_word_t bss_lenght;		//!< Memory BSS section lenght in bytes
+	unsigned int text_lenght;		//!< Memory TEXT section lenght in bytes
+	unsigned int data_lenght;		//!< Memory DATA section lenght in bytes
+	unsigned int bss_lenght;		//!< Memory BSS section lenght in bytes
 
 	int mapper_address;
 	int mapper_task;
@@ -95,7 +96,7 @@ tcb_t *tcb_free_get();
  * @param mapper_task ID of the mapper task
  * @param mapper_addr Address of the mapper task
  */
-void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr);
 
 /**
  * @brief Clears the TCB to allocate a migrated task
@@ -106,7 +107,7 @@ void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapp
  * @param mapper_tak ID of the mapper task
  * @param mapper_addr Address of the mapper task
  */
-void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr);
+void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr);
 
 /**
  * @brief Updates the TCB with proper section sizes
@@ -115,7 +116,7 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task,
  * @param data_sz Size of the section data
  * @param bss_sz Size of the section bss
  */
-void tcb_update_sections(tcb_t *tcb, hal_word_t data_sz, hal_word_t bss_sz);
+void tcb_update_sections(tcb_t *tcb, unsigned int data_sz, unsigned int bss_sz);
 
 /**
  * @brief Gets the pointer to the message variable
@@ -133,7 +134,7 @@ message_t *tcb_get_message(tcb_t *tcb);
  * 
  * @return Address of the task offset
  */
-hal_word_t tcb_get_offset(tcb_t *tcb);
+unsigned int tcb_get_offset(tcb_t *tcb);
 
 /**
  * @brief Gets the application ID of a running task
@@ -177,7 +178,7 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr);
  * 
  * @return Value of the pc
  */
-hal_word_t tcb_get_pc(tcb_t *tcb);
+unsigned int tcb_get_pc(tcb_t *tcb);
 
 /**
  * @brief Gets the stack pointer of a task
@@ -186,7 +187,7 @@ hal_word_t tcb_get_pc(tcb_t *tcb);
  * 
  * @return Value of the stack pointer
  */
-hal_word_t tcb_get_sp(tcb_t *tcb);
+unsigned int tcb_get_sp(tcb_t *tcb);
 
 /**
  * @brief Gets the id of a task
@@ -205,7 +206,7 @@ int tcb_get_id(tcb_t *tcb);
  * 
  * @return Value of the register
  */
-hal_word_t tcb_get_reg(tcb_t *tcb, int idx);
+unsigned int tcb_get_reg(tcb_t *tcb, int idx);
 
 /**
  * @brief Gets the pointer to the message request
@@ -230,7 +231,7 @@ void tcb_clear(tcb_t *tcb);
  * 
  * @return Length of the code
  */
-hal_word_t tcb_get_code_length(tcb_t *tcb);
+unsigned int tcb_get_code_length(tcb_t *tcb);
 
 /**
  * @brief Gets the length of the data section
@@ -239,7 +240,7 @@ hal_word_t tcb_get_code_length(tcb_t *tcb);
  * 
  * @return Length of the data
  */
-hal_word_t tcb_get_data_length(tcb_t *tcb);
+unsigned int tcb_get_data_length(tcb_t *tcb);
 
 /**
  * @brief Gets the length of the bss section
@@ -248,7 +249,7 @@ hal_word_t tcb_get_data_length(tcb_t *tcb);
  * 
  * @return Length of the bss
  */
-hal_word_t tcb_get_bss_length(tcb_t *tcb);
+unsigned int tcb_get_bss_length(tcb_t *tcb);
 
 /**
  * @brief Sets the program counter of a task
@@ -258,7 +259,7 @@ hal_word_t tcb_get_bss_length(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  * @param pc Address to write to PC
  */
-void tcb_set_pc(tcb_t *tcb, hal_word_t pc);
+void tcb_set_pc(tcb_t *tcb, unsigned int pc);
 
 /**
  * @brief Sets the stack pointer of a task
@@ -268,4 +269,4 @@ void tcb_set_pc(tcb_t *tcb, hal_word_t pc);
  * @param tcb Pointer to the TCB
  * @param sp Value of the stack pointer
  */
-void tcb_set_sp(tcb_t *tcb, hal_word_t sp);
+void tcb_set_sp(tcb_t *tcb, unsigned int sp);

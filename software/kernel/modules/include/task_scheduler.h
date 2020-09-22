@@ -31,8 +31,6 @@
 
 #include <stdbool.h>
 
-#include "hal.h"
-
 /* Forward Declaration */
 typedef struct _tcb tcb_t;
 
@@ -213,7 +211,7 @@ void sched_set_wait_delivery(tcb_t *tcb);
  * 
  * @return Value of the period
  */
-hal_word_t sched_get_period(tcb_t *tcb);
+unsigned int sched_get_period(tcb_t *tcb);
 
 /**
  * @brief Gets the deadline constraint of a RT task
@@ -231,7 +229,7 @@ int sched_get_deadline(tcb_t *tcb);
  * 
  * @return Value of the execution time
  */
-hal_word_t sched_get_exec_time(tcb_t *tcb);
+unsigned int sched_get_exec_time(tcb_t *tcb);
 
 /**
  * @brief Sets the remaining execution time of a task
@@ -239,7 +237,7 @@ hal_word_t sched_get_exec_time(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  * @param timeslice Value to set to the remaining execution time
  */
-void sched_set_remaining_time(tcb_t *tcb, hal_word_t timeslice);
+void sched_set_remaining_time(tcb_t *tcb, unsigned int timeslice);
 
 /**
  * @brief Runs the scheduler to set the current running task

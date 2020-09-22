@@ -70,7 +70,7 @@ int tl_search(tcb_t *tcb, int task)
 	return tcb->task_location[task & 0x00FF];
 }
 
-hal_word_t tl_get_len(tcb_t *tcb)
+unsigned int tl_get_len(tcb_t *tcb)
 {
 	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
 		if(tcb->task_location[i] == -1)

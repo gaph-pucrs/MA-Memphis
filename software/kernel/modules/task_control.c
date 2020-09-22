@@ -22,12 +22,12 @@ tcb_t tcbs[PKG_MAX_LOCAL_TASKS];	//!< TCB array
 void tcb_idle_task()
 {
 	while(true)
-		*HAL_CLOCK_HOLD = 1;
+		HAL_CLOCK_HOLD = 1;
 }
 
 void tcb_init()
 {
-	idle_tcb.pc = (hal_word_t)&tcb_idle_task;
+	idle_tcb.pc = (unsigned int)&tcb_idle_task;
 	idle_tcb.id = 0;
 	idle_tcb.offset = 0;
 	idle_tcb.proc_to_migrate = -1;
@@ -72,7 +72,7 @@ tcb_t* tcb_free_get()
     return NULL;
 }
 
-void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr)
+void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
 {
 	tcb->pc = 0;
 	tcb->id = id;
@@ -84,7 +84,7 @@ void tcb_alloc(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapp
 	tcb->mapper_task = mapper_task;
 }
 
-void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task, int mapper_addr)
+void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
 {
 	tcb->scheduler.status = SCHED_MIGRATING;
 	tcb->id = id;
@@ -93,7 +93,7 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, hal_word_t code_sz, int mapper_task,
 	tcb->mapper_address = mapper_addr;
 }
 
-void tcb_update_sections(tcb_t *tcb, hal_word_t data_sz, hal_word_t bss_sz)
+void tcb_update_sections(tcb_t *tcb, unsigned int data_sz, unsigned int bss_sz)
 {
 	tcb->data_lenght = data_sz;
 	tcb->bss_lenght = bss_sz;
@@ -105,7 +105,7 @@ message_t *tcb_get_message(tcb_t *tcb)
 	return (message_t*)(tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1]);
 }
 
-hal_word_t tcb_get_offset(tcb_t *tcb)
+unsigned int tcb_get_offset(tcb_t *tcb)
 {
 	return tcb->offset;
 }
@@ -130,12 +130,12 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr)
 	tcb->proc_to_migrate = addr;
 }
 
-hal_word_t tcb_get_pc(tcb_t *tcb)
+unsigned int tcb_get_pc(tcb_t *tcb)
 {
 	return tcb->pc;
 }
 
-hal_word_t tcb_get_sp(tcb_t *tcb)
+unsigned int tcb_get_sp(tcb_t *tcb)
 {
 	return tcb->registers[HAL_REG_SP];
 }
@@ -145,7 +145,7 @@ int tcb_get_id(tcb_t *tcb)
 	return tcb->id;
 }
 
-hal_word_t tcb_get_reg(tcb_t *tcb, int idx)
+unsigned int tcb_get_reg(tcb_t *tcb, int idx)
 {
 	return tcb->registers[idx];
 }
@@ -162,27 +162,27 @@ void tcb_clear(tcb_t *tcb)
 	tcb->proc_to_migrate = -1;
 }
 
-hal_word_t tcb_get_code_length(tcb_t *tcb)
+unsigned int tcb_get_code_length(tcb_t *tcb)
 {
 	return tcb->text_lenght;
 }
 
-hal_word_t tcb_get_data_length(tcb_t *tcb)
+unsigned int tcb_get_data_length(tcb_t *tcb)
 {
 	return tcb->data_lenght;
 }
 
-hal_word_t tcb_get_bss_length(tcb_t *tcb)
+unsigned int tcb_get_bss_length(tcb_t *tcb)
 {
 	return tcb->bss_lenght;
 }
 
-void tcb_set_pc(tcb_t *tcb, hal_word_t pc)
+void tcb_set_pc(tcb_t *tcb, unsigned int pc)
 {
 	tcb->pc = pc + tcb->offset;
 }
 
-void tcb_set_sp(tcb_t *tcb, hal_word_t sp)
+void tcb_set_sp(tcb_t *tcb, unsigned int sp)
 {
 	tcb->registers[HAL_REG_SP] = sp + tcb->offset;
 }

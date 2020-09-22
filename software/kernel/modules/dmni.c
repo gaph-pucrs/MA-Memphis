@@ -12,12 +12,13 @@
  */
 
 #include "dmni.h"
+#include "hal.h"
 
-void dmni_read(hal_word_t *payload_address, uint16_t payload_size)
+void dmni_read(unsigned int *payload_address, unsigned short payload_size)
 {
-	*HAL_DMNI_SIZE = payload_size;
-	*HAL_DMNI_OP = HAL_DMNI_WRITE;
-	*HAL_DMNI_ADDRESS = (hal_word_t)payload_address;
-	*HAL_DMNI_START = 1;
-	while(*HAL_DMNI_RECEIVE_ACTIVE);
+	HAL_DMNI_SIZE = payload_size;
+	HAL_DMNI_OP = HAL_DMNI_WRITE;
+	HAL_DMNI_ADDRESS = (unsigned int)payload_address;
+	HAL_DMNI_START = 1;
+	while(HAL_DMNI_RECEIVE_ACTIVE);
 }

@@ -78,7 +78,7 @@ void tm_migrate(tcb_t *tcb)
 	 * Where is CODE (.text) ?!?!?
 	 */
 
-	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" migrated at time "); puts(itoa(*HAL_TICK_COUNTER)); puts(" to processor "); puts(itoh(migrate_addr)); puts("\n");
+	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" migrated at time "); puts(itoa(HAL_TICK_COUNTER)); puts(" to processor "); puts(itoh(migrate_addr)); puts("\n");
 
 	sched_clear(tcb);
 	tcb_clear(tcb);
@@ -95,7 +95,7 @@ void tm_send_code(tcb_t *tcb)
 	packet->mapper_task = tcb->mapper_task;
 	packet->mapper_address = tcb->mapper_address;
 
-	pkt_send(packet, (hal_word_t*)tcb_get_offset(tcb), tcb_get_code_length(tcb));
+	pkt_send(packet, (unsigned int*)tcb_get_offset(tcb), tcb_get_code_length(tcb));
 }
 
 void tm_send_tcb(tcb_t *tcb, int addr)
@@ -114,10 +114,10 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	packet->execution_time = sched_get_exec_time(tcb);
 
 	/* Registers */
-	hal_word_t offset = tcb_get_offset(tcb);
+	unsigned int offset = tcb_get_offset(tcb);
 	packet->program_counter = tcb_get_pc(tcb) - offset;
 
-	hal_word_t regs[HAL_MAX_REGISTERS];
+	unsigned int regs[HAL_MAX_REGISTERS];
 	for(int i = 0; i < HAL_MAX_REGISTERS; i++){
 		if(i == HAL_REG_SP)
 			regs[HAL_REG_SP] = tcb_get_sp(tcb) - offset;
@@ -137,12 +137,12 @@ void tm_send_tl(tcb_t *tcb, int addr)
 	packet->service = MIGRATION_TASK_LOCATION;
 	packet->request_size = tl_get_len(tcb);
 
-	pkt_send(packet, (hal_word_t*)tl_get_ptr(tcb), packet->request_size);
+	pkt_send(packet, (unsigned int*)tl_get_ptr(tcb), packet->request_size);
 }
 
 void tm_send_mr(tcb_t *tcb, int addr)
 {
-	hal_word_t mr_len = mr_defrag(tcb);
+	unsigned int mr_len = mr_defrag(tcb);
 
 	if(mr_len){
 		packet_t *packet = pkt_slot_get();
@@ -152,13 +152,13 @@ void tm_send_mr(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->request_size = mr_len;
 
-		pkt_send(packet, (hal_word_t*)tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(hal_word_t));
+		pkt_send(packet, (unsigned int*)tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(unsigned int));
 	}
 }
 
 void tm_send_data_av(tcb_t *tcb, int addr)
 {
-	hal_word_t data_av_len = data_av_get_len_head_end(tcb);
+	unsigned int data_av_len = data_av_get_len_head_end(tcb);
 
 	if(data_av_len){
 		packet_t *packet = pkt_slot_get();
@@ -168,7 +168,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, (hal_word_t*)data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+		pkt_send(packet, (unsigned int*)data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
 	}
 
 	data_av_len = data_av_get_len_start_tail(tcb);
@@ -181,7 +181,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, (hal_word_t*)data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(hal_word_t));
+		pkt_send(packet, (unsigned int*)data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
 	}
 }
 
@@ -203,8 +203,8 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 void tm_send_stack(tcb_t *tcb, int addr)
 {
 	/* Get the stack pointer */
-	hal_word_t sp = tcb_get_sp(tcb);
-	hal_word_t stack_len = sp;
+	unsigned int sp = tcb_get_sp(tcb);
+	unsigned int stack_len = sp;
 
 	/* Align to 32 bits */
 	while((PKG_PAGE_SIZE - stack_len) % 4)
@@ -219,7 +219,7 @@ void tm_send_stack(tcb_t *tcb, int addr)
 	packet->task_ID = pipe_get_cons_task(tcb);
 	packet->stack_size = stack_len;
 
-	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
+	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
 }
 
 void tm_send_data_bss(tcb_t *tcb, int addr)
@@ -233,5 +233,5 @@ void tm_send_data_bss(tcb_t *tcb, int addr)
 	packet->bss_size = tcb_get_bss_length(tcb);
 
 	/** @todo This doesn't seems right. Let's investigate the sizes */
-	pkt_send(packet, (hal_word_t*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), (packet->data_size + packet->bss_size));
+	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), (packet->data_size + packet->bss_size));
 }

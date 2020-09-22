@@ -89,7 +89,7 @@ data_av_t *data_av_peek(tcb_t *tcb)
 	return &(tcb->data_av.buffer[tcb->data_av.head]);
 }
 
-hal_word_t data_av_get_len_head_end(tcb_t *tcb)
+unsigned int data_av_get_len_head_end(tcb_t *tcb)
 {
 	if(tcb->data_av.empty)
 		return 0;
@@ -103,7 +103,7 @@ hal_word_t data_av_get_len_head_end(tcb_t *tcb)
 	}
 }
 
-hal_word_t data_av_get_len_start_tail(tcb_t *tcb)
+unsigned int data_av_get_len_start_tail(tcb_t *tcb)
 {
 	if(tcb->data_av.empty || tcb->data_av.tail > tcb->data_av.head)
 		return 0;
@@ -126,7 +126,7 @@ data_av_t *data_av_get_buffer_tail(tcb_t *tcb)
 	return &tcb->data_av.buffer[tcb->data_av.tail];
 }
 
-void data_av_add_tail(tcb_t *tcb, hal_word_t len)
+void data_av_add_tail(tcb_t *tcb, unsigned int len)
 {
 	tcb->data_av.tail += len;
 	tcb->data_av.tail %= PKG_MAX_LOCAL_TASKS;
