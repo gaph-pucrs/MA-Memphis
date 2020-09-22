@@ -106,7 +106,7 @@ def platform_cfg(testcase_path, debug_path, yaml_testcase_r, yaml_scenario_r):
 
 def services_cfg(testcase_path, debug_path):
     
-    fp = open(testcase_path+"/software/include/services.h", "r")
+    fp = open(testcase_path+"/software/kernel/modules/include/services.h", "r")
     
     service_cfg_lines = []
     

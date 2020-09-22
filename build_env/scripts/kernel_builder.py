@@ -90,24 +90,11 @@ def generate_memory( yaml_r ):
         if gen_compatible_mem_size > 256:
             sys.exit("ERROR: Memory size for VHDL description not allowed, please reduce page_size_KB or tasks_per_PE in yaml file until this message disappear :(")
         
-    else:
-        cluster_list = create_cluster_list(x_mpsoc_dim, y_mpsoc_dim, x_cluster_dim, y_cluster_dim, master_location)
-        
+    else:        
         for x in range(0, x_mpsoc_dim):
-            for y in range(0, y_mpsoc_dim):
-                
-                master_pe = False
-                for cluster_obj in cluster_list:
-                    if x == cluster_obj.master_x and y == cluster_obj.master_y:
-                        master_pe = True
-                        break
-                
+            for y in range(0, y_mpsoc_dim):                
                 dst_ram_file = memory_path+"/ram"+str(x)+"x"+str(y)+".txt"
-                
-                if master_pe == True:
-                    os.symlink("../../software/kernel_master.txt", dst_ram_file)
-                else:
-                    os.symlink("../../software/kernel_slave.txt", dst_ram_file)
+                os.symlink("../../software/kernel.txt", dst_ram_file)
               
       
 main()
