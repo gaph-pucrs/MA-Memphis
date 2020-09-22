@@ -287,11 +287,11 @@ def check_application_task_number(testcase_dir, app_task_number, app_name):
     kernel_max_app = 0
     
     #Useful function that serach a value of a #define is for a given file_path
-    with open(testcase_dir+"/include/kernel_pkg.h") as search:
+    with open(testcase_dir+"/software/kernel/pkg.h") as search:
         for line in search:
             line = line.rstrip()  # remove '\n' at end of line
-            if "#define MAX_TASKS_APP" in line:
-                kernel_max_app = int(line.split(" ")[16])
+            if "#define PKG_MAX_TASKS_APP" in line:
+                kernel_max_app = int(line.split(" ")[2])
                 break
     if kernel_max_app == 0:
         sys.exit("ERROR in app_builder: impossible to determine the max number of application task\n")
