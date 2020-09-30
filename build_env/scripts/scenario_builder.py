@@ -130,13 +130,11 @@ def generate_appstart_file(apps_start_obj_list, testcase_path, scenario_path):
     for app_start_obj in apps_start_obj_list:
         file_lines.append( app_start_obj.name +"\n")
         file_lines.append( str(app_start_obj.start_time_ms) +"\n")
-        file_lines.append( str(app_start_obj.cluster_id) +"\n")
         file_lines.append( str(app_start_obj.task_number) +"\n")
         
         #Debug file
         file_debug_lines.append(app_start_obj.name+"\t******** application name *********\n")
         file_debug_lines.append(str(app_start_obj.start_time_ms)+"\t["+app_start_obj.name+"] start time in ms\n")
-        file_debug_lines.append(str(app_start_obj.cluster_id)+"\t["+app_start_obj.name+"] cluster ID statically mapped. -1 when in dynamic mapping\n")
         file_debug_lines.append(str(app_start_obj.task_number)+"\t["+app_start_obj.name+"] task number\n")
         
         static_task_list = app_start_obj.static_task_list
@@ -149,12 +147,7 @@ def generate_appstart_file(apps_start_obj_list, testcase_path, scenario_path):
                 file_debug_lines.append(str(tuple[1])+"\ttask ["+str(app_task_list[tuple[0]])+"] is market to be dynamically mapped (-1)\n")
             else: #Entering in the else statment means that task has static mapping enabled
                 #It is necessary to check if the source was specified, if not, generate a error
-                if app_start_obj.cluster_id == -1:
-                    sys.exit("ERROR: You must to specify the cluster where static mapped task of "+app_start_obj.name+" will be inserted.\nTo fix this problem, edit your scenary.yaml inserting the tag: cluster: X below the tag of the application "+app_start_obj.name+", where X is the ID of the cluster!")
                 file_debug_lines.append(str(tuple[1])+"\ttask ["+str(app_task_list[tuple[0]])+"] is market to be statically mapped at PE "+ str(tuple[1] >> 8)+"x"+str(tuple[1] & 0xFF)+"\n")
-        
-        
-        
     
     file_lines.append( "deadc0de\n")
     file_debug_lines.append("deadc0de\tend of file indicator\n")

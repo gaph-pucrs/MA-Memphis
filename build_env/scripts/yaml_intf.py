@@ -48,12 +48,6 @@ def get_mpsoc_x_dim(yaml_reader):
 def get_mpsoc_y_dim(yaml_reader):
     return yaml_reader["hw"]["mpsoc_dimension"][1]
 
-def get_cluster_x_dim(yaml_reader):
-    return yaml_reader["hw"]["cluster_dimension"][0]
-
-def get_cluster_y_dim(yaml_reader):
-    return yaml_reader["hw"]["cluster_dimension"][1]
-
 def get_master_location(yaml_reader):
     try:
         return yaml_reader["hw"]["master_location"]
@@ -106,7 +100,7 @@ def get_task_scheduler(yaml_reader):
 def get_app_repo_size(yaml_reader):
     return 1000
 
-#Returns a list of objects ApplicationInfo containing the app name, num of tasks, start time and cluster id
+#Returns a list of objects ApplicationInfo containing the app name, num of tasks and start time
 #However repo address return -1, it is filled inside app_builder during the repositoriy generation
 def get_app_info_list(yaml_reader, testcase_path):
     
@@ -127,13 +121,8 @@ def get_app_info_list(yaml_reader, testcase_path):
         
         #If the time is not configured - default is zero
         start_time_ms = 0
-        cluster = -1
         try:
             start_time_ms = int(app_reader["start_time_ms"])
-        except:
-            pass
-        try:
-            cluster = app_reader["cluster"]
         except:
             pass
         
@@ -171,7 +160,7 @@ def get_app_info_list(yaml_reader, testcase_path):
             task_id = task_id + 1
         
         #Create a new object of Application info gathering all information previously extracted from yaml
-        app_start_list.append( ApplicationInfo(app_name, start_time_ms, task_number, cluster, static_task_list) )
+        app_start_list.append(ApplicationInfo(app_name, start_time_ms, task_number, static_task_list))
         
         app_id = app_id + 1
 

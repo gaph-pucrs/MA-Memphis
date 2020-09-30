@@ -54,8 +54,6 @@ def generate_memory( yaml_r ):
     #Variables from yaml used into this function
     x_mpsoc_dim     =   get_mpsoc_x_dim(yaml_r)
     y_mpsoc_dim     =   get_mpsoc_y_dim(yaml_r)
-    x_cluster_dim   =   get_cluster_x_dim(yaml_r)
-    y_cluster_dim   =   get_cluster_y_dim(yaml_r)
     model_descr     =   get_model_description(yaml_r)
     master_location =   get_master_location(yaml_r)
     mem_size_KB     =   get_memory_size_KB(yaml_r)

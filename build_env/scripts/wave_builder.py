@@ -41,7 +41,6 @@ def generate_wave_generic(yaml_r, system_model):
     app_injector_monitor = "add wave -noupdate -group {App Injector} -group monitor -radix hexadecimal /test_bench/App_Injector/"
     
     wave_lines.append(app_injector_monitor + "EA_new_app_monitor\n")
-    wave_lines.append(app_injector_monitor + "app_cluster_id\n")
     wave_lines.append(app_injector_monitor + "app_task_number\n")
     wave_lines.append(app_injector_monitor + "app_start_time\n")
     wave_lines.append(app_injector_monitor + "app_name\n")
