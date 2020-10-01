@@ -125,7 +125,8 @@ void app_injector::task_allocation_loader(unsigned int full_task_id, unsigned in
 		packet[1] = packet_size-2; //Packet service
 		packet[2] = TASK_ALLOCATION; //Packet service
 		packet[3] = full_task_id;
-		packet[4] = master_ID; //Master ID
+		packet[4] = -1; /** @todo Mapper Address */
+		packet[8] = -1; /** @todo Mapper task */
 		packet[9] = data_size; //Data size
 		packet[10] = code_size; //Code size
 		packet[11] = bss_size; //Bss size

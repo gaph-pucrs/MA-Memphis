@@ -17,6 +17,7 @@
 .ent _start
 _start:
    li    $sp, sp_addr   # Initializes stack pointer
+   # SEND TASK ALLOCATED
    jal   main
    nop
    

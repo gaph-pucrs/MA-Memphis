@@ -236,9 +236,14 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	putsv("Mapper task: ", mapper_task);
 	putsv("Mapper addr: ", mapper_addr);
 
-	/* Sends task allocated to mapper */
-	/** @todo This should be wrapped in a DATA_AV!!!! */
-	tl_send_allocated(free_tcb);
+	if(mapper_task != -1){
+		/* Sends task allocated to mapper */
+		/** @todo This should be wrapped in a DATA_AV!!!! */
+		tl_send_allocated(free_tcb);
+	} else {
+		/* Task came from Injector directly. Release immediately */
+		sched_release(free_tcb);
+	}
 
 	//printTaskInformations(tcb_ptr, 1, 1, 0);
 	return sched_is_idle();
