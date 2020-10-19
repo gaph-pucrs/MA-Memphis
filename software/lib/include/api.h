@@ -62,5 +62,6 @@ typedef struct {
 	int msg[MSG_SIZE];
 } Message;
 
-#endif /*__TASK_H__*/
+#define KERNEL_MSG		0x10000000
 
+#endif /*__TASK_H__*/

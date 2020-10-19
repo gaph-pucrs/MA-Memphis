@@ -35,6 +35,11 @@ def generate_sw_pkg( yaml_r ):
     #Variables from yaml used into this function
     page_size_KB =      get_page_size_KB(yaml_r)
     max_local_tasks =   get_tasks_per_PE(yaml_r)    
+    x_mpsoc_dim =       get_mpsoc_x_dim(yaml_r)
+    y_mpsoc_dim =       get_mpsoc_y_dim(yaml_r)
+    IO_peripherals =    get_IO_peripherals(yaml_r)
+
+    mpsoc_dim = x_mpsoc_dim * y_mpsoc_dim
     
     file_lines = []
     #---------------- C SINTAX ------------------
@@ -44,6 +49,24 @@ def generate_sw_pkg( yaml_r ):
     file_lines.append("#define PKG_MAX_TASKS_APP "+str(10)+" //!> Max number of tasks for the APPs described into testcase file\n")
     file_lines.append("#define PKG_PENDING_SVC_MAX "+str(20)+" //!< Pending service array size\n")
     file_lines.append("#define PKG_SLACK_TIME_WINDOW "+str(50000)+" //!< Half millisecond\n")
+
+    file_lines.append("#define PKG_N_PE "+str(mpsoc_dim)+"  //!< Number of PEs\n")
+    file_lines.append("#define PKG_N_PE_X "+str(x_mpsoc_dim)+" //!< Number of PEs in X dimension\n")
+
+    file_lines.append("#define PKG_PERIPHERALS_NUMBER "+str(len(IO_peripherals))+"      //max number of peripherals\n")
+    for io_peripheral in IO_peripherals:
+        pe_addr = int(io_peripheral["pe"][0]) << 8 | int(io_peripheral["pe"][2])
+        port = io_peripheral["port"]
+        port_encoded = 0 #Stores the port where the peripheral is connected to PE. Such information is used by XY routing algorithm (See SwitchControl.vhd of router implementation)
+        if (port == "E"):
+            port_encoded = 2147483648 # == 1000 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port East
+        elif (port == "W"):
+            port_encoded = 2684354560 # == 1010 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port West
+        elif (port == "N"):
+            port_encoded = 3221225472 # == 1100 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port North
+        elif (port == "S"):
+            port_encoded = 3758096384 # == 1110 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port South
+        file_lines.append("#define "+str(io_peripheral["name"])+" "+hex(port_encoded|pe_addr)+" //This number is hot encoded (1 k bit + 2 n bits + 13 zeros + 8 x bits + 8 y bits). k bit when on enable routing to external peripheral, n bits signals the port between peripheral and PE, x bits stores the X address of PE, y bits stores the Y address of PE\n")
     
     #Use this function to create any file into testcase, it automatically only updates the old file if necessary
     writes_file_into_testcase("software/kernel/pkg.h", file_lines)

@@ -18,3 +18,9 @@
 #define PKG_MAX_TASKS_APP		10		//!> Max number of tasks for the APPs described into testcase file
 #define PKG_PENDING_SVC_MAX 	20		//!< Pending service array size
 #define PKG_SLACK_TIME_WINDOW	50000	//!< Half millisecond
+
+#define PKG_N_PE				9		//!< Number of PEs
+#define PKG_N_PE_X				3		//!< Number of PEs in X dimension
+
+#define PKG_PERIPHERALS_NUMBER	1			//!< Number of Peripherals
+#define APP_INJECTOR			0xe0000000	//!< Port where the Peripheral App Injector is connected
