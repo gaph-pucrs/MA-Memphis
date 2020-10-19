@@ -71,9 +71,22 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 {
 	tcb_t *current = sched_get_current();
 
+	int cons_addr;
+	if(cons_task & 0x80000000){
+		/* Message directed to peripheral */
+		cons_addr = cons_task;
+		cons_task = -1;
+	} else if(cons_task & 0x10000000){
+		/* Message directed to kernel */
+		cons_addr = cons_task & 0x0000FFFF;
+		cons_task = -1;
+	} else {
+		/* Send to task of the same app */
+		cons_task |= (current->id & 0xFF00);
+	}
+
 	if(!sync)	/* Synced write must send complete app|task id */
 		cons_task |= (current->id & 0xFF00);
-
 
 	int cons_addr = tl_search(current, cons_task);
 
