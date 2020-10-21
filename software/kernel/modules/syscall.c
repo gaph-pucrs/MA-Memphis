@@ -339,6 +339,9 @@ bool os_kernel_syscall(int *message, int length)
 
 bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 {
+	/* Avoid overwriting pending messages */
+	while(HAL_DMNI_SEND_ACTIVE);
+
 	/* Insert message in kernel output message buffer */
 	pending_msg_push(task, size, msg);
 
