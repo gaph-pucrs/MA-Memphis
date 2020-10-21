@@ -11,6 +11,8 @@
  * @brief Defines the syscall procedures of the kernel.
  */
 
+#include <stddef.h>
+
 #include "syscall.h"
 #include "services.h"
 #include "task_location.h"
@@ -55,7 +57,6 @@ bool os_exit()
 		return false;
 
 	/* Send TASK_TERMINATED */
-	/** @todo Should be wrapped in a DATA_AV */
 	tl_send_terminated(current);
 
 	puts("Task id: "); puts(itoa(current->id)); putsv(" terminated at ", HAL_TICK_COUNTER);
@@ -74,30 +75,24 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	int cons_addr;
 	if(cons_task & 0x80000000){
 		/* Message directed to peripheral */
+		cons_task &= 0xE000FFFF;
 		cons_addr = cons_task;
-		cons_task = -1;
 	} else if(cons_task & 0x10000000){
 		/* Message directed to kernel */
+		cons_task &= 0x1000FFFF;
 		cons_addr = cons_task & 0x0000FFFF;
-		cons_task = -1;
 	} else {
 		/* Send to task of the same app */
-		cons_task |= (current->id & 0xFF00);
+		cons_task &= 0x000000FF;
+		cons_task |= (current->id & 0x0000FF00);
+		cons_addr = tl_search(current, cons_task);
 	}
-
-	if(!sync)	/* Synced write must send complete app|task id */
-		cons_task |= (current->id & 0xFF00);
-
-	int cons_addr = tl_search(current, cons_task);
 
 	/* Check if consumer task is allocated */
 	if(cons_addr == -1){		
-		/** @todo Discuss */
-		if(!sync){	/* Synced write can send to other apps and cannot wait for TASK_RELEASE */
-			/* Task is blocked until a TASK_RELEASE packet is received */
-			sched_block(current);
-			schedule_after_syscall = 1;
-		}
+		/* Task is blocked until a TASK_RELEASE packet is received */
+		sched_block(current);
+		schedule_after_syscall = 1;
 		return false;
 	}
 
@@ -114,24 +109,34 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	message_request_t *request = mr_peek(current, cons_task);
 
 	if(request){	/* Message request found! */
-		if(request->requester_address == HAL_NI_CONFIG){ /* Local consumer */
-			/* Writes to the consumer page address */
-			tcb_t *cons_tcb = tcb_search(cons_task);
-			message_t *msg_dst = tcb_get_message(cons_tcb);
+		if(request->requester_address == HAL_NI_CONFIG){ 
+			/* Local consumer */
+			if(cons_task & 0x10000000){
+				/* Message directed to kernel. No TCB to write to */
+				/* This SHOULD NEVER happen because local kernel will not make a request out of nowhere */
+				/* But the functionality is here just in case */
+				/** @todo Generate the proper syscall */
 
-			pipe_transfer(message, msg_dst);
+			} else {
+				/* Writes to the consumer page address */
+				tcb_t *cons_tcb = tcb_search(cons_task);
+				message_t *msg_dst = tcb_get_message(cons_tcb);
 
-			/* Remove the message request from buffer */
-			mr_pop(request);
+				pipe_transfer(message, msg_dst);
 
-			/* Release consumer task */
-			sched_release_wait(cons_tcb);
+				/* Remove the message request from buffer */
+				mr_pop(request);
 
-			if(tcb_need_migration(cons_tcb)){
-				tm_migrate(cons_tcb);
-				schedule_after_syscall = 1;
+				/* Release consumer task */
+				sched_release_wait(cons_tcb);
+
+				if(tcb_need_migration(cons_tcb)){
+					tm_migrate(cons_tcb);
+					schedule_after_syscall = 1;
+				}
 			}
-		} else {	/* Remote consumer */
+		} else {
+			/* Remote consumer */
 
 			/* Send a MESSAGE_DELIVERY */
 
@@ -149,27 +154,34 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 			/* Remove the message request from buffer */
 			mr_pop(request);
 		}
-
 	} else if(!pipe_is_full(current) && !HAL_DMNI_SEND_ACTIVE){	/* Pipe is free */
 		if(sync){
 			int prod_task = sched_get_current_id();
 			if(cons_addr == HAL_NI_CONFIG){
-				/* Insert a DATA_AV to consumer table */
-				tcb_t *cons_tcb = tcb_search(cons_task);
+				/* Local consumer */
+				if(cons_task & 0x10000000){
+					/* Message directed to kernel. No TCB to write to */
+					/* We can bypass the need to kernel answer if a request */
+					/** @todo Generate the proper syscall */
 
-				/* Insert DATA_AV to the consumer TCB */
-				data_av_insert(cons_tcb, prod_task, HAL_NI_CONFIG);
-				
-				/* If consumer waiting for a DATA_AV, release the task */
-				if(sched_is_waiting_data_av(cons_tcb))
-					sched_release_wait(cons_tcb);
+				} else {
+					/* Insert a DATA_AV to consumer table */
+					tcb_t *cons_tcb = tcb_search(cons_task);
 
+					/* Insert DATA_AV to the consumer TCB */
+					data_av_insert(cons_tcb, prod_task, HAL_NI_CONFIG);
+					
+					/* If consumer waiting for a DATA_AV, release the task */
+					if(sched_is_waiting_data_av(cons_tcb))
+						sched_release_wait(cons_tcb);
+				}
 			} else {
 				/* Send DATA_AV to consumer PE */
 				data_av_send(cons_task, prod_task, cons_addr, HAL_NI_CONFIG);
 			}
 		}
 
+		/* Please use SSend to send Kernel/Peripheral messages or it can be stuck in pipe forever */
 		/* Store message in Pipe. Will be sent when a REQUEST is received */
 		pipe_push(current, message, cons_task);
 
@@ -309,4 +321,34 @@ bool os_realtime(unsigned int period, int deadline, unsigned int exec_time)
 	schedule_after_syscall = 1;
 
 	return true;
+}
+
+bool os_kernel_delivery(int task, int addr, int size, int *msg)
+{
+	/* Insert message in kernel output message buffer */
+	pending_msg_push(task, size, msg);
+
+	/* Check if local consumer / migrated task */
+	tcb_t *cons_tcb = NULL;
+	if(addr == HAL_NI_CONFIG){
+		cons_tcb = tcb_search(task);
+		if(!cons_tcb)
+			addr = tm_get_migrated_addr(task);
+	}
+
+	if(cons_tcb){
+		/* Insert the packet to TCB */
+		data_av_insert(cons_tcb, 0x10000000 | HAL_NI_CONFIG, HAL_NI_CONFIG);
+
+		/* If the consumer task is waiting for a DATA_AV, release it */
+		if(sched_is_waiting_data_av(cons_tcb)){
+			sched_release_wait(cons_tcb);
+			return sched_is_idle();
+		}
+	} else {
+		/* Send data available to the right processor */
+		data_av_send(task, 0x10000000 | HAL_NI_CONFIG, addr, HAL_NI_CONFIG);
+	}
+
+	return false;
 }

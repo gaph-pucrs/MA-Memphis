@@ -36,16 +36,10 @@ void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr)
 	pkt_send(packet, NULL, 0);
 }
 
-void tl_send_allocated(tcb_t *allocated_task)
+bool tl_send_allocated(tcb_t *allocated_task)
 {
-	packet_t *packet = pkt_slot_get();
-
-	packet->header = allocated_task->mapper_address;
-	packet->service = TASK_ALLOCATED;
-	packet->task_ID = allocated_task->id;
-	packet->mapper_task = allocated_task->mapper_task;
-
-	pkt_send(packet, NULL, 0);
+	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};
+	return os_kernel_delivery(allocated_task->mapper_task, allocated_task->mapper_address, 2, task_allocated);
 }
 
 void tl_insert_update(tcb_t *tcb, int id, int addr)
@@ -53,16 +47,10 @@ void tl_insert_update(tcb_t *tcb, int id, int addr)
 	tcb->task_location[id & 0x00FF] = addr;
 }
 
-void tl_send_terminated(tcb_t *tcb)
+bool tl_send_terminated(tcb_t *tcb)
 {
-	packet_t *packet = pkt_slot_get();
-
-	packet->header = tcb->mapper_address;
-	packet->service = TASK_TERMINATED;
-	packet->task_ID = tcb->id;
-	packet->mapper_task = tcb->mapper_task;
-
-	pkt_send(packet, NULL, 0);
+	int task_terminated[2] = {TASK_TERMINATED, tcb->id};
+	return os_kernel_delivery(tcb->mapper_task, tcb->mapper_address, 2, task_terminated);
 }
 
 int tl_search(tcb_t *tcb, int task)

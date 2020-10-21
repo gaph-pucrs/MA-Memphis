@@ -87,9 +87,11 @@ bool os_handle_pkt(packet_t *packet)
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
 		case TASK_ALLOCATION:
+			/* Injector -> Kernel. No need to insert inside delivery */
 			return os_task_allocation(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
 		case TASK_RELEASE:
-			return os_task_release(packet->task_ID, packet->data_size, packet->bss_size, packet->app_task_number);
+			puts("DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY\n");
+			return false;
 		case UPDATE_TASK_LOCATION:
 			return os_update_task_location(packet->consumer_task, packet->task_ID, packet->allocated_processor);
 		case TASK_MIGRATION:
@@ -156,56 +158,80 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 
 bool os_message_delivery(int cons_task, unsigned int length)
 {
-	/* Get consumer task */
-	tcb_t *cons_tcb = tcb_search(cons_task);
+	if(cons_task & 0x10000000){
+		/* This message was directed to kernel */
+		/* Receive the message in stack. Maybe this is a bad idea. */
+		message_t msg;
+		msg.length = length;
+		dmni_read(msg.msg, msg.length);
 
-	/* Message is stored in task's page + argument 1 from syscall */
-	message_t *message = tcb_get_message(cons_tcb);
+		/* Process it like a syscall */
+		switch(msg.msg[0]){
+			case TASK_RELEASE:
+				return os_task_release(msg.msg[1], msg.msg[2], msg.msg[3], msg.msg[4], &msg.msg[5]);
+			default:
+				putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", msg.msg[0]);
+				return false;
+		}
 
-	/* Assert message requested is the received size */
-	message->length = length;
+	} else {
+		/* Get consumer task */
+		tcb_t *cons_tcb = tcb_search(cons_task);
 
-	/* Obtain message from DMNI */
-	dmni_read(message->msg, message->length);
+		/* Message is stored in task's page + argument 1 from syscall */
+		message_t *message = tcb_get_message(cons_tcb);
 
-	/* Release task to execute */
-	sched_release_wait(cons_tcb);
+		/* Assert message requested is the received size */
+		message->length = length;
 
-	if(tcb_need_migration(cons_tcb)){
-		tm_migrate(cons_tcb);
-		return true;
+		/* Obtain message from DMNI */
+		dmni_read(message->msg, message->length);
+
+		/* Release task to execute */
+		sched_release_wait(cons_tcb);
+
+		if(tcb_need_migration(cons_tcb)){
+			tm_migrate(cons_tcb);
+			return true;
+		}
+
+		return sched_is_idle();
 	}
-
-	return sched_is_idle();
 }
 
 bool os_data_available(int cons_task, int prod_task, int prod_addr)
 {
-	/* Insert the packet received */
-	tcb_t *cons_tcb = tcb_search(cons_task);
+	if(cons_task & 0x10000000){
+		/* This message was directed to kernel */
+		/* Kernel is always ready to receive. Send message request */
+		mr_send(prod_task, cons_task, prod_addr, HAL_NI_CONFIG);
+	} else {
+		/* Insert the packet received */
+		tcb_t *cons_tcb = tcb_search(cons_task);
 
-	if(cons_tcb){	/* Ensure task is allocated here */
-		/* Insert the packet to TCB */
-		data_av_insert(cons_tcb, prod_task, prod_addr);
+		if(cons_tcb){	/* Ensure task is allocated here */
+			/* Insert the packet to TCB */
+			data_av_insert(cons_tcb, prod_task, prod_addr);
 
-		/* If the consumer task is waiting for a DATA_AV, release it */
-		if(sched_is_waiting_data_av(cons_tcb)){
-			sched_release_wait(cons_tcb);
-			return sched_is_idle();
+			/* If the consumer task is waiting for a DATA_AV, release it */
+			if(sched_is_waiting_data_av(cons_tcb)){
+				sched_release_wait(cons_tcb);
+				return sched_is_idle();
+			}
+
+		} else {
+			/* Task migrated? Forward. */
+			int migrated_addr = tm_get_migrated_addr(cons_task);
+
+			/* Update the task location in the consumer */
+			tl_send_update(prod_task, prod_addr, cons_task, migrated_addr);
+
+			/* Forward the message request to the migrated processor */
+			data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
 		}
 
-	} else {
-		/* Task migrated? Forward. */
-		int migrated_addr = tm_get_migrated_addr(cons_task);
-
-		/* Update the task location in the consumer */
-		tl_send_update(prod_task, prod_addr, cons_task, migrated_addr);
-
-		/* Forward the message request to the migrated processor */
-		data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
+		return false;
 	}
-
-	return false;
 }
 
 bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
@@ -238,18 +264,16 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 
 	if(mapper_task != -1){
 		/* Sends task allocated to mapper */
-		/** @todo This should be wrapped in a DATA_AV!!!! */
-		tl_send_allocated(free_tcb);
+		return tl_send_allocated(free_tcb);
 	} else {
 		/* Task came from Injector directly. Release immediately */
 		sched_release(free_tcb);
+		return sched_is_idle();
 	}
-
-	//printTaskInformations(tcb_ptr, 1, 1, 0);
-	return sched_is_idle();
+	
 }
 
-bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number)
+bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number, int *task_location)
 {
 	/* Get task to release */
 	tcb_t *task = tcb_search(id);
@@ -259,8 +283,10 @@ bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number
 	/* Update TCB with received info */
 	tcb_update_sections(task, data_sz, bss_sz);
 
-	/* Get the location of app's tasks */
-	dmni_read((unsigned int*)task->task_location, task_number);
+	/* Write task location */
+	/** @todo Use memcpy */
+	for(int i = 0; i < task_number; i++)
+		task->task_location[i] = task_location[i];
 
 	/* If the task is blocked, release it */
 	if(sched_is_blocked(task))

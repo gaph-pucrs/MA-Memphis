@@ -90,3 +90,15 @@ bool os_echo(unsigned int msg_ptr);
  * @return True.
  */
 bool os_realtime(unsigned int period, int deadline, unsigned int exec_time);
+
+/**
+ * @brief Sends a message delivery from kernel
+ * 
+ * @param task Consumer task
+ * @param addr Consumer address
+ * @param size Lenght of the message
+ * @param msg Pointer to the message
+ * 
+ * @return True if should schedule
+ */
+bool os_kernel_delivery(int task, int addr, int size, int *msg);

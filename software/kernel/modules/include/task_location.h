@@ -38,8 +38,10 @@ void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr);
  * @brief Sends a TASK_ALLOCATED to the mapper
  * 
  * @param allocated_task Pointer to the TCB of the allocated task
+ * 
+ * @return True if should schedule
  */
-void tl_send_allocated(tcb_t *allocated_task);
+bool tl_send_allocated(tcb_t *allocated_task);
 
 /**
  * @brief Updates a single task location
@@ -54,8 +56,10 @@ void tl_insert_update(tcb_t *tcb, int id, int addr);
  * @brief Sends a task terminated packet to the mapper
  * 
  * @param tcb Pointer of the terminated TCB
+ * 
+ * @return True if should schedule
  */
-void tl_send_terminated(tcb_t *tcb);
+bool tl_send_terminated(tcb_t *tcb);
 
 /**
  * @brief Gets the location of a task

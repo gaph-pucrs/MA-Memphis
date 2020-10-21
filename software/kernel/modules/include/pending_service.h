@@ -30,18 +30,54 @@ typedef struct _pending_svc {
 } pending_svc_t;
 
 /**
+ * @brief Pending message information. This is a 'lightweight' pipe for kernel
+ */
+typedef struct _pending_msg {
+	int task;
+	int size;
+	int message[PKG_MAX_KERNEL_MSG_LEN];
+} pending_msg_t;
+
+/**
+ * @brief FIFO data structure for pending output messages from kernel
+ */
+typedef struct _pending_fifo {
+	pending_msg_t buffer[PKG_PENDING_SVC_MAX];
+	unsigned char head;
+	unsigned char tail;
+	bool empty;
+	bool full;
+} pending_fifo_t;
+
+/**
  * @brief Initialize the pending service structures
  */
 void pending_svc_init();
 
 /**
+ * @brief Initialize the pending message structures
+ */
+void pending_msg_init();
+
+/**
  * @brief Adds a service to pending structure
  * 
- * @param *packet Pointer to service packet
+ * @param packet Pointer to service packet
  *
  * @return True if sucess
  */
 bool pending_svc_push(const packet_t *packet);
+
+/**
+ * @brief Adds a service to pending structure
+ * 
+ * @param task ID of the target task
+ * @param size Length of the message
+ * @param msg Pointer to the message
+ *
+ * @return True if sucess
+ */
+bool pending_msg_push(int task, int size, int *msg);
 
 /**
  * @brief Gets the next pending service and remove from the buffer
