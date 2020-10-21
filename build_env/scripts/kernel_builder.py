@@ -49,6 +49,7 @@ def generate_sw_pkg( yaml_r ):
     file_lines.append("#define PKG_MAX_TASKS_APP "+str(10)+" //!> Max number of tasks for the APPs described into testcase file\n")
     file_lines.append("#define PKG_PENDING_SVC_MAX "+str(20)+" //!< Pending service array size\n")
     file_lines.append("#define PKG_SLACK_TIME_WINDOW "+str(50000)+" //!< Half millisecond\n")
+    file_lines.append("#define PKG_MAX_KERNEL_MSG_LEN "+str(10)+"   //!< Size of the kernel output pending service\n")
 
     file_lines.append("#define PKG_N_PE "+str(mpsoc_dim)+"  //!< Number of PEs\n")
     file_lines.append("#define PKG_N_PE_X "+str(x_mpsoc_dim)+" //!< Number of PEs in X dimension\n")

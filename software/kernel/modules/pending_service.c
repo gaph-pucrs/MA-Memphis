@@ -121,5 +121,5 @@ void pending_msg_send(pending_msg_t *msg, int addr)
 	/* Release pipe availability. Must check if DMNI is busy before populating again */
 	msg->task = -1;
 
-	pkt_send(packet, msg->message, msg->size);
+	pkt_send(packet, (unsigned*)msg->message, msg->size);
 }

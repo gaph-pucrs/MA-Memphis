@@ -18,6 +18,7 @@
 #include "dmni.h"
 #include "task_location.h"
 #include "utils.h"
+#include "syscall.h"
 
 void os_isr(unsigned int status)
 {
@@ -176,7 +177,7 @@ bool os_message_delivery(int cons_task, unsigned int length)
 		/* This message was directed to kernel */
 		/* Receive the message in stack. Maybe this is a bad idea. */
 		int message[length];
-		dmni_read(message, length);
+		dmni_read((unsigned*)message, length);
 
 		/* Process the message like a syscall triggered from another PE */
 		return os_kernel_syscall(message, length);
@@ -235,9 +236,8 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 			/* Forward the message request to the migrated processor */
 			data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
 		}
-
-		return false;
 	}
+	return false;
 }
 
 bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)

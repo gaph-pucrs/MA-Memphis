@@ -16,6 +16,7 @@
 #include "task_location.h"
 #include "services.h"
 #include "packet.h"
+#include "syscall.h"
 
 void tl_init(tcb_t *tcb)
 {

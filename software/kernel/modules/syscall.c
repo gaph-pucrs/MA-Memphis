@@ -18,6 +18,8 @@
 #include "task_location.h"
 #include "task_migration.h"
 #include "utils.h"
+#include "pending_service.h"
+#include "interrupts.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -162,7 +164,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				if(cons_task & 0x10000000){
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
-					schedule_after_syscall = os_kernel_syscall(message->msg, message->length);
+					schedule_after_syscall = os_kernel_syscall((int*)message->msg, message->length);
 					return true;
 				} else {
 					/* Insert a DATA_AV to consumer table */
