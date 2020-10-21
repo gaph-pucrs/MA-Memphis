@@ -14,9 +14,10 @@
 #include "pending_service.h"
 #include "hal.h"
 #include "utils.h"
+#include "services.h"
 
 pending_svc_t pending_svcs;
-pending_fifo_t pending_msgs;
+pending_msg_t pending_msgs[PKG_PENDING_SVC_MAX];
 
 void pending_svc_init()
 {
@@ -28,10 +29,8 @@ void pending_svc_init()
 
 void pending_msg_init()
 {
-	pending_msgs.empty = true;
-	pending_msgs.full = false;
-	pending_msgs.head = 0;
-	pending_msgs.tail = 0;
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++)
+		pending_msgs[i].task = -1;
 }
 
 bool pending_svc_push(const packet_t *packet){
@@ -56,29 +55,26 @@ bool pending_svc_push(const packet_t *packet){
 
 bool pending_msg_push(int task, int size, int *msg)
 {
-	if(pending_msgs.full){
-		puts("ERROR: Pending message FIFO FULL\n");
-		while(1);
-		return false;
-	}
-
 	if(size > PKG_MAX_KERNEL_MSG_LEN){
 		puts("ERROR: Message too big for kernel 'pipe'\n");
 		while(1);
 		return false;
 	}
 
-	/* Push message to buffer */
-	pending_msgs.buffer[pending_msgs.tail].task = task;
-	pending_msgs.buffer[pending_msgs.tail].size = size;
-	for(int i = 0; i < size; i++)
-		pending_msgs.buffer[pending_msgs.tail].message[i] = msg[i];
-	
-	pending_msgs.tail++;
+	/* Search for a free slot */
+	pending_msg_t *pending = pending_msg_search(-1);
 
-	pending_msgs.tail %= PKG_PENDING_SVC_MAX;
-	pending_msgs.full = (pending_msgs.tail == pending_msgs.head);
-	pending_msgs.empty = false;
+	if(!pending){
+		puts("ERROR: No available slots in kernel 'pipe'\n");
+		while(1);
+		return false;
+	}
+
+	/* Push message to buffer */
+	pending->task = task;
+	pending->size = size;
+	for(int i = 0; i < size; i++)
+		pending->message[i] = msg[i];
 
 	return true;
 }
@@ -101,4 +97,29 @@ packet_t *pending_svc_pop()
 	pending_svcs.full = false;
 
 	return packet;
+}
+
+pending_msg_t *pending_msg_search(int id)
+{
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
+		if(pending_msgs[i].task == id)
+			return &pending_msgs[i];
+	}
+	return NULL;
+}
+
+void pending_msg_send(pending_msg_t *msg, int addr)
+{
+	packet_t *packet = pkt_slot_get();
+
+	packet->header = addr;
+	packet->service = MESSAGE_DELIVERY;
+	packet->producer_task = HAL_NI_CONFIG | 0x10000000;
+	packet->consumer_task = msg->task;
+	packet->msg_lenght = msg->size;
+
+	/* Release pipe availability. Must check if DMNI is busy before populating again */
+	msg->task = -1;
+
+	pkt_send(packet, msg->message, msg->size);
 }

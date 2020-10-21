@@ -39,7 +39,7 @@ void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr)
 bool tl_send_allocated(tcb_t *allocated_task)
 {
 	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};
-	return os_kernel_delivery(allocated_task->mapper_task, allocated_task->mapper_address, 2, task_allocated);
+	return os_kernel_writepipe(allocated_task->mapper_task, allocated_task->mapper_address, 2, task_allocated);
 }
 
 void tl_insert_update(tcb_t *tcb, int id, int addr)
@@ -50,7 +50,7 @@ void tl_insert_update(tcb_t *tcb, int id, int addr)
 bool tl_send_terminated(tcb_t *tcb)
 {
 	int task_terminated[2] = {TASK_TERMINATED, tcb->id};
-	return os_kernel_delivery(tcb->mapper_task, tcb->mapper_address, 2, task_terminated);
+	return os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_terminated);
 }
 
 int tl_search(tcb_t *tcb, int task)

@@ -120,39 +120,53 @@ bool os_handle_pkt(packet_t *packet)
 
 bool os_message_request(int cons_task, int cons_addr, int prod_task)
 {
-	/* Get the producer task */
-	tcb_t *prod_tcb = tcb_search(prod_task);
+	if(prod_task & 0x10000000){
+		/* Message directed to kernel */
+		/* ATTENTION: Never request directly to kernel. Always use SReceive! */
 
-	if(!prod_tcb){
-		/* Task is not here. Probably migrated. */
-		int migrated_addr = tm_get_migrated_addr(cons_task);
-
-		/* Update the task location in the consumer */
-		tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
-
-		/* Forward the message request to the migrated processor */
-		mr_send(prod_task, cons_task, migrated_addr, cons_addr);
-
+		/* Search for the kernel-produced message */
+		pending_msg_t *msg = pending_msg_search(cons_task);
+		if(!msg){
+			puts("ERROR: Kernel received request but message not found. Use SReceive!\n");
+			while(1);
+		}
+		/* Send it like a MESSAGE_DELIVERY */
+		pending_msg_send(msg, cons_addr);
 	} else {
-		/* Task found. Now search for message. */
-		pipe_t *message = pipe_pop(prod_tcb, cons_task);
-	
-		if(!message){	/* No message in producer's pipe to the consumer task */
-			/* Insert the message request in the producer's TCB */
-			mr_insert(prod_tcb, cons_task, cons_addr);
+		/* Get the producer task */
+		tcb_t *prod_tcb = tcb_search(prod_task);
 
-		} else {	/* Message found */
-			/* Send through NoC */
-			pipe_send(prod_task, cons_task, cons_addr, message);
+		if(!prod_tcb){
+			/* Task is not here. Probably migrated. */
+			int migrated_addr = tm_get_migrated_addr(cons_task);
 
-			/* Release task for execution if it was blocking another send */
-			if(sched_is_waiting_request(prod_tcb)){
-				sched_release_wait(prod_tcb);
-				return sched_is_idle();
+			/* Update the task location in the consumer */
+			tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
+
+			/* Forward the message request to the migrated processor */
+			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
+
+		} else {
+			/* Task found. Now search for message. */
+			pipe_t *message = pipe_pop(prod_tcb, cons_task);
+		
+			if(!message){	/* No message in producer's pipe to the consumer task */
+				/* Insert the message request in the producer's TCB */
+				mr_insert(prod_tcb, cons_task, cons_addr);
+
+			} else {	/* Message found */
+				/* Send through NoC */
+				pipe_send(prod_task, cons_task, cons_addr, message);
+
+				/* Release task for execution if it was blocking another send */
+				if(sched_is_waiting_request(prod_tcb)){
+					sched_release_wait(prod_tcb);
+					return sched_is_idle();
+				}
 			}
 		}
 	}
-
+	
 	return false;
 }
 
@@ -161,19 +175,11 @@ bool os_message_delivery(int cons_task, unsigned int length)
 	if(cons_task & 0x10000000){
 		/* This message was directed to kernel */
 		/* Receive the message in stack. Maybe this is a bad idea. */
-		message_t msg;
-		msg.length = length;
-		dmni_read(msg.msg, msg.length);
+		int message[length];
+		dmni_read(message, length);
 
-		/* Process it like a syscall */
-		switch(msg.msg[0]){
-			case TASK_RELEASE:
-				return os_task_release(msg.msg[1], msg.msg[2], msg.msg[3], msg.msg[4], &msg.msg[5]);
-			default:
-				putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", msg.msg[0]);
-				return false;
-		}
-
+		/* Process the message like a syscall triggered from another PE */
+		return os_kernel_syscall(message, length);
 	} else {
 		/* Get consumer task */
 		tcb_t *cons_tcb = tcb_search(cons_task);

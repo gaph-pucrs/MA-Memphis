@@ -39,17 +39,6 @@ typedef struct _pending_msg {
 } pending_msg_t;
 
 /**
- * @brief FIFO data structure for pending output messages from kernel
- */
-typedef struct _pending_fifo {
-	pending_msg_t buffer[PKG_PENDING_SVC_MAX];
-	unsigned char head;
-	unsigned char tail;
-	bool empty;
-	bool full;
-} pending_fifo_t;
-
-/**
  * @brief Initialize the pending service structures
  */
 void pending_svc_init();
@@ -85,3 +74,20 @@ bool pending_msg_push(int task, int size, int *msg);
  * @return Pointer to the next service. NULL if no service is pending.
  */
 packet_t *pending_svc_pop();
+
+/**
+ * @brief Gets a pending message pointer
+ * 
+ * @param id ID of the target task
+ * 
+ * @return Pointer to the structure found. NULL if no corresponding id
+ */
+pending_msg_t *pending_msg_search(int id);
+
+/**
+ * @brief Sends a kernel pending message
+ * 
+ * @param msg Pointer to the message structure
+ * @param addr Address of the consumer task
+ */ 
+void pending_msg_send(pending_msg_t *msg, int addr);

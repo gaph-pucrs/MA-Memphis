@@ -54,7 +54,7 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 	if(message->message.length > MSG_SIZE){
 		puts("ERROR: message lenght higher than MSG_SIZE\n");
 		while(true);
-	}		
+	}
 
 	pkt_send(packet, message->message.msg, message->message.length);
 }

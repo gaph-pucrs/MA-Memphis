@@ -86,22 +86,22 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 		cons_task &= 0x000000FF;
 		cons_task |= (current->id & 0x0000FF00);
 		cons_addr = tl_search(current, cons_task);
-	}
-
-	/* Check if consumer task is allocated */
-	if(cons_addr == -1){		
-		/* Task is blocked until a TASK_RELEASE packet is received */
-		sched_block(current);
-		schedule_after_syscall = 1;
-		return false;
+		
+		/* Check if consumer task is allocated */
+		if(cons_addr == -1){		
+			/* Task is blocked until a TASK_RELEASE packet is received */
+			sched_block(current);
+			schedule_after_syscall = 1;
+			return false;
+		}
 	}
 
 	/* Points the message in the task page. Address composition: offset + msg address */
 	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 
 	/* Test if the application passed a invalid message lenght */
-	if(message->length > MSG_SIZE || message->length < 0){
-		putsv("ERROR: Message lenght must be 0 or higher and lower than MSG_SIZE", message->length);
+	if(message->length > MSG_SIZE){
+		putsv("ERROR: Message lenght must be lower than MSG_SIZE", message->length);
 		while(1);
 	}
 
@@ -113,10 +113,10 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 			/* Local consumer */
 			if(cons_task & 0x10000000){
 				/* Message directed to kernel. No TCB to write to */
-				/* This SHOULD NEVER happen because local kernel will not make a request out of nowhere */
-				/* But the functionality is here just in case */
-				/** @todo Generate the proper syscall */
-
+				/* This should NEVER happen because it means the kernel made a request without receiving a DATA_AV */
+				puts("ERROR: Kernel made a request without receiving DATA_AV!\n");
+				while(1);
+				return false;
 			} else {
 				/* Writes to the consumer page address */
 				tcb_t *cons_tcb = tcb_search(cons_task);
@@ -162,8 +162,8 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				if(cons_task & 0x10000000){
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
-					/** @todo Generate the proper syscall */
-
+					schedule_after_syscall = os_kernel_syscall(message->msg, message->length);
+					return true;
 				} else {
 					/* Insert a DATA_AV to consumer table */
 					tcb_t *cons_tcb = tcb_search(cons_task);
@@ -323,7 +323,19 @@ bool os_realtime(unsigned int period, int deadline, unsigned int exec_time)
 	return true;
 }
 
-bool os_kernel_delivery(int task, int addr, int size, int *msg)
+bool os_kernel_syscall(int *message, int length)
+{
+	/* Process it like a syscall */
+	switch(message[0]){
+		case TASK_RELEASE:
+			return os_task_release(message[1], message[2], message[3], message[4], &message[5]);
+		default:
+			putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", message[0]);
+			return false;
+	}
+}
+
+bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 {
 	/* Insert message in kernel output message buffer */
 	pending_msg_push(task, size, msg);

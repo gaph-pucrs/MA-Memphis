@@ -27,6 +27,7 @@ int main()
 	tcb_init();
 
 	pending_svc_init();
+	pending_msg_init();
 
 	sched_init();
 

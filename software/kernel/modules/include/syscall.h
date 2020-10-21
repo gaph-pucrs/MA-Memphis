@@ -92,6 +92,16 @@ bool os_echo(unsigned int msg_ptr);
 bool os_realtime(unsigned int period, int deadline, unsigned int exec_time);
 
 /**
+ * @brief Calls a syscall from a received message (MESSAGE_DELIVERY)
+ * 
+ * @param message Pointer to the message
+ * @param length Length of the message
+ * 
+ * @return True if should schedule
+ */
+bool os_kernel_syscall(int *message, int length);
+
+/**
  * @brief Sends a message delivery from kernel
  * 
  * @param task Consumer task
@@ -101,4 +111,4 @@ bool os_realtime(unsigned int period, int deadline, unsigned int exec_time);
  * 
  * @return True if should schedule
  */
-bool os_kernel_delivery(int task, int addr, int size, int *msg);
+bool os_kernel_writepipe(int task, int addr, int size, int *msg);
