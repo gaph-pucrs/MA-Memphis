@@ -215,19 +215,24 @@ void map_task_allocated(mapper_t *mapper, int id)
 		/* Assemble and send task release */
 		Message msg;
 		msg.msg[0] = TASK_RELEASE;
-		// msg.msg[1] = target id
+		// msg.msg[1] = appid_shift | i;
+		// msg.msg[2] = app->task[i]->data_sz;
+		// msg.msg[3] = app->task[i]->bss_sz;
+		msg.msg[4] = app->task_cnt;
 		for(int i = 0; i < app->task_cnt; i++)
-			msg.msg[i + 2] = mapper->processors[app->task[i]->proc_idx].addr;
+			msg.msg[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
 		
-		msg.length = app->task_cnt + 2;
+		msg.length = app->task_cnt + 5;
 
 		int appid_shift = app->id << 8;
 		for(int i = 0; i < app->task_cnt; i++){
 			/* Tell kernel to populate the proper task by sending the ID */
 			msg.msg[1] = appid_shift | i;
+			msg.msg[2] = app->task[i]->data_sz;
+			msg.msg[3] = app->task[i]->bss_sz;
 
 			/* Send message directed to kernel at task address */
-			SSend(&msg, KERNEL_MSG | msg.msg[i + 2]);
+			SSend(&msg, KERNEL_MSG | msg.msg[i + 5]);
 		}
 	}
 }
@@ -293,7 +298,7 @@ void map_task_allocation(app_t *app, processor_t *processors)
 	Message msg;
 	for(int i = 0; i < app->task_cnt; i++)
 		msg.msg[i] = processors[app->task[i]->proc_idx].addr;
-						
+
 	msg.length = app->task_cnt;
 	SSend(&msg, APP_INJECTOR);
 }
