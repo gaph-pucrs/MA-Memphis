@@ -212,29 +212,43 @@ void map_task_allocated(mapper_t *mapper, int id)
 		/* All tasks allocated, send task release */
 		Echo("All tasks allocated. Sending TASK_RELEASE\n");
 
-		/* Assemble and send task release */
-		Message msg;
-		msg.msg[0] = TASK_RELEASE;
-		// msg.msg[1] = appid_shift | i;
-		// msg.msg[2] = app->task[i]->data_sz;
-		// msg.msg[3] = app->task[i]->bss_sz;
-		msg.msg[4] = app->task_cnt;
-		for(int i = 0; i < app->task_cnt; i++)
-			msg.msg[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
-		
-		msg.length = app->task_cnt + 5;
-
-		int appid_shift = app->id << 8;
-		for(int i = 0; i < app->task_cnt; i++){
-			/* Tell kernel to populate the proper task by sending the ID */
-			msg.msg[1] = appid_shift | i;
-			msg.msg[2] = app->task[i]->data_sz;
-			msg.msg[3] = app->task[i]->bss_sz;
-
-			/* Send message directed to kernel at task address */
-			SSend(&msg, KERNEL_MSG | msg.msg[i + 5]);
-		}
+		map_task_release(mapper, app);
+		map_app_mapping_complete();
 	}
+}
+
+void map_task_release(mapper_t *mapper, app_t *app)
+{
+	/* Assemble and send task release */
+	Message msg;
+	msg.msg[0] = TASK_RELEASE;
+	// msg.msg[1] = appid_shift | i;
+	// msg.msg[2] = app->task[i]->data_sz;
+	// msg.msg[3] = app->task[i]->bss_sz;
+	msg.msg[4] = app->task_cnt;
+	for(int i = 0; i < app->task_cnt; i++)
+		msg.msg[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
+	
+	msg.length = app->task_cnt + 5;
+
+	int appid_shift = app->id << 8;
+	for(int i = 0; i < app->task_cnt; i++){
+		/* Tell kernel to populate the proper task by sending the ID */
+		msg.msg[1] = appid_shift | i;
+		msg.msg[2] = app->task[i]->data_sz;
+		msg.msg[3] = app->task[i]->bss_sz;
+
+		/* Send message directed to kernel at task address */
+		SSend(&msg, KERNEL_MSG | msg.msg[i + 5]);
+	}
+}
+
+void map_app_mapping_complete()
+{
+	Message msg;
+	msg.msg[0] = APP_MAPPING_COMPLETE;
+	msg.length = 1;
+	SSend(&msg, APP_INJECTOR);
 }
 
 app_t *app_search(app_t *apps, int appid)
@@ -296,7 +310,7 @@ void map_task_allocation(app_t *app, processor_t *processors)
 
 	/* Ask injector for task allocation */
 	Message msg;
-	msg.msg[0] = TASK_ALLOCATION;
+	msg.msg[0] = APP_ALLOCATION_REQUEST;
 	for(int i = 1; i < app->task_cnt * 2 + 1; i += 2){
 		msg.msg[i] = app->task[(i - 2)/2]->id;
 		msg.msg[i + 1] = processors[app->task[(i - 1)/2]->proc_idx].addr;

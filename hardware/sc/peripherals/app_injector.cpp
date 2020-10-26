@@ -469,7 +469,7 @@ void app_injector::receive_packet(){
 
 					if(payload_size == 0){
 						switch(packet[0]){
-							case TASK_ALLOCATION:
+							case APP_ALLOCATION_REQUEST:
 								app_mapping_loader();
 								EA_receive_packet = WAITING_SEND_TASK_ALLOCATION;
 								break;
