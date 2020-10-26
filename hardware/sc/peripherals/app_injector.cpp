@@ -72,7 +72,7 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 
 	path = get_app_repo_path(app_id);
 
-	//cout << "Task allocation loader - app path: " << path << endl;
+	cout << "Task allocation loader - app path: " << path << endl;
 
 	ifstream repo_file (path.c_str());
 
@@ -120,8 +120,8 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 		packet[1] = packet_size-2; //Packet service
 		packet[2] = TASK_ALLOCATION; //Packet service
 		packet[3] = id;
-		packet[4] = mapper_addr; /** @todo Mapper Address */
-		packet[8] = mapper_id; /** @todo Mapper task */
+		packet[4] = mapper_addr;
+		packet[8] = mapper_id;
 		packet[9] = data_size; //Data size
 		packet[10] = code_size; //Code size
 		packet[11] = bss_size; //Bss size
@@ -150,14 +150,18 @@ void app_injector::bootloader(){
 			/*Sends the Global Mapper App to PE 0 */
 			case INITIALIZE:
 				/*Load the boot task in the packet array*/
+				cout << "bootloader init task alloc loader " << endl;
 				task_allocation_loader(0, 0, -1, -1);
 				/*This state signals to send_packet to start transmission*/
 				EA_bootloader = WAIT_SEND_BOOT;
+				cout << "bootloader init ok" << endl;
 				break;
 			case WAIT_SEND_BOOT:
 				/*Waits ends of boot packet transmission*/
-				if (EA_send_packet == SEND_FINISHED)
+				if (EA_send_packet == SEND_FINISHED){
 					EA_bootloader = BOOTLOADER_FINISHED;
+					cout << "bootloader send ok" << endl;
+				}
 				break;
 			case BOOTLOADER_FINISHED:
 				break;
@@ -187,12 +191,12 @@ void app_injector::monitor_new_app(){
 	ifstream appstart_file;
 
 	if (reset.read() == 1)  {
-		EA_new_app_monitor = IDLE_MONITOR;
+		EA_new_app_monitor = MONITORING;
 		current_time = 0;
 		req_app_start_time = 0;
 		req_app_task_number = 0;
 		req_app_cluster_id = 0;
-		line_counter = MAN_APP_DESCRIPTOR_SIZE; //6 is the number of lines after MAN_app_application
+		line_counter = MAN_APP_DESCRIPTOR_SIZE;
 
 	} else if (clock.posedge()){
 
@@ -217,28 +221,28 @@ void app_injector::monitor_new_app(){
 
 					//Reads the next line of the file. Supposed to be the application name
 					getline (appstart_file,req_app_name);
-
+					cout << "found app name " << req_app_name << endl;
 					if (req_app_name != "deadc0de"){
 
 						//Gets the application start time
 						getline (appstart_file,line);
 						sscanf( line.substr(0, 8).c_str(), "%u", &req_app_start_time ); //Start time is in milliseconds
 
-						//Gets the application cluster
-						getline (appstart_file,line);
-						sscanf( line.substr(0, 8).c_str(), "%d", &req_app_cluster_id );
+						// //Gets the application cluster
+						// getline (appstart_file,line);
+						// sscanf( line.substr(0, 8).c_str(), "%d", &req_app_cluster_id );
 
 						//Gets the application task number
 						getline (appstart_file,line);
 						sscanf( line.substr(0, 8).c_str(), "%u", &req_app_task_number );
 
-						line_counter = line_counter + 4;
+						line_counter = line_counter + 3;
 
 						task_static_mapping = new int[req_app_task_number];
 
-						//cout << "App name: " << req_app_name << endl;
-						//cout << "req_app_cluster_id: " << req_app_cluster_id << endl;
-						//cout << "app_task_number: " << req_app_task_number << endl;
+						cout << "App name: " << req_app_name << endl;
+						// cout << "req_app_cluster_id: " << req_app_cluster_id << endl;
+						cout << "app_task_number: " << req_app_task_number << endl;		/** @todo ALWAYS -1, locks whole process */
 
 						//Gets the allocated processor for each task, useful for static task mapping
 						for(unsigned int i=0; i<req_app_task_number; i++){
@@ -250,6 +254,7 @@ void app_injector::monitor_new_app(){
 						}
 
 						EA_new_app_monitor = WAITING_TIME;
+						cout << "app found. will wait time" << endl;
 					}
 
 					appstart_file.close();
@@ -267,6 +272,7 @@ void app_injector::monitor_new_app(){
 					/* Now it sends direclty NEW_APP -> no clustering */
 						
 					//Loads app descriptor to the pointer * packet (used in send_packet function)
+					cout << "time achieved! will send new_app" << endl;
 					app_descriptor_loader();
 					EA_new_app_monitor = WAITING_SEND_NEW_APP;
 				}
@@ -654,7 +660,7 @@ void app_injector::app_mapping_loader()
 {
 	/* Build application mapping */
 	pending_allocation.clear();
-	for(int i = 1; i < packet_size; i += 2)
+	for(unsigned int i = 1; i < packet_size; i += 2)
 		pending_allocation[packet[i]] = packet[i + 1];
 
 	delete[] packet;

@@ -16,6 +16,8 @@
 #include <string>
 #include <map>
 
+#include "../standards.h"
+
 using namespace std;
 
 #define TAM_FLIT 				32 	//Size of the Packet-Swtiching NoC flit
@@ -23,7 +25,7 @@ using namespace std;
 #define MPE_ADDR				0 	//PE address of the manager PE
 #define TASK_NUMBER_INDEX		8 	//Index where is the app task number information within packet APP_REQ_ACK
 #define TASK_DESCRIPTOR_SIZE	6	//6 is number of lines to represent a task description. Keeps this number equal to build_env/scripts/app_builder.py
-#define MAN_APP_DESCRIPTOR_SIZE	8 	//This number represents the number of lines that MAN_app has into the file my_scenario/appstart.txt. If you include a new MAN_app task, please increase this value in +1
+#define MAN_APP_DESCRIPTOR_SIZE	4 	//This number represents the number of lines that MAN_app has into the file my_scenario/appstart.txt. If you include a new MAN_app task, please increase this value in +1
 
 
 typedef sc_uint<TAM_FLIT > regflit;
@@ -37,7 +39,7 @@ typedef sc_uint<TAM_FLIT > regflit;
 #define 	APP_ALLOCATION_REQUEST			0x00000240 //Mestre to Injector (carries tasks properties and mapping)
 #define		APP_MAPPING_COMPLETE			0x00000440
 
-#define		APP_INJECTOR_ADDRESS (0x80000000 | (io_ports[APP_INJECTOR] << 29) | ((APP_INJECTOR / N_PE_X) << 8) | (APP_INJECTOR % N_PE_X))
+#define		APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR / N_PE_X) << 8) | (APP_INJECTOR % N_PE_X))
 
 SC_MODULE(app_injector){
 
