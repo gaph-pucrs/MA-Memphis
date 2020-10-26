@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -28,9 +29,10 @@ using namespace std;
 typedef sc_uint<TAM_FLIT > regflit;
 
 //Services
+#define 	MESSAGE_REQUEST 				0x00000010
+#define		MESSAGE_DELIVERY				0x00000020
+#define 	DATA_AV							0x00000310
 #define 	TASK_ALLOCATION     			0x00000040
-#define		NEW_APP_REQ						0x00000290 //Injector to Mestre (carries num_tasks)
-#define		APP_REQ_ACK						0x00000300 //Mestre to Injector (carries cluster addr)
 #define		NEW_APP							0x00000150 //Injector to Mestre (carries App descriptor)
 #define 	APP_ALLOCATION_REQUEST			0x00000240 //Mestre to Injector (carries tasks properties and mapping)
 #define		APP_MAPPING_COMPLETE			0x00000440
@@ -56,6 +58,7 @@ SC_MODULE(app_injector){
 	void app_descriptor_loader();
 	void task_allocation_loader(unsigned int, unsigned int, unsigned int, unsigned int);
 	string get_app_repo_path(unsigned int);
+	void app_mapping_loader();
 
 	//Sequential logic
 	void bootloader();
@@ -68,9 +71,9 @@ SC_MODULE(app_injector){
 
 	//FSM
 	enum FSM_bootloader{INITIALIZE, WAIT_SEND_BOOT, BOOTLOADER_FINISHED};
-	enum FSM_send_packet{IDLE, SEND_PACKET, WAITING_CREDIT, SEND_FINISHED};
-	enum FSM_receive_packet{HEADER, PAYLOAD_SIZE, SERVICE, RECEIVE_APP_ACK, RECEIVE_ALLOCATION_REQ, RECEIVE_MAPPING_COMPLETE, WAITING_SEND_NEW_APP, WAITING_SEND_TASK_ALLOCATION};
-	enum FSM_new_app_monitor{IDLE_MONITOR, MONITORING, WAITING_TIME, WAITING_SEND_APP_REQ};
+	enum FSM_send_packet{IDLE, WAIT_MESSAGE_REQUEST, SEND_DATA_AV, SEND_MSG_REQUEST, SEND_PACKET, WAITING_CREDIT, SEND_FINISHED};
+	enum FSM_receive_packet{HEADER, PAYLOAD_SIZE, SERVICE, RECEIVE_DATA_AV, RECEIVE_MESSAGE_REQUEST, RECEIVE_MESSAGE_DELIVERY, WAIT_SEND_REQUEST, WAIT_SEND_DELIVERY, WAITING_SEND_TASK_ALLOCATION, CHECK_NEXT_MAP, RECEIVE_MAPPING_COMPLETE};
+	enum FSM_new_app_monitor{IDLE_MONITOR, MONITORING, WAITING_TIME, WAITING_SEND_NEW_APP};
 
 	enum FSM_bootloader 		EA_bootloader;
 	enum FSM_new_app_monitor 	EA_new_app_monitor;
@@ -102,7 +105,8 @@ SC_MODULE(app_injector){
 	//Used inside EA_send_packet
 	unsigned int packet_size;
 	unsigned int * packet;
-
+	map<int, int> pending_allocation;
+	map<int, int>::iterator pending_it;
 
 	SC_HAS_PROCESS(app_injector);
 	app_injector (sc_module_name name_) : sc_module(name_) {

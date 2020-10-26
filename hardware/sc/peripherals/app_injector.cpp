@@ -57,22 +57,17 @@ string app_injector::get_app_repo_path(unsigned int app_id){
 
 /**Assembles the packet that load the a generic task to the system
  */
-void app_injector::task_allocation_loader(unsigned int full_task_id, unsigned int real_task_id, unsigned int master_ID, unsigned int allocated_proc){
+void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, unsigned int mapper_id, unsigned int mapper_addr){
 
 	string line, path;
 	unsigned int  task_number, code_size, data_size, bss_size, task_line, code_line, current_line;
 	int ptr_index = 0;
 	unsigned int app_id, task_id;
 
-	app_id = full_task_id >> 8;
-	task_id = full_task_id & 0xFF;
+	app_id = id >> 8;
+	task_id = id & 0xFF;
 
-	if(real_task_id != 0){
-		full_task_id = real_task_id;
-		//cout << "Real task ID updated to " << real_task_id << endl;
-	}
-
-	cout << "Loading task ID " << full_task_id << " to PE " << (allocated_proc >> 8) << "x" << (allocated_proc & 0xFF) << endl;
+	cout << "Loading task ID " << id << " to PE " << (addr >> 8) << "x" << (addr & 0xFF) << endl;
 
 
 	path = get_app_repo_path(app_id);
@@ -121,16 +116,16 @@ void app_injector::task_allocation_loader(unsigned int full_task_id, unsigned in
 
 		packet = new unsigned int[packet_size];
 
-		packet[0] = allocated_proc; //Packet service
+		packet[0] = addr; //Packet service
 		packet[1] = packet_size-2; //Packet service
 		packet[2] = TASK_ALLOCATION; //Packet service
-		packet[3] = full_task_id;
-		packet[4] = -1; /** @todo Mapper Address */
-		packet[8] = -1; /** @todo Mapper task */
+		packet[3] = id;
+		packet[4] = mapper_addr; /** @todo Mapper Address */
+		packet[8] = mapper_id; /** @todo Mapper task */
 		packet[9] = data_size; //Data size
 		packet[10] = code_size; //Code size
 		packet[11] = bss_size; //Bss size
-		ptr_index 			= CONSTANT_PACKET_SIZE; //Jumps to the end of ServiceHeader
+		ptr_index  = CONSTANT_PACKET_SIZE; //Jumps to the end of ServiceHeader
 
 		//Assembles txt
 		for(unsigned int i=0; i<code_size; i++){
@@ -155,7 +150,7 @@ void app_injector::bootloader(){
 			/*Sends the Global Mapper App to PE 0 */
 			case INITIALIZE:
 				/*Load the boot task in the packet array*/
-				task_allocation_loader(0,0,0,0);
+				task_allocation_loader(0, 0, -1, -1);
 				/*This state signals to send_packet to start transmission*/
 				EA_bootloader = WAIT_SEND_BOOT;
 				break;
@@ -204,7 +199,6 @@ void app_injector::monitor_new_app(){
 		switch (EA_new_app_monitor) {
 
 			case IDLE_MONITOR:
-
 				//Waits until the master sends the app mapping complete
 				if (EA_receive_packet == RECEIVE_MAPPING_COMPLETE)
 					EA_new_app_monitor = MONITORING;
@@ -269,30 +263,17 @@ void app_injector::monitor_new_app(){
 			case WAITING_TIME: //Test when the current time reach the application start time
 
 				if (EA_receive_packet == HEADER && EA_bootloader == BOOTLOADER_FINISHED && (req_app_start_time * 100000) <= current_time){
-
-					packet_size = CONSTANT_PACKET_SIZE+3;
-
-					packet = new unsigned int[packet_size];
-
-					packet[0] = MPE_ADDR;
-					packet[1] = packet_size - 2;
-					packet[2] = NEW_APP_REQ;
-					packet[4] = 0; //Task Global Mapper
-					packet[8] = 3; //Payload lenght
-					packet[CONSTANT_PACKET_SIZE] = NEW_APP_REQ;
-					packet[CONSTANT_PACKET_SIZE+1] = req_app_cluster_id;
-					packet[CONSTANT_PACKET_SIZE+2] = req_app_task_number;
-					//cout << "NEW_APP_SENT" << endl;
-
-					cout << "App Injector requesting app " << req_app_name << endl;
-
-					EA_new_app_monitor = WAITING_SEND_APP_REQ;
+					/* It once sent "NEW_APP_REQ" */
+					/* Now it sends direclty NEW_APP -> no clustering */
+						
+					//Loads app descriptor to the pointer * packet (used in send_packet function)
+					app_descriptor_loader();
+					EA_new_app_monitor = WAITING_SEND_NEW_APP;
 				}
 
 				break;
 
-			case WAITING_SEND_APP_REQ:
-
+			case WAITING_SEND_NEW_APP:
 				if (EA_send_packet == SEND_FINISHED)
 					EA_new_app_monitor = IDLE_MONITOR;
 
@@ -334,22 +315,22 @@ void app_injector::app_descriptor_loader(){
 		repo_file.seekg (0, repo_file.beg);
 
 		//Sets the NoC's packet size
-		packet_size = CONSTANT_PACKET_SIZE + 3 + file_length;
+		packet_size = CONSTANT_PACKET_SIZE + 2 + file_length;
 
 		//Allocate memory
 		packet = new unsigned int[packet_size];
 
 		//Assembles the Service Header on packet
-		packet[0] = (cluster_address & 0xFFFF); // Manager address
-		packet[1] = packet_size - 2; // Packet payload
-		packet[2] = NEW_APP;
-		packet[4] = (cluster_address >> 16); //Task Global Mapper
-		packet[8] = file_length + 3; //Payload lenght
-		packet[CONSTANT_PACKET_SIZE] = NEW_APP;
-		packet[CONSTANT_PACKET_SIZE+1] = ack_app_id;
-		packet[CONSTANT_PACKET_SIZE+2] = file_length;
+		packet[0] = 0x0000; 		 			/* Header: mapper task address */
+		packet[1] = packet_size - 2; 			/* Payload size */
+		packet[2] = MESSAGE_DELIVERY;			/* Service */
+		packet[3] = APP_INJECTOR_ADDRESS;		/* producer_task */
+		packet[4] = 0x0000; 					/* consumer_task: mapper task id */
+		packet[8] = file_length + 2; 			/* Message length */
+		packet[CONSTANT_PACKET_SIZE] = NEW_APP;	/* Protocol: NEW_APP */
+		packet[CONSTANT_PACKET_SIZE+1] = file_length;
 
-		ptr_index = CONSTANT_PACKET_SIZE + 3; //ptr_index starts after ServiceHeader + 3
+		ptr_index = CONSTANT_PACKET_SIZE + 2; //ptr_index starts after ServiceHeader + 2
 
 		//Assembles the App Descriptor from repository file
 		allocated_proc_index = 2;//Starts at index 2 because the first index is used to the number of app tasks, and the second one to the task name
@@ -410,7 +391,7 @@ void app_injector::app_descriptor_loader(){
  */
 void app_injector::receive_packet(){
 
-	if (reset.read() == 1)  {
+	if(reset.read()){
 		EA_receive_packet = HEADER;
 		req_task_id = 0;
 		req_task_allocated_proc = 0;
@@ -418,201 +399,269 @@ void app_injector::receive_packet(){
 		req_task_id_real = 0;
 		sig_credit_out.write(1);
 	} else {
-
-		/*Credit out update*/
-		if (EA_receive_packet == WAITING_SEND_NEW_APP || EA_receive_packet == WAITING_SEND_TASK_ALLOCATION || EA_new_app_monitor == WAITING_SEND_APP_REQ)
-			sig_credit_out.write(0);
-		else
+		/* Credit out update */
+		if(
+			EA_send_packet == WAIT_MESSAGE_REQUEST ||
+			(
+				EA_new_app_monitor == IDLE_MONITOR && 
+				EA_receive_packet != WAIT_SEND_REQUEST &&
+				EA_receive_packet != WAITING_SEND_TASK_ALLOCATION
+			)
+		)
 			sig_credit_out.write(1);
-
-
-		switch (EA_receive_packet) {
-
+		else
+			sig_credit_out.write(0);
+		
+		switch(EA_receive_packet){
 			case HEADER:
-
-				if (rx.read() == 1 && sig_credit_out.read() == 1)
+				if(rx.read() && sig_credit_out.read())
 					EA_receive_packet = PAYLOAD_SIZE;
 
 				break;
-
 			case PAYLOAD_SIZE:
-
-				if (rx.read() == 1 && sig_credit_out.read() == 1){
+				if(rx.read() && sig_credit_out.read()){
 					payload_size = data_in.read();
-					flit_counter = 2;
+					flit_counter = 1;
 					EA_receive_packet = SERVICE;
 				}
-
 				break;
 			case SERVICE:
-
-				if (rx.read() == 1 && sig_credit_out.read() == 1){
-
-					switch (data_in.read()) {
-						case APP_REQ_ACK:
-							EA_receive_packet = RECEIVE_APP_ACK;
+				if(rx.read() && sig_credit_out.read()){
+					switch(data_in.read()){
+						case DATA_AV:
+							EA_receive_packet = RECEIVE_DATA_AV;
 							break;
-						case APP_ALLOCATION_REQUEST:
-							EA_receive_packet = RECEIVE_ALLOCATION_REQ;
+						case MESSAGE_REQUEST:
+							EA_receive_packet = RECEIVE_MESSAGE_REQUEST;
 							break;
-						case APP_MAPPING_COMPLETE:
-							EA_receive_packet = RECEIVE_MAPPING_COMPLETE;
+						case MESSAGE_DELIVERY:
+							EA_receive_packet = RECEIVE_MESSAGE_DELIVERY;
 							break;
 						default:
 							cout << "ERROR: packet received unknown at time " << current_time << "\n" << endl;
 							break;
 					}
-
 				}
-
 				break;
-
-			case RECEIVE_APP_ACK: //APP_REQ_ACK:
-
-				if (rx.read() == 1 && sig_credit_out.read() == 1){
-
-					switch (flit_counter) {
-						case 4:
-							ack_app_id = data_in.read();
-							break;
-						case 5:
-							cluster_address = data_in.read();
-							break;
-						default:
-							break;
-					}
-
-					if (payload_size == 0){
-						cout << "Manager sent ACK" << endl;
-						//Loads app descriptor to the pointer * packet (used in send_packet function)
-						app_descriptor_loader();
-						EA_receive_packet = WAITING_SEND_NEW_APP;
-					}
+			case RECEIVE_DATA_AV:
+				if(rx.read() && sig_credit_out.read()){
+					/* For now we are ignoring the parameters: prod_task, cons_task and cons_addr */
+					if(payload_size == 0)
+						EA_receive_packet = WAIT_SEND_REQUEST;
 				}
-
 				break;
-
-			case RECEIVE_ALLOCATION_REQ:
-
-				if (rx.read() == 1 && sig_credit_out.read() == 1){
-
-					switch (flit_counter) {
-						case 4:
-							req_task_id = data_in.read();
-							break;
-						case 5:
-							req_task_master_ID = data_in.read();
-							break;
-						case 6:
-							req_task_allocated_proc = data_in.read();
-							break;
-						case 7:
-							req_task_id_real = data_in.read();
-							break;
-						default:
-							break;
+			case RECEIVE_MESSAGE_REQUEST:
+				if(rx.read() && sig_credit_out.read()){
+					/* For now we are ignoring the parameters: prod_task, cons_task and cons_addr */
+					if (payload_size == 0)
+						EA_receive_packet = WAIT_SEND_DELIVERY;
+				}
+				break;
+			case RECEIVE_MESSAGE_DELIVERY:
+				if(rx.read() && sig_credit_out.read()){
+					/* For now we are ignoring the parameters: prod_task, cons_task and cons_addr */
+					if(flit_counter == 8){
+						packet_size = data_in.read();
+						packet = new unsigned int[packet_size];
+					} else if(flit_counter >= 13){
+						packet[flit_counter - 13] = data_in.read();
 					}
 
-					if (payload_size == 0){
-						task_allocation_loader(req_task_id, req_task_id_real, req_task_master_ID, req_task_allocated_proc);
-						EA_receive_packet = WAITING_SEND_TASK_ALLOCATION;
+					if(payload_size == 0){
+						switch(packet[0]){
+							case TASK_ALLOCATION:
+								app_mapping_loader();
+								EA_receive_packet = WAITING_SEND_TASK_ALLOCATION;
+								break;
+							case APP_MAPPING_COMPLETE:
+								EA_receive_packet = RECEIVE_MAPPING_COMPLETE;
+								delete[] packet;
+								packet = NULL;
+								break;
+							default:
+								cout << "ERROR: Unknown service received at time " << current_time << endl;
+								break;
+						}
 					}
 				}
-
 				break;
-
-			case RECEIVE_MAPPING_COMPLETE:
-				if (payload_size == 0){
+			case WAIT_SEND_REQUEST:
+				if(EA_send_packet == SEND_FINISHED)
 					EA_receive_packet = HEADER;
-				}
-				break;
 
-			case WAITING_SEND_NEW_APP:
-				if (EA_send_packet == SEND_FINISHED)
+				break;
+			case WAIT_SEND_DELIVERY:
+				if(EA_send_packet == SEND_FINISHED)
 					EA_receive_packet = HEADER;
-				break;
 
+				break;
 			case WAITING_SEND_TASK_ALLOCATION:
-				if (EA_send_packet == SEND_FINISHED)
-					EA_receive_packet = HEADER;
-				break;
-		}//end switch
+				if(EA_send_packet == SEND_FINISHED)
+					EA_receive_packet = CHECK_NEXT_MAP;
 
-		if (rx.read() == 1 && sig_credit_out.read() == 1 && payload_size != 0){
+				break;
+			case CHECK_NEXT_MAP:
+				if(pending_it != pending_allocation.end()){
+					task_allocation_loader(pending_it->first, pending_it->second, 0, 0);
+					pending_it++;
+					EA_receive_packet = WAITING_SEND_TASK_ALLOCATION;
+				} else {
+					EA_receive_packet = HEADER;
+				}
+				break;
+			case RECEIVE_MAPPING_COMPLETE:
+				EA_receive_packet = HEADER;
+				break;
+		}
+
+		if(rx.read() && sig_credit_out.read() && payload_size){
 			payload_size--;
 			flit_counter++;
 		}
 
-	}//end else
+	}
 }
 
 /**Sequential process
  * Only is in charge to send data to NoC using as reference the packet pointer and packet_size variable.
  */
 void app_injector::send_packet(){
-
+	static FSM_send_packet last_state;
+	static unsigned int aux_pkt[CONSTANT_PACKET_SIZE];
+	static unsigned int aux_idx = 0;
 	static unsigned int p_index = 0;
 
 	if (reset.read() == 1)  {
 		EA_send_packet = IDLE;
 	} else {
-
-		switch (EA_send_packet) {
-
+		switch(EA_send_packet){
 			case IDLE:
 				//IDLE monitors the states of other FSM that acts as triggers
-				if (EA_new_app_monitor == WAITING_SEND_APP_REQ ||
-					EA_receive_packet == WAITING_SEND_NEW_APP ||
-					EA_receive_packet == WAITING_SEND_TASK_ALLOCATION ||
-					EA_bootloader == WAIT_SEND_BOOT
-					) {
-
+				if(EA_receive_packet == WAITING_SEND_TASK_ALLOCATION || EA_bootloader == WAIT_SEND_BOOT){
 					if (credit_in.read() == 1){
 						if (packet != NULL) {
 							EA_send_packet = SEND_PACKET;
 							p_index = 0;
-						} else
+						} else {
 							cout << "ERROR: packet has an NULL pointer at time " << current_time <<  endl;
+						}
+					}
+				} else if(EA_new_app_monitor == WAITING_SEND_NEW_APP){
+					/* Send a packet synchronously: DATA_AV -> MESSAGE_REQUEST -> MESSAGE_DELIVERY */
+					if(credit_in.read()){
+						/* Can send */
+						aux_idx = 0;
+						aux_pkt[0] = 0x0000; 				/* Header: mapper task address */
+						aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 				/* Payload size */
+						aux_pkt[2] = DATA_AV;				/* Service */
+						aux_pkt[3] = APP_INJECTOR_ADDRESS;	/* producer_task */
+						aux_pkt[4] = 0x0000; 				/* consumer_task: mapper task id */
+						aux_pkt[8] = APP_INJECTOR_ADDRESS;	/* requesting_processor */
+
+						EA_send_packet = SEND_DATA_AV;
+					}
+				} else if(EA_receive_packet == WAIT_SEND_REQUEST){
+					if(credit_in.read()){
+						/* Can send */
+						aux_idx = 0;
+						aux_pkt[0] = 0x0000; 				/* Header: mapper task address */
+						aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 				/* Payload size */
+						aux_pkt[2] = MESSAGE_REQUEST;		/* Service */
+						aux_pkt[3] = 0x0000;				/* producer_task: mapper task id */
+						aux_pkt[4] = APP_INJECTOR_ADDRESS; 	/* consumer_task */
+						aux_pkt[8] = APP_INJECTOR_ADDRESS;	/* requesting_processor */
+
+						EA_send_packet = SEND_MSG_REQUEST;
 					}
 				}
 				break;
-
-			case SEND_PACKET:
-
+			case SEND_DATA_AV:
 				if (credit_in.read() == 1){
-
-					if (packet_size > 0){
-
+					if(aux_idx < CONSTANT_PACKET_SIZE){
 						tx.write(1);
-						data_out.write(packet[p_index++]);
-						packet_size--;
-
+						data_out.write(aux_pkt[aux_idx++]);
+					} else {
+						tx.write(0);
+						EA_send_packet = WAIT_MESSAGE_REQUEST;
+					}
+				} else {
+					tx.write(0);
+					EA_send_packet = WAITING_CREDIT;
+					last_state = SEND_DATA_AV;
+				}
+				break;
+			case SEND_MSG_REQUEST:
+				if (credit_in.read() == 1){
+					if(aux_idx < CONSTANT_PACKET_SIZE){
+						tx.write(1);
+						data_out.write(aux_pkt[aux_idx++]);
 					} else {
 						tx.write(0);
 						EA_send_packet = SEND_FINISHED;
 					}
-
 				} else {
 					tx.write(0);
 					EA_send_packet = WAITING_CREDIT;
+					last_state = SEND_DATA_AV;
 				}
-
 				break;
-
+			case WAIT_MESSAGE_REQUEST:
+				if(EA_receive_packet == WAIT_SEND_DELIVERY){
+					if (credit_in.read() == 1){
+						if (packet != NULL) {
+							EA_send_packet = SEND_PACKET;
+							p_index = 0;
+						} else {
+							cout << "ERROR: packet has an NULL pointer at time " << current_time <<  endl;
+						}
+					}
+				}
+				break;
+			case SEND_PACKET:
+				if (credit_in.read() == 1){
+					if (packet_size > 0){
+						tx.write(1);
+						data_out.write(packet[p_index++]);
+						packet_size--;
+					} else {
+						tx.write(0);
+						EA_send_packet = SEND_FINISHED;
+					}
+				} else {
+					tx.write(0);
+					EA_send_packet = WAITING_CREDIT;
+					last_state = SEND_PACKET;
+				}
+				break;
 			case WAITING_CREDIT:
 				if (credit_in.read() == 1){
 					tx.write(1);
-					EA_send_packet = SEND_PACKET;
+					EA_send_packet = last_state;
 				}
 				break;
-
 			case SEND_FINISHED:
-
-				delete[] packet;
-				packet = NULL;
+				if(packet != NULL){
+					delete[] packet;
+					packet = NULL;
+				}
 				EA_send_packet = IDLE;
-
 				break;
 		}
 	}
+}
+
+void app_injector::app_mapping_loader()
+{
+	/* Build application mapping */
+	pending_allocation.clear();
+	for(int i = 1; i < packet_size; i += 2)
+		pending_allocation[packet[i]] = packet[i + 1];
+
+	delete[] packet;
+	packet = NULL;
+
+	pending_it = pending_allocation.begin();
+
+	task_allocation_loader(pending_it->first, pending_it->second, 0, 0);
+	pending_it++;
 }

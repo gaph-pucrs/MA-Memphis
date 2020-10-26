@@ -296,8 +296,11 @@ void map_task_allocation(app_t *app, processor_t *processors)
 
 	/* Ask injector for task allocation */
 	Message msg;
-	for(int i = 0; i < app->task_cnt; i++)
-		msg.msg[i] = processors[app->task[i]->proc_idx].addr;
+	msg.msg[0] = TASK_ALLOCATION;
+	for(int i = 1; i < app->task_cnt * 2 + 1; i += 2){
+		msg.msg[i] = app->task[(i - 2)/2]->id;
+		msg.msg[i + 1] = processors[app->task[(i - 1)/2]->proc_idx].addr;
+	}
 
 	msg.length = app->task_cnt;
 	SSend(&msg, APP_INJECTOR);
