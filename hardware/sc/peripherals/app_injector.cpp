@@ -321,7 +321,7 @@ void app_injector::app_descriptor_loader(){
 		repo_file.seekg (0, repo_file.beg);
 
 		//Sets the NoC's packet size
-		packet_size = CONSTANT_PACKET_SIZE + 2 + file_length;
+		packet_size = CONSTANT_PACKET_SIZE + 3 + file_length;
 
 		//Allocate memory
 		packet = new unsigned int[packet_size];
@@ -334,9 +334,10 @@ void app_injector::app_descriptor_loader(){
 		packet[4] = 0x0000; 					/* consumer_task: mapper task id */
 		packet[8] = file_length + 2; 			/* Message length */
 		packet[CONSTANT_PACKET_SIZE] = NEW_APP;	/* Protocol: NEW_APP */
-		packet[CONSTANT_PACKET_SIZE+1] = file_length;
+		packet[CONSTANT_PACKET_SIZE+1] = req_app_task_number;
+		packet[CONSTANT_PACKET_SIZE+2] = file_length;
 
-		ptr_index = CONSTANT_PACKET_SIZE + 2; //ptr_index starts after ServiceHeader + 2
+		ptr_index = CONSTANT_PACKET_SIZE + 3; //ptr_index starts after ServiceHeader + 2
 
 		//Assembles the App Descriptor from repository file
 		allocated_proc_index = 2;//Starts at index 2 because the first index is used to the number of app tasks, and the second one to the task name
@@ -356,10 +357,10 @@ void app_injector::app_descriptor_loader(){
 		delete [] task_static_mapping;
 		task_static_mapping = NULL;
 
-		/*for(int i=0; i<packet_size; i++){
+		for(int i=0; i<packet_size; i++){
 			cout << hex << packet[i] << endl;
-		}*/
-		//cout << "APP_DESCRIPTOR SENT" << endl;
+		}
+		cout << "APP_DESCRIPTOR SENT" << endl;
 
 		repo_file.close();
 	} else {
