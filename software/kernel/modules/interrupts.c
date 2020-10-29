@@ -149,18 +149,19 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
 
 		} else {
+			// putsvsv("Received message request from task ", cons_task, " to task ", prod_task);
 			// putsvsv("Task ", prod_task, " received message request from ", cons_task);
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
 			if(!message){	/* No message in producer's pipe to the consumer task */
 				/* Insert the message request in the producer's TCB */
-				mr_insert(prod_tcb, cons_task, cons_addr);
 				// puts("Message not found. Inserting message request.\n");
+				mr_insert(prod_tcb, cons_task, cons_addr);
 			} else {	/* Message found */
 				/* Send through NoC */
+				// puts("Message found. Sending through NoC.\n");
 				pipe_send(prod_task, cons_task, cons_addr, message);
-				// puts("Message found. Sent through NoC.\n");
 
 				/* Release task for execution if it was blocking another send */
 				if(sched_is_waiting_request(prod_tcb)){
@@ -298,7 +299,7 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	
 }
 
-bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number, int *task_location)
+bool os_task_release(int id, int data_sz, int bss_sz, int task_number, int *task_location)
 {
 	/* Get task to release */
 	tcb_t *task = tcb_search(id);

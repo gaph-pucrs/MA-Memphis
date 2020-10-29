@@ -91,7 +91,7 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr);
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number, int *task_location);
+bool os_task_release(int id, int data_sz, int bss_sz, int task_number, int *task_location);
 
 /**
  * @brief Handles a update task location packet
