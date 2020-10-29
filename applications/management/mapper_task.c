@@ -19,7 +19,7 @@ int main()
 		/* Check what service has been received */
 		switch(msg.msg[0]){
 			case NEW_APP:
-				map_new_app(&mapper, msg.msg[1], &msg.msg[3], msg.msg[2]);
+				map_new_app(&mapper, msg.msg[2], &msg.msg[3], msg.msg[1] - 1);
 				break;
 			case TASK_ALLOCATED:
 				map_task_allocated(&mapper, msg.msg[1]);
@@ -53,6 +53,7 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned 
 	Echo("New app received.\n");
 	Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
 	Echo("App ID: "); Echo(itoa(mapper->appid_cnt)); Echo("\n");
+	Echo("Task cnt: "); Echo(itoa(task_cnt)); Echo("\n");
 
 	if(task_cnt > mapper->available_slots){
 		Echo("No available slots.\n");
@@ -64,7 +65,7 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned 
 		for(int i = 0; i < desc_sz; i++)
 			mapper->pending_descr[i] = descriptor[i];
 	} else {
-		map_try_mapping(mapper, mapper->appid_cnt++, descriptor, task_cnt, mapper->processors);
+		map_try_mapping(mapper, mapper->appid_cnt, descriptor, task_cnt, mapper->processors);
 	}
 }
 
@@ -77,12 +78,19 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 	app->allocated_cnt = 0;
 
 	for(int i = 0; i < app->task_cnt; i++){
-		unsigned task_id = descriptor[i*6] & 0xFF;
+		/**
+		 * @todo Check this bug
+		 * This is usually = descriptor[i*6] & 0xFF.
+		 * But using & in this statement acts as | besides the proper instruction being generated and executed.
+		 */
+		int task_id = descriptor[i*6];
+		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
 		app->task[task_id] = task_get_free(mapper->tasks);
 
 		app->task[task_id]->id = appid << 8 | task_id;
 
 		int proc_idx = descriptor[i*6 + 1];
+		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
 		if(proc_idx != -1)
 			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
 		app->task[task_id]->proc_idx = proc_idx;
@@ -126,7 +134,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 			/* This is needed because more than 1 task can be statically mapped to the same processor */
 			processors[proc_idx].pending_map_cnt++;
 			if(processors[proc_idx].pending_map_cnt > processors[proc_idx].free_page_cnt){
-				Echo("No available page for statically mapped task "); Echo(itoa(i)); Echo("\n");
+				Echo("No available page for statically mapped task "); Echo(itoa(app->task[i]->id)); Echo("\n");
 				map_failed = true;
 			}
 		}
@@ -145,7 +153,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 		for(int i = 0; i < app->task_cnt; i++){
 			int proc_idx = app->task[i]->proc_idx;
 			if(proc_idx != -1){
-				Echo("Statically mapped task "); Echo(itoa(i)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
+				Echo("Statically mapped task "); Echo(itoa(app->task[i]->id)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
 				processors[proc_idx].pending_map_cnt = 0;
 				processors[proc_idx].free_page_cnt--;
 			}
@@ -155,7 +163,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 		for(int i = 0; i < app->task_cnt; i++){
 			if(app->task[i]->proc_idx == -1){
 				int proc_idx = processors_get_first_most_free(processors);
-				Echo("Dinamically mapped task "); Echo(itoa(i)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
+				Echo("Dinamically mapped task "); Echo(itoa(app->task[i]->id)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
 				processors[proc_idx].free_page_cnt--;
 				app->task[i]->proc_idx = proc_idx;
 			}
@@ -180,7 +188,7 @@ void app_init(app_t *apps)
 void processor_init(processor_t *processors)
 {
 	for(int i = 0; i < PKG_N_PE; i++){
-		processors[i].addr = (i/PKG_N_PE_X << 8) | (i % PKG_N_PE);
+		processors[i].addr = i % PKG_N_PE_X << 8 | i / PKG_N_PE;
 		processors[i].free_page_cnt = PKG_MAX_TASKS_APP;
 		processors[i].pending_map_cnt = 0;
 	}
@@ -214,6 +222,7 @@ void map_task_allocated(mapper_t *mapper, int id)
 
 		map_task_release(mapper, app);
 		map_app_mapping_complete();
+		mapper->appid_cnt++;
 	}
 }
 
@@ -283,7 +292,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
 		/* Pending NEW_APP and resources freed. Map pending task */
-		map_try_mapping(mapper, mapper->appid_cnt++, mapper->pending_descr, mapper->pending_task_cnt, mapper->processors);
+		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_descr, mapper->pending_task_cnt, mapper->processors);
 	} else if(
 		mapper->fail_map_cnt > 0 &&																	/* Pending mapping */
 		mapper->processors[proc_idx].pending_map_cnt > 0 && 											/* Terminated task freed desired processor */
@@ -310,13 +319,16 @@ void map_task_allocation(app_t *app, processor_t *processors)
 
 	/* Ask injector for task allocation */
 	Message msg;
+
 	msg.msg[0] = APP_ALLOCATION_REQUEST;
-	for(int i = 1; i < app->task_cnt * 2 + 1; i += 2){
-		msg.msg[i] = app->task[(i - 2)/2]->id;
-		msg.msg[i + 1] = processors[app->task[(i - 1)/2]->proc_idx].addr;
+	int *payload = &msg.msg[1];
+
+	for(int i = 0; i < app->task_cnt; i++){
+		payload[i*2] = app->task[i]->id;
+		payload[i*2 + 1] = processors[app->task[i]->proc_idx].addr;
 	}
 
-	msg.length = app->task_cnt;
+	msg.length = app->task_cnt * 2 + 1;
 	SSend(&msg, APP_INJECTOR);
 }
 
@@ -324,7 +336,7 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 {
 	Echo("Mapping application...\n");
 		
-	app_t *app = map_build_app(mapper, mapper->appid_cnt++, descr, task_cnt);
+	app_t *app = map_build_app(mapper, mapper->appid_cnt, descr, task_cnt);
 
 	mapper->fail_map_cnt = map_app_mapping(app, mapper->processors);
 	if(!mapper->fail_map_cnt){
