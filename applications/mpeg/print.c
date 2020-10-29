@@ -20,7 +20,7 @@ Message msg1;
 
 int main()
 {
-    unsigned int time_a, time_b;
+    // unsigned int time_a, time_b;
     int i;
 
     Echo("MPEG Task PRINT start:");

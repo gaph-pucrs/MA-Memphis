@@ -86,10 +86,10 @@ void iquant_func(type_DATA *src, int lx, int dc_prec, int mquant)
 
 int main()
 {
-    unsigned int time_a, time_b;
+    // unsigned int time_a, time_b;
 	int i,j;
 
-    type_DATA clk_count;
+    // type_DATA clk_count;
     type_DATA block[64];
 
 

@@ -223,7 +223,7 @@ void idct_func(type_DATA *block,int lx)
 
 int main()
 {
-    unsigned int time_a, time_b;
+    // unsigned int time_a, time_b;
     int i,j;
     type_DATA block[64];
 
