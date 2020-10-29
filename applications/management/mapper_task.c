@@ -291,8 +291,10 @@ void map_task_terminated(mapper_t *mapper, int id)
 	mapper->processors[proc_idx].free_page_cnt++;
 
 	/* All tasks terminated, terminate app */
-	if(app->allocated_cnt == 0)
+	if(app->allocated_cnt == 0){
+		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo("\n");
 		app->id = -1;
+	}
 
 	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
 		/* Pending NEW_APP and resources freed. Map pending task */
