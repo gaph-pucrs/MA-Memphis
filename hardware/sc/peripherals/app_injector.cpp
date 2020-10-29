@@ -34,10 +34,12 @@ string app_injector::get_app_repo_path(unsigned int app_id){
 		for(unsigned int app_count = 0; app_count < app_id; app_count++){
 
 			/*Each descriptor in app_start start always with 4 information*/
-			for(int i=0; i<4; i++){
+			for(int i = 0; i < 3; i++){
 				getline (repo_file,line);
+				// cout << line << endl;
 			}
 			sscanf( line.substr(0, 8).c_str(), "%u", &task_number);
+			// cout << "Task number: " << task_number << endl;
 
 			/*Skips the number of tasks*/
 			for(unsigned int i=0; i<task_number; i++){
@@ -47,6 +49,7 @@ string app_injector::get_app_repo_path(unsigned int app_id){
 		}
 
 		getline (repo_file,line);
+		// cout << "APP NAME: " << line << endl;
 		return ("../applications/" + line + "/repository.txt");
 	}
 
@@ -104,13 +107,13 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 
 		current_line = task_line + TASK_DESCRIPTOR_SIZE + 1; /*Finds the current line by sum the number of task by the task decription size*/
 
-		//cout << "Current line: " << current_line << endl;
+		// cout << "Current line: " << current_line << endl;
 		/*Points the reader to the beging of task code*/
 		while(current_line < code_line){
 			getline (repo_file,line);
 			current_line++;
 		}
-		//cout << "Task ID " << task_id << " code size " << code_size << " code_line " << code_line << endl;
+		// cout << "Task ID " << task_id << " code size " << code_size << " code_line " << code_line << endl;
 
 		packet_size = code_size+CONSTANT_PACKET_SIZE;
 
@@ -131,7 +134,7 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 		for(unsigned int i=0; i<code_size; i++){
 			getline (repo_file,line);
 			sscanf( line.substr(0, 8).c_str(), "%x", &packet[ptr_index++]);
-			//cout << line << endl;
+			// cout << line << endl;
 		}
 
 	} else {
@@ -204,8 +207,10 @@ void app_injector::monitor_new_app(){
 
 			case IDLE_MONITOR:
 				//Waits until the master sends the app mapping complete
-				if (EA_receive_packet == RECEIVE_MAPPING_COMPLETE)
+				if (EA_receive_packet == RECEIVE_MAPPING_COMPLETE){
 					EA_new_app_monitor = MONITORING;
+					// cout << "Mapping complete received. Entering monitoring." << endl;
+				}
 
 				break;
 
@@ -242,7 +247,7 @@ void app_injector::monitor_new_app(){
 
 						// cout << "App name: " << req_app_name << endl;
 						// cout << "req_app_cluster_id: " << req_app_cluster_id << endl;
-						// cout << "app_task_number: " << req_app_task_number << endl;		/** @todo ALWAYS -1, locks whole process */
+						// cout << "app_task_number: " << req_app_task_number << endl;
 
 						//Gets the allocated processor for each task, useful for static task mapping
 						for(unsigned int i=0; i<req_app_task_number; i++){
@@ -280,8 +285,10 @@ void app_injector::monitor_new_app(){
 				break;
 
 			case WAITING_SEND_NEW_APP:
-				if (EA_send_packet == SEND_FINISHED)
+				if (EA_send_packet == SEND_FINISHED){
 					EA_new_app_monitor = IDLE_MONITOR;
+					// cout << "Descriptor sent (sync). Will enter idle monitor." << endl;
+				}
 
 				break;
 		}
@@ -675,8 +682,10 @@ void app_injector::app_mapping_loader()
 {
 	/* Build application mapping */
 	pending_allocation.clear();
-	for(unsigned int i = 1; i < packet_size; i += 2)
+	for(unsigned int i = 1; i < packet_size; i += 2){
+		// cout << "Task id " << packet[i] << " will be mapped at " << packet[i + 1] << endl;
 		pending_allocation[packet[i]] = packet[i + 1];
+	}
 
 	delete[] packet;
 	packet = NULL;
