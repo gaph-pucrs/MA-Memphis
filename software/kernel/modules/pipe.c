@@ -67,7 +67,10 @@ bool pipe_is_full(tcb_t *tcb)
 
 void pipe_transfer(message_t *src, message_t *dst)
 {
-	*dst = *src;
+	dst->length = src->length;
+	/** @todo Memcpy */
+	for(int i = 0; i < dst->length; i++)
+		dst->msg[i] = src->msg[i];
 }
 
 bool pipe_push(tcb_t *tcb, message_t *message, int cons_task)
