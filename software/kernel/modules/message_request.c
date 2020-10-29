@@ -53,7 +53,7 @@ bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)
 		}
 	}
 
-    puts("ERROR: producer request array full\n");
+    putsv("ERROR: producer request array full of task ", producer_tcb->id);
 	// while(true);
 	return false;
 }

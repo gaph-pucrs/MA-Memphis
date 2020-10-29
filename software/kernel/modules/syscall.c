@@ -180,7 +180,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				if(cons_task & 0x10000000){
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
-					schedule_after_syscall = os_kernel_syscall((int*)message->msg, message->length);
+					schedule_after_syscall = os_kernel_syscall(message->msg, message->length);
 					return true;
 				} else {
 					/* Insert a DATA_AV to consumer table */
@@ -237,6 +237,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			return false;
 		}
+		// putsvsv("Readpipe: trying to read from task ", prod_task, " with address ", prod_addr);
 	} else {
 		/* Synced READ, must see what applications have data available for it */
 		data_av_t *data_av = data_av_peek(current);
@@ -251,33 +252,57 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 		prod_task = data_av->requester;
 		prod_addr = data_av->requester_addr;
+		// putsvsv("Readpipe: received DATA_AV from task ", prod_task, " with address ", prod_addr);
 	}
 
 	if(prod_addr == HAL_NI_CONFIG){	/* Local producer */
-
-		/* Get the producer TCB */
-		tcb_t *prod_tcb = tcb_search(prod_task);
-
-		/* Searches if the message is in PIPE (local producer) */
-		pipe_t *pipe = pipe_pop(prod_tcb, cons_task);
-
-		if(!pipe){
-			/* Stores the request into the message request table */
-			mr_insert(prod_tcb, cons_task, HAL_NI_CONFIG);
-
-		} else {
-			/* Message was found in pipe, writes to the consumer page address (local producer) */
+		if(prod_task & 0x10000000){
+			// puts("Received DATA_AV from LOCAL Kernel!\n");
+			/* Message from Kernel. No request needed */
+			/* Search for the kernel-produced message */
+			pending_msg_t *msg = pending_msg_search(cons_task);
+	
+			/* Store it like a MESSAGE_DELIVERY */
 			message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
-			message_t *msg_src = pipe_get_message(pipe);
+			
+			// putsv("Message length is ", msg->size);
+			// putsv("First word is ", msg->message[0]);
+			message->length = msg->size;
+			/** @todo Memcpy */
+			for(int i = 0; i < msg->size; i++)
+				message->msg[i] = msg->message[i];
+			
+			/* Free pending message */
+			msg->task = -1;
 
-			pipe_transfer(msg_src, message);
-
-			if(sched_is_waiting_request(prod_tcb))
-				sched_release_wait(prod_tcb);
+			/* Remove pending DATA_AV */
+			data_av_pop(current);
 
 			return true;
-		}
+		} else {
+			/* Get the producer TCB */
+			tcb_t *prod_tcb = tcb_search(prod_task);
 
+			/* Searches if the message is in PIPE (local producer) */
+			pipe_t *pipe = pipe_pop(prod_tcb, cons_task);
+
+			if(!pipe){
+				/* Stores the request into the message request table */
+				mr_insert(prod_tcb, cons_task, HAL_NI_CONFIG);
+
+			} else {
+				/* Message was found in pipe, writes to the consumer page address (local producer) */
+				message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
+				message_t *msg_src = pipe_get_message(pipe);
+
+				pipe_transfer(msg_src, message);
+
+				if(sched_is_waiting_request(prod_tcb))
+					sched_release_wait(prod_tcb);
+
+				return true;
+			}
+		}
 	} else { /* Remote producer : Sends the message request */
 		// puts("Remote producer\n");
 		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
@@ -363,6 +388,7 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 	/* Avoid overwriting pending messages */
 	while(HAL_DMNI_SEND_ACTIVE);
 
+	// putsvsv("Kernel writing pending message to task ", task, " with size ", size);
 	/* Insert message in kernel output message buffer */
 	pending_msg_push(task, size, msg);
 
