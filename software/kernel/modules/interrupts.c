@@ -84,7 +84,7 @@ bool os_handle_pkt(packet_t *packet)
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
-			putsv("Packet length is ", packet->msg_lenght);
+			// putsv("Packet length is ", packet->msg_lenght);
 			return os_message_delivery(packet->consumer_task, packet->msg_lenght);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
@@ -115,7 +115,7 @@ bool os_handle_pkt(packet_t *packet)
 		case MIGRATION_DATA_BSS:
 			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size, packet->source_PE);
 		default:
-			putsv("ERROR: service unknown: ", HAL_TICK_COUNTER);
+			putsv("ERROR: service unknown at time ", HAL_TICK_COUNTER);
 			return false;
 	}
 }
@@ -149,18 +149,18 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
 
 		} else {
-			putsvsv("Task ", prod_task, " received message request from ", cons_task);
+			// putsvsv("Task ", prod_task, " received message request from ", cons_task);
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
 			if(!message){	/* No message in producer's pipe to the consumer task */
 				/* Insert the message request in the producer's TCB */
 				mr_insert(prod_tcb, cons_task, cons_addr);
-				puts("Message not found. Inserting message request.\n");
+				// puts("Message not found. Inserting message request.\n");
 			} else {	/* Message found */
 				/* Send through NoC */
 				pipe_send(prod_task, cons_task, cons_addr, message);
-				puts("Message found. Sent through NoC.\n");
+				// puts("Message found. Sent through NoC.\n");
 
 				/* Release task for execution if it was blocking another send */
 				if(sched_is_waiting_request(prod_tcb)){
@@ -183,38 +183,38 @@ bool os_message_delivery(int cons_task, unsigned int length)
 		static int rcvmsg[MSG_SIZE];
 		dmni_read(rcvmsg, length);
 
-		puts("-- Received message to kernel");
-		for(int i = 0; i < length; i++){
-			putsvsv("V", i, "=", rcvmsg[i]);
-		}
+		// puts("-- Received message to kernel");
+		// for(int i = 0; i < length; i++){
+		// 	putsvsv("V", i, "=", rcvmsg[i]);
+		// }
 
 		/* Process the message like a syscall triggered from another PE */
 		return os_kernel_syscall(rcvmsg, length);
 	} else {
 		/* Get consumer task */
-		putsv("Received delivery to task ", cons_task);
+		// putsv("Received delivery to task ", cons_task);
 		tcb_t *cons_tcb = tcb_search(cons_task);
-		if(cons_tcb)
-			puts("Found TCB\n");
-		else
-			puts("TCB not found\n");
+		// if(cons_tcb)
+		// 	puts("Found TCB\n");
+		// else
+		// 	puts("TCB not found\n");
 
 		/* Message is stored in task's page + argument 1 from syscall */
 		message_t *message = tcb_get_message(cons_tcb);
-		putsv("Message at address ", (unsigned int)message);
+		// putsv("Message at address ", (unsigned int)message);
 
 		/* Assert message requested is the received size */
 		message->length = length;
-		putsv("Message length = ", message->length);
+		// putsv("Message length = ", message->length);
 
 		/* Obtain message from DMNI */
 		dmni_read(message->msg, message->length);
 
-		puts("Message read from DMNI\n");
+		// puts("Message read from DMNI\n");
 
 		/* Release task to execute */
 		sched_release_wait(cons_tcb);
-		puts("Consumer released\n");
+		// puts("Consumer released\n");
 
 		if(tcb_need_migration(cons_tcb)){
 			tm_migrate(cons_tcb);
@@ -283,9 +283,9 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	/* Obtain the program code */
 	dmni_read((int*)free_tcb->offset, length);
 
-	putsv("Code lenght: ", length);
-	putsv("Mapper task: ", mapper_task);
-	putsv("Mapper addr: ", mapper_addr);
+	// putsv("Code lenght: ", length);
+	// putsv("Mapper task: ", mapper_task);
+	// putsv("Mapper addr: ", mapper_addr);
 
 	if(mapper_task != -1){
 		/* Sends task allocated to mapper */
@@ -304,7 +304,7 @@ bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number
 	tcb_t *task = tcb_search(id);
 
 	putsv("-> TASK RELEASE received to task ", task->id);
-	putsv("-> Task count: ", task_number);
+	// putsv("-> Task count: ", task_number);
 
 	/* Update TCB with received info */
 	tcb_update_sections(task, data_sz, bss_sz);
@@ -312,7 +312,7 @@ bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number
 	/* Write task location */
 	/** @todo Use memcpy */
 	for(int i = 0; i < task_number; i++){
-		putsv("TL ", task_location[i]);
+		// putsv("TL ", task_location[i]);
 		task->task_location[i] = task_location[i];
 	}
 

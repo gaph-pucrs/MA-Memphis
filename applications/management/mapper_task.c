@@ -51,7 +51,7 @@ void map_init(mapper_t *mapper)
 void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned desc_sz)
 {
 	Echo("New app received.\n");
-	Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
+	// Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
 	Echo("App ID: "); Echo(itoa(mapper->appid_cnt)); Echo("\n");
 	Echo("Task cnt: "); Echo(itoa(task_cnt)); Echo("\n");
 

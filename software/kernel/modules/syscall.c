@@ -42,7 +42,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 		case REALTIME:
 			return os_realtime(a1, a2, a3);
 		default:
-			puts("ERROR: Unknown service\n");
+			putsv("ERROR: Unknown service ", service);
 			return 0;
 	}
 }
@@ -61,7 +61,7 @@ bool os_exit()
 	/* Send TASK_TERMINATED */
 	tl_send_terminated(current);
 
-	puts("Task id: "); puts(itoa(current->id)); putsv(" terminated at ", HAL_TICK_COUNTER);
+	putsvsv("Task id: ", current->id, " terminated at ", HAL_TICK_COUNTER);
 
 	sched_clear(current);
 
@@ -86,10 +86,11 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	} else {
 		/* Send to task of the same app */
 		cons_task &= 0x000000FF;
-		putsvsv("Trying to write pipe from ", current->id, " to ", cons_task);
+		// putsvsv("Trying to write pipe from ", current->id, " to ", cons_task);
 		cons_addr = tl_search(current, cons_task);
 		cons_task |= (current->id & 0x0000FF00);
-		putsv("Trying to write pipe to addr ", cons_addr);
+		// putsv("Trying to write pipe to addr ", cons_addr);
+
 		/* Check if consumer task is allocated */
 		if(cons_addr == -1){
 			/* Task is blocked until a TASK_RELEASE packet is received */
@@ -100,11 +101,12 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	}
 
 	/* Points the message in the task page. Address composition: offset + msg address */
-	putsv("Message at virtual address ", msg_ptr);
+	// putsv("Message at virtual address ", msg_ptr);
 	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
-	putsv("Message at physical address ", (int)message);
-	putsv("Value 9 of message = ", message->msg[9]);
-	putsv("Message length = ", message->length);
+	// putsv("Message at physical address ", (int)message);
+	// putsv("Value 9 of message = ", message->msg[9]);
+	// putsv("Message length = ", message->length);
+
 	/* Test if the application passed a invalid message lenght */
 	if(message->length > MSG_SIZE){
 		putsv("ERROR: Message lenght must be lower than MSG_SIZE", message->length);
@@ -115,7 +117,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	message_request_t *request = mr_peek(current, cons_task);
 
 	if(request){	/* Message request found! */
-		puts("MR Found!\n");
+		// puts("MR Found!\n");
 		if(request->requester_address == HAL_NI_CONFIG){ 
 			/* Local consumer */
 			if(cons_task & 0x10000000){
@@ -143,7 +145,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				}
 			}
 		} else {
-			puts("Remote consumer\n");
+			// puts("Remote consumer\n");
 			/* Remote consumer */
 
 			/* Send a MESSAGE_DELIVERY */
@@ -155,23 +157,23 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 
 			/* Insert the message in the pipe to avoid overwrite by task */
 			pipe_push(current, message, cons_task);
-			puts("Pushed pipe\n");
+			// puts("Pushed pipe\n");
 
 			/* Send through NoC */
 			pipe_t *pipe = pipe_pop(current, cons_task);
-			putsv("Popped message length = ", pipe->message.length);
+			// putsv("Popped message length = ", pipe->message.length);
 			
 			pipe_send(sched_get_current_id(), cons_task, request->requester_address, pipe);
-			puts("Sent through NoC\n");
+			// puts("Sent through NoC\n");
 			
 			/* Remove the message request from buffer */
 			mr_pop(request);
-			puts("Request popped\n");
+			// puts("Request popped\n");
 		}
 	} else if(!pipe_is_full(current) && !HAL_DMNI_SEND_ACTIVE){	/* Pipe is free */
-		puts("MR NOT found!\n");
+		// puts("MR NOT found!\n");
 		if(sync){
-			puts("Sync!\n");
+			// puts("Sync!\n");
 			int prod_task = sched_get_current_id();
 			if(cons_addr == HAL_NI_CONFIG){
 				/* Local consumer */
@@ -200,12 +202,12 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 		/* Please use SSend to send Kernel/Peripheral messages or it can be stuck in pipe forever */
 		/* Store message in Pipe. Will be sent when a REQUEST is received */
 		pipe_push(current, message, cons_task);
-		puts("Pushed to pipe!\n");
+		// puts("Pushed to pipe!\n");
 
 	} else {
 		/* DMNI busy sending message or pipe full */
 		if(pipe_is_full(current)){
-			puts("Request not found and pipe is full. Will wait until consumed!\n");
+			// puts("Request not found and pipe is full. Will wait until consumed!\n");
 			/* In this case, we must wait for a message request to release the pipe */
 			sched_set_wait_request(current);
 			schedule_after_syscall = 1;
@@ -226,7 +228,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 	if(!sync){	/* Not synced READ must define the producer */
 		prod_task |= (cons_task & 0xFF00);
 		prod_addr = tl_search(current, prod_task);
-		putsvsv("Trying to read from task ", prod_task, " at address ", prod_addr);
+		// putsvsv("Trying to read from task ", prod_task, " at address ", prod_addr);
 
 		/* Test if the producer task is not allocated */
 		if(prod_addr == -1){
@@ -277,7 +279,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 		}
 
 	} else { /* Remote producer : Sends the message request */
-		puts("Remote producer\n");
+		// puts("Remote producer\n");
 		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
 		if(HAL_DMNI_SEND_ACTIVE)
 			return false;
@@ -289,7 +291,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 		/* Send the message request through NoC */
 		mr_send(prod_task, cons_task, prod_addr, HAL_NI_CONFIG);
-		puts("Sent request\n");
+		// puts("Sent request\n");
 	}
 
 	/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
@@ -348,7 +350,7 @@ bool os_kernel_syscall(int *message, int length)
 	/* Process it like a syscall */
 	switch(message[0]){
 		case TASK_RELEASE:
-			putsv("will call release with ntasks=", message[4]);
+			// putsv("will call release with ntasks=", message[4]);
 			return os_task_release(message[1], message[2], message[3], message[4], &message[5]);
 		default:
 			putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", message[0]);

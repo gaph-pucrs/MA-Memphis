@@ -9,7 +9,7 @@
 #define PROD_CONS_STD_H_
 
 
-#define PROD_CONS_ITERATIONS	500
+#define PROD_CONS_ITERATIONS	50
 
 
 

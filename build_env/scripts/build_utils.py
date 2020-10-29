@@ -58,7 +58,7 @@ def check_mem_size(file_path, mem_size_KB):
 
     #This print needs more for: http://www.python-course.eu/python3_formatted_output.php
     #But currently I am very very very busy - so, if I is reading this, please...do it!!
-    print ("Memory size ("+str(mem_size_KB)+"KB) OK for file\n-"+file_path+">\t with size ("+str(file_size_KB)+"KB)")
+    print ("Memory size ("+str(mem_size_KB)+"KB) OK for file\t<"+file_path+">\t with size ("+str(file_size_KB)+"KB)")
 
 def get_app_task_name_list(testcase_path, app_name):
     
