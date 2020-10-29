@@ -33,7 +33,7 @@ unsigned int backtracks = 0;
 
 Message msg;
 
-void next_hop(int appid)
+void next_hop()
 {
 	MSG_SRC = THIS_NODE;
 	if(N_ADJ - counterf - backtracks > 1)
@@ -49,7 +49,7 @@ void next_hop(int appid)
 				Echo("DEBUG: SEND FORWARD");
 			#endif
 				Echo(fwd_msg[atop[THIS_NODE][i]]);
-				SSend(&msg, (appid << 8) | P[atop[THIS_NODE][i]]);
+				SSend(&msg, P[atop[THIS_NODE][i]]);
 			#if DEBUG == 1
 				Echo("DEBUG: SENT FORWARD");
 			#endif
@@ -62,7 +62,7 @@ void next_hop(int appid)
 		Echo("DEBUG: SEND BACKTRACK");
 	#endif
 		Echo(bkt_msg[BK_ADDR]);
-		SSend(&msg, (appid << 8) | P[BK_ADDR]);
+		SSend(&msg, P[BK_ADDR]);
 	#if DEBUG == 1
 		Echo("DEBUG: SENT BACKTRACK");
 	#endif
@@ -72,7 +72,6 @@ void next_hop(int appid)
 
 int main()
 {
-	int appid = get_appid();    
 	Echo(start_msg[THIS_NODE]);
 	while(true){
 	#if DEBUG == 1
@@ -92,7 +91,7 @@ int main()
 			Echo("DEBUG: SEND EXIT REQUEST TO MANAGER");
 		#endif
 			Echo("No more unused edges. Exiting.");
-			SSend(&msg, (appid << 8) | P[0]);
+			SSend(&msg, P[0]);
 		#if DEBUG == 1
 			Echo("DEBUG: SENT EXIT REQUEST TO MANAGER");
 		#endif
@@ -100,7 +99,7 @@ int main()
 			Echo(rcv_msg[MSG_SRC]);
 			if(MSG_SRC)
 				weight[ntoa[THIS_NODE][MSG_SRC]] = ++counterf;
-			next_hop(appid);
+			next_hop();
 		} else { // Backtrack
 			// Find backtracked edge
 			Echo(bkt_msg[MSG_SRC]);
@@ -111,7 +110,7 @@ int main()
 			}
 			weight[top] = N_ADJ - backtracks;
 			backtracks++;
-			next_hop(appid);
+			next_hop();
 		}
 	}
 }

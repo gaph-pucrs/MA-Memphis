@@ -57,7 +57,6 @@ int main()
 		exit();
 	}
 
-	int appid = get_appid();
 	Message msg;
 	msg.length = LENGHT;
 	MSG_OP = FORWARD;
@@ -69,7 +68,7 @@ int main()
 	Echo("DEBUG: SEND FORWARD TO START NODE");
 #endif
 	Echo(start_msg[start]);
-	SSend(&msg, (appid << 8) | P[start]);
+	SSend(&msg, P[start]);
 #if DEBUG == 1
 	Echo("DEBUG: SENT FORWARD TO START NODE");
 #endif
@@ -90,7 +89,7 @@ int main()
 	#if DEBUG == 1
 		Echo("DEBUG: SEND EXIT TO NODE");
 	#endif
-		SSend(&msg, (appid << 8) | P[i]);
+		SSend(&msg, P[i]);
 	#if DEBUG == 1
 		Echo("DEBUG: SENT EXIT TO NODE");
 	#endif
