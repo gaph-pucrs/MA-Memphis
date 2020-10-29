@@ -22,8 +22,10 @@
 typedef struct _tcb tcb_t;
 
 typedef struct _message {
-	unsigned short length;
-	unsigned int msg[MSG_SIZE];
+	// unsigned short length;
+	int length;
+	// unsigned int msg[MSG_SIZE];
+	int msg[MSG_SIZE];
 } message_t;
 
 /**

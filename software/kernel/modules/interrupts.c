@@ -84,6 +84,7 @@ bool os_handle_pkt(packet_t *packet)
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
+			putsv("Packet length is ", packet->msg_lenght);
 			return os_message_delivery(packet->consumer_task, packet->msg_lenght);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
@@ -148,16 +149,18 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
 
 		} else {
+			putsvsv("Task ", prod_task, " received message request from ", cons_task);
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
 			if(!message){	/* No message in producer's pipe to the consumer task */
 				/* Insert the message request in the producer's TCB */
 				mr_insert(prod_tcb, cons_task, cons_addr);
-
+				puts("Message not found. Inserting message request.\n");
 			} else {	/* Message found */
 				/* Send through NoC */
 				pipe_send(prod_task, cons_task, cons_addr, message);
+				puts("Message found. Sent through NoC.\n");
 
 				/* Release task for execution if it was blocking another send */
 				if(sched_is_waiting_request(prod_tcb)){
@@ -177,26 +180,41 @@ bool os_message_delivery(int cons_task, unsigned int length)
 		/* This message was directed to kernel */
 		/* Receive the message in stack. Maybe this is a bad idea. */
 		/** @todo Check this behavior for big messages */
-		int message[length];
-		dmni_read((unsigned*)message, length);
+		static int rcvmsg[MSG_SIZE];
+		dmni_read(rcvmsg, length);
+
+		puts("-- Received message to kernel");
+		for(int i = 0; i < length; i++){
+			putsvsv("V", i, "=", rcvmsg[i]);
+		}
 
 		/* Process the message like a syscall triggered from another PE */
-		return os_kernel_syscall(message, length);
+		return os_kernel_syscall(rcvmsg, length);
 	} else {
 		/* Get consumer task */
+		putsv("Received delivery to task ", cons_task);
 		tcb_t *cons_tcb = tcb_search(cons_task);
+		if(cons_tcb)
+			puts("Found TCB\n");
+		else
+			puts("TCB not found\n");
 
 		/* Message is stored in task's page + argument 1 from syscall */
 		message_t *message = tcb_get_message(cons_tcb);
+		putsv("Message at address ", (unsigned int)message);
 
 		/* Assert message requested is the received size */
 		message->length = length;
+		putsv("Message length = ", message->length);
 
 		/* Obtain message from DMNI */
 		dmni_read(message->msg, message->length);
 
+		puts("Message read from DMNI\n");
+
 		/* Release task to execute */
 		sched_release_wait(cons_tcb);
+		puts("Consumer released\n");
 
 		if(tcb_need_migration(cons_tcb)){
 			tm_migrate(cons_tcb);
@@ -260,10 +278,10 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	/* Clears the message request table */
 	mr_init(free_tcb);
 
-	puts("Task id: "); puts(itoa(id)); putsv(" allocated at ", HAL_TICK_COUNTER);	
+	putsvsv("Task id: ", id, " allocated at ", HAL_TICK_COUNTER);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)free_tcb->offset, length);
+	dmni_read((int*)free_tcb->offset, length);
 
 	putsv("Code lenght: ", length);
 	putsv("Mapper task: ", mapper_task);
@@ -285,15 +303,18 @@ bool os_task_release(int id, int data_sz, int bss_sz, unsigned short task_number
 	/* Get task to release */
 	tcb_t *task = tcb_search(id);
 
-	//putsv("-> TASK RELEASE received to task ", p->task_ID);
+	putsv("-> TASK RELEASE received to task ", task->id);
+	putsv("-> Task count: ", task_number);
 
 	/* Update TCB with received info */
 	tcb_update_sections(task, data_sz, bss_sz);
 
 	/* Write task location */
 	/** @todo Use memcpy */
-	for(int i = 0; i < task_number; i++)
+	for(int i = 0; i < task_number; i++){
+		putsv("TL ", task_location[i]);
 		task->task_location[i] = task_location[i];
+	}
 
 	/* If the task is blocked, release it */
 	if(sched_is_blocked(task))
@@ -353,7 +374,7 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	mr_init(free_tcb);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz);
+	dmni_read((int*)tcb_get_offset(free_tcb), code_sz);
 
 	return false;
 }
@@ -365,7 +386,7 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 
 	tcb_set_pc(tcb, pc);
 
-	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
+	dmni_read((int*)tcb->registers, HAL_MAX_REGISTERS);
 	tcb_set_sp(tcb, tcb_get_sp(tcb));
 
 	/* Check if task has real time parameters */
@@ -379,7 +400,7 @@ bool os_migration_tl(int id, unsigned int tl_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)tcb->task_location, tl_len);
+	dmni_read(tcb->task_location, tl_len);
 
 	return false;
 }
@@ -388,7 +409,7 @@ bool os_migration_mr(int id, unsigned int mr_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(unsigned int));
+	dmni_read((int*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(unsigned int));
 
 	return false;
 }
@@ -397,7 +418,7 @@ bool os_migration_data_av(int id , unsigned int data_av_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
+	dmni_read((int*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
 
 	data_av_add_tail(tcb, data_av_len);
 
@@ -419,7 +440,7 @@ bool os_migration_stack(int id, unsigned int stack_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
+	dmni_read((int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
 
 	return false;
 }
@@ -433,7 +454,7 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 
 	/** @todo Review these sizes */
 	if(bss_len + data_len)
-		dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), bss_len + data_len);
+		dmni_read((int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), bss_len + data_len);
 
 	sched_release(tcb);
 	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);

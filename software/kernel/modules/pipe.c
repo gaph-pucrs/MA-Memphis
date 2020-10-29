@@ -52,11 +52,12 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 	message->consumer_task = -1;
 
 	if(message->message.length > MSG_SIZE){
-		puts("ERROR: message lenght higher than MSG_SIZE\n");
+		putsv("ERROR: message lenght higher than MSG_SIZE ", packet->msg_lenght);
 		while(true);
 	}
+	putsv("Sending with message len ", packet->msg_lenght);
 
-	pkt_send(packet, message->message.msg, message->message.length);
+	pkt_send(packet, (unsigned int*)message->message.msg, message->message.length);
 }
 
 bool pipe_is_full(tcb_t *tcb)
@@ -75,7 +76,12 @@ bool pipe_push(tcb_t *tcb, message_t *message, int cons_task)
 		return false;
 
 	tcb->pipe.consumer_task = cons_task;
-	tcb->pipe.message = *message;
+	tcb->pipe.message.length = message->length;
+	putsv("Pipe message length = ", tcb->pipe.message.length);
+	/** @todo memcpy */
+	for(int i = 0; i < message->length; i++)
+		tcb->pipe.message.msg[i] = message->msg[i];
+
 	return true;
 }
 

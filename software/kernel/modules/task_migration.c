@@ -196,7 +196,7 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 		packet->consumer_task = pipe_get_cons_task(tcb);
 		packet->msg_lenght = pipe_get_message_len(tcb);
 
-		pkt_send(packet, tcb->pipe.message.msg, packet->msg_lenght);
+		pkt_send(packet, (unsigned int *)tcb->pipe.message.msg, packet->msg_lenght);
 	}
 }
 

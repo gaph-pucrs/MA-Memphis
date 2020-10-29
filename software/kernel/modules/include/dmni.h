@@ -19,4 +19,4 @@
  * @param payload_address	Address where the payload will be saved
  * @param payload_size		Number of bytes to copy
  */
-void dmni_read(unsigned int *payload_address, unsigned short payload_size);
+void dmni_read(int *payload_address, int payload_size);
