@@ -90,10 +90,12 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 		app->task[task_id]->id = appid << 8 | task_id;
 
 		int proc_idx = descriptor[i*6 + 1];
-		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
+		// Echo("Processor address: "); Echo(itoa(proc_idx));
 		if(proc_idx != -1)
 			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
+		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
 		app->task[task_id]->proc_idx = proc_idx;
+		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
 
 		app->task[task_id]->code_sz = descriptor[i*6 + 2];
 		app->task[task_id]->data_sz = descriptor[i*6 + 3];
@@ -187,8 +189,10 @@ void app_init(app_t *apps)
 
 void processor_init(processor_t *processors)
 {
+	// Echo("Initializing "); Echo(itoa(PKG_N_PE)); Echo(" processors\n");
 	for(int i = 0; i < PKG_N_PE; i++){
-		processors[i].addr = i % PKG_N_PE_X << 8 | i / PKG_N_PE;
+		processors[i].addr = i / PKG_N_PE_X << 8 | i % PKG_N_PE_X;
+		// Echo("Addr "); Echo(itoa(processors[i].addr));
 		processors[i].free_page_cnt = PKG_MAX_TASKS_APP;
 		processors[i].pending_map_cnt = 0;
 	}

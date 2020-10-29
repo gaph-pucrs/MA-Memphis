@@ -249,7 +249,7 @@ void app_injector::monitor_new_app(){
 							//Gets the application task number
 							getline (appstart_file,line);
 							sscanf( line.substr(0, 8).c_str(), "%d", &task_static_mapping[i]);
-							//cout << "task id " << i << " mapped at " <<  task_static_mapping[i] << endl;
+							// cout << "task id " << i << " mapped at " <<  task_static_mapping[i] << endl;
 							line_counter++;
 						}
 

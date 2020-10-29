@@ -39,7 +39,7 @@ typedef sc_uint<TAM_FLIT > regflit;
 #define 	APP_ALLOCATION_REQUEST			0x00000240 //Mestre to Injector (carries tasks properties and mapping)
 #define		APP_MAPPING_COMPLETE			0x00000440
 
-#define		APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR % N_PE_X) << 8) | (APP_INJECTOR / N_PE_X))
+#define		APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR / N_PE_X) << 8) | (APP_INJECTOR % N_PE_X))
 
 SC_MODULE(app_injector){
 
