@@ -9,20 +9,16 @@
 #include <stdlib.h>
 #include "prod_cons_std.h"
 
-
 Message msg;
 
 int main()
 {
-
 	int i;
-	volatile int p;
 	unsigned int time[PROD_CONS_ITERATIONS];
 
 	Echo("Inicio da aplicacao cons");
 
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-
 		Receive(&msg, prod);
 		time[i] = GetTick();
 	}
@@ -35,7 +31,4 @@ int main()
 	Echo("Fim da aplicacao cons");
 
 	exit();
-
 }
-
-

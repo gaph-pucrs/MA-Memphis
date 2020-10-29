@@ -13,10 +13,7 @@ Message msg;
 
 int main()
 {
-
 	int i;
-	volatile int t;
-
 
 	Echo("Inicio da aplicacao prod");
 
@@ -29,10 +26,6 @@ int main()
 		Send(&msg, cons);
 	}
 
-
 	Echo("Fim da aplicacao prod");
 	exit();
-
 }
-
-
