@@ -99,7 +99,7 @@ void fir_filter_int(int* in,int* out,int in_len,
 int main () {
 	int k;
 	Message received_msg;
-	Message send_msg;
+	// Message send_msg;
 	int * input_stream;
 
 	Echo("FIR - start");

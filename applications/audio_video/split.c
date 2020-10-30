@@ -32,9 +32,9 @@ Message compresssed_adpcm;
 
 int main() {
 
-	int i, b;
-	char str[20];
-	int compressed_adpcm[COMPRESSED_SAMPLES];
+	int i;
+	// char str[20];
+	// int compressed_adpcm[COMPRESSED_SAMPLES];
 
 	Echo("Task SPLIT start:  ");
 

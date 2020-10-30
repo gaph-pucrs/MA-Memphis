@@ -251,16 +251,6 @@ int     dec_ph1,dec_ph2;
 /* put input samples in xin1 = first value, xin2 = second value */
 /* returns il and ih stored together */
 
-
-float fabs(float n)
-{
-  float f;
-
-  if (n >= 0) f = n;
-  else f = -n;
-  return f;
-}
-
 /* clear all storage locations */
 
 void reset()
@@ -586,7 +576,7 @@ void decode(int input)
 int main() {
 	int i, k;
 	int * compressed_adpcm;
-	int result[COMPRESSED_SAMPLES*2];	/* Compression factor: 2 */
+	// int result[COMPRESSED_SAMPLES*2];	/* Compression factor: 2 */
 	Message received_msg;
 	Message send_msg;
 

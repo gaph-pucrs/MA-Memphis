@@ -3,12 +3,12 @@
 #include "audio_video_def.h"
 int main() {
 
-    unsigned char decoded_block[1000];
-    int samples[COMPRESSED_SAMPLES*2];
-    unsigned int j, time_arrive =0, last_arrive = 0, jitter[2000];
-    int block_size, blocks;
+    // unsigned char decoded_block[1000];
+    // int samples[COMPRESSED_SAMPLES*2];
+    // unsigned int j, time_arrive =0, last_arrive = 0, jitter[2000];
+    // int block_size, blocks;
     Message msg;
-    int i, k;
+    int k;
 
     Echo("Join start...");
     Echo("Number of frames");
@@ -16,7 +16,7 @@ int main() {
 
 	//RealTime(AUDIO_VIDEO_PERIOD, JOIN_deadline, JOIN_exe_time);
 
-	j = 0;
+	// j = 0;
 	for(k=0; k<FRAMES; k++ ) {
 
 		Receive(&msg, FIR);
