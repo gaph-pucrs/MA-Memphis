@@ -6,7 +6,7 @@
 //Message structure of MEMPHIS, provided by api.h
 Message msg;
 
-void main()
+int main()
 {
     Echo("Task D started at time ");
 	Echo(itoa(GetTick()));

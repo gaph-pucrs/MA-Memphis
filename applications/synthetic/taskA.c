@@ -7,7 +7,7 @@
 Message msg1;
 Message msg2;
 
-void main()
+int main()
 {
     Echo("Task A started at time ");
 	Echo(itoa(GetTick()));
@@ -15,12 +15,12 @@ void main()
 	for(int i=0;i<SYNTHETIC_ITERATIONS;i++)
 	{
 		//Compute and send something
-		compute(&msg1.msg);
+		compute((unsigned int*)&msg1.msg);
 		msg1.length = 128;
 		Send(&msg1,taskB);
 
 		//Compute and send something
-		compute(&msg2.msg);
+		compute((unsigned int*)&msg2.msg);
 		msg2.length = 128;
 		Send(&msg2,taskC);
 	}

@@ -6,7 +6,7 @@
 //MEMPHIS message structure
 Message msg;
 
-void main()
+int main()
 {
     Echo("Task C started at time ");
 	Echo(itoa(GetTick()));
@@ -16,7 +16,7 @@ void main()
 
 		Receive(&msg, taskA);
 
-		compute(&msg.msg);
+		compute((unsigned int*)&msg.msg);
 
 		Send(&msg,taskD);
 	}
