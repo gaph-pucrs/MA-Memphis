@@ -108,7 +108,7 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 	Echo(itoa(GetTick()));
 	
 	int ini, fim, qtdElem, numLinhasA;
-	int i,j,k,numMSG;
+	int i,j,numMSG;
 
 	int B [SIZE];
 	 Echo("Recebendo B");
