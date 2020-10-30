@@ -32,8 +32,8 @@ int main()
 	volatile int x, y, i,j;
 	int plain_msg[MSG_LENGHT];
 	int cipher_msg[MSG_LENGHT], decipher_msg[MSG_LENGHT];
-	int msg_length, blocks, qtd_messages[MAX_SLAVES];
-	int pad_value, aux_msg[3];
+	int blocks, qtd_messages[MAX_SLAVES];
+	int aux_msg[3];
 	int aux1_blocks_PE;
 	int aux2_blocks_PE;	
 
@@ -46,9 +46,9 @@ int main()
     Echo(itoa(GetTick()));
 
 	// calculate number of block and pad value (PCKS5) of last block
-	msg_length = MSG_LENGHT;	
+	// msg_length = MSG_LENGHT;
 	blocks = (MSG_LENGHT%AES_BLOCK_SIZE)==0 ? (MSG_LENGHT/AES_BLOCK_SIZE) : (MSG_LENGHT/AES_BLOCK_SIZE)+1;
-	pad_value = (AES_BLOCK_SIZE - (msg_length%AES_BLOCK_SIZE))%AES_BLOCK_SIZE;	
+	// pad_value = (AES_BLOCK_SIZE - (msg_length%AES_BLOCK_SIZE))%AES_BLOCK_SIZE;	
 	
 	Echo(" ");
 	Echo("Blocks:");	
@@ -79,13 +79,13 @@ int main()
 	// Send number of block and operation mode and ID
 	// to each Slave_PE
 	for(x=0; x < MAX_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
+		msg.length = sizeof(aux_msg)/4;
 		aux_msg[0] = CIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
 		aux_msg[2] = x+1;
 		if(x >= NUMBER_OF_SLAVES) // zero messages to Slave not used
 			aux_msg[0] = END_TASK;
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
+		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
 		Send(&msg, Slave[x]);  
 	}
 
@@ -95,8 +95,8 @@ int main()
 		// send a block to Slave_PE encrypt
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = 4*AES_BLOCK_SIZE;
-				memcpy(msg.msg, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				msg.length = AES_BLOCK_SIZE;
+				__builtin_memcpy(msg.msg, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
 				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
 			}
 		}
@@ -140,7 +140,7 @@ int main()
 		msg.length = sizeof(aux_msg);
 		aux_msg[0] = DECIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
+		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
 		Send(&msg, Slave[x]);  
 	}
 
@@ -150,8 +150,8 @@ int main()
 		// send each block to a Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = 4*AES_BLOCK_SIZE;
-				memcpy(msg.msg, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				msg.length = AES_BLOCK_SIZE;
+				__builtin_memcpy(msg.msg, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
 				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);   
 			} 
 		}
@@ -179,10 +179,10 @@ int main()
 	//  End tasks still running
 	//  End Applicattion
 	for(x=0; x < NUMBER_OF_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
+		msg.length = sizeof(aux_msg)/4;
 		aux_msg[0] = END_TASK;
 		aux_msg[1] = 0;
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
+		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
 		Send(&msg, Slave[x]);  
 	}	
     Echo("task AES finished.");

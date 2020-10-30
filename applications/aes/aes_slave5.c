@@ -33,7 +33,7 @@ int main()
     
     while(flag){
 		Receive(&msg, aes_master);
-		memcpy(input_text, msg.msg, 12);
+		__builtin_memcpy(input_text, msg.msg, 12);
 			
 #ifdef debug_comunication_on
 	Echo(" ");  
@@ -63,7 +63,7 @@ int main()
 		}
 		for(x = 0; x < qtd_messages; x++){
 			Receive(&msg, aes_master);		
-			memcpy(input_text, msg.msg, 4*AES_BLOCK_SIZE);
+			__builtin_memcpy(input_text, msg.msg, 4*AES_BLOCK_SIZE);
 			
 #ifdef debug_comunication_on
 	Echo(" ");  
@@ -82,8 +82,8 @@ int main()
 				Echo("decript");					
 				aes_decrypt(input_text, enc_buf, key_schedule, KEY_SIZE);
 			}			
-			msg.length = 4*AES_BLOCK_SIZE;
-			memcpy( msg.msg, enc_buf,4*AES_BLOCK_SIZE);
+			msg.length = AES_BLOCK_SIZE;
+			__builtin_memcpy( msg.msg, enc_buf,4*AES_BLOCK_SIZE);
 			Send(&msg, aes_master);	
 		}
 	}
