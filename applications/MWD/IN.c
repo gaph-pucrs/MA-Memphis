@@ -6,9 +6,9 @@ Message msg;
 int main()
 {
 
-int i, j;
+int j;
 
-	for(j=0;j<128;j++) msg.msg[j]=i;
+	for(j=0;j<128;j++) msg.msg[j]=j;
 
 	/*Comm HS 1280*/
 	msg.length=128;
