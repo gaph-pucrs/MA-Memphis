@@ -33,7 +33,7 @@ int main(){
 
 	Echo("Rec ola\n");
 	Echo(itoa(GetTick()));
-	memcpy(msg.msg, test, sizeof(test));
+	__builtin_memcpy(msg.msg, test, sizeof(test));
 
 	for(i=0; i<TOTAL_TASKS; i++){
 		Send(&msg,P[i]);

@@ -44,9 +44,9 @@ int dynamicTimeWarping(int x[SIZE][SIZE], int y[SIZE][SIZE]) {
 
 	for (i = 1; i <= maxI; i++) {
 
-		memcpy(temp, lastCol, sizeof(lastCol));
-		memcpy(lastCol,currCol, sizeof(lastCol));
-		memcpy(currCol,currCol, sizeof(lastCol));
+		__builtin_memcpy(temp, lastCol, sizeof(lastCol));
+		__builtin_memcpy(lastCol,currCol, sizeof(lastCol));
+		__builtin_memcpy(currCol,currCol, sizeof(lastCol));
 
 		currCol[0] = lastCol[0] + euclideanDistance(x[i], y[0]);
 

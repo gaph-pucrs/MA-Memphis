@@ -13,7 +13,7 @@ int main(){
 
 	Echo("Task P4 INIT\n");
 
-	memcpy(test, msg.msg, sizeof(test));
+	__builtin_memcpy(test, msg.msg, sizeof(test));
 
 	for(j=0; j<PATTERN_PER_TASK; j++){
 
@@ -23,7 +23,7 @@ int main(){
 
 		//Echo("Task P4 received pattern from bank\n");
 
-		memcpy(pattern, msg.msg, sizeof(pattern));
+		__builtin_memcpy(pattern, msg.msg, sizeof(pattern));
 
 		result = dynamicTimeWarping(test, pattern);
 
