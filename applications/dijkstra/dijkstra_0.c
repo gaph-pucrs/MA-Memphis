@@ -33,6 +33,9 @@ int AdjMatrix[NUM_NODES][NUM_NODES];
 int globalMiniCost[MAXPROCESSORS];
 int qtdEnvios;
 
+int qcount (int myID);
+void sendResult(int myID,int chStart, int chEnd);
+
 int main(int argc, char *argv[])
 {
 	int i, j;

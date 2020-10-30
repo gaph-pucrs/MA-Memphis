@@ -15,10 +15,12 @@ int AdjMatrix[NUM_NODES][NUM_NODES];
 int result[33];
 int ended;
 
+int execute();
+
 int main(int argc, char *argv[])
 {
-	int m_argc,size,i;
-	char *m_argv[3];
+	// int m_argc,size,i;
+	// char *m_argv[3];
 	ended = 0;
 
 	//RealTime(103349, 103349, 87835, 0);
@@ -44,10 +46,10 @@ void ProcessMessage() {
 }
 
 int execute() {
-	int i,j,k;
+	int k;
 	k = 0;
 
-	int tasks = NUM_NODES*(NUM_NODES-1)/2;
+	// int tasks = NUM_NODES*(NUM_NODES-1)/2;
 	int end_task[5] = {0, 0, 0, 0, 0};
 
 	Message msg;

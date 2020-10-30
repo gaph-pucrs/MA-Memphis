@@ -15,10 +15,12 @@ int AdjMatrix[NUM_NODES][NUM_NODES];
 int result[33];
 int ended;
 
+int execute();
+
 int main(int argc, char *argv[])
 {
-	int m_argc,size,i;
-	char *m_argv[3];
+	// int m_argc,size,i;
+	// char *m_argv[3];
 	ended = 0;
 
 	//RealTime(103349, 103349, 87835, 0);
@@ -97,7 +99,7 @@ void divide_task_group(int task) {
 	int i;
 	for(i=0;i<PROCESSORS;i++){
 		tasks[i][0] = task/PROCESSORS* (i);
-		tasks[i][1] = task/PROCESSORS* (i+1) + (i+1==PROCESSORS&task%PROCESSORS!=0?task%PROCESSORS:0);
+		tasks[i][1] = task/PROCESSORS* (i+1) + (i+1 == PROCESSORS && task % PROCESSORS !=0 ? task % PROCESSORS : 0);
 
 	}
 }

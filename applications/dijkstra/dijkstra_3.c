@@ -33,6 +33,8 @@ int AdjMatrix[NUM_NODES][NUM_NODES];
 int globalMiniCost[MAXPROCESSORS];
 int qtdEnvios;
 
+void dijkstra(int myID);
+
 int main(int argc, char *argv[])
 {
 	int i, j;
