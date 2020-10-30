@@ -79,19 +79,6 @@ int mult(int a, int b)
 	return res;
 }
 
-int sqrt(int x)
-{
-	int racine=10000;
-	int i,a;
-	a=x;
-	for(i=0;i<20;i++)
-	{
-		racine=mult(5000,add(racine,div(a,racine)));
-	}
-	return racine;
-}
-
-
 int div(int a, int b)
 {
 	int i;
@@ -164,6 +151,18 @@ int div(int a, int b)
 	/*res=normalise(res);*/
 	res=add(res,entier);
 	return res;
+}
+
+int sqrt(int x)
+{
+	int racine=10000;
+	int i,a;
+	a=x;
+	for(i=0;i<20;i++)
+	{
+		racine=mult(5000,add(racine,div(a,racine)));
+	}
+	return racine;
 }
 
 

@@ -180,8 +180,8 @@ int main()
 	int gfc;
 
 	Receive(&msg1,P1);
-    Receive(&msg2,P2);
-
+	Receive(&msg2,P2);
+	
 	sum_Es=0;
     sum_Me=0;
     sum_EM=0;

@@ -4,7 +4,7 @@
 
 #define FIXE 4 /*nb de chiffres aprÃ¨s la virgule*/
 #define MAX 1000000000 /*10^PU*/
-#define PU 9 /*puissance de 10 max supportÃ©e ici 2Â³Â¹->2 000 000 000 donc 10â?/
+#define PU 9 /*puissance de 10 max supportÃ©e ici 2Â³Â¹->2 000 000 000 donc 10 */
 #define size 16
 #define data 64
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres aprÃ¨s la virgule*/
@@ -151,20 +151,6 @@ int div(int a, int b)
 	return res;
 }
 
-int pow(int x,int y)
-{
-
-	int puissance = 10000;
-
-
-	int i;
-
-	for(i = 0 ; i < (y/10000); i++)
-		puissance = mult(puissance,x);
-	return puissance;
-
-}
-
 
 int	racine(int val,int expo)
 {
@@ -196,7 +182,7 @@ void lab(int* sum,int* LAB)
 
         /*calcul de L*/
 	    var_Y = div(sum[1],1000000);
-	    if (var_Y>89)   /*valeur théorique : 0.008856*/
+	    if (var_Y>89)   /*valeur thï¿½orique : 0.008856*/
         {
 
                    var_Y = racine(var_Y,30000);
@@ -211,11 +197,11 @@ void lab(int* sum,int* LAB)
      /*calcul de a*/
 	    var_X=div(sum[0],950470);  /*vrai valeur 95.047*/
 	    var_Y=div(sum[1],1000000);
-	     if (var_X > 89)  /*valeur théorique : 0.008856*/
+	     if (var_X > 89)  /*valeur thï¿½orique : 0.008856*/
 		           var_X = racine(var_X,30000);
 	     else
 		           var_X = div(add(mult(9033000,var_X),160000),1160000);
-	     if (var_Y > 89)  /*valeur théorique : 0.008856*/
+	     if (var_Y > 89)  /*valeur thï¿½orique : 0.008856*/
 	                var_Y = racine(var_Y,30000);
 	      else
 	                var_Y = div(add(mult(9033000,var_Y),160000),1160000);
@@ -226,11 +212,11 @@ void lab(int* sum,int* LAB)
         /*calcul de b*/
 	      var_Y=div(sum[1],1000000);
 	      var_Z=div(sum[2],1088830); /*vrai valeur 108.883*/
-	      if (var_Y > 89) /*valeur théorique : 0.008856*/
+	      if (var_Y > 89) /*valeur thï¿½orique : 0.008856*/
 	               var_Y = racine(var_Y,30000);
 	      else
 	               var_Y = div(add(mult(9033000,var_Y),160000),1160000);
-	      if (var_Z>89) /*valeur théorique : 0.008856*/
+	      if (var_Z>89) /*valeur thï¿½orique : 0.008856*/
                    var_Z= racine(var_Z,30000);
 	      else
      		       var_Z = div(add(mult(9033000,var_Z),160000),1160000);

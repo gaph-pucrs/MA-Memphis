@@ -153,18 +153,6 @@ int div(int a, int b)
 	return res;
 }
 
-int sommeXYZ(int* moyenne,int* tabref)
-{
-        int i;
-        int sum=0;
-        for(i=0;i<size;i++)
-        {
-               sum=add(mult(tabref[i],moyenne[i]),sum);
-
-        }
-        return sum;
-}
-
 
 Message msg1,msg2;
 
@@ -205,7 +193,7 @@ int main()
 	Echo("start Processeur 1");
 	Echo(itoa(GetTick()));
 
-    int moyenne[size],i,j;
+    int moyenne[size],i;
 
 
 	calcul_moyenne(moyenne);

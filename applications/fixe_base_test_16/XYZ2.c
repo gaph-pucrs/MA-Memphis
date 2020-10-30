@@ -80,79 +80,6 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
-{
-	int i;
-	int res=0;
-	int entier,nb=1;
-	int reste;
-	int cpt=0;
-	int cpt2=FIXE;
-	int cpt3=0;
-	int reste2;
-
-	if (b==0)
-	{
-		return -1;
-	}
-
-    /*récupère la partie entière du résultat de la division*/
-	entier=a/b;
-
-	/*calcul le résultat entier avec FIXE zéros derrières*/
-	for(i=0;i<FIXE;i++)
-		{
-			entier=entier*10;
-		}
-
-	if(a!=b)
-	{
-		reste=sub(a,mult(entier,b));
-	}
-	else
-	{return entier;}
-
-	if(reste==0)
-	{return entier;}
-
-	for(i=0;i<FIXE;i++)
-	{
-		nb=nb*10;
-	}
-	reste2=reste;
-	while(reste2!=0)
-	{
-		reste2=reste2/10;
-		cpt++;
-	}
-	cpt--;
-		/*calcul nb*a jusqu'à ce qu'on ait un res>(1000*entier) on a alors les quatre décimales*/
-		/*while((res<val)&&((reste*nb)<MAX))
-		{
-			nb=nb*10;
-			res=reste*nb/b;
-		} */
-	while((cpt+cpt2)>=PU)
-	{
-		nb=nb/10;
-		cpt2--;
-		cpt3++;
-		if((cpt+cpt2)>=PU)
-		{
-			reste=reste/10;
-			cpt--;
-			cpt3++;
-		}
-	}
-	res=nb*reste/b;
-	for(i=0;i<cpt3;i++)
-	{
-		res=res*10;
-	}
-	/*res=normalise(res);*/
-	res=add(res,entier);
-	return res;
-}
 
 
 
@@ -176,20 +103,6 @@ int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970
 int tabrefX[size]={1,2,2,3,5,6,8,11,14,18,23,29,37,47,58,72};
 int tabrefY[size]={0,0,0,0,0,0,0,1,1,2,3,3,4,5,6,8};
 int tabrefZ[size]={7,9,12,17,22,29,38,50,64,82,105,133,167,210,261,323};
-
-void calcul_moyenne(int* moyenne)
- {
-	 int m,j,sum;
-     for(m=0;m<size;m++)
-     {
-          sum=0;
-          for(j=0;j<data;j++)
-		  {
-		     	sum=add(sum,tabdata[j]);
-		  }
-          moyenne[m]=div(sum,data_val);
-	    }
-}
 
 
 int sommeXYZ(int* moyenne,int* tabref)

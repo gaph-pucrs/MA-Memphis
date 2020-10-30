@@ -192,19 +192,6 @@ void calcul_moyenne(int* moyenne)
 }
 
 
-int sommeXYZ(int* moyenne,int* tabref)
-{
-        int i;
-        int sum=0;
-        for(i=0;i<size;i++)
-        {
-               sum=add(mult(tabref[i],moyenne[i]),sum);
-
-        }
-        return sum;
-}
-
-
 int main()
 {
 	Echo("start Processeur 2");

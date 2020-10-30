@@ -14,7 +14,6 @@
 
 
 
-
 int mult(int a, int b)
 {
 	int i,res;
@@ -163,41 +162,6 @@ int sqrt(int x)
 		racine=mult(5000,add(racine,div(a,racine)));
 	}
 	return racine;
-}
-
-int pow(int x,int y)
-{
-
-	int puissance = 10000;
-
-
-	int i;
-
-	for(i = 0 ; i < (y/10000); i++)
-		puissance = mult(puissance,x);
-	return puissance;
-
-}
-
-
-int	racine(int val,int expo)
-{
-	int				i,j;
-    int ex=expo;
-	int				result=10000;
-	int				value;
-
-	if (ex<0) ex=-ex;
-	for (i=0;i<10;i++)
-	{
-		value=10000;
-		for (j=0;j<(ex/10000);j++)
-            value=mult(value,result);
-		result=div(add(mult(value,sub(ex,10000)),val),mult(ex,div(value,result)));
-	}
-	if (expo<0)
-       result=div(10000,result);
-	return result;
 }
 
 
