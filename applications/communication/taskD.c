@@ -7,7 +7,7 @@ Message msg;
 int main()
 {
 
-	int i, j,t;
+	int i;
 
     Echo("synthetic task D started.");
 	Echo(itoa(GetTick()));
