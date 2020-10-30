@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define NODE_M 0
 #define NODE_A 1
