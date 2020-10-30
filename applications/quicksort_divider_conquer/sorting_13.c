@@ -68,7 +68,7 @@ void quickSort(int *arr, int low, int high)
 
 int main(){
     int vector[EIGHT_VECTOR_SIZE];
-    int i, mensagens, tamanho;
+    int i, tamanho;
     Echo("Aguardando o vetor!");
     Receive(&msg, sorting_6); // AQUI
     Echo("Recebendo o vetor:");
