@@ -18,8 +18,7 @@ for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	for(j=0;j<30;j++) msg.msg[j]=i;
 	
 		Receive(&msg,taskC);
-			for(t=0;t<1000;t++){
-		}
+		for(t=0;t<1000;t++);
 		Send(&msg,taskF);
 
 	}

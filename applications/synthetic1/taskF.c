@@ -16,8 +16,7 @@ int main()
 for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	
 		Receive(&msg,taskE);
-			for(t=0;t<1000;t++){
-		}
+		for(t=0;t<1000;t++);
 		Receive(&msg,taskD);
 
 	}
