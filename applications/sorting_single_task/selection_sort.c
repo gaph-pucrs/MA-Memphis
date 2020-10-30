@@ -30,7 +30,7 @@ void selectionSort(int arr[], int n)
 
 
 // Driver program to test above functions
-void main()
+int main()
 {
     int n = sizeof(arr)/sizeof(arr[0]);
     Echo("n:"); Echo(itoa(n));

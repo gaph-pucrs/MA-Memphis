@@ -32,7 +32,7 @@ void insertionSort(int arr[], int n)
 
 
 /* Driver program to test insertion sort */
-void main()
+int main()
 {
     int n = sizeof(arr)/sizeof(arr[0]);
     Echo("n:"); Echo(itoa(n));
