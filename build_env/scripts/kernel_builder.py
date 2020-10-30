@@ -34,7 +34,8 @@ def generate_sw_pkg( yaml_r ):
     
     #Variables from yaml used into this function
     page_size_KB =      get_page_size_KB(yaml_r)
-    max_local_tasks =   get_tasks_per_PE(yaml_r)    
+    max_local_tasks =   get_tasks_per_PE(yaml_r)
+    max_tasks_app   =   get_max_tasks_app(yaml_r)
     x_mpsoc_dim =       get_mpsoc_x_dim(yaml_r)
     y_mpsoc_dim =       get_mpsoc_y_dim(yaml_r)
     IO_peripherals =    get_IO_peripherals(yaml_r)
@@ -46,7 +47,7 @@ def generate_sw_pkg( yaml_r ):
     file_lines.append("#pragma once\n")
     file_lines.append("#define PKG_MAX_LOCAL_TASKS "+str(max_local_tasks)+" //!> Max task allowed to execute into a single processor\n")
     file_lines.append("#define PKG_PAGE_SIZE "+str(page_size_KB*1024)+" //!> The page size each task will have (inc. kernel)\n")
-    file_lines.append("#define PKG_MAX_TASKS_APP "+str(10)+" //!> Max number of tasks for the APPs described into testcase file\n")
+    file_lines.append("#define PKG_MAX_TASKS_APP "+str(max_tasks_app)+" //!> Max number of tasks for the APPs described into testcase file\n")
     file_lines.append("#define PKG_PENDING_SVC_MAX "+str(20)+" //!< Pending service array size\n")
     file_lines.append("#define PKG_SLACK_TIME_WINDOW "+str(50000)+" //!< Half millisecond\n")
     file_lines.append("#define PKG_MAX_KERNEL_MSG_LEN "+str(10)+"   //!< Size of the kernel output pending service\n")
