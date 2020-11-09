@@ -1,6 +1,6 @@
 ##
 # 
-# @file boot.s
+# @file hal.s
 #
 # @author Fernando Gehm Moraes (fernando.moraes@pucrs.br)
 # GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
@@ -75,7 +75,7 @@ hal_isr:
 	sw		$s7, 84($k1)
 	sw		$t8, 88($k1)
 	sw		$t9, 92($k1)
-	#sw		$28, 96($k1)	# We are not using Global Pointer
+	#sw		$gp, 96($k1)	# We are not using Global Pointer
 	sw		$sp, 100($k1)
 	sw		$fp, 104($k1)
 	sw		$ra, 108($k1)
