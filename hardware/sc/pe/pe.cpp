@@ -178,6 +178,13 @@ void pe::sequential_attr(){
 		//************ NEW DEBBUG AND REPORT logs - they are used by Memphis Debbuger Tool********
 		if (write_enable.read()==1){
 
+			/* TASK_TERMINATED report implementation */
+			if(cpu_mem_address_reg.read() == 0x20000070){
+				fp = fopen("debug/traffic_router.txt", "a");
+				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 4, 0, 4, -1, (unsigned int)cpu_mem_data_write_reg.read());
+				fclose(fp);
+			}
+
 			//************** Scheduling report implementation *******************
 			if (cpu_mem_address_reg.read() == SCHEDULING_REPORT) {
 				sprintf(aux, "debug/scheduling_report.txt");

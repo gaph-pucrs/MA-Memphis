@@ -62,6 +62,7 @@ bool os_exit()
 	tl_send_terminated(current);
 
 	putsvsv("Task id: ", current->id, " terminated at ", HAL_TICK_COUNTER);
+	HAL_TASK_TERMINATED = current->id;
 
 	sched_clear(current);
 

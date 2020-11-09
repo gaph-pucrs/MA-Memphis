@@ -31,6 +31,7 @@
 #define HAL_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
 #define HAL_IRQ_MASK 				(*(volatile unsigned int*)0x20000010U)	//!< NoC interrupt mask
 #define HAL_TIME_SLICE 				(*(volatile unsigned int*)0x20000060U)
+#define HAL_TASK_TERMINATED			(*(volatile unsigned int*)0x20000070U)	//!< Signals that a task terminated
 #define HAL_CLOCK_HOLD				(*(volatile unsigned int*)0x20000090U)	//!< Clock hold register
 #define HAL_NI_CONFIG				(*(volatile unsigned int*)0x20000140U)	//!< Net address
 #define HAL_DMNI_SIZE 				(*(volatile unsigned int*)0x20000200U)	//!< Size of the packet to read
