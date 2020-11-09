@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "mapper.h"
+#include "task_migration.h"
 
 int main()
 {
@@ -14,7 +15,7 @@ int main()
 	map_init(&mapper);
 
 	while(true){
-		Message msg;
+		static Message msg;
 		SReceive(&msg);
 		/* Check what service has been received */
 		switch(msg.msg[0]){
@@ -27,6 +28,9 @@ int main()
 			case TASK_TERMINATED:
 				map_task_terminated(&mapper, msg.msg[1]);
 				break;
+			case TASK_MIGRATION:
+				tm_migrate(&mapper, msg.msg[1]);
+				break;
 			default:
 				Echo("Invalid service received: "); Echo(itoa(msg.msg[0])); Echo("\n");
 				break;
@@ -36,11 +40,11 @@ int main()
 
 void map_init(mapper_t *mapper)
 {
-	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE - 1;
+	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
 	mapper->pending_task_cnt = 0;
 	mapper->fail_map_cnt = 0;
 	/** @todo Change to 0 when using more management tasks */
-	mapper->appid_cnt = 1;
+	mapper->appid_cnt = 0;
 	mapper->pending_map_app = NULL;
 
 	task_init(mapper->tasks);
@@ -198,7 +202,7 @@ void processor_init(processor_t *processors)
 	}
 
 	/* Mapper task temporarily only mapped to 0x0 */
-	processors[0].free_page_cnt--;
+	// processors[0].free_page_cnt--;
 }
 
 int processors_get_first_most_free(processor_t *processors)
@@ -348,7 +352,17 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 	if(!mapper->fail_map_cnt){
 		/* Send task allocation to injector */
 		map_task_allocation(app, processors);
+		
+		/* Mapper task is already allocated */
+		if(mapper->appid_cnt == 0)
+			app->allocated_cnt++;
+
 	} else {
 		mapper->pending_map_app = app;
 	}
+}
+
+void tm_migrate(mapper_t *mapper, int task)
+{
+	Echo("Received migration request to task id "); Echo(itoa(task)); Echo("\n");
 }

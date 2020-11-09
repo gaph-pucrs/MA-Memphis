@@ -1,0 +1,28 @@
+#include <api.h>
+#include <stdlib.h>
+
+#include "pkg.h"
+
+int main()
+{
+	Echo("Migration started at "); Echo(itoa(GetTick())); Echo("\n");
+
+	/**
+	 * @todo
+	 * Receive monitoring information and decide when to trigger migration
+	 */
+
+	/* Action: trigger migration for task 256. Mapper will decide where to migrate the task */
+	Message msg;
+	msg.msg[0] = TASK_MIGRATION;
+	msg.msg[1] = 257;
+	msg.length = 2;
+
+	while(GetTick() < 150000);
+
+	Echo("Requesting migration for task "); Echo(itoa(msg.msg[1])); Echo("\n");
+
+	SSend(&msg, mapper_task);
+
+	return 0;
+}

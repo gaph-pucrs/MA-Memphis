@@ -199,7 +199,8 @@ void app_injector::monitor_new_app(){
 		req_app_start_time = 0;
 		req_app_task_number = 0;
 		req_app_cluster_id = 0;
-		line_counter = MAN_APP_DESCRIPTOR_SIZE;
+		// line_counter = MAN_APP_DESCRIPTOR_SIZE;
+		line_counter = 0;
 
 	} else if (clock.posedge()){
 
@@ -691,6 +692,10 @@ void app_injector::app_mapping_loader()
 	packet = NULL;
 
 	pending_it = pending_allocation.begin();
+	
+	/* Skip Mapper task allocation */
+	if(pending_it->first == 0)
+		pending_it++;
 
 	task_allocation_loader(pending_it->first, pending_it->second, 0, 0);
 	pending_it++;
