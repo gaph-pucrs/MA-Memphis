@@ -73,10 +73,8 @@ void tm_migrate(tcb_t *tcb)
 	tm_send_stack(tcb, migrate_addr);
 	/* Send data and BSS */
 	tm_send_data_bss(tcb, migrate_addr);
-	/**
-	 * @todo
-	 * Where is CODE (.text) ?!?!?
-	 */
+	
+	/* Code (.text) is in another function */
 
 	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" migrated at time "); puts(itoa(HAL_TICK_COUNTER)); puts(" to processor "); puts(itoh(migrate_addr)); puts("\n");
 
