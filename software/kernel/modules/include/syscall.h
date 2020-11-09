@@ -30,9 +30,11 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 /**
  * @brief Exit the task and deallocate resources
  * 
+ * @param status Return status code
+ * 
  * @return True if exited. False if it must wait for pipe or dmni.
  */
-bool os_exit();
+bool os_exit(int status);
 
 /**
  * @brief Sends a message

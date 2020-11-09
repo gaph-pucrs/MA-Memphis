@@ -28,7 +28,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 	schedule_after_syscall = false;
 	switch(service){
 		case EXIT:
-			return os_exit();
+			return os_exit(a1);
 		case WRITEPIPE:
 			return os_writepipe(a1, a2, a3);
 		case READPIPE:
@@ -47,7 +47,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 	}
 }
 
-bool os_exit()
+bool os_exit(int status)
 {
 	schedule_after_syscall = true;
 
@@ -61,7 +61,7 @@ bool os_exit()
 	/* Send TASK_TERMINATED */
 	tl_send_terminated(current);
 
-	putsvsv("Task id: ", current->id, " terminated at ", HAL_TICK_COUNTER);
+	putsvsv("Task id: ", current->id, " terminated with status ", status);
 	HAL_TASK_TERMINATED = current->id;
 
 	sched_clear(current);
