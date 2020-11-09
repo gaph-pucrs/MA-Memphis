@@ -7,5 +7,5 @@ typedef struct _processor {
 } processor_t;
 
 void processor_init(processor_t *processors);
-int processors_get_first_most_free(processor_t *processors);
+int processors_get_first_most_free(processor_t *processors, int old_proc);
 

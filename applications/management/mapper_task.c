@@ -43,7 +43,6 @@ void map_init(mapper_t *mapper)
 	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
 	mapper->pending_task_cnt = 0;
 	mapper->fail_map_cnt = 0;
-	/** @todo Change to 0 when using more management tasks */
 	mapper->appid_cnt = 0;
 	mapper->pending_map_app = NULL;
 
@@ -168,7 +167,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 		/* Now map dynamic tasks */
 		for(int i = 0; i < app->task_cnt; i++){
 			if(app->task[i]->proc_idx == -1){
-				int proc_idx = processors_get_first_most_free(processors);
+				int proc_idx = processors_get_first_most_free(processors, -1);
 				Echo("Dinamically mapped task "); Echo(itoa(app->task[i]->id)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
 				processors[proc_idx].free_page_cnt--;
 				app->task[i]->proc_idx = proc_idx;
@@ -197,7 +196,7 @@ void processor_init(processor_t *processors)
 	for(int i = 0; i < PKG_N_PE; i++){
 		processors[i].addr = i / PKG_N_PE_X << 8 | i % PKG_N_PE_X;
 		// Echo("Addr "); Echo(itoa(processors[i].addr));
-		processors[i].free_page_cnt = PKG_MAX_TASKS_APP;
+		processors[i].free_page_cnt = PKG_MAX_LOCAL_TASKS;
 		processors[i].pending_map_cnt = 0;
 	}
 
@@ -205,11 +204,11 @@ void processor_init(processor_t *processors)
 	// processors[0].free_page_cnt--;
 }
 
-int processors_get_first_most_free(processor_t *processors)
+int processors_get_first_most_free(processor_t *processors, int old_proc)
 {
 	int address = 0;
 	for(int i = 1; i < PKG_N_PE; i++){
-		if(processors[i].free_page_cnt > processors[address].free_page_cnt)
+		if(processors[i].free_page_cnt + (i == old_proc) > processors[address].free_page_cnt + (address == old_proc))
 			address = i;
 	}
 	return address;
@@ -305,7 +304,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_descr, mapper->pending_task_cnt, mapper->processors);
 	} else if(
 		mapper->fail_map_cnt > 0 &&																	/* Pending mapping */
-		mapper->processors[proc_idx].pending_map_cnt > 0 && 											/* Terminated task freed desired processor */
+		mapper->processors[proc_idx].pending_map_cnt > 0 && 										/* Terminated task freed desired processor */
 		mapper->processors[proc_idx].free_page_cnt >= mapper->processors[proc_idx].pending_map_cnt	/* All slots needed in this processor are freed! */
 	){
 		mapper->processors[proc_idx].pending_map_cnt = 0;
@@ -362,7 +361,31 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 	}
 }
 
-void tm_migrate(mapper_t *mapper, int task)
+void tm_migrate(mapper_t *mapper, int task_id)
 {
-	Echo("Received migration request to task id "); Echo(itoa(task)); Echo("\n");
+	Echo("Received migration request to task id "); Echo(itoa(task_id)); Echo("\n");
+
+	app_t *app = app_search(mapper->apps, task_id >> 8);
+	task_t *task = app->task[task_id & 0xFF];
+
+	int old_proc = task->proc_idx;
+	int proc_idx = processors_get_first_most_free(mapper->processors, old_proc);
+	Echo("Migrated task "); Echo(itoa(task->id)); Echo("to address "); Echo(itoa(mapper->processors[proc_idx].addr));
+
+	task->proc_idx = proc_idx;
+
+	/**
+	 * @todo Release page on migration complete
+	 */
+	if(proc_idx != old_proc){
+		mapper->processors[proc_idx].free_page_cnt--;
+
+		/* Send migration order to Kernel at old processor address */
+		Message msg;
+		msg.msg[0] = TASK_MIGRATION;
+		msg.msg[1] = task->id;
+		msg.msg[2] = proc_idx;
+		msg.length = 3;
+		// SSend(&msg, KERNEL_MSG | mapper->processors[old_proc].addr);
+	}
 }
