@@ -35,8 +35,6 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			return os_readpipe(a1, a2, a3);
 		case GETTICK:
 			return os_get_tick();
-		case APPID:
-			return os_get_appid();
 		case ECHO:
 			return os_echo(a1);
 		case REALTIME:
@@ -325,11 +323,6 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 	schedule_after_syscall = 1;
 
 	return true;
-}
-
-unsigned int os_get_tick()
-{
-	return HAL_TICK_COUNTER;
 }
 
 int os_get_appid()

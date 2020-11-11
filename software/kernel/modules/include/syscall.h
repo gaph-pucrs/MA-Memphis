@@ -60,13 +60,6 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
 bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync);
 
 /**
- * @brief Get the tick count
- * 
- * @return Value of tick count
- */
-unsigned int os_get_tick();
-
-/**
  * @brief Gets the application ID of a running task
  * 
  * @return ID of the application (not the ID of the task)
