@@ -74,6 +74,10 @@ void mr_pop(message_request_t *request)
 
 unsigned int mr_defrag(tcb_t *tcb)
 {
+	/**
+	 * @todo This resembles a lot the bubblesort algorithm
+	 * Change this to a more efficient algorithm
+	 */
 	unsigned int size = 0;
 	bool swapped = true;
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS && swapped; i++){
