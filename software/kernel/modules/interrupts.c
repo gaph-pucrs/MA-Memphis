@@ -351,8 +351,6 @@ bool os_task_migration(int id, int addr)
 			tm_migrate(task);
 			return true;
 		}
-
-		sched_block(task);
 	} else {
 		puts ("ERROR: task not found or proc_to_migrate already assigned\n");
 		while(1);
@@ -479,9 +477,10 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 	sched_release(tcb);
 	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
 
-	/** @todo Confirm migration to whatever triggered it */
-
 	puts("Task id: "); puts(itoa(tcb_get_id(tcb))); puts(" allocated by task migration at time "); puts(itoa(HAL_TICK_COUNTER)); puts(" from processor "); puts(itoh(source)); puts("\n");
+
+	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
+	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);
 
 	return true;
 }
