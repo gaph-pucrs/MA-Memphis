@@ -28,7 +28,7 @@ int main()
 			case TASK_TERMINATED:
 				map_task_terminated(&mapper, msg.msg[1]);
 				break;
-			case TASK_MIGRATION:
+			case TASK_MIGRATION_MAP:
 				tm_migrate(&mapper, msg.msg[1]);
 				break;
 			default:
@@ -386,6 +386,6 @@ void tm_migrate(mapper_t *mapper, int task_id)
 		msg.msg[1] = task->id;
 		msg.msg[2] = proc_idx;
 		msg.length = 3;
-		// SSend(&msg, KERNEL_MSG | mapper->processors[old_proc].addr);
+		SSend(&msg, KERNEL_MSG | mapper->processors[old_proc].addr);
 	}
 }

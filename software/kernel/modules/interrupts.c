@@ -97,7 +97,8 @@ bool os_handle_pkt(packet_t *packet)
 		case UPDATE_TASK_LOCATION:
 			return os_update_task_location(packet->consumer_task, packet->task_ID, packet->allocated_processor);
 		case TASK_MIGRATION:
-			return os_task_migration(packet->task_ID, packet->allocated_processor);
+			puts("DEPRECATED: TASK_MIGRATION should be inside MESSAGE_DELIVERY\n");
+			return false;
 		case MIGRATION_CODE:
 			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
 		case MIGRATION_TCB:
@@ -135,12 +136,15 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 		/* Send it like a MESSAGE_DELIVERY */
 		pending_msg_send(msg, cons_addr);
 	} else {
+		// putsvsv("Received message request from task ", cons_task, " to task ", prod_task);
 		/* Get the producer task */
 		tcb_t *prod_tcb = tcb_search(prod_task);
 
 		if(!prod_tcb){
+			// puts("Producer NOT found. Will resend the request and update location\n");
 			/* Task is not here. Probably migrated. */
-			int migrated_addr = tm_get_migrated_addr(cons_task);
+			int migrated_addr = tm_get_migrated_addr(prod_task);
+			// putsv("Migrated address is ", migrated_addr);
 
 			/* Update the task location in the consumer */
 			tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
@@ -149,8 +153,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
 
 		} else {
-			// putsvsv("Received message request from task ", cons_task, " to task ", prod_task);
-			// putsvsv("Task ", prod_task, " received message request from ", cons_task);
+			// puts("Producer found!\n");
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
@@ -336,6 +339,7 @@ bool os_update_task_location(int dest_task, int updt_task, int updt_addr)
 
 bool os_task_migration(int id, int addr)
 {
+	putsvsv("Trying to migrate task ", id, " to address ", addr);
 	tcb_t *task = tcb_search(id);
 
 	if(task && !tcb_need_migration(task)){
@@ -347,8 +351,10 @@ bool os_task_migration(int id, int addr)
 			tm_migrate(task);
 			return true;
 		}
+
+		sched_block(task);
 	} else {
-		puts ("ERROR: task not found or proc_to_migrated already assigned\n");
+		puts ("ERROR: task not found or proc_to_migrate already assigned\n");
 		while(1);
 	}
 
@@ -377,22 +383,24 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	/* Obtain the program code */
 	dmni_read((int*)tcb_get_offset(free_tcb), code_sz);
 
+	// putsvsv("Received MIGRATION_CODE from task id ", id, " with size ", code_sz);
+
 	return false;
 }
 
 bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time)
 {
 	tcb_t *tcb = tcb_search(id);
-	/** @todo Check volatile for all messages read and written to/from dmni */
 
 	tcb_set_pc(tcb, pc);
 
 	dmni_read((int*)tcb->registers, HAL_MAX_REGISTERS);
-	tcb_set_sp(tcb, tcb_get_sp(tcb));
 
 	/* Check if task has real time parameters */
 	if(period)
 		sched_real_time_task(tcb, period, deadline, exec_time);
+
+	// putsv("Received MIGRATION_TCB from task id ", id);
 
 	return false;
 }
@@ -403,6 +411,8 @@ bool os_migration_tl(int id, unsigned int tl_len)
 
 	dmni_read(tcb->task_location, tl_len);
 
+	// putsvsv("Received MIGRATION_TASK_LOCATION from task id ", id, " with size ", tl_len);
+
 	return false;
 }
 
@@ -412,16 +422,21 @@ bool os_migration_mr(int id, unsigned int mr_len)
 
 	dmni_read((int*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(unsigned int));
 
+	// putsvsv("Received MIGRATION_MESSAGE_REQUEST from task id ", id, " with size ", mr_len);
+
 	return false;
 }
 
 bool os_migration_data_av(int id , unsigned int data_av_len)
 {
+	// puts("Received MIG_DATA_AV PKT\n");
 	tcb_t *tcb = tcb_search(id);
 
 	dmni_read((int*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
 
 	data_av_add_tail(tcb, data_av_len);
+
+	// putsvsv("Received MIGRATION_DATA_AV from task id ", id, " with size ", data_av_len);
 
 	return false;
 }
@@ -434,14 +449,19 @@ bool os_migration_pipe(int id, int cons_task, unsigned int msg_len)
 	pipe_set_message_len(tcb, msg_len);
 	dmni_read(tcb->pipe.message.msg, msg_len);
 
+	// putsvsv("Received MIGRATION_PIPE from task id ", id, " with size ", msg_len);
+
 	return false;
 }
 
 bool os_migration_stack(int id, unsigned int stack_len)
 {
+	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_search(id);
 
 	dmni_read((int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
+
+	// putsvsv("Received MIGRATION_STACK from task id ", id, " with size ", stack_len);
 
 	return false;
 }
@@ -453,7 +473,6 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 	tcb->data_lenght = data_len;
 	tcb->bss_lenght = bss_len;
 
-	/** @todo Review these sizes */
 	if(bss_len + data_len)
 		dmni_read((int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), bss_len + data_len);
 

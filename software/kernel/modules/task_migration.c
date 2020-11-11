@@ -60,18 +60,25 @@ void tm_migrate(tcb_t *tcb)
 	tl_update_local(tcb_get_id(tcb), migrate_addr);
 
 	/* Send base TCB info */
+	// puts("Sending migration TCB\n");
 	tm_send_tcb(tcb, migrate_addr);
 	/* Send task location array (only what is needed) */
+	// puts("Sending migration task location\n");
 	tm_send_tl(tcb, migrate_addr);
 	/* Send message request array (only what is needed) */
+	// puts("Sending migration message request\n");
 	tm_send_mr(tcb, migrate_addr);
 	/* Send data available fifo */
+	// puts("Sending migration data available\n");
 	tm_send_data_av(tcb, migrate_addr);
 	/* Send pipe */
+	// puts("Sending migration pipe\n");
 	tm_send_pipe(tcb, migrate_addr);
 	/* Send stack */
+	// puts("Sending migration stack\n");
 	tm_send_stack(tcb, migrate_addr);
 	/* Send data and BSS */
+	// puts("Sending migration data and bss\n");
 	tm_send_data_bss(tcb, migrate_addr);
 	
 	/* Code (.text) is in another function */
@@ -112,18 +119,9 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	packet->execution_time = sched_get_exec_time(tcb);
 
 	/* Registers */
-	unsigned int offset = tcb_get_offset(tcb);
-	packet->program_counter = tcb_get_pc(tcb) - offset;
+	packet->program_counter = tcb_get_pc(tcb);
 
-	unsigned int regs[HAL_MAX_REGISTERS];
-	for(int i = 0; i < HAL_MAX_REGISTERS; i++){
-		if(i == HAL_REG_SP)
-			regs[HAL_REG_SP] = tcb_get_sp(tcb) - offset;
-		else
-			regs[i] = tcb_get_reg(tcb, i);
-	}
-
-	pkt_send(packet, regs, HAL_MAX_REGISTERS);
+	pkt_send(packet, tcb->registers, HAL_MAX_REGISTERS);
 }
 
 void tm_send_tl(tcb_t *tcb, int addr)
@@ -143,6 +141,7 @@ void tm_send_mr(tcb_t *tcb, int addr)
 	unsigned int mr_len = mr_defrag(tcb);
 
 	if(mr_len){
+		// puts("Will send message request");
 		packet_t *packet = pkt_slot_get();
 
 		packet->header = addr;
@@ -159,6 +158,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 	unsigned int data_av_len = data_av_get_len_head_end(tcb);
 
 	if(data_av_len){
+		// puts("will send data_av migrate part 1\n");
 		packet_t *packet = pkt_slot_get();
 
 		packet->header = addr;
@@ -172,6 +172,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 	data_av_len = data_av_get_len_start_tail(tcb);
 
 	if(data_av_len){
+		// puts("will send data_av migrate part 2\n");
 		packet_t *packet = pkt_slot_get();
 
 		packet->header = addr;
@@ -186,6 +187,7 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 void tm_send_pipe(tcb_t *tcb, int addr)
 {
 	if(pipe_is_full(tcb)){
+		// puts("Will send pipe migration\n");
 		packet_t *packet = pkt_slot_get();
 
 		packet->header = addr;
@@ -201,8 +203,7 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 void tm_send_stack(tcb_t *tcb, int addr)
 {
 	/* Get the stack pointer */
-	unsigned int sp = tcb_get_sp(tcb);
-	unsigned int stack_len = sp;
+	unsigned int stack_len = tcb_get_sp(tcb);
 
 	/* Align to 32 bits */
 	while((PKG_PAGE_SIZE - stack_len) % 4)
@@ -214,7 +215,7 @@ void tm_send_stack(tcb_t *tcb, int addr)
 
 	packet->header = addr;
 	packet->service = MIGRATION_STACK;
-	packet->task_ID = pipe_get_cons_task(tcb);
+	packet->task_ID = tcb_get_id(tcb);
 	packet->stack_size = stack_len;
 
 	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
@@ -230,6 +231,5 @@ void tm_send_data_bss(tcb_t *tcb, int addr)
 	packet->data_size = tcb_get_data_length(tcb);
 	packet->bss_size = tcb_get_bss_length(tcb);
 
-	/** @todo This doesn't seems right. Let's investigate the sizes */
 	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), (packet->data_size + packet->bss_size));
 }

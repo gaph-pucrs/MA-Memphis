@@ -378,6 +378,8 @@ bool os_kernel_syscall(int *message, int length)
 		case TASK_RELEASE:
 			// putsv("will call release with ntasks=", message[4]);
 			return os_task_release(message[1], message[2], message[3], message[4], &message[5]);
+		case TASK_MIGRATION:
+			return os_task_migration(message[1], message[2]);
 		default:
 			putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", message[0]);
 			return false;

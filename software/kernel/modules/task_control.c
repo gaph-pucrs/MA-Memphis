@@ -89,6 +89,7 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->scheduler.status = SCHED_MIGRATING;
 	tcb->id = id;
 	tcb->text_lenght = code_sz;
+	tcb->proc_to_migrate = -1;
 	tcb->mapper_task = mapper_task;
 	tcb->mapper_address = mapper_addr;
 }
@@ -132,7 +133,7 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr)
 
 unsigned int tcb_get_pc(tcb_t *tcb)
 {
-	return tcb->pc;
+	return tcb->pc - tcb->offset;
 }
 
 unsigned int tcb_get_sp(tcb_t *tcb)

@@ -74,18 +74,22 @@ void mr_pop(message_request_t *request)
 
 unsigned int mr_defrag(tcb_t *tcb)
 {
-	unsigned int size = PKG_MAX_LOCAL_TASKS;
-	unsigned int last_found = PKG_MAX_LOCAL_TASKS;
-	for(int i = 0; i < last_found; i++){
+	unsigned int size = 0;
+	bool swapped = true;
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS && swapped; i++){
 		if(tcb->message_request[i].requester == -1){
-			/* Slot found */
-			for(int j = last_found - 1; j > i; j++){
-				size = j;
+			/* Slot found! */
+			for(int j = i; j < PKG_MAX_LOCAL_TASKS; j++){
+				swapped = false;
 				if(tcb->message_request[j].requester != -1){
-					last_found = j;
 					tcb->message_request[i] = tcb->message_request[j];
+					tcb->message_request[j].requester = -1;
+					swapped = true;
+					break;
 				}
 			}
+		} else {
+			size++;
 		}
 	}
 	return size;

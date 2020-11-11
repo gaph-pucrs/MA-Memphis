@@ -14,7 +14,7 @@
 #define HAL_MAX_REGISTERS	30	//!< Number of registers the context switching procedure must save 
 #define HAL_REG_A1			3	//!< Second argument register (is register 5)
 #define HAL_REG_V0			0	//!< First return value register (is register 2)
-#define HAL_REG_SP			27	//!< Stack Pointer (is register 29)
+#define HAL_REG_SP			25	//!< Stack Pointer (is register 29)
 
 #define HAL_IRQ_PENDING_SERVICE	0x01
 #define HAL_IRQ_SLACK_TIME		0x02
