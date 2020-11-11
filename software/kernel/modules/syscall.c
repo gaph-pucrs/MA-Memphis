@@ -325,10 +325,9 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 	return true;
 }
 
-int os_get_appid()
-{
-	tcb_t *current = sched_get_current();
-	return tcb_get_appid(current);
+unsigned int os_get_tick()	
+{	
+	return HAL_TICK_COUNTER;	
 }
 
 bool os_echo(unsigned int msg_ptr)
