@@ -416,7 +416,7 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	Message msg;
 	msg.msg[0] = TASK_MIGRATION;
 	msg.msg[1] = task->id;
-	msg.msg[2] = task->proc_idx;
+	msg.msg[2] = mapper->processors[task->proc_idx].addr;
 	msg.length = 3;
 	SSend(&msg, KERNEL_MSG | mapper->processors[task->old_proc].addr);
 }
