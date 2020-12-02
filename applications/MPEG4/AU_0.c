@@ -20,6 +20,6 @@ Message msg;
 
 //Echo(strcat("e,AU,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

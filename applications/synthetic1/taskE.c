@@ -26,6 +26,6 @@ for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	Echo(itoa(GetTick()));
     Echo("synthetic task E finished.");
 
-	exit();
+	return 0;
 
 }

@@ -28,6 +28,6 @@ Message msg;
 
 //Echo(strcat("e,RISC,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

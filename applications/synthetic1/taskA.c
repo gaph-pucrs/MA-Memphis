@@ -28,5 +28,5 @@ int main()
 
     Echo(itoa(GetTick()));
     Echo("Synthetic task A finished.");
-	exit();
+	return 0;
 }

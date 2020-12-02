@@ -60,5 +60,5 @@ int main(){
     Echo(itoa(GetTick()));
     Echo("End Task A - MPEG");
 
-    exit();
+    return 0;
 }

@@ -33,5 +33,5 @@ int main()
 
     Echo("End Task E - MPEG");
 
-    exit();
+    return 0;
 }

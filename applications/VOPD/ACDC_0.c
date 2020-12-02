@@ -22,6 +22,6 @@ int j;
 	msg.length=88;
 	Send(&msg,IQUANT_0);
 
-exit();
+return 0;
 
 }

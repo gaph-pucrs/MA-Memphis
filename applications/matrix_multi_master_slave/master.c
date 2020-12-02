@@ -267,7 +267,7 @@ void sendA( int *A){
 	/*for(i=0;i<SIZE;i++){
 		Echo(itoa(R[i]));
 	}*/
-		exit();
+		return 0;
 }
 
 

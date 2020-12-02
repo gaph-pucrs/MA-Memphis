@@ -25,6 +25,6 @@ int j;
 	msg.length=64;
 	Send(&msg,MEM2);
 
-exit();
+return 0;
 
 }

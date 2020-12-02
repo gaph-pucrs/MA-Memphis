@@ -52,6 +52,6 @@ Message msg;
 
 //Echo(strcat("e,SRAM2,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

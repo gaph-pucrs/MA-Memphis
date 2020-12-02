@@ -251,5 +251,5 @@ int main()
     Echo(itoa(GetTick()));
     Echo("Communication LAB1 finished.");
 
-exit();
+return 0;
 }

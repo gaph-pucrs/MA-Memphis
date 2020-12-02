@@ -194,7 +194,7 @@ int main()
 
     Echo(itoa(GetTick()));
     Echo("Communication RMS finished.");
-exit();
+return 0;
 
 
 }

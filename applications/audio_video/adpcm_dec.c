@@ -608,5 +608,5 @@ int main() {
 
     Echo("ADPCM Decoder - end");
 
-    exit();
+    return 0;
 }

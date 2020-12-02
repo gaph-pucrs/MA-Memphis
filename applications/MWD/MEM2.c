@@ -21,6 +21,6 @@ int j;
 	msg.length=64;
 	Send(&msg,HVS);
 
-exit();
+return 0;
 
 }

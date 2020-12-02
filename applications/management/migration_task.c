@@ -22,7 +22,7 @@ int main()
 
 	Echo("Requesting migration for task "); Echo(itoa(msg.msg[1])); Echo("\n");
 
-	SSend(&msg, mapper_task);
+	//SSend(&msg, mapper_task);
 
 	return 0;
 }

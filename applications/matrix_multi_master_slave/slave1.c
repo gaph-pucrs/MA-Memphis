@@ -190,5 +190,5 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 	Echo("Fim da aplicação slave1");
 	Echo(itoa(GetTick()));
 
-	exit();
+	return 0;
 }	

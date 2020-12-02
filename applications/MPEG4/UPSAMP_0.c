@@ -41,6 +41,6 @@ Message msg;
 
 //Echo(strcat("e,UPSAMP,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

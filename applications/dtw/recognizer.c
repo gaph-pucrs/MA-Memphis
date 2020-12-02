@@ -64,5 +64,5 @@ int main(){
 	Echo(itoa(GetTick()));*/
 
 
-	exit();
+	return 0;
 }

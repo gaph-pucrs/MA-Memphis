@@ -91,5 +91,5 @@ int main()
     Echo(itoa(id));
     Echo(itoa(GetTick()));
    
-	exit();	
+	return 0;	
 }

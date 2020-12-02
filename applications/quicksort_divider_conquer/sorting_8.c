@@ -93,6 +93,6 @@ int main(){
     Echo("Retornando o vetor:");
     Send(&msg, sorting_3); // AQUI
 
-	exit();
+	return 0;
 
 }

@@ -20,6 +20,6 @@ int j;
 	msg.length=61;
 	Send(&msg,UPSAMP_0);
 
-	exit();
+	return 0;
 
 }

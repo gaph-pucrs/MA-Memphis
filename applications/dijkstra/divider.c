@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	execute();
 
-	exit();
+	return 0;
 }
 
 

@@ -38,7 +38,7 @@ extern int SystemCall();
 #define ReceiveIO(msg, io_source) while(!SystemCall(IOREADPIPE, (unsigned int*)msg, io_source,0))
 #define GetTick() SystemCall(GETTICK,0,0,0)
 #define Echo(str) SystemCall(ECHO, (char*)str,0,0)
-#define exit() while(!SystemCall(EXIT, 0, 0, 0))
+#define exit(status) while(!SystemCall(EXIT, status, 0, 0))
 #define SSend(msg, app_target) while(!SystemCall(WRITEPIPE, (unsigned int*)msg, app_target, 1))
 #define SReceive(msg) while(!SystemCall(READPIPE, (unsigned int*)msg, 0, 1))
 #define get_appid()	SystemCall(APPID, 0, 0, 0)

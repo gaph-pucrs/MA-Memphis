@@ -209,5 +209,5 @@ int main()
     Echo(itoa(GetTick()));
     Echo("Communication dis_XYZ finished.");
 
-exit();
+return 0;
 }

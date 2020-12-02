@@ -24,6 +24,6 @@ int j;
 	msg.length=128;
 	for(j=0;j<5;j++) Send(&msg,SE);
 
-exit();
+return 0;
 
 }

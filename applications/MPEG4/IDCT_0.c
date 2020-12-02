@@ -28,6 +28,6 @@ Message msg;
 
 //Echo(strcat("e,IDCT,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

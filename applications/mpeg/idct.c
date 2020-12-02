@@ -252,7 +252,7 @@ int main()
     Echo(itoa(GetTick()));
     Echo("End Task D - MPEG");
 
-    exit();
+    return 0;
 }
 
 

@@ -102,6 +102,6 @@ int main(){
     msg.length = tamanho;
     Send(&msg, sorting_1); // AQUI
     
-	exit();
+	return 0;
 
 }

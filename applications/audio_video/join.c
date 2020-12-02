@@ -32,5 +32,5 @@ int main() {
 
 	Echo("Join finished.");
 
-	exit();
+	return 0;
 }

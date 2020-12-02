@@ -23,5 +23,5 @@ int main()
 
     Echo("Task B finished at time");
     Echo(itoa(GetTick()));
-	exit();
+	return 0;
 }

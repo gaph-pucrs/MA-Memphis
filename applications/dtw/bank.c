@@ -51,5 +51,5 @@ int main(){
 
 	Echo("Bank sendedd all patterns\n");
 
-	exit();
+	return 0;
 }
