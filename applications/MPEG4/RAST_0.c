@@ -32,6 +32,6 @@ Message msg;
 
 //Echo(strcat("e,RAST,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

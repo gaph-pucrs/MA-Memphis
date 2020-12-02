@@ -30,5 +30,5 @@ int main()
 
 	Echo("Fim da aplicacao cons");
 
-	exit();
+	return 0;
 }

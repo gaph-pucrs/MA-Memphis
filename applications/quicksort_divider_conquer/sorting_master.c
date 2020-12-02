@@ -93,6 +93,6 @@ int main(){
         Echo(itoa(vector[i]));
         msg.msg[i] = vector[i];
     }
-	exit();
+	return 0;
 
 }

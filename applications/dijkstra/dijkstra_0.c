@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	Echo(itoa(tasks[rank][1]));
 	Echo("\n");*/
 
-	exit();
+	return 0;
 }
 
 int qcount (int myID){

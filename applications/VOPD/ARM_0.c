@@ -12,6 +12,6 @@ int j;
 	msg.length=128;
 	Send(&msg,IDCT2_0);
 	
-	exit();
+	return 0;
 
 }

@@ -80,6 +80,6 @@ Message msg;
 
 //Echo(strcat("e,SDRAM,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

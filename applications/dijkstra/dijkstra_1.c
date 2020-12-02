@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	Echo(itoa(GetTick()));
 	Echo("Dijkstra_1 finished.");
 
-	exit();
+	return 0;
 }
 
 int qcount (int myID){

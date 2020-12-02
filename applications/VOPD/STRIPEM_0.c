@@ -16,6 +16,6 @@ int j;
 	msg.length=128;
 	Send(&msg,IQUANT_0);
 
-	exit();
+	return 0;
 
 }

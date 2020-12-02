@@ -54,7 +54,7 @@ int main()
 {
 	if(!check_eulerian()){
 		Echo("The graph is not Eulerian. Quiting.");
-		exit();
+		return 0;
 	}
 
 	Message msg;
@@ -96,5 +96,5 @@ int main()
 	}
 	
 	Echo("Exiting main");
-	exit();
+	return 0;
 }

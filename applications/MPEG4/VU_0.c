@@ -23,6 +23,6 @@ int j;
 
 //Echo(strcat("e,VU,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

@@ -24,6 +24,6 @@ Message msg;
 
 //Echo(strcat("e,ADSP,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

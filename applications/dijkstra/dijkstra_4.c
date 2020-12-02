@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	Echo(itoa(GetTick()));
 	Echo("Dijkstra_4 finished.");
 
-	exit();
+	return 0;
 }
 
 

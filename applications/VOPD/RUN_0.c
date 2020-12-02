@@ -18,6 +18,6 @@ int j;
 	msg.length=88;
 	Send(&msg,ISCAN_0);
 
-	exit();
+	return 0;
 
 }

@@ -22,6 +22,6 @@ int j;
 	msg.length=92;
 	Send(&msg,VOPREC_0);
 
-	exit();
+	return 0;
 
 }

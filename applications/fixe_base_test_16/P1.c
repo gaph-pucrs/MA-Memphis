@@ -213,5 +213,5 @@ int main()
     Echo(itoa(GetTick()));
 	Echo("Communication Processeur 1 finished.");
 
-exit();
+return 0;
 }

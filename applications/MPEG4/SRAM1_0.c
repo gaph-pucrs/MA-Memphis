@@ -24,6 +24,6 @@ Message msg;
 
 //Echo(strcat("e,SRAM1,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

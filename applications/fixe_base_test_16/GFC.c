@@ -203,5 +203,5 @@ int main()
     Echo(itoa(GetTick()));
     Echo("Communication GFC finished.");
 
-exit();
+return 0;
 }

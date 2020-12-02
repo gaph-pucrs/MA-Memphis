@@ -24,6 +24,6 @@ Message msg;
 
 //Echo(strcat("e,MCPU,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

@@ -309,7 +309,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
-		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo("\n");
+		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo(" tempo = "); Echo(itoa(GetTick())); Echo("\n");
 		app->id = -1;
 	}
 

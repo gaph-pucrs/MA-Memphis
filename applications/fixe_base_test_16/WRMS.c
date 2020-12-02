@@ -199,5 +199,5 @@ int main()
     Echo("Communication WRMS finished.");
 
 
-exit();
+return 0;
 }

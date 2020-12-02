@@ -27,5 +27,5 @@ int main()
 	}
 
 	Echo("Fim da aplicacao prod");
-	exit();
+	return 0;
 }

@@ -84,7 +84,7 @@ int main()
 
 		if(!MSG_OP){        // Exit
 			Echo(exit_msg[THIS_NODE]);
-			exit();
+			return 0;
 		} else if(!TUNUE){
 			MSG_OP = EXIT;
 		#if DEBUG == 1

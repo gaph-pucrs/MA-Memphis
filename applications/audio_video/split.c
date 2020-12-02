@@ -60,5 +60,5 @@ int main() {
 
 	Echo("End Task SPLIT");
 
-	exit();
+	return 0;
 }

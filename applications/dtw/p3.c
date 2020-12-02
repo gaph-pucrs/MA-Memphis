@@ -37,5 +37,5 @@ int main(){
 	Echo("Task P3 FINISHEDD IN\n");
 	Echo(itoa(GetTick()));
 
-	exit();
+	return 0;
 }

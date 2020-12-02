@@ -18,6 +18,6 @@ int j;
 	msg.length=26;
 	Send(&msg,VOPREC_0);
 
-	exit();
+	return 0;
 
 }

@@ -22,6 +22,6 @@ int j;
 	msg.length=33;
 	Receive(&msg,VOPME_0);
 
-	exit();
+	return 0;
 
 }

@@ -31,5 +31,5 @@ int main()
    	Echo("End:");Echo(itoa(GetTick()));
    	Echo("Sorted array");
    	printArray(arr, n);
-    exit();
+    return 0;
 }

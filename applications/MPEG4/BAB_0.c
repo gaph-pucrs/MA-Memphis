@@ -30,6 +30,6 @@ Message msg;
 
 //Echo(strcat("e,BAB,",itoa(GetTick())));
 
-exit();
+return 0;
 
 }

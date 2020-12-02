@@ -143,6 +143,6 @@ int main()
 
 	Echo(itoa(GetTick()));
     Echo("Communication XYZ 2 finished.");
-exit();
+return 0;
 }
 

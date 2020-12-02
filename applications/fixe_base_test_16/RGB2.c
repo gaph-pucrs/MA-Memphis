@@ -121,6 +121,6 @@ int main()
 	Echo(itoa(GetTick()));
     Echo("Communication RGB2 finished.");
 
-	exit();
+	return 0;
 }
 

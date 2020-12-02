@@ -20,6 +20,6 @@ int j;
 
 	Echo("Chamou exit");
 
-	exit();
+	exit(0);
 
 }

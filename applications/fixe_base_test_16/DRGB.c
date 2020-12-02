@@ -208,5 +208,5 @@ int main()
     Echo(itoa(GetTick()));
     Echo("Communication dis_RGB finished.");
 
-exit();
+return 0;
 }

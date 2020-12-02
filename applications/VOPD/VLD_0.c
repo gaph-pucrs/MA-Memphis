@@ -14,6 +14,6 @@ int j;
 	msg.length=87;
 	Send(&msg,RUN_0);
 
-	exit();
+	return 0;
 
 }

@@ -202,5 +202,5 @@ int main()
 	}
 //#endif 
 
-	exit();		
+	return 0;		
 }

@@ -123,5 +123,5 @@ int main () {
 
 	Echo("FIR - end");
 
-	exit();
+	return 0;
 }
