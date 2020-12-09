@@ -383,3 +383,10 @@ void pe::clock_stop(){
 
 }
 
+void pe::update_credit()
+{
+  if (x_address == 0) credit_o[WEST].write(0);
+  if (x_address == (NPORT - 1)) credit_o[EAST].write(0);
+  if (y_address == 0) credit_o[SOUTH].write(0);
+  if (y_address == (NPORT - 1)) credit_o[NORTH].write(0);
+}

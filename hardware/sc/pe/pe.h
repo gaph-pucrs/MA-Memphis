@@ -115,6 +115,8 @@ SC_MODULE(pe) {
 	unsigned long int nop_instant_instructions;
 	unsigned long int mult_div_instant_instructions;
 
+  char x_address;
+  char y_address;
 
 	char aux[255];
 	FILE *fp;
@@ -128,6 +130,7 @@ SC_MODULE(pe) {
 	void reset_n_attr();
 	void clock_stop();
 	void end_of_simulation();
+  void update_credit();
 	
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00) : sc_module(name_), router_address(address_) {
@@ -196,10 +199,19 @@ SC_MODULE(pe) {
 		router->tx[NORTH](tx[NORTH]);
 		router->tx[SOUTH](tx[SOUTH]);
 		router->tx[LOCAL](rx_ni);
-		router->credit_o[EAST](credit_o[EAST]);
-		router->credit_o[WEST](credit_o[WEST]);
-		router->credit_o[NORTH](credit_o[NORTH]);
-		router->credit_o[SOUTH](credit_o[SOUTH]);
+		//router->credit_o[EAST](credit_o[EAST]);
+		//router->credit_o[WEST](credit_o[WEST]);
+		//router->credit_o[NORTH](credit_o[NORTH]);
+		//router->credit_o[SOUTH](credit_o[SOUTH]);
+   
+    x_address = router_address >> 8;
+    y_address = router_address & 0xFF;
+    
+    if (x_address <= (NPORT - 2)) router->credit_o[EAST](credit_o[EAST]);
+    if (x_address != 0) router->credit_o[WEST](credit_o[WEST]);
+    if (y_address <= (NPORT - 2)) router->credit_o[NORTH](credit_o[NORTH]);
+    if (y_address != 0) router->credit_o[SOUTH](credit_o[SOUTH]);
+    
 		router->credit_o[LOCAL](credit_i_ni);
 		router->data_out[EAST](data_out[EAST]);
 		router->data_out[WEST](data_out[WEST]);
@@ -252,7 +264,10 @@ SC_MODULE(pe) {
 		sensitive << end_sim_reg;
 
 		SC_METHOD(clock_stop);
-		sensitive << clock << reset.pos();	
+		sensitive << clock << reset.pos();
+    
+    SC_METHOD(update_credit);
+    sensitive << reset.pos() << clock.pos();	
 
 	}
 	
