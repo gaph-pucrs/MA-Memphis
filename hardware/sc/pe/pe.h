@@ -24,6 +24,7 @@ SC_MODULE(pe) {
 	sc_out<bool >		credit_o[NPORT-1];
 	
 	sc_signal < bool > 	clock_hold;
+  sc_signal < bool >  credit_signal[NPORT - 1];
 	bool 				clock_aux;
 
 	//signals
@@ -199,18 +200,18 @@ SC_MODULE(pe) {
 		router->tx[NORTH](tx[NORTH]);
 		router->tx[SOUTH](tx[SOUTH]);
 		router->tx[LOCAL](rx_ni);
-		//router->credit_o[EAST](credit_o[EAST]);
-		//router->credit_o[WEST](credit_o[WEST]);
-		//router->credit_o[NORTH](credit_o[NORTH]);
-		//router->credit_o[SOUTH](credit_o[SOUTH]);
+		router->credit_o[EAST](credit_signal[EAST]);
+		router->credit_o[WEST](credit_signal[WEST]);
+		router->credit_o[NORTH](credit_signal[NORTH]);
+		router->credit_o[SOUTH](credit_signal[SOUTH]);
    
     x_address = router_address >> 8;
     y_address = router_address & 0xFF;
     
-    if (x_address <= (NPORT - 2)) router->credit_o[EAST](credit_o[EAST]);
-    if (x_address != 0) router->credit_o[WEST](credit_o[WEST]);
-    if (y_address <= (NPORT - 2)) router->credit_o[NORTH](credit_o[NORTH]);
-    if (y_address != 0) router->credit_o[SOUTH](credit_o[SOUTH]);
+    //if (x_address <= (N_PE_X - 2)) credit_o[EAST](credit_signal[EAST]);
+    //if (x_address != 0) credit_o[WEST](credit_signal[WEST]);
+    //if (y_address <= (N_PE_Y - 2)) credit_o[NORTH](credit_signal[NORTH]);
+    //if (y_address != 0) credit_o[SOUTH](credit_signal[SOUTH]);
     
 		router->credit_o[LOCAL](credit_i_ni);
 		router->data_out[EAST](data_out[EAST]);

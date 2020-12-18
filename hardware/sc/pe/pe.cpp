@@ -387,20 +387,37 @@ void pe::update_credit()
 {
   static int seq_addr = x_address * N_PE_X + y_address;
   
-  if (x_address == 0 && io_port[seq_addr] != WEST) 
+  /*if (x_address == 0 && io_port[seq_addr] != WEST) 
     credit_o[WEST].write(0);
-  else if (x_address == 0 && io_port[seq_addr] == WEST)
-    credit_o[WEST].write(router->credit_o[WEST]);
-  if (x_address == (NPORT - 1) && io_port[seq_addr] != EAST) 
+  else// if (x_address != 0 || io_port[seq_addr] == WEST)
+    credit_o[WEST].write(credit_signal[WEST]);
+  if (x_address == (N_PE_X - 1) && io_port[seq_addr] != EAST) 
     credit_o[EAST].write(0);
-  else if (x_address == (NPORT - 1) && io_port[seq_addr] == EAST)
-    credit_o[EAST].write(router->credit_o[EAST]);
+  else //if (x_address != (N_PE_X - 1) || io_port[seq_addr] == EAST)
+    credit_o[EAST].write(credit_signal[EAST]);
   if (y_address == 0 && io_port[seq_addr] != SOUTH) 
     credit_o[SOUTH].write(0);
-  else if (y_address == 0 && io_port[seq_addr] == SOUTH) 
-    credit_o[SOUTH].write(router->credit_o[SOUTH]);
-  if (y_address == (NPORT - 1) && io_port[seq_addr] != NORTH) 
+  else //if (y_address != 0 || io_port[seq_addr] == SOUTH) 
+    credit_o[SOUTH].write(credit_signal[SOUTH]);
+  if (y_address == (N_PE_Y - 1) && io_port[seq_addr] != NORTH) 
     credit_o[NORTH].write(0);
-  else if (y_address == (NPORT - 1) && io_port[seq_addr] == NORTH) 
-    credit_o[NORTH].write(router->credit_o[NORTH]);
+  else //if (y_address != (N_PE_Y - 1) || io_port[seq_addr] == NORTH) 
+    credit_o[NORTH].write(credit_signal[NORTH]);*/
+  
+
+    credit_o[WEST].write(router->credit_o[WEST].read());
+  //if (x_address == 0 && io_port[seq_addr] != WEST)
+    //credit_o[WEST].write(0);
+
+    credit_o[EAST].write(router->credit_o[EAST].read());
+  //if (x_address == (N_PE_X - 1) && io_port[seq_addr] != EAST)
+    //credit_o[EAST].write(0);
+
+    credit_o[SOUTH].write(router->credit_o[SOUTH].read());
+  //if (y_address == 0 && io_port[seq_addr] != SOUTH)
+    //credit_o[SOUTH].write(0);
+  
+    credit_o[NORTH].write(router->credit_o[NORTH].read());
+  //if (y_address == (N_PE_Y - 1) && io_port[seq_addr] != NORTH)
+    //credit_o[NORTH].write(0);
 }
