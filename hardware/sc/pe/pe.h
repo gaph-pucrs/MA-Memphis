@@ -208,11 +208,6 @@ SC_MODULE(pe) {
     x_address = router_address >> 8;
     y_address = router_address & 0xFF;
     
-    //if (x_address <= (N_PE_X - 2)) credit_o[EAST](credit_signal[EAST]);
-    //if (x_address != 0) credit_o[WEST](credit_signal[WEST]);
-    //if (y_address <= (N_PE_Y - 2)) credit_o[NORTH](credit_signal[NORTH]);
-    //if (y_address != 0) credit_o[SOUTH](credit_signal[SOUTH]);
-    
 		router->credit_o[LOCAL](credit_i_ni);
 		router->data_out[EAST](data_out[EAST]);
 		router->data_out[WEST](data_out[WEST]);
@@ -268,7 +263,10 @@ SC_MODULE(pe) {
 		sensitive << clock << reset.pos();
     
     SC_METHOD(update_credit);
-    sensitive << reset.pos() << clock.pos();	
+    sensitive << credit_signal[EAST];
+    sensitive << credit_signal[WEST];	
+    sensitive << credit_signal[NORTH];	
+    sensitive << credit_signal[SOUTH];		
 
 	}
 	
