@@ -51,14 +51,14 @@ def check_mem_size(file_path, mem_size_KB):
     
     file_size_KB = program_memory_size / 1024.0
     
-    file_size_KB = ceil( file_size_KB + (file_size_KB * 0.2) )
+    file_size_KB = file_size_KB + (file_size_KB * 0.2)
     
     if file_size_KB >= mem_size_KB:
-        sys.exit("ERROR: Insufficient memory size ("+str(mem_size_KB)+"KB) for file <"+file_path+"> size ("+str(file_size_KB)+"KB)")
+        sys.exit("ERROR: Insufficient memory size ("+str(mem_size_KB)+" KiB) for file <"+file_path+"> size (%.1f KiB)" % file_size_KB)
 
     #This print needs more for: http://www.python-course.eu/python3_formatted_output.php
     #But currently I am very very very busy - so, if I is reading this, please...do it!!
-    print ("Memory size ("+str(mem_size_KB)+"KB) OK for file\t<"+file_path+">\t with size ("+str(file_size_KB)+"KB)")
+    print ("Memory size ("+str(mem_size_KB)+" KiB) OK for file\t<"+file_path+">\t with size (%.1f KiB)" % file_size_KB)
 
 def get_app_task_name_list(testcase_path, app_name):
     
