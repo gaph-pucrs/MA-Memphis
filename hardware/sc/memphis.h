@@ -43,7 +43,13 @@ SC_MODULE(memphis) {
 	sc_in< regflit >		memphis_app_injector_data_in;
 
 	//IO interface - Create the IO interface for your component here:
+  sc_out< bool >			memphis_ma_injector_tx;
+	sc_in< bool >			memphis_ma_injector_credit_i;
+	sc_out< regflit >		memphis_ma_injector_data_out;
 
+	sc_in< bool >			memphis_ma_injector_rx;
+	sc_out< bool >			memphis_ma_injector_credit_o;
+	sc_in< regflit >		memphis_ma_injector_data_in;
 
 
 	// Signals to connects the NoC routers
@@ -98,6 +104,12 @@ SC_MODULE(memphis) {
 		sensitive << memphis_app_injector_rx;
 		sensitive << memphis_app_injector_credit_o;
 		sensitive << memphis_app_injector_data_in;
+    sensitive << memphis_ma_injector_tx;
+		sensitive << memphis_ma_injector_credit_i;
+		sensitive << memphis_ma_injector_data_out;
+		sensitive << memphis_ma_injector_rx;
+		sensitive << memphis_ma_injector_credit_o;
+		sensitive << memphis_ma_injector_data_in;
 		for (j = 0; j < N_PE; j++) {
 			for (i = 0; i < NPORT - 1; i++) {
 				sensitive << tx[j][i];

@@ -8,72 +8,77 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
-#include "app_injector.h"
+#include "MAInjector.h"
 
 //This line enables the integration with vhdl
 #ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(app_injector);
+SC_MODULE_EXPORT(MAInjector);
 #endif
 
-void app_injector::credit_out_update(){
-	credit_out.write(sig_credit_out.read());
+MAInjector::MAInjector(sc_module_name _name) :
+  sc_module(_name)
+{
+  //Variable initialization
+		current_time = 0;
+		line_counter = 0;
+		packet = 0;
+		packet_size = 0;
+		req_app_start_time = 0;
+		req_app_task_number = 0;
+		req_app_cluster_id = 0;
+		cluster_address = 0;
+		//ack_app_id = 0;
+		payload_size = 0;
+		flit_counter = 0;
+		req_task_id = 0;
+		req_task_allocated_proc = 0;
+		req_task_master_ID = 0;
+		task_static_mapping = 0;
+
+		EA_receive_packet = HEADER;
+		EA_send_packet = IDLE;
+		EA_new_app_monitor = MONITORING;
+		EA_bootloader = INITIALIZE;
+
+		SC_METHOD(bootloader);
+		sensitive << clock.pos();
+		sensitive << reset;
+
+		SC_METHOD(monitor_new_app);
+		sensitive << clock.pos();
+		sensitive << reset;
+
+		SC_METHOD(send_packet);
+		sensitive << clock.pos();
+		sensitive << reset;
+
+		SC_METHOD(receive_packet);
+		sensitive << clock.pos();
+		sensitive << reset;
+
+		SC_METHOD(credit_out_update);
+		sensitive << sig_credit_out;
 }
 
-/**Converst an app ID to an app name by searching in app_start.txt file
- *
- */
-string app_injector::get_app_repo_path(unsigned int app_id){
-	string line;
-	string path = "appstart.txt";
-	ifstream repo_file (path.c_str());
-	string app_name;
-	unsigned int task_number;
-
-	if (repo_file.is_open()) {
-
-		for(unsigned int app_count = 0; app_count < app_id; app_count++){
-
-			/*Each descriptor in app_start start always with 4 information*/
-			for(int i = 0; i < 3; i++){
-				getline (repo_file,line);
-				// cout << line << endl;
-			}
-			sscanf( line.substr(0, 8).c_str(), "%u", &task_number);
-			// cout << "Task number: " << task_number << endl;
-
-			/*Skips the number of tasks*/
-			for(unsigned int i=0; i<task_number; i++){
-				getline (repo_file,line);
-			}
-
-		}
-
-		getline (repo_file,line);
-		// cout << "APP NAME: " << line << endl;
-		return ("../applications/" + line + "/repository.txt");
-	}
-
-	cout << "ERROR: app path not found\n" << endl;
-	return NULL;
-
+void MAInjector::credit_out_update(){
+	credit_out.write(sig_credit_out.read());
 }
 
 /**Assembles the packet that load the a generic task to the system
  */
-void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, unsigned int mapper_id, unsigned int mapper_addr){
+void MAInjector::task_allocation_loader(unsigned int id, unsigned int addr, unsigned int mapper_id, unsigned int mapper_addr){
 
 	string line, path;
 	unsigned int  task_number, code_size, data_size, bss_size, task_line, code_line, current_line;
 	int ptr_index = 0;
-	unsigned int app_id, task_id;
+	unsigned int task_id;
 
-	app_id = id >> 8;
 	task_id = id & 0xFF;
 
 	cout << "Loading task ID " << id << " to PE " << (addr >> 8) << "x" << (addr & 0xFF) << endl;
 
 
-	path = get_app_repo_path(app_id);
+	path = "../management/repository.txt";
 
 	// cout << "Task allocation loader - app path: " << path << endl;
 
@@ -138,9 +143,40 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 		}
 
 	} else {
-		cout << "ERROR cannot read the file at path: " << path << " and app id " << app_id << endl;
+		cout << "ERROR cannot read the file at path: " << path << endl;
 	}
 }
+
+void MAInjector::bootloader(){
+	if (reset.read() == 1)  {
+		EA_bootloader = INITIALIZE;
+
+	} else if (clock.posedge()){
+
+		switch (EA_bootloader) {
+
+			/*Sends the Global Mapper App to PE 0 */
+			case INITIALIZE:
+				/*Load the boot task in the packet array*/
+				// cout << "bootloader init task alloc loader " << endl;
+				task_allocation_loader(0, 0, -1, -1);
+				/*This state signals to send_packet to start transmission*/
+				EA_bootloader = WAIT_SEND_BOOT;
+				// cout << "bootloader init ok" << endl;
+				break;
+			case WAIT_SEND_BOOT:
+				/*Waits ends of boot packet transmission*/
+				if (EA_send_packet == SEND_FINISHED){
+					EA_bootloader = BOOTLOADER_FINISHED;
+					// cout << "bootloader send ok" << endl;
+				}
+				break;
+			case BOOTLOADER_FINISHED:
+				break;
+		}
+	}
+}
+
 
 /**
  * Monitors the file appstart.txt looking for a new app to inject on the system
@@ -158,7 +194,7 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
  * WAITING_ACK: Waits all the process to map a new application be completed by observing the state of
  * EA_receive_packet and EA_send_packet
  */
-void app_injector::monitor_new_app(){
+void MAInjector::monitor_new_app(){
 	string line;
 	ifstream appstart_file;
 
@@ -242,7 +278,7 @@ void app_injector::monitor_new_app(){
 
 			case WAITING_TIME: //Test when the current time reach the application start time
 
-				if (EA_receive_packet == HEADER && (req_app_start_time * 100000) <= current_time){
+				if (EA_receive_packet == HEADER && EA_bootloader == BOOTLOADER_FINISHED && (req_app_start_time * 100000) <= current_time){
 					/* It once sent "NEW_APP_REQ" */
 					/* Now it sends direclty NEW_APP -> no clustering */
 						
@@ -276,10 +312,10 @@ void app_injector::monitor_new_app(){
  * - app_name = used to form the application repository's path
  * - app_task_number = used to compute the repository's size
  */
-void app_injector::app_descriptor_loader(){
+void MAInjector::app_descriptor_loader(){
 
 	string line;
-	string path = "../applications/" + req_app_name + "/repository.txt";
+	string path = "../management/" + req_app_name + "/repository.txt";
 	ifstream repo_file (path.c_str());
 	int file_length;
 	int ptr_index;
@@ -307,7 +343,7 @@ void app_injector::app_descriptor_loader(){
 		packet[0] = 0x0000; 		 			/* Header: mapper task address */
 		packet[1] = packet_size - 2; 			/* Payload size */
 		packet[2] = MESSAGE_DELIVERY;			/* Service */
-		packet[3] = APP_INJECTOR_ADDRESS;		/* producer_task */
+		packet[3] = MA_INJECTOR_ADDRESS;		/* producer_task */
 		packet[4] = 0x0000; 					/* consumer_task: mapper task id */
 		packet[8] = file_length + 2; 			/* Message length */
 		packet[CONSTANT_PACKET_SIZE] = NEW_APP;	/* Protocol: NEW_APP */
@@ -372,7 +408,7 @@ void app_injector::app_descriptor_loader(){
  *  pointer *packet and its size in the variable packet_size. Both pointer and variable are used by the send_packet function to send a
  *  packet to the NoC.
  */
-void app_injector::receive_packet(){
+void MAInjector::receive_packet(){
 
 	if(reset.read()){
 		EA_receive_packet = HEADER;
@@ -516,7 +552,7 @@ void app_injector::receive_packet(){
 /**Sequential process
  * Only is in charge to send data to NoC using as reference the packet pointer and packet_size variable.
  */
-void app_injector::send_packet(){
+void MAInjector::send_packet(){
 	static FSM_send_packet last_state;
 	static unsigned int aux_pkt[CONSTANT_PACKET_SIZE];
 	static unsigned int aux_idx = 0;
@@ -528,7 +564,7 @@ void app_injector::send_packet(){
 		switch(EA_send_packet){
 			case IDLE:
 				//IDLE monitors the states of other FSM that acts as triggers
-				if(EA_receive_packet == WAITING_SEND_TASK_ALLOCATION){
+				if(EA_receive_packet == WAITING_SEND_TASK_ALLOCATION || EA_bootloader == WAIT_SEND_BOOT){
 					if (credit_in.read() == 1){
 						if (packet != NULL) {
 							EA_send_packet = SEND_PACKET;
@@ -545,9 +581,9 @@ void app_injector::send_packet(){
 						aux_pkt[0] = 0x0000; 				/* Header: mapper task address */
 						aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 				/* Payload size */
 						aux_pkt[2] = DATA_AV;				/* Service */
-						aux_pkt[3] = APP_INJECTOR_ADDRESS;	/* producer_task */
+						aux_pkt[3] = MA_INJECTOR_ADDRESS;	/* producer_task */
 						aux_pkt[4] = 0x0000; 				/* consumer_task: mapper task id */
-						aux_pkt[8] = APP_INJECTOR_ADDRESS;	/* requesting_processor */
+						aux_pkt[8] = MA_INJECTOR_ADDRESS;	/* requesting_processor */
 
 						EA_send_packet = SEND_DATA_AV;
 
@@ -561,8 +597,8 @@ void app_injector::send_packet(){
 						aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 				/* Payload size */
 						aux_pkt[2] = MESSAGE_REQUEST;		/* Service */
 						aux_pkt[3] = 0x0000;				/* producer_task: mapper task id */
-						aux_pkt[4] = APP_INJECTOR_ADDRESS; 	/* consumer_task */
-						aux_pkt[8] = APP_INJECTOR_ADDRESS;	/* requesting_processor */
+						aux_pkt[4] = MA_INJECTOR_ADDRESS; 	/* consumer_task */
+						aux_pkt[8] = MA_INJECTOR_ADDRESS;	/* requesting_processor */
 
 						EA_send_packet = SEND_MSG_REQUEST;
 
@@ -648,7 +684,7 @@ void app_injector::send_packet(){
 	}
 }
 
-void app_injector::app_mapping_loader()
+void MAInjector::app_mapping_loader()
 {
 	/* Build application mapping */
 	pending_allocation.clear();

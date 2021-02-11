@@ -1,14 +1,11 @@
 /*
- * app_injector.h
+ *  MAInjector.hpp
  *
- *  Created on: 6 de ago de 2018
- *      Author: Marcelo Ruaro
+ *  Created on: 4 de jan de 2021
+ *      Author: ???
  */
 
-
-#ifndef PERIPHERALS_APP_INJECTOR_H_
-#define PERIPHERALS_APP_INJECTOR_H_
-
+#pragma once
 
 #include <systemc.h>
 #include <iostream>
@@ -39,10 +36,10 @@ typedef sc_uint<TAM_FLIT > regflit;
 #define 	APP_ALLOCATION_REQUEST			0x00000240 //Mestre to Injector (carries tasks properties and mapping)
 #define		APP_MAPPING_COMPLETE			0x00000440
 
-#define		APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR / N_PE_X) << 8) | (APP_INJECTOR % N_PE_X))
+#define		MA_INJECTOR_ADDRESS (0x80000000 | (io_port[MAINJECTOR] << 29) | ((MAINJECTOR / N_PE_X) << 8) | (MAINJECTOR % N_PE_X))
 
-SC_MODULE(app_injector){
-
+SC_MODULE(MAInjector){
+public:
 	//Ports
 	sc_in <bool > 		clock;
 	sc_in <bool > 		reset;
@@ -54,29 +51,35 @@ SC_MODULE(app_injector){
 	sc_out <bool > 		tx;
 	sc_out<regflit > 	data_out;
 	sc_in<bool > 		credit_in;
+ 
+  SC_HAS_PROCESS(MAInjector);
+	MAInjector(sc_module_name _name);
 
-	//Internal variables/signals
-	sc_signal<bool > 	sig_credit_out;
-
+private:
 	//Functions;
 	void app_descriptor_loader();
 	void task_allocation_loader(unsigned int, unsigned int, unsigned int, unsigned int);
-	string get_app_repo_path(unsigned int);
 	void app_mapping_loader();
 
 	//Sequential logic
+	void bootloader();
 	void monitor_new_app();
 	void send_packet();
 	void receive_packet();
 
 	//Combinational logic
 	void credit_out_update();
+ 
+ //Internal variables/signals
+	sc_signal<bool > 	sig_credit_out;
 
 	//FSM
+	enum FSM_bootloader{INITIALIZE, WAIT_SEND_BOOT, BOOTLOADER_FINISHED};
 	enum FSM_send_packet{IDLE, WAIT_MESSAGE_REQUEST, SEND_DATA_AV, SEND_MSG_REQUEST, SEND_PACKET, WAITING_CREDIT, SEND_FINISHED};
 	enum FSM_receive_packet{HEADER, PAYLOAD_SIZE, SERVICE, RECEIVE_DATA_AV, RECEIVE_MESSAGE_REQUEST, RECEIVE_MESSAGE_DELIVERY, WAIT_SEND_REQUEST, WAIT_SEND_DELIVERY, WAITING_SEND_TASK_ALLOCATION, CHECK_NEXT_MAP, RECEIVE_MAPPING_COMPLETE};
 	enum FSM_new_app_monitor{IDLE_MONITOR, MONITORING, WAITING_TIME, WAITING_SEND_NEW_APP};
 
+	enum FSM_bootloader 		EA_bootloader;
 	enum FSM_new_app_monitor 	EA_new_app_monitor;
 	enum FSM_send_packet 		EA_send_packet;
 	enum FSM_receive_packet 	EA_receive_packet;
@@ -109,48 +112,4 @@ SC_MODULE(app_injector){
 	map<int, int> pending_allocation;
 	map<int, int>::iterator pending_it;
 
-	SC_HAS_PROCESS(app_injector);
-	app_injector (sc_module_name name_) : sc_module(name_) {
-
-		//Variable initialization
-		current_time = 0;
-		line_counter = 0;
-		packet = 0;
-		packet_size = 0;
-		req_app_start_time = 0;
-		req_app_task_number = 0;
-		req_app_cluster_id = 0;
-		cluster_address = 0;
-		ack_app_id = 0;
-		payload_size = 0;
-		flit_counter = 0;
-		req_task_id = 0;
-		req_task_allocated_proc = 0;
-		req_task_master_ID = 0;
-		task_static_mapping = 0;
-
-		EA_receive_packet = HEADER;
-		EA_send_packet = IDLE;
-		EA_new_app_monitor = MONITORING;
-
-		SC_METHOD(monitor_new_app);
-		sensitive << clock.pos();
-		sensitive << reset;
-
-		SC_METHOD(send_packet);
-		sensitive << clock.pos();
-		sensitive << reset;
-
-		SC_METHOD(receive_packet);
-		sensitive << clock.pos();
-		sensitive << reset;
-
-		SC_METHOD(credit_out_update);
-		sensitive << sig_credit_out;
-
-	}
-
 };
-
-
-#endif /* PERIPHERALS_APP_INJECTOR_H_ */

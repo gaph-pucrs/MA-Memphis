@@ -21,6 +21,7 @@ using namespace std;
 
 #include "memphis.h"
 #include "peripherals/app_injector.h"
+#include "peripherals/MAInjector.h"
 
 SC_MODULE(test_bench) {
 	
@@ -36,6 +37,12 @@ SC_MODULE(test_bench) {
 	sc_signal<regflit>	memphis_injector_data_in;
 
 	//Create the signals of your IO component here:
+  sc_signal<bool>		memphis_mai_tx;
+	sc_signal<bool>		memphis_mai_credit_i;
+	sc_signal<regflit> 	memphis_mai_data_out;
+	sc_signal<bool>		memphis_mai_rx;
+	sc_signal<bool>		memphis_mai_credit_o;
+	sc_signal<regflit>	memphis_mai_data_in;
 
 
 	//Clock and Reset processes
@@ -44,6 +51,7 @@ SC_MODULE(test_bench) {
 	
 	memphis * MPSoC;
 	app_injector * io_app;
+  MAInjector * ma_app;
 
 	char aux[255];
 	FILE *fp;
@@ -63,6 +71,13 @@ SC_MODULE(test_bench) {
 		MPSoC->memphis_app_injector_rx(memphis_injector_rx);
 		MPSoC->memphis_app_injector_credit_o(memphis_injector_credit_o);
 		MPSoC->memphis_app_injector_data_in(memphis_injector_data_in);
+   
+    MPSoC->memphis_ma_injector_tx(memphis_mai_tx);
+		MPSoC->memphis_ma_injector_credit_i(memphis_mai_credit_i);
+		MPSoC->memphis_ma_injector_data_out(memphis_mai_data_out);
+		MPSoC->memphis_ma_injector_rx(memphis_mai_rx);
+		MPSoC->memphis_ma_injector_credit_o(memphis_mai_credit_o);
+		MPSoC->memphis_ma_injector_data_in(memphis_mai_data_in);
 
 
 		io_app = new app_injector("App_Injector");
@@ -75,8 +90,15 @@ SC_MODULE(test_bench) {
 		io_app->data_out(memphis_injector_data_in);
 		io_app->credit_in(memphis_injector_credit_o);
 
-		//Instantiate your IO component  here
-		//...
+		ma_app = new MAInjector("MAInjector");
+		ma_app->clock(clock);
+		ma_app->reset(reset);
+		ma_app->rx(memphis_mai_tx);
+		ma_app->data_in(memphis_mai_data_out);
+		ma_app->credit_out(memphis_mai_credit_i);
+		ma_app->tx(memphis_mai_rx);
+		ma_app->data_out(memphis_mai_data_in);
+		ma_app->credit_in(memphis_mai_credit_o);
 
 		SC_THREAD(ClockGenerator);
 		SC_THREAD(resetGenerator);

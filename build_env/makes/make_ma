@@ -1,0 +1,43 @@
+GREEN  =\033[0;32m
+NC   =\033[0m # No Color
+
+INCLUDE           = ../../software/lib/include
+
+CFLAGS            = -O2 -Wall -fms-extensions -c -s -std=c99 -G 0
+GCC_MIPS          = mips-elf-gcc $(CFLAGS)
+AS_MIPS           = mips-elf-as
+LD_MIPS           = mips-elf-ld
+DUMP_MIPS         = mips-elf-objdump
+COPY_MIPS         = mips-elf-objcopy -I elf32-bigmips -O binary
+
+BOOT_TASK         = bootloader
+BOOT_TASK_SRC     = ../software/bootloader/mipsi/bootloader.s
+
+TASK_SRC = $(wildcard *.c)
+TASK_OBJ = $(TASK_SRC:.c=.o)
+
+default: $(BOOT_TASK).o $(TASK_OBJ) 
+
+bootloader.o: $(BOOT_TASK_SRC)
+	@printf "${GREEN}Assemblying %s...${NC}\n" "$<"
+	@$(AS_MIPS) --defsym sp_addr=$(PAGE_SP_INIT) -o $@ $^
+
+#[$*] - only the filename - #https://www.gnu.org/software/make/manual/make.html#Automatic-Variables
+$(TASK_OBJ): $(TASK_SRC) 
+	@printf "${GREEN}Compiling task: %s ...${NC}\n" "$*.c"
+	@$(GCC_MIPS) $(CFLAGS) $*.c -o $*.o --include id_tasks.h -I $(INCLUDE)
+	@$(LD_MIPS) --section-start=".init"=0 -Map $*.map -s -N -o $*.elf $(BOOT_TASK).o $*.o
+	@$(LD_MIPS) --section-start=".init"=0 -Map $*_debug.map -o $*_debug.elf $(BOOT_TASK).o $*.o
+	@$(DUMP_MIPS) -S $*_debug.elf > $*.lst
+	@$(COPY_MIPS) -R .MIPS.abiflags -R .reginfo $*.elf $*.bin
+	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $*.bin > $*.txt
+
+clean:
+	@printf "Cleaning up\n"
+	@rm -rf *.o
+	@rm -rf *.bin
+	@rm -rf *.map
+	@rm -rf *.lst
+	@rm -rf *.txt
+	@rm -rf *.elf
+

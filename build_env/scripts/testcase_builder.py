@@ -64,8 +64,9 @@ def main():
     page_size_KB = get_page_size_KB(yaml_reader)
     memory_size_KB = get_memory_size_KB(yaml_reader)
     
-    #Create the application dir
+    #Create the application and management dir
     create_ifn_exists(TESTCASE_PATH+"/applications")
+    create_ifn_exists(TESTCASE_PATH+"/management")
     
     #Create the application dir
     delete_if_exists(TESTCASE_PATH+"/base_scenario")

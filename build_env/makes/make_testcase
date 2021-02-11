@@ -4,7 +4,7 @@ APPS_DIR=$(dir $(wildcard applications/*/.))
 
 default: $(MY_SCENARIO)
 
-all: banner kernel hw apps
+all: banner kernel management hw apps
 
 update:
 	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);
@@ -14,6 +14,9 @@ banner:
 	
 kernel:
 	@python2 build/kernel_builder.py $(YAML_FILE)
+
+management:
+	@python2 build/ma_builder.py $(YAML_FILE)	
 	
 hw:
 	@python2 build/hw_builder.py $(YAML_FILE)
@@ -26,13 +29,16 @@ scenario:
 clean-kernel:
 	@make clean -C software/
 	
+clean-management:
+	@make clean -C management/
+
 clean-hw:
 	@make clean -C hardware/
 
 clean-apps:
 	@make clean -C applications/
 	
-clean: clean-apps clean-kernel clean-hw
+clean: clean-apps clean-kernel clean-management clean-hw
 	@rm -rf *.txt
 	@rm -f $(TC_NAME)
 
