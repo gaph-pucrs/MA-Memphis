@@ -31,7 +31,7 @@ def get_tasks_per_PE(yaml_reader):
     return yaml_reader["hw"]["tasks_per_PE"]
 
 def get_mapper_task(yaml_reader):
-    return yaml_reader["management"]["mapper_task"]
+    return yaml_reader["management"]["static_mapping"]["mapper_task"]
 
 def get_max_tasks_app(yaml_reader):
     return yaml_reader["sw"]["max_tasks_app"]
