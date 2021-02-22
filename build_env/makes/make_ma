@@ -1,7 +1,7 @@
 GREEN  =\033[0;32m
 NC   =\033[0m # No Color
 
-INCLUDE           = ../../software/lib/include
+INCLUDE           = ../software/lib/include
 
 CFLAGS            = -O2 -Wall -fms-extensions -c -s -std=c99 -G 0
 GCC_MIPS          = mips-elf-gcc $(CFLAGS)
