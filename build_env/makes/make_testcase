@@ -4,7 +4,7 @@ APPS_DIR=$(dir $(wildcard applications/*/.))
 
 default: $(MY_SCENARIO)
 
-all: banner kernel management hw apps
+all: banner kernel ma hw apps
 
 update:
 	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);
@@ -15,7 +15,7 @@ banner:
 kernel:
 	@python2 build/kernel_builder.py $(YAML_FILE)
 
-management:
+ma:
 	@python2 build/ma_builder.py $(YAML_FILE)	
 	
 hw:
