@@ -28,30 +28,8 @@ def main():
     path_list       = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
     input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
     TESTCASE_PATH   = MEMPHIS_HOME + "/" + input_yaml_name.split(".")[0] #Creates a new path using the MEMPHIS_HOME + the YAML name
-    TESTCASE_NAME   = input_yaml_name.split(".")[0]
       
     APP_PATH        = TESTCASE_PATH + "/management"
-    
-    #Clean the app if it exists inside the testcase
-    if os.path.exists(APP_PATH):
-        os.system("cd "+APP_PATH+"; make clean")
-    
-    #Selects the application source code from the MEMPHIS_PATH or from MEMPHIS_HOME
-    source_app_path = ""
-    try:
-        source_app_path = MEMPHIS_PATH + "/management"
-        if os.path.exists(APP_PATH) == False and os.path.exists(source_app_path) == False:
-            raise Exception()
-        elif os.path.exists(APP_PATH) == True:
-            source_app_path = APP_PATH
-        else:
-            print "\nWARNING: App path not found at:\n-" + APP_PATH + "\nGetting app path from MEMPHIS_PATH="+source_app_path
-    except:
-        sys.exit("\n\nERROR: Invalid application name passed as 2nd argument: \nThe application was not found either in:\n- " + APP_PATH + "\n- "+ source_app_path)
-
-    #Copies the application if it source path is not equal to the app path on testcase
-    if (source_app_path != APP_PATH):
-        generic_copy(source_app_path, APP_PATH, [".svn"])
     
     #Generate the APP id file
     generate_apps_id(APP_PATH, TESTCASE_PATH)
@@ -87,13 +65,13 @@ def copy_app_make(memphis_path, app_path, page_size_KB):
     append_lines_at_end_of_file(make_app_path, line)
         
 
-def generate_apps_id(app_name, app_path, testacase_dir):
+def generate_apps_id(app_path, testacase_dir):
     
     task_id_file_path = app_path + "/id_tasks.h"
     
     file_lines = []
     
-    task_name_list = get_app_task_name_list(testacase_dir, app_name)
+    task_name_list = get_ma_task_name_list(testacase_dir)
     
     task_id = 0
     
@@ -106,20 +84,20 @@ def generate_apps_id(app_name, app_path, testacase_dir):
 
 #Function that generates a new repository from the dir: /applications
 #Please, behold this following peace of art:     
-def generate_repository(yaml_r, testcase_dir, app_path, app_name):
+def generate_repository(yaml_r, testcase_dir, app_path):
     
     TASK_DESCRIPTOR_SIZE = 6 #6 is number of lines to represent a task description 
 
     print "\n***************** Task page size report ***********************"
     
-    task_name_list = get_app_task_name_list(testcase_dir, app_name)
+    task_name_list = get_ma_task_name_list(testcase_dir)
     
     app_tasks_number = len(task_name_list)
     
     ######################################################################################
     ######### Check if task number is compatible to kernel max task number ###############
     ######################################################################################
-    check_application_task_number(testcase_dir, app_tasks_number, app_name)
+    check_application_task_number(testcase_dir, app_tasks_number, "management")
     ######################################################################################
     
     #Used for point the next free address to fill with a given task code (task.txt file)
@@ -129,7 +107,7 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
     repo_lines = []
     
     #First line of app descriptor is the app task number
-    repo_lines.append( RepoLine(toX( app_tasks_number), "task number to application "+app_name+"" ) ) 
+    repo_lines.append( RepoLine(toX( app_tasks_number), "task number to application management" ) ) 
     
     #This variable point to the end of the application header descriptor, this address represent where the 
     #app tasks code can be inserted
@@ -152,7 +130,7 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
         
         initial_address = initial_address + (txt_size * 4)
         
-        dependenc_list = get_task_dependence_list(app_name, task_name)
+        dependenc_list = get_task_dependence_list("", task_name)
         
         task_id = task_id + 1
         
@@ -177,7 +155,7 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
         task_txt_file.close()
     
     #Here the repository for each task must be writed
-    generate_app_repository_file(app_name, app_path, repo_lines, get_model_description(yaml_r))
+    generate_app_repository_file("management", app_path, repo_lines, get_model_description(yaml_r))
     
     ################Finally, generates the repository file (main and debug files) ##########################
     print "***************** End task page size report ********************\n"
