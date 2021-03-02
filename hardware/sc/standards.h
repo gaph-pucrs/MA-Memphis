@@ -25,7 +25,7 @@
 #define QUARTOFLIT (TAM_FLIT/4)
 
 
-	// Memory map constants.
+// Memory map constants.
 #define DEBUG 					0x20000000
 #define IRQ_MASK 				0x20000010
 #define IRQ_STATUS_ADDR 		0x20000020
@@ -56,6 +56,10 @@
 
 //Kernel pending service FIFO
 #define PENDING_SERVICE_INTR	0x20000400
+
+/**
+ * @todo Add memory-mapped register to release peripherals
+ */
 
 #define SLACK_MONITOR_WINDOW 	50000
 
