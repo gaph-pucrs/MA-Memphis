@@ -220,9 +220,9 @@ void MAInjector::monitor_new_app(){
 
 				break;
 
-			case MONITORING: //Reads appstart.txt
+			case MONITORING: //Reads mastart.txt
 
-				appstart_file.open("appstart.txt", std::ifstream::in);
+				appstart_file.open("mastart.txt", std::ifstream::in);
 
 				if (appstart_file.is_open()) {
 
@@ -271,7 +271,7 @@ void MAInjector::monitor_new_app(){
 					appstart_file.close();
 
 				} else {
-					cout << "Unable to open file appstart.txt" << endl;
+					cout << "Unable to open file mastart.txt" << endl;
 				}
 
 				break;
@@ -315,7 +315,7 @@ void MAInjector::monitor_new_app(){
 void MAInjector::app_descriptor_loader(){
 
 	string line;
-	string path = "../management/" + req_app_name + "/repository.txt";
+	string path = "../management/repository.txt";
 	ifstream repo_file (path.c_str());
 	int file_length;
 	int ptr_index;
