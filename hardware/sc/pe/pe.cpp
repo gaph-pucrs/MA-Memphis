@@ -40,6 +40,12 @@ void pe::mem_mapped_registers(){
 		case DMA_RECEIVE_ACTIVE:
 			cpu_mem_data_read.write(dmni_receive_active_sig.read());
 		break;
+		/**
+		 * @todo Add memory-mapped register for peripheral release 
+		 * case NET_ADDRESS:
+			cpu_mem_data_read.write(router_address);
+			break;
+		 */
 		default:
 			cpu_mem_data_read.write(data_read_ram.read());
 		break;
@@ -112,6 +118,9 @@ void pe::sequential_attr(){
 		tick_counter.write(0);
 		pending_service.write(0);
 		slack_update_timer.write(0);
+		/**
+		 * @todo Set to 0 release peripheral
+		 */
 	} else {
 
 		if(cpu_mem_pause.read() == 0) {
@@ -178,6 +187,12 @@ void pe::sequential_attr(){
 		//************ NEW DEBBUG AND REPORT logs - they are used by Memphis Debbuger Tool********
 		if (write_enable.read()==1){
 
+			/**
+			 * @todo Add peripheral release
+			 * if cpu_mem_address_reg.read() == PERIPHERAL
+			 * variavel = cpu_mem_data_write_reg.read()
+			 */
+
 			/* TASK_TERMINATED report implementation */
 			if(cpu_mem_address_reg.read() == 0x20000070){
 				fp = fopen("debug/traffic_router.txt", "a");
@@ -237,11 +252,11 @@ void pe::sequential_attr(){
 }
 
 void pe::end_of_simulation(){
-    if (end_sim_reg.read() == 0x00000000){
-        cout << "END OF ALL APPLICATIONS!!!" << endl;
-        cout << "Simulation time: " << (float) ((tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
-        sc_stop();
-    }
+	if (end_sim_reg.read() == 0x00000000){
+		cout << "END OF ALL APPLICATIONS!!!" << endl;
+		cout << "Simulation time: " << (float) ((tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
+		sc_stop();
+	}
 }
 
 void pe::log_process(){
@@ -385,23 +400,38 @@ void pe::clock_stop(){
 
 void pe::update_credit()
 {
-  static int seq_addr = x_address * N_PE_X + y_address;
-  
-  if (x_address == 0 && io_port[seq_addr] != WEST) 
-    credit_o[WEST].write(0);
-  else if (x_address != 0 || io_port[seq_addr] == WEST)
-    credit_o[WEST].write(credit_signal[WEST]);
-  if (x_address == (N_PE_X - 1) && io_port[seq_addr] != EAST) 
-    credit_o[EAST].write(0);
-  else if (x_address != (N_PE_X - 1) || io_port[seq_addr] == EAST)
-    credit_o[EAST].write(credit_signal[EAST]);
-  if (y_address == 0 && io_port[seq_addr] != SOUTH) 
-    credit_o[SOUTH].write(0);
-  else if (y_address != 0 || io_port[seq_addr] == SOUTH) 
-    credit_o[SOUTH].write(credit_signal[SOUTH]);
-  if (y_address == (N_PE_Y - 1) && io_port[seq_addr] != NORTH) 
-    credit_o[NORTH].write(0);
-  else if (y_address != (N_PE_Y - 1) || io_port[seq_addr] == NORTH) 
-    credit_o[NORTH].write(credit_signal[NORTH]);
+	static int seq_addr = x_address * N_PE_X + y_address;
+
+	/* First column, has WEST port connected to peripherals */
+	if(x_address == 0){
+		/* If has MA_Injector or released peripherals, update signal */
+		if(io_port[seq_addr] == WEST && (seq_addr == MAINJECTOR))
+			credit_o[WEST].write(credit_signal[WEST]);
+		else 
+			credit_o[WEST].write(0);
+	} else {
+		/* If not first column, connect WEST port to many-core */
+		credit_o[WEST].write(credit_signal[WEST]);
+	}
+
+	/**
+	 * @todo Update logic below to match logic above
+	 */
+	if(x_address == 0 && io_port[seq_addr] != WEST) 
+		credit_o[WEST].write(0);
+	else if (x_address != 0 || io_port[seq_addr] == WEST)
+		credit_o[WEST].write(credit_signal[WEST]);
+	if (x_address == (N_PE_X - 1) && io_port[seq_addr] != EAST) 
+		credit_o[EAST].write(0);
+	else if (x_address != (N_PE_X - 1) || io_port[seq_addr] == EAST)
+		credit_o[EAST].write(credit_signal[EAST]);
+	if (y_address == 0 && io_port[seq_addr] != SOUTH) 
+		credit_o[SOUTH].write(0);
+	else if (y_address != 0 || io_port[seq_addr] == SOUTH) 
+		credit_o[SOUTH].write(credit_signal[SOUTH]);
+	if (y_address == (N_PE_Y - 1) && io_port[seq_addr] != NORTH) 
+		credit_o[NORTH].write(0);
+	else if (y_address != (N_PE_Y - 1) || io_port[seq_addr] == NORTH) 
+		credit_o[NORTH].write(credit_signal[NORTH]);
   
 }

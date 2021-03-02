@@ -24,7 +24,7 @@ SC_MODULE(pe) {
 	sc_out<bool >		credit_o[NPORT-1];
 	
 	sc_signal < bool > 	clock_hold;
-  sc_signal < bool >  credit_signal[NPORT - 1];
+  	sc_signal < bool >  credit_signal[NPORT - 1];
 	bool 				clock_aux;
 
 	//signals
@@ -116,8 +116,8 @@ SC_MODULE(pe) {
 	unsigned long int nop_instant_instructions;
 	unsigned long int mult_div_instant_instructions;
 
-  char x_address;
-  char y_address;
+	char x_address;
+	char y_address;
 
 	char aux[255];
 	FILE *fp;
@@ -131,10 +131,13 @@ SC_MODULE(pe) {
 	void reset_n_attr();
 	void clock_stop();
 	void end_of_simulation();
-  void update_credit();
+	void update_credit();
 	
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00) : sc_module(name_), router_address(address_) {
+		/**
+		 * @todo Initialize memory-mapped release peripheral register as 0
+		 */
 
 		end_sim_reg.write(0x00000001);
 
@@ -205,8 +208,8 @@ SC_MODULE(pe) {
 		router->credit_o[NORTH](credit_signal[NORTH]);
 		router->credit_o[SOUTH](credit_signal[SOUTH]);
    
-    x_address = router_address >> 8;
-    y_address = router_address & 0xFF;
+		x_address = router_address >> 8;
+		y_address = router_address & 0xFF;
     
 		router->credit_o[LOCAL](credit_i_ni);
 		router->data_out[EAST](data_out[EAST]);
@@ -262,16 +265,19 @@ SC_MODULE(pe) {
 		SC_METHOD(clock_stop);
 		sensitive << clock << reset.pos();
     
-    SC_METHOD(update_credit);
-    sensitive << credit_signal[EAST];
-    sensitive << credit_signal[WEST];	
-    sensitive << credit_signal[NORTH];	
-    sensitive << credit_signal[SOUTH];		
+		SC_METHOD(update_credit);
+		sensitive << credit_signal[EAST];
+		sensitive << credit_signal[WEST];	
+		sensitive << credit_signal[NORTH];	
+		sensitive << credit_signal[SOUTH];		
 
 	}
 	
-	public:
-		regaddress router_address;
+public:
+	regaddress router_address;
+	/**
+	 * @todo Add memory-mapped register to release peripheral
+	 */
 };
 
 
