@@ -135,10 +135,7 @@ SC_MODULE(pe) {
 	
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00) : sc_module(name_), router_address(address_) {
-		/**
-		 * @todo Initialize memory-mapped release peripheral register as 0
-		 */
-
+		mem_peripheral = 0;
 		end_sim_reg.write(0x00000001);
 
 		shift_mem_page = (unsigned char) (log10(PAGE_SIZE_BYTES)/log10(2));
@@ -275,9 +272,7 @@ SC_MODULE(pe) {
 	
 public:
 	regaddress router_address;
-	/**
-	 * @todo Add memory-mapped register to release peripheral
-	 */
+	int mem_peripheral;
 };
 
 
