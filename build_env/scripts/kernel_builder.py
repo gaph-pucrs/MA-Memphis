@@ -89,7 +89,7 @@ def generate_sw_pkg( yaml_r ):
             port_encoded = 3221225472 # == 1100 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port North
         elif (port == "S"):
             port_encoded = 3758096384 # == 1110 0000 0000 0000 0000 0000 0000 0000 == IO routing On through port South
-        file_lines.append("#define "+str(io_peripheral["name"])+"            "+hex(port_encoded|pe_addr)+"    //This number is hot encoded (1 k bit + 3 n bits + 12 zeros + 8 x bits + 8 y bits). k bit when on enable routing to external peripheral, n bits signals the port between peripheral and PE, x bits stores the X address of PE, y bits stores the Y address of PE")
+        file_lines.append("#define "+str(io_peripheral["name"])+"            "+hex(port_encoded|pe_addr)+"    //This number is hot encoded (1 k bit + 3 n bits + 12 zeros + 8 x bits + 8 y bits). k bit when on enable routing to external peripheral, n bits signals the port between peripheral and PE, x bits stores the X address of PE, y bits stores the Y address of PE\n")
          
     #file_lines.append("#ifdef IS_MASTER\n")
     file_lines.append("\n\n//This struct stores the cluster information\n")
