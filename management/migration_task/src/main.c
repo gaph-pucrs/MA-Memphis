@@ -3,6 +3,8 @@
 
 #include "pkg.h"
 
+#warning Migration depends on mapper. Please include it in the testcase.
+
 int main()
 {
 	Echo("Migration started at "); Echo(itoa(GetTick())); Echo("\n");
@@ -22,7 +24,7 @@ int main()
 
 	Echo("Requesting migration for task "); Echo(itoa(msg.msg[1])); Echo("\n");
 
-	//SSend(&msg, mapper_task);
+	SSend(&msg, mapper_task[0]);
 
 	return 0;
 }

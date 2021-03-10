@@ -1,45 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <api.h>
 #include <stdlib.h>
 
 #include "mapper.h"
-#include "task_migration.h"
-
-int main()
-{
-	Echo("Mapper started at "); Echo(itoa(GetTick())); Echo("\n");
-
-	mapper_t mapper;
-	map_init(&mapper);
-
-	while(true){
-		static Message msg;
-		SReceive(&msg);
-		/* Check what service has been received */
-		switch(msg.msg[0]){
-			case NEW_APP:
-				map_new_app(&mapper, msg.msg[2], &msg.msg[3], msg.msg[1] - 1);
-				break;
-			case TASK_ALLOCATED:
-				map_task_allocated(&mapper, msg.msg[1]);
-				break;
-			case TASK_TERMINATED:
-				map_task_terminated(&mapper, msg.msg[1]);
-				break;
-			case TASK_MIGRATION_MAP:
-				tm_migrate(&mapper, msg.msg[1]);
-				break;
-			case TASK_MIGRATED:
-				tm_migration_complete(&mapper, msg.msg[1]);
-				break;
-			default:
-				Echo("Invalid service received: "); Echo(itoa(msg.msg[0])); Echo("\n");
-				break;
-		}
-	}
-}
 
 void map_init(mapper_t *mapper)
 {
@@ -113,24 +77,6 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 	return app;
 }
 
-app_t *app_get_free(app_t *apps)
-{
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++)
-		if(apps[i].id == -1)
-			return &apps[i];
-
-	return NULL;
-}
-
-task_t *task_get_free(task_t *tasks)
-{
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++)
-		if(tasks[i].id == -1)
-			return &tasks[i];
-
-	return NULL;
-}
-
 bool map_app_mapping(app_t *app, processor_t *processors)
 {
 	bool map_failed = false;
@@ -180,42 +126,6 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 
 		return 0;
 	}
-}
-
-void task_init(task_t *tasks)
-{
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++)
-		tasks[i].id = -1;
-}
-
-void app_init(app_t *apps)
-{
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++)
-		apps[i].id = -1;
-}
-
-void processor_init(processor_t *processors)
-{
-	// Echo("Initializing "); Echo(itoa(PKG_N_PE)); Echo(" processors\n");
-	for(int i = 0; i < PKG_N_PE; i++){
-		processors[i].addr = i / PKG_N_PE_X << 8 | i % PKG_N_PE_X;
-		// Echo("Addr "); Echo(itoa(processors[i].addr));
-		processors[i].free_page_cnt = PKG_MAX_LOCAL_TASKS;
-		processors[i].pending_map_cnt = 0;
-	}
-
-	/* Mapper task temporarily only mapped to 0x0 */
-	// processors[0].free_page_cnt--;
-}
-
-int processors_get_first_most_free(processor_t *processors, int old_proc)
-{
-	int address = 0;
-	for(int i = 1; i < PKG_N_PE; i++){
-		if(processors[i].free_page_cnt + (i == old_proc) > processors[address].free_page_cnt + (address == old_proc))
-			address = i;
-	}
-	return address;
 }
 
 void map_task_allocated(mapper_t *mapper, int id)
@@ -272,15 +182,6 @@ void map_app_mapping_complete()
 	msg.msg[0] = APP_MAPPING_COMPLETE;
 	msg.length = 1;
 	SSend(&msg, APP_INJECTOR);
-}
-
-app_t *app_search(app_t *apps, int appid)
-{
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
-		if(apps[i].id == appid)
-			return &apps[i];
-	}
-	return NULL;
 }
 
 void map_task_terminated(mapper_t *mapper, int id)
@@ -373,79 +274,4 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 	} else {
 		mapper->pending_map_app = app;
 	}
-}
-
-void tm_migrate(mapper_t *mapper, int task_id)
-{
-	Echo("Received migration request to task id "); Echo(itoa(task_id)); Echo("\n");
-
-	app_t *app = app_search(mapper->apps, task_id >> 8);
-	if(app == NULL){
-		Echo("Not found app to migrate with id "); Echo(itoa(task_id >> 8)); Echo("\n");
-		return;
-	}
-
-	task_t *task = app->task[task_id & 0xFF];
-	if(task->id != task_id){
-		Echo("Not found task to migrate with id "); Echo(itoa(task_id)); Echo("\n");
-		return;
-	}
-	if(task->status != RUNNING){
-		Echo("Will not migrate. Task is either already migrating or waiting for task release\n");
-		return;
-	}
-
-	task->old_proc = task->proc_idx;
-	task->proc_idx = processors_get_first_most_free(mapper->processors, task->old_proc);
-
-	if(task->old_proc == task->proc_idx){
-		Echo("Will not migrate. Task is in the same PE as the target address\n");
-		return;
-	}
-
-	Echo("Migrating task to address "); Echo(itoa(mapper->processors[task->proc_idx].addr));
-
-	/* Allocate the page on target address */
-	mapper->processors[task->proc_idx].free_page_cnt--;
-	mapper->available_slots--;
-
-	/* Mark the task as migrating */
-	task->status = MIGRATING;
-
-	/* Send migration order to Kernel at old processor address */
-	Message msg;
-	msg.msg[0] = TASK_MIGRATION;
-	msg.msg[1] = task->id;
-	msg.msg[2] = mapper->processors[task->proc_idx].addr;
-	msg.length = 3;
-	SSend(&msg, KERNEL_MSG | mapper->processors[task->old_proc].addr);
-}
-
-void tm_migration_complete(mapper_t *mapper, int task_id)
-{
-	Echo("Received migration completed to task id "); Echo(itoa(task_id)); Echo("\n");
-
-	app_t *app = app_search(mapper->apps, task_id >> 8);
-	if(app == NULL){
-		Echo("Not found app that migrated with id "); Echo(itoa(task_id >> 8)); Echo("\n");
-		return;
-	}
-
-	task_t *task = app->task[task_id & 0xFF];
-	if(task->id != task_id){
-		Echo("Not found task that migrated with id "); Echo(itoa(task_id)); Echo("\n");
-		return;
-	}
-
-	if(task->status != MIGRATING){
-		Echo("Will not free old resources. Task not marked as migrating. Already freed?\n");
-		return;
-	}
-
-	/* Mark as migrationg finished */
-	task->status = RUNNING;
-
-	/* Free old processor resources */
-	mapper->processors[task->old_proc].free_page_cnt++;
-	mapper->available_slots++;
 }

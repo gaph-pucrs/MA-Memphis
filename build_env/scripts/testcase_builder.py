@@ -63,6 +63,7 @@ def main():
 	model_description = get_model_description(yaml_reader)
 	page_size_KB = get_page_size_KB(yaml_reader)
 	memory_size_KB = get_memory_size_KB(yaml_reader)
+	ma_task_list = get_ma_task_list(yaml_reader)
 	
 	#Create the application and management dir
 	create_ifn_exists(TESTCASE_PATH+"/applications")
@@ -75,7 +76,7 @@ def main():
 	#Testcase generation: updates source files...
 	copy_scripts ( MEMPHIS_PATH,  TESTCASE_PATH)
 	copy_kernel( MEMPHIS_PATH,  TESTCASE_PATH)
-	copy_management(MEMPHIS_PATH, TESTCASE_PATH)
+	copy_management(MEMPHIS_PATH, TESTCASE_PATH, ma_task_list)
 	copy_hardware( MEMPHIS_PATH,  TESTCASE_PATH, model_description)
 	copy_makefiles( MEMPHIS_PATH,  TESTCASE_PATH, page_size_KB, memory_size_KB, model_description)
 	copy_testcase_file( testcase_file_inside_dir, INPUT_TESTCASE_FILE_PATH)
@@ -113,13 +114,18 @@ def copy_kernel(memphis_path, testcase_path):
 	#--------------  COPIES ALL THE FILES .H AND .C FROM SOFTWARE DIRECTORY ----------------
 	generic_copy(source_sw_path, testcase_sw_path, [".svn"] )
 
-def copy_management(memphis_path, testcase_path):
+def copy_management(memphis_path, testcase_path, ma_task_list):
 	
 	source_ma_path = memphis_path+"/management"
 	testcase_ma_path = testcase_path+"/management"
-	
-	#--------------  COPIES ALL THE FILES .H AND .C FROM SOFTWARE DIRECTORY ----------------
-	generic_copy(source_ma_path, testcase_ma_path, [".svn"] )
+
+	# First copy files that are in the management 'root'
+	command_string = "rsync -u "+source_ma_path+"/* "+testcase_ma_path+"/"
+	status = os.system(command_string)
+
+	# Then, copy subfolders of selected tasks
+	for task in ma_task_list:
+		generic_copy(source_ma_path+"/"+task+"/", testcase_ma_path+"/"+task+"/", [".svn"] )
 
    
 # This function copies the source files in hardware dir according with the system model description
@@ -219,7 +225,7 @@ def copy_makefiles(memphis_path, testcase_path, page_size_KB, memory_size_KB, sy
 	
 	append_lines_at_end_of_file(make_file_path, lines)
 
-	copyfile(makes_dir+"/make_ma", testcase_path+"/management/makefile")
+	copyfile(makes_dir+"/make_all_ma", testcase_path+"/management/makefile")
 
 	copyfile(makes_dir+"/make_all_apps", testcase_path+"/applications/makefile")
 	

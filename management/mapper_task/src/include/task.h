@@ -19,5 +19,3 @@ typedef struct _task {
 
 task_t *task_get_free(task_t *tasks);
 void task_init(task_t *tasks);
-
-

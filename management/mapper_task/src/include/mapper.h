@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include <api.h>
 #include "app.h"
 #include "processor.h"

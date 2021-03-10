@@ -1,0 +1,13 @@
+TASKSDIR=$(wildcard */)
+
+.PHONY: all clean $(TASKSDIR)
+
+apps: $(TASKSDIR)
+
+clean: cmd_clear $(TASKSDIR)
+
+cmd_clear:
+	$(eval CMD=clean)
+
+$(TASKSDIR):
+	@$(MAKE) $(CMD) -C $@

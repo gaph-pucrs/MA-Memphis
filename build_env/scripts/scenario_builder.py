@@ -83,10 +83,7 @@ def main():
 	
 	generate_appstart_file(apps_info_list, TESTCASE_PATH, SCENARIO_PATH)
 
-	#Generates the mastart.txt and mastart_debug.txt files
-	ma_info_list = get_ma_info_list(yaml_testcase_r, TESTCASE_PATH)
-
-	generate_mastart_file(ma_info_list, TESTCASE_PATH, SCENARIO_PATH)
+	generate_maboot(TESTCASE_PATH, SCENARIO_PATH, yaml_testcase_r)
 	
 	#Calls the deloream_env.py to generate all necessary debugging dir and files
 	generate_deloream_env(TESTCASE_PATH, yaml_testcase_r, SCENARIO_PATH, yaml_scenario_r)
@@ -160,41 +157,29 @@ def generate_appstart_file(apps_start_obj_list, testcase_path, scenario_path):
 	writes_file_into_testcase(appstart_file_path, file_lines)
 	writes_file_into_testcase(appstart_debug_file_path, file_debug_lines)
 
-def generate_mastart_file(apps_start_obj_list, testcase_path, scenario_path):
-	
-	appstart_file_path = scenario_path + "/mastart.txt"
-	
-	appstart_debug_file_path = scenario_path + "/mastart_debug.txt"
-	
+def generate_maboot(testcase_path, scenario_path, yaml_reader):
 	file_lines = []
 	file_debug_lines = []
+
+	ma_tasks = get_ma_list(yaml_reader)
 	
-	
-	for app_start_obj in apps_start_obj_list:
-		file_lines.append( app_start_obj.name +"\n")
-		file_lines.append( str(app_start_obj.start_time_ms) +"\n")
-		file_lines.append( str(app_start_obj.task_number) +"\n")
+	for task in ma_tasks:
+		file_lines.append(task["task"]+"\n")
+		file_debug_lines.append(task["task"]+"\t******** application name *********\n")
 		
-		#Debug file
-		file_debug_lines.append(app_start_obj.name+"\t******** application name *********\n")
-		file_debug_lines.append(str(app_start_obj.start_time_ms)+"\t["+app_start_obj.name+"] start time in ms\n")
-		file_debug_lines.append(str(app_start_obj.task_number)+"\t["+app_start_obj.name+"] task number\n")
-		
-		static_task_list = app_start_obj.static_task_list
-		
-		app_task_list = get_ma_task_name_list(testcase_path)
-		
-		for tuple in static_task_list:
-			file_lines.append( str(tuple[1]) +"\n")
-			if tuple[1] == -1:
-				file_debug_lines.append(str(tuple[1])+"\ttask ["+str(app_task_list[tuple[0]])+"] is market to be dynamically mapped (-1)\n")
-			else: #Entering in the else statment means that task has static mapping enabled
-				#It is necessary to check if the source was specified, if not, generate a error
-				file_debug_lines.append(str(tuple[1])+"\ttask ["+str(app_task_list[tuple[0]])+"] is market to be statically mapped at PE "+ str(tuple[1] >> 8)+"x"+str(tuple[1] & 0xFF)+"\n")
-	
-	file_lines.append( "deadc0de\n")
-	file_debug_lines.append("deadc0de\tend of file indicator\n")
-		
+		try:
+			address = task["static_mapping"]
+			addr_x = int(address[0])
+			addr_y = int(address[1])
+			address = addr_x << 8 | addr_y
+			file_lines.append(str(address)+"\n")
+			file_debug_lines.append(str(address)+"\ttask ["+str(task["task"])+"] is marked to be statically mapped at PE "+ str(addr_x)+"x"+str(addr_y)+"\n")
+		except:
+			file_lines.append(str(-1)+"\n")
+			file_debug_lines.append(str(-1)+"\ttask ["+str(task["task"])+"] is marked to be dynamically mapped (-1)\n")
+
+	appstart_file_path = scenario_path + "/maboot.txt"
+	appstart_debug_file_path = scenario_path + "/maboot_debug.txt"
 	writes_file_into_testcase(appstart_file_path, file_lines)
 	writes_file_into_testcase(appstart_debug_file_path, file_debug_lines)
 		

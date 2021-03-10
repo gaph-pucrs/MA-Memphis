@@ -19,6 +19,7 @@
 #define FALSE		0
 #define TRUE		1
 
+static
 char *itoa(unsigned int num)
 {
    static char buf[12];
@@ -47,7 +48,7 @@ char *itoa(unsigned int num)
    return &buf2[0];
 }
 
-
+static
 char *itoh(unsigned int num)
 {
    static char buf[11];
@@ -83,12 +84,14 @@ char *itoh(unsigned int num)
    return buf;
 }
 
+static
 int abs(int num)
 {
 	if(num<0) return -num;
 	else return num;
 }
 
+static
 int rand(int seed, int min, int max)
 { 
 	int lfsr = seed;
@@ -98,6 +101,7 @@ int rand(int seed, int min, int max)
 	return (lfsr % max + min);
 } 
 
+static
 int add(int a, int b)
 {
 	int res;
@@ -106,7 +110,7 @@ int add(int a, int b)
 	return res;
 }
 
-
+static
 int sub(int a, int b)
 {
 	int res;
@@ -115,6 +119,7 @@ int sub(int a, int b)
 	return res;
 }
 
+static
 void *memset(void *dst, int c, unsigned long bytes) {
 
    unsigned char *Dst = (unsigned char*)dst;
@@ -125,6 +130,7 @@ void *memset(void *dst, int c, unsigned long bytes) {
    return dst;
 }
 
+static
 char *fixetoa(int nume)
 {
 	static char buf[13];
@@ -205,6 +211,7 @@ char *fixetoa(int nume)
 	}
 }
 
+static
 char *strcpy(char *dst, const char *src) {
 
 	char *dstSave=dst;
@@ -217,6 +224,7 @@ char *strcpy(char *dst, const char *src) {
    return dstSave;
 }
 
+static
 int strlen(const char *string) {
 
    const char *base=string;

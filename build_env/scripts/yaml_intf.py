@@ -189,48 +189,24 @@ def get_ma_info_list(yaml_reader, testcase_path):
 	app_reader = yaml_reader["management"]
 
 	#Then, list all tasks from app_name
-	app_task_list = get_ma_task_name_list(testcase_path)
+	app_task_list = get_ma_task_list(yaml_reader)
 	
 	task_number = len(app_task_list)
 	
 	#If the time is not configured - default is zero
 	start_time_ms = 0
-	try:
-		start_time_ms = int(app_reader["start_time_ms"])
-	except:
-		pass
-	
-	#Test if a given app have the static_mapping tag
-	static_mapping_tasks = []
-	try:
-		static_mapping_tasks = app_reader["static_mapping"]
-	except:
-		pass # This means that the application not has any task mapped statically
-	
+		
 	task_id = 0
-	
-	#Checks for typing error in the task name
-	for static_task in static_mapping_tasks:
-		if static_task not in app_task_list: 
-			print "[WARNING]: Static task name ["+static_task+"] does not belong to application [" + app_name+ "], it will be ignored in static mapping\n"
 	
 	static_task_list = []
 	#Walk over all tasks of app
 	for task_name in app_task_list:
+		x_address = int( app_reader[task_name][0] ) # Gets the x address value
+		y_address = int( app_reader[task_name][1] ) # Gets the y address value
 		
-		#Walk over all tasks signaled within static mapping flag
-		if task_name in static_mapping_tasks:
-			
-			x_address = int( static_mapping_tasks[task_name][0] ) # Gets the x address value
-			y_address = int( static_mapping_tasks[task_name][1] ) # Gets the y address value
-			
-			task_static_map = x_address << 8 | y_address
-			
-			static_task_list.append([task_id, task_static_map])
-			
-		else:
-			static_task_list.append([task_id, -1]) #Signals a dynamic mapping
-			
+		task_static_map = x_address << 8 | y_address
+		
+		static_task_list.append([task_id, task_static_map])
 		task_id = task_id + 1
 	
 	#Create a new object of Application info gathering all information previously extracted from yaml
@@ -243,6 +219,23 @@ def get_ma_info_list(yaml_reader, testcase_path):
 	
 	return app_start_list
 
+# Get the list of management tasks instantiated in the testcase
+def get_ma_task_list(yaml_reader):
+	return set(get_ma_id_list(yaml_reader))
+
+# Get the list of management task IDs (it is possible to have multiple tasks with the same name)
+def get_ma_id_list(yaml_reader):
+	management = get_ma_list(yaml_reader)
+	ma_task_list = []
+
+	for task in management:
+		ma_task_list.append(task["task"])
+
+	return ma_task_list
+
+def get_ma_list(yaml_reader):
+	management = yaml_reader["management"]
+	return management
 
 def get_IO_peripherals(yaml_reader):
 	to_return = []
