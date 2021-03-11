@@ -27,13 +27,15 @@ DMNI_SRC		= $(addprefix vhdl/pe/dmni/, 				$(DMNI:=.vhd) 		)
 MEMORY_SRC		= $(addprefix ../base_scenario/ram_pe/,		$(MEMORY:=.vhd) 	) 
 PROCESSOR_SRC	= $(addprefix vhdl/pe/processor/plasma/, 	$(PROCESSOR:=.vhd) 	)
 ROUTER_SRC		= $(addprefix vhdl/pe/router/, 				$(ROUTER:=.vhd) 	)
+IO_VHDL_SRC		= $(wildcard vhdl/peripherals/*.vhd)
+IO_VHDL			= $(patsubst %.vhd,%,$(IO_VHDL_SRC))
 
 #This target dir $(TGT_SCCOM_PATH) is created automatically by questa or modelsim, please ensures that your path math it the following 
 TGT_SCCOM_PATH = $(LIB)/_sc/linux_x86_64_gcc-4.7.4/
 
 IO_TGT	 		=$(addprefix $(TGT_SCCOM_PATH), $(IO:=.o))
 
-default: lib $(MEMPHIS_PKG) $(STAND) $(ROUTER) $(PROCESSOR) $(DMNI) $(MEMORY) $(PE) $(IO_TGT) $(TOP)
+default: lib $(MEMPHIS_PKG) $(STAND) $(ROUTER) $(PROCESSOR) $(DMNI) $(MEMORY) $(PE) $(IO_TGT) $(IO_VHDL) $(TOP)
 	@ $(CC) -link -B/usr/bin/
 
 lib:
@@ -55,6 +57,10 @@ $(TOP): $(TOP_SRC)
 $(IO_TGT): $(IO_SRC)
 	@printf "${COR}Compiling SystemC source: %s ...${NC}\n" "$(dir $<)$(notdir $*).cpp"
 	$(SC_C) $(dir $<)$(notdir $*).cpp
+	
+$(IO_VHDL): $(IO_VHDL_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$<"
+	$(COMP) $<
 
 $(PE): $(PE_SRC)
 	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
