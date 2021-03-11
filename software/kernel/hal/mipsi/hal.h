@@ -48,6 +48,7 @@
 #define HAL_TICK_COUNTER			(*(volatile unsigned int*)0x20000300U)	//!< CPU Clock ticks counter
 #define HAL_SLACK_TIME_MONITOR 		(*(volatile unsigned int*)0x20000370U)
 #define HAL_PENDING_SERVICE_INTR	(*(volatile unsigned int*)0x20000400U)	//!< Signals there is a service pending
+#define HAL_MEM_REG_PERIPHERALS     (*(volatile unsigned int*)0x20000500U)
 
 /**
  * @brief Changes context and runs a task

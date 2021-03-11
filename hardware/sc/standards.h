@@ -57,9 +57,7 @@
 //Kernel pending service FIFO
 #define PENDING_SERVICE_INTR	0x20000400
 
-/**
- * @todo Add memory-mapped register to release peripherals
- */
+#define MEM_REG_PERIPHERALS 0x20000500
 
 #define SLACK_MONITOR_WINDOW 	50000
 
