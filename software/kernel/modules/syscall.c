@@ -372,6 +372,8 @@ bool os_kernel_syscall(int *message, int length)
 			return os_task_release(message[1], message[2], message[3], message[4], &message[5]);
 		case TASK_MIGRATION:
 			return os_task_migration(message[1], message[2]);
+		case RELEASE_PERIPHERAL:
+			return os_release_peripheral();
 		default:
 			putsv("ERROR: Unknown service inside MESSAGE_DELIVERY ", message[0]);
 			return false;
@@ -410,4 +412,10 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 	}
 
 	return false;
+}
+
+bool os_release_peripheral()
+{
+	HAL_MEM_REG_PERIPHERALS = 1;
+	puts("Peripherals released");
 }

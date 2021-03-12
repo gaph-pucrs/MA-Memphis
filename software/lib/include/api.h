@@ -24,7 +24,6 @@
 #define	REALTIME			5
 #define IOSEND 				6
 #define IORECEIVE  			7
-#define APPID				8
 
 #define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 #define TRUE	1
@@ -41,7 +40,6 @@ extern int SystemCall();
 #define exit(status) while(!SystemCall(EXIT, status, 0, 0))
 #define SSend(msg, app_target) while(!SystemCall(WRITEPIPE, (unsigned int*)msg, app_target, 1))
 #define SReceive(msg) while(!SystemCall(READPIPE, (unsigned int*)msg, 0, 1))
-#define get_appid()	SystemCall(APPID, 0, 0, 0)
 
 //Real-Time API - time represented in microseconds
 #define RealTime(period, deadline, execution_time) while(!SystemCall(REALTIME, period, deadline, execution_time))

@@ -107,3 +107,10 @@ bool os_kernel_syscall(int *message, int length);
  * @return True if should schedule
  */
 bool os_kernel_writepipe(int task, int addr, int size, int *msg);
+
+/**
+ * @brief Releases peripherals connected to this PE
+ * 
+ * @return False
+ */
+bool os_release_peripheral();

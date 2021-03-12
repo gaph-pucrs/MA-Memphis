@@ -142,7 +142,7 @@ void map_task_allocated(mapper_t *mapper, int id)
 		Echo("All tasks allocated. Sending TASK_RELEASE\n");
 
 		map_task_release(mapper, app);
-		map_app_mapping_complete();
+		map_app_mapping_complete(app);
 		mapper->appid_cnt++;
 	}
 }
@@ -176,12 +176,20 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	}
 }
 
-void map_app_mapping_complete()
+void map_app_mapping_complete(app_t *app)
 {
 	Message msg;
 	msg.msg[0] = APP_MAPPING_COMPLETE;
 	msg.length = 1;
-	SSend(&msg, APP_INJECTOR);
+	if(app->id == 0){
+		SSend(&msg, MAINJECTOR);
+
+		msg.msg[0] = RELEASE_PERIPHERAL;
+		msg.length = 1;
+		SSend(&msg, (APP_INJECTOR & ~0xE0000000) | KERNEL_MSG);
+	} else {
+		SSend(&msg, APP_INJECTOR);
+	}
 }
 
 void map_task_terminated(mapper_t *mapper, int id)
@@ -253,7 +261,11 @@ void map_task_allocation(app_t *app, processor_t *processors)
 	}
 
 	msg.length = app->task_cnt * 2 + 1;
-	SSend(&msg, APP_INJECTOR);
+
+	if(app->id == 0)
+		SSend(&msg, MAINJECTOR);
+	else
+		SSend(&msg, APP_INJECTOR);
 }
 
 void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors)

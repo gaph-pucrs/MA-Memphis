@@ -25,3 +25,4 @@
 
 #define PKG_PERIPHERALS_NUMBER	1			//!< Number of Peripherals
 #define APP_INJECTOR			0xe0000000	//!< Port where the Peripheral App Injector is connected
+#define MAINJECTOR				0xe0000000	//!< Port where the Peripheral MA Injector is connected

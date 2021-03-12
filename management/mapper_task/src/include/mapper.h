@@ -31,4 +31,4 @@ void map_task_terminated(mapper_t *mapper, int id);
 void map_task_allocation(app_t *app, processor_t *processors);
 void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors);
 void map_task_release(mapper_t *mapper, app_t *app);
-void map_app_mapping_complete();
+void map_app_mapping_complete(app_t *app);
