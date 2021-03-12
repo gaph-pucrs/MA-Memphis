@@ -43,28 +43,8 @@ MAInjector::MAInjector(sc_module_name _name) :
 	sensitive << clock.pos();
 	sensitive << reset;
 
-
 	SC_METHOD(credit_out_update);
 	sensitive << sig_credit_out;
-
-
-// 	//Variable initialization
-// 	line_counter = 0;
-// 	req_app_start_time = 0;
-// 	req_app_task_number = 0;
-// 	req_app_cluster_id = 0;
-// 	//ack_app_id = 0;
-// 	req_task_id = 0;
-// 	req_task_allocated_proc = 0;
-// 	req_task_master_ID = 0;
-
-// 	EA_new_app_monitor = MONITORING;
-
-
-// 	SC_METHOD(monitor_new_app);
-// 	sensitive << clock.pos();
-// 	sensitive << reset;
-
 }
 
 void MAInjector::timer()
@@ -82,14 +62,15 @@ void MAInjector::credit_out_update()
 
 void MAInjector::ma_boot()
 {
+	static std::ifstream ma_boot_info("maboot.txt");
 	static int ma_boot_task_cnt = 0;
-	static int sent_task = 0;
+	static unsigned sent_task = 0;
+
 	if(reset.read()){
 		ma_boot_state = BOOT_INIT;
 	} else if(clock.posedge()){
 		switch(ma_boot_state){
 		case BOOT_INIT:
-			std::ifstream ma_boot_info("maboot.txt");
 			if(ma_boot_info.is_open()){
 				tasks.clear();
 				std::string task_name;
@@ -97,16 +78,18 @@ void MAInjector::ma_boot()
 				while(std::getline(ma_boot_info, task_name)){
 					std::string addrstr;
 					std::getline(ma_boot_info, addrstr);
+					// std::cout << "maboot.txt line: " << addrstr << std::endl;
 					int address = std::stoi(addrstr);
+					// std::cout << "Converted value: " << address << std::endl;
 
-					tasks.pushback(std::makepair(task_name, address));
+					tasks.push_back(std::make_pair(task_name, address));
 
-					std::cout << "Task name: " << task_name << std::endl;
-					std::cout << "Address: " << address << std::endl;
+					// std::cout << "Task name: " << task_name << std::endl;
+					// std::cout << "Address: " << address << std::endl;
 					ma_boot_task_cnt++;
 				}
 
-				std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
+				// std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
 
 				/* First task should be the mapper directly injected to the system with static mapping */
 				if(tasks[0].first.compare("mapper_task") != 0){
@@ -119,7 +102,7 @@ void MAInjector::ma_boot()
 					ma_boot_state = BOOT_FINISHED;
 				}
 
-				task_load(task[0].first, 0, task[0].second, -1, -1);
+				task_load(tasks[0].first, 0, tasks[0].second, -1, -1);
 
 				ma_boot_state = BOOT_WAIT;
 			} else {
@@ -129,12 +112,13 @@ void MAInjector::ma_boot()
 		case BOOT_WAIT:
 			/* Waits ends of boot packet transmission */
 			if(send_pkt_state == SEND_FINISHED){
+				// std::cout << "bootloader send ok" << std::endl;
+
 				/* Now will request the MA mapping */
 				/* All MA startup information is already loaded into 'tasks' structure */
 				ma_load();
 
 				ma_boot_state = BOOT_TASKS;
-				// std::cout << "bootloader send ok" << std::endl;
 			}
 			break;
 		case BOOT_TASKS:
@@ -145,14 +129,14 @@ void MAInjector::ma_boot()
 			break;
 		case BOOT_MAP:
 			if(rcv_pkt_state == WAIT_ALLOCATION){
-				task_load(tasks[rcv_packet[sent_task*2]].first, rcv_packet[sent_task*2], rcv_packet[sent_task*2 + 1], 0, tasks[0].second);
+				task_load(tasks[packet_in[sent_task*2]].first, packet_in[sent_task*2], packet_in[sent_task*2 + 1], 0, tasks[0].second);
 				ma_boot_state = BOOT_SEND;
 			}
 			break;
 		case BOOT_SEND:
 			if(send_pkt_state == SEND_FINISHED){
 				sent_task++;
-				if(sent_task*2 < rcv_packet.size()){
+				if(sent_task*2 < packet_in.size()){
 					ma_boot_state = BOOT_MAP;
 				} else {
 					ma_boot_state = BOOT_CONFIRM;
@@ -161,6 +145,7 @@ void MAInjector::ma_boot()
 			break;
 		case BOOT_CONFIRM:
 			if(rcv_pkt_state == RCV_MAP_COMPLETE){
+				packet.clear();
 				ma_boot_state = BOOT_FINISHED;
 			}
 			break;
@@ -173,41 +158,52 @@ void MAInjector::ma_boot()
 void MAInjector::task_load(std::string task, int id, int address, int mapper_id, int mapper_address)
 {
 	std::cout << "Loading task ID " << id << " to PE " << (address >> 8) << "x" << (address & 0xFF) << std::endl;
-	std::string path = "../management/"+task+"/repository.txt")
+	std::string path = "../management/"+task+"/repository.txt";
 	std::ifstream repo(path);
 	if(repo.is_open()){
 		std::string line;
 		std::getline(repo, line);
-		int txt_size = std::stoi(line, nullptr, 16);
+		// std::cout << "Line: " << line << std::endl;
+		unsigned txt_size = std::stoul(line, nullptr, 16);
+		// std::cout << "Txt size: " << txt_size << std::endl;
 		std::getline(repo, line);
-		int data_size = std::stoi(line, nullptr, 16);
+		// std::cout << "Line: " << line << std::endl;
+		unsigned data_size = std::stoul(line, nullptr, 16);
+		// std::cout << "Data size: " << data_size << std::endl;
 		std::getline(repo, line);
-		int bss_size = std::stoi(line, nullptr, 16);
+		// std::cout << "Line: " << line << std::endl;
+		unsigned bss_size = std::stoul(line, nullptr, 16);
+		// std::cout << "Bss size: " << bss_size << std::endl;
 		
-		unsigned int packet_size = txt_size + CONSTANT_PACKET_SIZE;
+		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;
 		
 		packet.clear();
 		packet.reserve(packet_size);
 
-		packet[0] = address;			/* Target address */
-		packet[1] = packet_size - 2;	/* Packet size */
-		packet[2] = TASK_ALLOCATION;	/* Platform service */
-		packet[3] = id;					/* Task ID */
-		packet[4] = mapper_address;		/* Mapper address */
-		packet[8] = mapper_id;			/* Mapper ID */
-		packet[9] = data_size;			/* Data section size */
-		packet[10] = txt_size;			/* Text section size */
-		packet[11] = bss_size;			/* BSS section size */
+		packet.push_back(address);			/* Target address */
+		packet.push_back(packet_size - 2);	/* Packet size */
+		packet.push_back(TASK_ALLOCATION);	/* Platform service */
+		packet.push_back(id);					/* Task ID */
+		packet.push_back(mapper_address);		/* Mapper address */
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(mapper_id);				/* Mapper ID */
+		packet.push_back(data_size);				/* Data section size */
+		packet.push_back(txt_size);				/* Text section size */
+		packet.push_back(bss_size);				/* BSS section size */
+		packet.push_back(0);
 
-
-		int ptr_index  = CONSTANT_PACKET_SIZE; /* End of service header / payload start */
+		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 
 		/* Assembles payload */
-		for(unsigned int i=0; i<code_size; i++){
+		for(unsigned i = 0; i < txt_size; i++){
 			std::getline(repo, line);
-			packet[ptr_index++] = std::stoi(line, nullptr, 16);
 			// std::cout << line << std::endl;
+			packet.push_back(std::stoul(line, nullptr, 16));
+			// std::cout << packet[ptr_index - 1] << std::endl;
 		}
+		// std::cout << "Generated packet size: " << packet.size() << std::endl;
 	} else {
 		std::cout << "ERROR: cannot read the file at path " << path << std::endl;
 	}
@@ -215,33 +211,43 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 
 void MAInjector::ma_load()
 {
-	unsigned tasks_len = tasks.size() * 2;
-	unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + tasks_len;
+	/* Memphis packet + message protocol (type + size) + task address */
+	unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + tasks.size();
 	packet.clear();
 	packet.reserve(packet_size);
 
-	packet[0] = tasks[0].second;					/* Target: mapper address */
-	packet[1] = packet_size - 2; 					/* Payload size */
-	packet[2] = MESSAGE_DELIVERY;					/* Service */
-	packet[3] = MA_INJECTOR_ADDRESS;				/* producer_task */
-	packet[4] = 0x0000; 							/* consumer_task: mapper task id */
-	packet[8] = tasks_len + 2; 						/* Message length */
-	packet[CONSTANT_PACKET_SIZE] = MA_ALLOCATION;	/* Protocol: MA_ALLOCATION */
-	packet[CONSTANT_PACKET_SIZE+1] = tasks_len;
+	packet.push_back(tasks[0].second);		/* Target: mapper address */
+	packet.push_back(packet_size - 2); 		/* Payload size */
+	packet.push_back(MESSAGE_DELIVERY);		/* Service */
+	packet.push_back(MA_INJECTOR_ADDRESS);	/* producer_task */
+	packet.push_back(0x0000); 				/* consumer_task: mapper task id */
+	packet.push_back(0);
+	packet.push_back(0);
+	packet.push_back(0);
+	packet.push_back(tasks.size() + 2);		/* Message length */
+	packet.push_back(0);
+	packet.push_back(0);
+	packet.push_back(0);
+	packet.push_back(0);
 
-	int ptr_index  = CONSTANT_PACKET_SIZE + 2; /* End of service header / payload start */
+	packet.push_back(MA_ALLOCATION);	/* Protocol: MA_ALLOCATION */
+	packet.push_back(tasks.size());		/* Number of MA tasks */
 
-	for(int i = 0; i < tasks.size(); i++){
-		packet[ptr_index++] = i;
-		packet[ptr_index++] = tasks[i].second;
+	for(unsigned i = 0; i < tasks.size(); i++){
+		packet.push_back(tasks[i].second);	/* Task Address */
 	}
+
+	// std::cout << "built packet size = " << packet.size() << std::endl;
 }
 
 void MAInjector::send_packet()
 {
+	/**
+	 * @todo Change to std::array
+	 */
 	static unsigned int aux_pkt[CONSTANT_PACKET_SIZE];
 	static unsigned int aux_idx = 0;
-	static int packet_idx = 0;
+	static unsigned packet_idx = 0;
 	static SEND_PKT_FSM last_state;
 
 	if(reset.read()){
@@ -250,13 +256,14 @@ void MAInjector::send_packet()
 		switch(send_pkt_state){
 		case SEND_IDLE:
 			/* Trigger packet send by other FSMs */
-			if(ma_boot_state == BOOT_WAIT || ma_boot_state == BOOT_SEND){
+			if(ma_boot_state == BOOT_WAIT /* || ma_boot_state == BOOT_SEND */){
 				if(credit_in.read()){
 					if(!packet.empty()){
+						// std::cout << "MAInjector: Packet send triggered" << std::endl;
 						send_pkt_state = SEND_PKT;
 						packet_idx = 0;
 					} else {
-						cout << "ERROR: packet is empty at time " << tick_cnt <<  endl;
+						std::cout << "ERROR: packet is empty at time " << tick_cnt << std::endl;
 					}
 				}
 			} else if(ma_boot_state == BOOT_TASKS){
@@ -273,13 +280,13 @@ void MAInjector::send_packet()
 
 					send_pkt_state = SEND_DATA_AV;
 
-					// std::cout << "AppInj: sending DATA_AV" << std::endl;
+					// std::cout << "MAInjector: sending DATA_AV" << std::endl;
 				}
 			} else if(rcv_pkt_state == WAIT_SEND_REQ){
 				if(credit_in.read()){
 					/* Can send */
 					aux_idx = 0;
-					aux_pkt[0] = tasks[0].address; 			/* Header: mapper task address */
+					aux_pkt[0] = tasks[0].second; 			/* Header: mapper task address */
 					aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 	/* Payload size */
 					aux_pkt[2] = MESSAGE_REQUEST;			/* Service */
 					aux_pkt[3] = 0x0000;					/* producer_task: mapper task id */
@@ -295,6 +302,7 @@ void MAInjector::send_packet()
 		case SEND_PKT:
 			if(credit_in.read()){
 				if(packet_idx < packet.size()){
+					// std::cout << "Write: " << packet[packet_idx] << std::endl;
 					tx.write(1);
 					data_out.write(packet[packet_idx++]);
 				} else {
@@ -308,10 +316,8 @@ void MAInjector::send_packet()
 			}
 			break;
 		case SEND_FINISHED:
-			if(!packet.empty())
-				packet.clear();
 			send_pkt_state = SEND_IDLE;
-			// std::cout << "AppInj: Packet sent" << std::endl;
+			// std::cout << "MAInjector: Packet sent" << std::endl;
 			break;
 		case WAIT_CREDIT:
 			if(credit_in.read()){
@@ -327,7 +333,7 @@ void MAInjector::send_packet()
 				} else {
 					tx.write(0);
 					send_pkt_state = WAIT_MSG_REQ;
-					// std::cout << "AppInj: waiting MESSAGE_REQUEST" << std::endl;
+					// std::cout << "MAInjector: waiting MESSAGE_REQUEST" << std::endl;
 				}
 			} else {
 				tx.write(0);
@@ -341,7 +347,7 @@ void MAInjector::send_packet()
 					if(!packet.empty()){
 						send_pkt_state = SEND_PKT;
 						packet_idx = 0;
-						// std::cout << "AppInj: Sending packet" << std::endl;
+						// std::cout << "MAInjector: Sending packet" << std::endl;
 					} else {
 						cout << "ERROR: packet is empty at time " << tick_cnt <<  endl;
 					}
@@ -375,9 +381,8 @@ void MAInjector::rcv_packet(){
 	if(reset.read()){
 		rcv_pkt_state = RCV_HEADER;
 		sig_credit_out.write(1);
-		rcv_packet.clear();
+		packet_in.clear();
 	} else if(clock.posedge()){
-		
 		/* Credit out update */
 		if(
 			send_pkt_state == WAIT_MSG_REQ || 
@@ -394,8 +399,10 @@ void MAInjector::rcv_packet(){
 
 		switch(rcv_pkt_state){
 		case RCV_HEADER:
-			if(rx.read() && sig_credit_out.read())
+			if(rx.read() && sig_credit_out.read()){
 				rcv_pkt_state = RCV_PAYLOAD_SIZE;
+				// std::cout << "MAInjector: received header" << std::endl;
+			}
 
 			break;
 		case RCV_PAYLOAD_SIZE:
@@ -403,6 +410,7 @@ void MAInjector::rcv_packet(){
 				payload_size = data_in.read();
 				flit_counter = 0; // 1
 				rcv_pkt_state = RCV_SERVICE;
+				// std::cout << "MAInjector: received payload size = " << payload_size << std::endl;
 			}
 			break;
 		case RCV_SERVICE:
@@ -411,12 +419,15 @@ void MAInjector::rcv_packet(){
 				switch(data_in.read()){
 				case MESSAGE_REQUEST:
 					rcv_pkt_state = RCV_MSG_REQ;
+					// std::cout << "MAInjector: received MR packet" << std::endl;
 					break;
 				case DATA_AV:
 					rcv_pkt_state = RCV_DATA_AV;
+					// std::cout << "MAInjector: received DA packet" << std::endl;
 					break;
 				case MESSAGE_DELIVERY:
 					rcv_pkt_state = RCV_MSG_DLVR;
+					// std::cout << "MAInjector: received MD packet" << std::endl;
 					break;
 				default:
 					std::cout << "ERROR: unknown packet received at time " << tick_cnt << "\n" << std::endl;
@@ -427,10 +438,12 @@ void MAInjector::rcv_packet(){
 		case RCV_MSG_REQ:
 			if(rx.read() && sig_credit_out.read()){
 				flit_counter++;
+				// std::cout << "MAInjector: flit = " << flit_counter << "; data = " << data_in.read() << std::endl;
 				/* For now we are ignoring the parameters: prod_task, cons_task and cons_addr */
 				if(flit_counter == payload_size){
 					rcv_pkt_state = WAIT_SEND_DLVR;
-					// std::cout << "AppInj: MESSAGE_REQUEST received. Sending MESSAGE_DELIVERY" << std::endl;
+					// std::cout << "MAInjector: MESSAGE_REQUEST received. Sending MESSAGE_DELIVERY" << std::endl;
+					// std::cout << "MAInjector: delivery packet size is " << packet.size() << std::endl;
 				}
 			}
 			break;
@@ -461,14 +474,14 @@ void MAInjector::rcv_packet(){
 				unsigned int data = data_in.read();
 				// cout << "F" << dec << flit_counter << ": " << hex << data << endl;
 				if(flit_counter == 8){
-					rcv_packet.clear();
-					rcv_packet.reserve(data);
+					packet_in.clear();
+					packet_in.reserve(data);
 				} else if(flit_counter >= 13){
-					rcv_packet[flit_counter - 13] = data;
+					packet_in[flit_counter - 13] = data;
 				}
 
 				if(flit_counter == payload_size){
-					switch(rcv_packet[0]){
+					switch(packet_in[0]){
 						case APP_ALLOCATION_REQUEST:
 							// std::cout << "AppInj: received APP_ALLOCATION_REQUEST" << std::endl;
 							// app_mapping_loader();
@@ -479,7 +492,7 @@ void MAInjector::rcv_packet(){
 							rcv_pkt_state = RCV_MAP_COMPLETE;
 							break;
 						default:
-							cout << "ERROR: Unknown service " << hex << packet[0] << " received at time " << dec << current_time << endl;
+							cout << "ERROR: Unknown service " << hex << packet[0] << " received at time " << dec << tick_cnt << endl;
 							break;
 					}
 				}

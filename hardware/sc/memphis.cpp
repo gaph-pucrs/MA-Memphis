@@ -165,10 +165,10 @@ void memphis::pes_interconnection(){
 			data_in[APP_INJECTOR][p].write(memphis_app_injector_data_in.read());
  		}
  		//Insert the IO wiring for your component here if it connected to a NORTH port:
-    if (i == MAINJECTOR && io_port[i] != NPORT) {
+		if (i == MAINJECTOR && io_port[i] != NPORT) {
  			p = io_port[i];
-			memphis_ma_injector_tx.write(tx[APP_INJECTOR][p].read());
-			memphis_ma_injector_data_out.write(data_out[APP_INJECTOR][p].read());
+			memphis_ma_injector_tx.write(tx[MAINJECTOR][p].read());
+			memphis_ma_injector_data_out.write(data_out[MAINJECTOR][p].read());
 			credit_i[MAINJECTOR][p].write(memphis_ma_injector_credit_i.read());
 
 			rx[MAINJECTOR][p].write(memphis_ma_injector_rx.read());
