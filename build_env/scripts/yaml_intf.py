@@ -175,50 +175,6 @@ def get_app_info_list(yaml_reader, testcase_path):
 	
 	return app_start_list
 
-#Returns a list of objects ApplicationInfo containing the app name, num of tasks and start time
-#However repo address return -1, it is filled inside app_builder during the repositoriy generation
-def get_ma_info_list(yaml_reader, testcase_path):
-	
-	#Start of processing to extracts the information of task statically mapped
-	app_start_list = []  
-	
-	yaml_app_index = 0
-	
-	app_id = 0
-	
-	app_reader = yaml_reader["management"]
-
-	#Then, list all tasks from app_name
-	app_task_list = get_ma_task_list(yaml_reader)
-	
-	task_number = len(app_task_list)
-	
-	#If the time is not configured - default is zero
-	start_time_ms = 0
-		
-	task_id = 0
-	
-	static_task_list = []
-	#Walk over all tasks of app
-	for task_name in app_task_list:
-		x_address = int( app_reader[task_name][0] ) # Gets the x address value
-		y_address = int( app_reader[task_name][1] ) # Gets the y address value
-		
-		task_static_map = x_address << 8 | y_address
-		
-		static_task_list.append([task_id, task_static_map])
-		task_id = task_id + 1
-	
-	#Create a new object of Application info gathering all information previously extracted from yaml
-	app_start_list.append(ApplicationInfo("management", start_time_ms, task_number, static_task_list))
-	
-	app_id = app_id + 1
-
-	# Sort the list in place.  See more in : https://wiki.python.org/moin/HowTo/Sorting
-	app_start_list.sort(key=lambda app: app.start_time_ms)
-	
-	return app_start_list
-
 # Get the list of management tasks instantiated in the testcase
 def get_ma_task_list(yaml_reader):
 	return set(get_ma_id_list(yaml_reader))

@@ -46,8 +46,6 @@ def platform_cfg(testcase_path, debug_path, yaml_testcase_r, yaml_scenario_r):
     
     mpsoc_x = get_mpsoc_x_dim(yaml_testcase_r)
     mpsoc_y = get_mpsoc_y_dim(yaml_testcase_r)
-    manager_position_x = "0"
-    manager_position_y = "0"
     flit_size = "32"
     clock_period_ns = "10"
     
@@ -57,20 +55,34 @@ def platform_cfg(testcase_path, debug_path, yaml_testcase_r, yaml_scenario_r):
     platform_cfg_lines.append("channel_number "+str(get_physical_channels(yaml_testcase_r))+"\n")
     platform_cfg_lines.append("mpsoc_x "+str(mpsoc_x)+"\n")
     platform_cfg_lines.append("mpsoc_y "+str(mpsoc_y)+"\n")
-    platform_cfg_lines.append("manager_position_x "+manager_position_x+"\n")
-    platform_cfg_lines.append("manager_position_y "+manager_position_y+"\n")
     platform_cfg_lines.append("flit_size "+flit_size+"\n")
     platform_cfg_lines.append("clock_period_ns "+clock_period_ns+"\n")
+
+    # Legacy lines. This will 'trick' the debugger into assigning no master
+    platform_cfg_lines.append("cluster_x "+str(mpsoc_x)+"\n")
+    platform_cfg_lines.append("cluster_y "+str(mpsoc_y)+"\n")
+    platform_cfg_lines.append("manager_position_x "+str(mpsoc_x)+"\n")
+    platform_cfg_lines.append("manager_position_y "+str(mpsoc_x)+"\n")
+
     
     platform_cfg_lines.append("BEGIN_task_name_relation\n")
-    
-    apps_name_list = get_apps_name_list(yaml_scenario_r)
-    
+
+    ma_task_name_list = get_ma_id_list(yaml_testcase_r)
+
     apps_name_relation = []
     
     apps_name_relation.append("BEGIN_app_name_relation\n")
+    apps_name_relation.append("management\t0\n")
+
+    task_id = 0
+    for task in ma_task_name_list:
+        platform_cfg_lines.append(task+" "+str(task_id)+"\n")
+        task_id = task_id + 1
+
     
-    app_id = 0
+    apps_name_list = get_apps_name_list(yaml_scenario_r)
+    
+    app_id = 1
     
     for app_name in apps_name_list:
         
