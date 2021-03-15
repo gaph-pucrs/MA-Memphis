@@ -135,7 +135,7 @@ SC_MODULE(pe) {
 	
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00) : sc_module(name_), router_address(address_) {
-		mem_peripheral = 0;
+		mem_peripheral.write(0);
 		end_sim_reg.write(0x00000001);
 
 		shift_mem_page = (unsigned char) (log10(PAGE_SIZE_BYTES)/log10(2));
@@ -266,13 +266,15 @@ SC_MODULE(pe) {
 		sensitive << credit_signal[EAST];
 		sensitive << credit_signal[WEST];	
 		sensitive << credit_signal[NORTH];	
-		sensitive << credit_signal[SOUTH];		
+		sensitive << credit_signal[SOUTH];
+		sensitive << mem_peripheral;
 
 	}
 	
-public:
+private:
+	sc_signal<regflit> mem_peripheral;
+
 	regaddress router_address;
-	int mem_peripheral;
 };
 
 

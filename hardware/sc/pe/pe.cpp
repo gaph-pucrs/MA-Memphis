@@ -41,7 +41,7 @@ void pe::mem_mapped_registers(){
 			cpu_mem_data_read.write(dmni_receive_active_sig.read());
 		break;
 		case MEM_REG_PERIPHERALS:
-			cpu_mem_data_read.write(mem_peripheral);
+			cpu_mem_data_read.write(mem_peripheral.read());
 			break;
 		default:
 			cpu_mem_data_read.write(data_read_ram.read());
@@ -115,7 +115,7 @@ void pe::sequential_attr(){
 		tick_counter.write(0);
 		pending_service.write(0);
 		slack_update_timer.write(0);
-		mem_peripheral = 0;
+		mem_peripheral.write(0);
 	} else {
 
 		if(cpu_mem_pause.read() == 0) {
@@ -182,8 +182,10 @@ void pe::sequential_attr(){
 		//************ NEW DEBBUG AND REPORT logs - they are used by Memphis Debbuger Tool********
 		if (write_enable.read()==1){
 
-			if(cpu_mem_address_reg.read() == MEM_REG_PERIPHERALS)
-				mem_peripheral = cpu_mem_data_write_reg.read();
+			if(cpu_mem_address_reg.read() == MEM_REG_PERIPHERALS){
+				mem_peripheral.write(cpu_mem_data_write_reg.read());
+				// std::cout << "PE " << (int)x_address << "x" << (int)y_address <<": MEM_REG_PERIPHERALS = " << cpu_mem_data_write_reg.read() << std::endl;
+			}
 				
 			/* TASK_TERMINATED report implementation */
 			if(cpu_mem_address_reg.read() == 0x20000070){
@@ -392,12 +394,12 @@ void pe::clock_stop(){
 
 void pe::update_credit()
 {
-	static int seq_addr = x_address * N_PE_X + y_address;
+	int seq_addr = (int)x_address * N_PE_X + (int)y_address;
 
 	/* First column, has WEST port connected to peripherals */
 	if(x_address == 0){
 		/* If has MA_Injector or released peripherals, update signal */
-		if(io_port[seq_addr] == WEST && (seq_addr == MAINJECTOR || mem_peripheral))
+		if(io_port[seq_addr] == WEST && (seq_addr == MAINJECTOR || mem_peripheral.read() == 1))
 			credit_o[WEST].write(credit_signal[WEST]);
 		else 
 			credit_o[WEST].write(0);
@@ -406,7 +408,7 @@ void pe::update_credit()
 		credit_o[WEST].write(credit_signal[WEST]);
 	}
 	if(x_address == (N_PE_X - 1)){
-		if(io_port[seq_addr] == EAST && (seq_addr == MAINJECTOR || mem_peripheral))
+		if(io_port[seq_addr] == EAST && (seq_addr == MAINJECTOR || mem_peripheral.read() == 1))
 			credit_o[EAST].write(credit_signal[EAST]);
 		else
 			credit_o[EAST].write(0);
@@ -414,7 +416,7 @@ void pe::update_credit()
 		credit_o[EAST].write(credit_signal[EAST]);
 	}
 	if(y_address == 0){
-		if(io_port[seq_addr] == SOUTH && (seq_addr == MAINJECTOR || mem_peripheral))
+		if(io_port[seq_addr] == SOUTH && (seq_addr == MAINJECTOR || mem_peripheral.read() == 1))
 			credit_o[SOUTH].write(credit_signal[SOUTH]);
 		else 
 			credit_o[SOUTH].write(0);
@@ -422,7 +424,7 @@ void pe::update_credit()
 		credit_o[SOUTH].write(credit_signal[SOUTH]);
 	}
 	if(y_address == (N_PE_Y - 1)){
-		if(io_port[seq_addr] == NORTH && (seq_addr == MAINJECTOR || mem_peripheral))
+		if(io_port[seq_addr] == NORTH && (seq_addr == MAINJECTOR || mem_peripheral.read() == 1))
 			credit_o[NORTH].write(credit_signal[NORTH]);
 		else
 			credit_o[NORTH].write(0);

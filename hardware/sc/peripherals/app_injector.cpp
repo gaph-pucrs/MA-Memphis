@@ -73,7 +73,7 @@ void app_injector::task_allocation_loader(unsigned int id, unsigned int addr, un
 	cout << "Loading task ID " << id << " to PE " << (addr >> 8) << "x" << (addr & 0xFF) << endl;
 
 
-	path = get_app_repo_path(app_id);
+	path = get_app_repo_path(app_id - 1);
 
 	// cout << "Task allocation loader - app path: " << path << endl;
 
