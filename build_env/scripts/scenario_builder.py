@@ -151,8 +151,8 @@ def generate_appstart_file(apps_start_obj_list, testcase_path, scenario_path):
 				#It is necessary to check if the source was specified, if not, generate a error
 				file_debug_lines.append(str(tuple[1])+"\ttask ["+str(app_task_list[tuple[0]])+"] is market to be statically mapped at PE "+ str(tuple[1] >> 8)+"x"+str(tuple[1] & 0xFF)+"\n")
 	
-	file_lines.append( "deadc0de\n")
-	file_debug_lines.append("deadc0de\tend of file indicator\n")
+	# file_lines.append( "deadc0de\n")
+	# file_debug_lines.append("deadc0de\tend of file indicator\n")
 		
 	writes_file_into_testcase(appstart_file_path, file_lines)
 	writes_file_into_testcase(appstart_debug_file_path, file_debug_lines)

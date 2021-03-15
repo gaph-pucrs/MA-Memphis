@@ -20,7 +20,7 @@
 using namespace std;
 
 #include "memphis.h"
-#include "peripherals/app_injector.h"
+#include "peripherals/AppInjector.h"
 #include "peripherals/MAInjector.h"
 
 SC_MODULE(test_bench) {
@@ -50,7 +50,7 @@ SC_MODULE(test_bench) {
 	void resetGenerator();
 	
 	memphis * MPSoC;
-	app_injector * io_app;
+	AppInjector * io_app;
   MAInjector * ma_app;
 
 	char aux[255];
@@ -80,7 +80,7 @@ SC_MODULE(test_bench) {
 		MPSoC->memphis_ma_injector_data_in(memphis_mai_data_in);
 
 
-		io_app = new app_injector("App_Injector");
+		io_app = new AppInjector("App_Injector");
 		io_app->clock(clock);
 		io_app->reset(reset);
 		io_app->rx(memphis_injector_tx);

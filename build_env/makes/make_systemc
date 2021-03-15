@@ -11,7 +11,7 @@ MEMPHIS_TGT=$(notdir $(patsubst %/,%,$(dir $(CURDIR))))
 
 #SystemC files
 TOP 		=memphis test_bench
-IO			=app_injector MAInjector
+IO			=AppInjector MAInjector
 PE	 		=pe
 DMNI 		=dmni
 MEMORY 		=ram

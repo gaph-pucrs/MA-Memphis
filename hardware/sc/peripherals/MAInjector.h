@@ -13,23 +13,25 @@
 
 #include "../standards.h"
 
-#define CONSTANT_PACKET_SIZE	13 	//Constant ServiceHeader packet size (more info inside software/modules/packet.h)
+/* Packet size. Check software/kernel/modules/include/packet.h. */
+#define CONSTANT_PACKET_SIZE	13
 
-#define 	MESSAGE_REQUEST 				0x00000010
-#define		MESSAGE_DELIVERY				0x00000020
-#define 	DATA_AV							0x00000310
-#define 	TASK_ALLOCATION     			0x00000040
-#define		NEW_APP							0x00000150
-#define 	APP_ALLOCATION_REQUEST			0x00000240
-#define		APP_MAPPING_COMPLETE			0x00000440
+/* Platform kernel/management services */
+#define MESSAGE_REQUEST			0x00000010
+#define MESSAGE_DELIVERY		0x00000020
+#define DATA_AV					0x00000310
+#define TASK_ALLOCATION			0x00000040
+#define NEW_APP					0x00000150
+#define APP_ALLOCATION_REQUEST	0x00000240
+#define APP_MAPPING_COMPLETE	0x00000440
 
-#define		MA_INJECTOR_ADDRESS (0x80000000 | (io_port[MAINJECTOR] << 29) | ((MAINJECTOR / N_PE_X) << 8) | (MAINJECTOR % N_PE_X))
+#define MA_INJECTOR_ADDRESS (0x80000000 | (io_port[MAINJECTOR] << 29) | ((MAINJECTOR / N_PE_X) << 8) | (MAINJECTOR % N_PE_X))
 
 SC_MODULE(MAInjector){
 public:
 	/* Ports used by the many-core */
-	sc_in<bool>	clock;
-	sc_in<bool>	reset;
+	sc_in<bool>		clock;
+	sc_in<bool>		reset;
 
 	sc_in<bool>		rx;
 	sc_in<regflit>	data_in;
