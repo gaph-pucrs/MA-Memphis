@@ -20,8 +20,8 @@
 using namespace std;
 
 #include "memphis.h"
-#include "peripherals/AppInjector.h"
-#include "peripherals/MAInjector.h"
+#include "peripherals/AppInjector.hpp"
+#include "peripherals/MAInjector.hpp"
 
 SC_MODULE(test_bench) {
 	

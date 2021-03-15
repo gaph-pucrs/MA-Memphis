@@ -18,13 +18,13 @@ MEMORY 		=ram
 PROCESSOR 	=mlite_cpu
 ROUTER	 	=queue switchcontrol router_cc
 
-TOP_SRC	    	= $(addprefix sc/, 						$(TOP:=.cpp) $(TOP:=.h) 			)
-IO_SRC			= $(addprefix sc/peripherals/, 			$(IO:=.cpp) $(IO:=.h)				)
-PE_SRC			= $(addprefix sc/pe/, 					$(PE:=.cpp) $(PE:=.h)  				)
-DMNI_SRC		= $(addprefix sc/pe/dmni/, 				$(DMNI:=.cpp) $(DMNI:=.h)			)
-MEMORY_SRC		= $(addprefix sc/pe/memory/,			$(MEMORY:=.cpp) $(MEMORY:=.h)		) 
-PROCESSOR_SRC	= $(addprefix sc/pe/processor/plasma/, 	$(PROCESSOR:=.cpp) $(PROCESSOR:=.h)	)
-ROUTER_SRC		= $(addprefix sc/pe/router/, 			$(ROUTER:=.cpp) $(ROUTER:=.h)		)
+TOP_SRC	    	= $(addprefix sc/, 						$(TOP:=.cpp)		)
+IO_SRC			= $(addprefix sc/peripherals/, 			$(IO:=.cpp)			)
+PE_SRC			= $(addprefix sc/pe/, 					$(PE:=.cpp)			)
+DMNI_SRC		= $(addprefix sc/pe/dmni/, 				$(DMNI:=.cpp)		)
+MEMORY_SRC		= $(addprefix sc/pe/memory/,			$(MEMORY:=.cpp)		) 
+PROCESSOR_SRC	= $(addprefix sc/pe/processor/plasma/, 	$(PROCESSOR:=.cpp)	)
+ROUTER_SRC		= $(addprefix sc/pe/router/, 			$(ROUTER:=.cpp)		)
 
 TOP_TGT 		=$(TOP:=.o)
 IO_TGT	 		=$(IO:=.o)

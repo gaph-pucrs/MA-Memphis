@@ -8,7 +8,7 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
-#include "AppInjector.h"
+#include "AppInjector.hpp"
 
 /* VHDL integration */
 #ifdef MTI_SYSTEMC
@@ -86,7 +86,7 @@ void AppInjector::monitor_new_app()
 			/* Wait mapping complete */
 			if(rcv_pkt_state == RECEIVE_MAPPING_COMPLETE){
 				monitor_state = MONITOR_ACTIVE;
-				std::cout << "AppInj: Mapping complete received. Entering monitoring." << std::endl;
+				// std::cout << "AppInj: Mapping complete received. Entering monitoring." << std::endl;
 			}
 			break;
 		case MONITOR_ACTIVE:
@@ -114,15 +114,15 @@ void AppInjector::monitor_new_app()
 					}
 
 					monitor_state = MONITOR_WAIT_TIME;
-					std::cout << "AppInj: app found. Will wait time" << std::endl;
+					// std::cout << "AppInj: app found. Will wait time" << std::endl;
 				}
 			} else {
-				cout << "Unable to open file appstart.txt" << endl;
+				std::cout << "Unable to open file appstart.txt" << std::endl;
 			}
 			break;
 		case MONITOR_WAIT_TIME:
 			if(rcv_pkt_state == RCV_HEADER && (start_time * 100000) <= tick_cnt){				
-				std::cout << "Time achieved! Will send new_app" << std::endl;
+				// std::cout << "Time achieved! Will send new_app" << std::endl;
 				app_descriptor_loader(name, task_cnt, static_mapping);
 				monitor_state = MONITOR_SEND_NEW_APP;
 			}
@@ -131,7 +131,7 @@ void AppInjector::monitor_new_app()
 			if(send_pkt_state == SEND_FINISHED){
 				sent_task = 0;
 				monitor_state = MONITOR_MAP;
-				std::cout << "Descriptor sent (sync). Will enter SEND TASKS." << std::endl;
+				// std::cout << "Descriptor sent (sync). Will enter SEND TASKS." << std::endl;
 			}
 			break;
 		case MONITOR_MAP:
@@ -143,7 +143,7 @@ void AppInjector::monitor_new_app()
 		case MONITOR_SEND_TASK:
 			if(send_pkt_state == SEND_FINISHED){
 				sent_task++;
-				std::cout << "Sent = " << sent_task << "; packet size = " << packet_in.size() << std::endl;
+				// std::cout << "Sent = " << sent_task << "; packet size = " << packet_in.size() << std::endl;
 				if(1 + sent_task*2 < packet_in.size()){
 					monitor_state = MONITOR_MAP;
 				} else {
@@ -307,7 +307,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		for(unsigned current_line = task_line + TASK_DESCRIPTOR_SIZE + 1; current_line < init_addr; current_line++){
 			std::getline(repository, line);
 		}
-		std::cout << "Task ID " << task_id << " code size " << txt_size << " code_line " << init_addr << std::endl;
+		// std::cout << "Task ID " << task_id << " code size " << txt_size << " code_line " << init_addr << std::endl;
 
 		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;
 
@@ -334,7 +334,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 			// std::cout << line << std::endl;
 		}
 	} else {
-		cout << "ERROR cannot read the file at path: " << path << " and app id " << app_id << endl;
+		std::cout << "ERROR cannot read the file at path: " << path << " and app id " << app_id << std::endl;
 	}
 }
 
@@ -417,7 +417,7 @@ void AppInjector::receive_packet()
 					rcv_pkt_state = RECEIVE_MESSAGE_DELIVERY;
 					break;
 				default:
-					cout << "ERROR: packet received unknown at time " << tick_cnt << "\n" << endl;
+					std::cout << "ERROR: packet received unknown at time " << tick_cnt << "\n" << std::endl;
 					break;
 				}
 
@@ -444,8 +444,8 @@ void AppInjector::receive_packet()
 			/* For now we are ignoring the parameters: prod_task, cons_task and cons_addr */
 			if(flit_counter == payload_size){
 				rcv_pkt_state = RCV_WAIT_DLVR;
-				std::cout << "AppInj: MESSAGE_REQUEST received. Sending MESSAGE_DELIVERY" << std::endl;
-				std::cout << "AppInj: delivery packet size is " << packet.size() << std::endl;
+				// std::cout << "AppInj: MESSAGE_REQUEST received. Sending MESSAGE_DELIVERY" << std::endl;
+				// std::cout << "AppInj: delivery packet size is " << packet.size() << std::endl;
 			}
 			break;
 		case RECEIVE_MESSAGE_DELIVERY:
@@ -525,7 +525,7 @@ void AppInjector::send_packet(){
 						send_pkt_state = SEND_PACKET;
 						pkt_idx = 0;
 					} else {
-						cout << "ERROR: packet has an NULL pointer at time " << tick_cnt <<  endl;
+						std::cout << "ERROR: packet has an NULL pointer at time " << tick_cnt <<  std::endl;
 					}
 				}
 			} else if(monitor_state == MONITOR_SEND_NEW_APP){
@@ -542,7 +542,7 @@ void AppInjector::send_packet(){
 
 					send_pkt_state = SEND_DATA_AV;
 
-					std::cout << "AppInj: sending DATA_AV" << std::endl;
+					// std::cout << "AppInj: sending DATA_AV" << std::endl;
 				}
 			} else if(rcv_pkt_state == RCV_WAIT_REQ){
 				if(credit_in.read()){
@@ -557,7 +557,7 @@ void AppInjector::send_packet(){
 
 					send_pkt_state = SEND_MSG_REQUEST;
 
-					std::cout << "AppInj: sending MSG_REQUEST" << std::endl;
+					// std::cout << "AppInj: sending MSG_REQUEST" << std::endl;
 				}
 			}
 			break;
@@ -569,7 +569,7 @@ void AppInjector::send_packet(){
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_WAIT_REQUEST;
-					std::cout << "AppInj: waiting MESSAGE_REQUEST" << std::endl;
+					// std::cout << "AppInj: waiting MESSAGE_REQUEST" << std::endl;
 				}
 			} else {
 				tx.write(0);
@@ -598,7 +598,7 @@ void AppInjector::send_packet(){
 					if(!packet.empty()){
 						send_pkt_state = SEND_PACKET;
 						pkt_idx = 0;
-						std::cout << "AppInj: Sending packet" << std::endl;
+						// std::cout << "AppInj: Sending packet" << std::endl;
 					} else {
 						cout << "ERROR: packet is empty at time " << tick_cnt <<  endl;
 					}
@@ -629,7 +629,7 @@ void AppInjector::send_packet(){
 			break;
 		case SEND_FINISHED:
 			send_pkt_state = SEND_IDLE;
-			std::cout << "AppInj: Packet sent" << std::endl;
+			// std::cout << "AppInj: Packet sent" << std::endl;
 			break;
 		}
 	}

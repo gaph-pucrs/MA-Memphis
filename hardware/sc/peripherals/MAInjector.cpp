@@ -8,7 +8,7 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
-#include "MAInjector.h"
+#include "MAInjector.hpp"
 
 #include <iostream>
 #include <fstream>
