@@ -126,8 +126,12 @@ def generate_repository(yaml_r, testcase_dir, app_path):
 	# Walk for all tasks into /management dir to fills the task headers
 	for task_name in task_name_list:
 		txt_size = get_task_txt_size(app_path, task_name)
+
+		task_reader = get_yaml_reader(app_path + "/" + task_name + "/config.yaml")
+		task_type_tag = get_task_type_tag(task_reader, task_name)
 		
 		#Points next_free_address to a next free repo space after considering the task code of <task_name>.txt
+		repo_lines.append(RepoLine(toX(task_type_tag), "task type tag"))
 		repo_lines.append(RepoLine(toX(txt_size), "txt size") )
 		repo_lines.append(RepoLine(toX(get_task_DATA_size(app_path, task_name)), "data size") )
 		repo_lines.append(RepoLine(toX(get_task_BSS_size(app_path, task_name)), "bss size") )
@@ -153,6 +157,47 @@ def generate_repository(yaml_r, testcase_dir, app_path):
 	################Finally, generates the repository file (main and debug files) ##########################
 	print "***************** End task page size report ********************\n"
 
+
+def get_task_type_tag(reader, task):
+	ttt = 0
+	try:
+		act = reader["act"]
+		ttt |= 0x02
+
+		for capability in act:
+			if capability == "migration":
+				ttt |= 0x01000000
+			else:
+				print "Management task "+ task +": unknown act capability '"+capability+"'\n"
+	except:
+		pass
+
+	try:
+		decide = reader["decide"]
+		ttt |= 0x04
+
+		for capability in decide:
+			if capability == "qos":
+				ttt |= 0x010000
+			else:
+				print "Management task "+ task +": unknown decide capability '"+capability+"'\n"
+	except:
+		pass
+
+	try:
+		observe = reader["observe"]
+		ttt |= 0x04
+
+		for capability in observe:
+			if capability == "qos":
+				ttt |= 0x0100
+			else:
+				print "Management task "+ task +": unknown observe capability '"+capability+"'\n"
+	except:
+		pass
+
+	# print "Management task " + task + " ttt = " + str(ttt) + "\n"
+	return ttt
 
 #Receives a int, convert to string and fills to a 32 bits word
 def toX(input):

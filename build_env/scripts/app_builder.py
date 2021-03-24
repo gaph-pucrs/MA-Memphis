@@ -146,6 +146,7 @@ def generate_repository(yaml_r, testcase_dir, app_path, app_name):
         #Points next_free_address to a next free repo space after considering the task code of <task_name>.txt
         repo_lines.append( RepoLine(toX(task_id)                                    , task_name+".c") )
         repo_lines.append( RepoLine(toX(0)                             , "static mapped PE address, filled only during application injection") )
+        repo_lines.append(RepoLine(toX(0x01), "Task Type Tag (TTT)"))
         repo_lines.append( RepoLine(toX(txt_size)                                   , "txt size") )
         repo_lines.append( RepoLine(toX(get_task_DATA_size(app_path, task_name))    , "data size") )
         repo_lines.append( RepoLine(toX(get_task_BSS_size(app_path, task_name))     , "bss size") )
