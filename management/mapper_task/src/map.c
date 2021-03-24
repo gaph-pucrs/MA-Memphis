@@ -53,14 +53,14 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 		 * This is usually = descriptor[i*6] & 0xFF.
 		 * But using & in this statement acts as | besides the proper instruction being generated and executed.
 		 */
-		int task_id = descriptor[i*6];
+		int task_id = descriptor[i*TASK_DESCRIPTOR_SIZE];
 		app->task[task_id]->status = BLOCKED;
 		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
 		app->task[task_id] = task_get_free(mapper->tasks);
 
 		app->task[task_id]->id = appid << 8 | task_id;
 
-		int proc_idx = descriptor[i*6 + 1];
+		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
 		// Echo("Processor address: "); Echo(itoa(proc_idx));
 		if(proc_idx != -1)
 			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
@@ -68,10 +68,13 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 		app->task[task_id]->proc_idx = proc_idx;
 		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
 
-		app->task[task_id]->code_sz = descriptor[i*6 + 2];
-		app->task[task_id]->data_sz = descriptor[i*6 + 3];
-		app->task[task_id]->bss_sz = descriptor[i*6 + 4];
-		app->task[task_id]->init_addr = descriptor[i*6 + 5];
+		app->task[task_id]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 2];
+		// Echo("Task type tag: "); Echo(itoa(app->task[task_id]->type_tag)); Echo("\n");
+
+		app->task[task_id]->code_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 3];
+		app->task[task_id]->data_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 4];
+		app->task[task_id]->bss_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 5];
+		app->task[task_id]->init_addr = descriptor[i*TASK_DESCRIPTOR_SIZE + 6];
 	}
 
 	return app;
@@ -218,7 +221,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
-		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo(" tempo = "); Echo(itoa(GetTick())); Echo("\n");
+		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo("; At time: "); Echo(itoa(GetTick())); Echo("\n");
 		app->id = -1;
 	}
 

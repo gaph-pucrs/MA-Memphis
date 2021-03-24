@@ -10,6 +10,7 @@ typedef struct _task {
 	int id;
 	int proc_idx;
 	int old_proc;
+	unsigned type_tag;
 	unsigned code_sz;
 	unsigned data_sz;
 	unsigned bss_sz;

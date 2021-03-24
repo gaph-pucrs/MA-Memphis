@@ -6,6 +6,8 @@
 #include "app.h"
 #include "processor.h"
 
+#define TASK_DESCRIPTOR_SIZE 7
+
 typedef struct _mapper {
 	unsigned pending_task_cnt;
 
