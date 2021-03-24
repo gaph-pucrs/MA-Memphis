@@ -109,7 +109,7 @@ def generate_apps_id(app_name, app_path, testacase_dir):
 #Please, behold this following peace of art:     
 def generate_repository(yaml_r, testcase_dir, app_path, app_name):
     
-    TASK_DESCRIPTOR_SIZE = 6 #6 is number of lines to represent a task description 
+    TASK_DESCRIPTOR_SIZE = 7 #6 is number of lines to represent a task description 
 
     print "\n***************** Task page size report ***********************"
     

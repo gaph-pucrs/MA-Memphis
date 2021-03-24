@@ -162,18 +162,20 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 	std::cout << "Loading task ID " << id << " to PE " << (address >> 8) << "x" << (address & 0xFF) << std::endl;
 	std::string path = "../management/"+task+"/repository.txt";
 	std::ifstream repo(path);
+
 	if(repo.is_open()){
 		std::string line;
+		std::getline(repo, line);	/* Task type tag */
+
 		std::getline(repo, line);
-		// std::cout << "Line: " << line << std::endl;
 		unsigned txt_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Txt size: " << txt_size << std::endl;
+
 		std::getline(repo, line);
-		// std::cout << "Line: " << line << std::endl;
 		unsigned data_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Data size: " << data_size << std::endl;
+
 		std::getline(repo, line);
-		// std::cout << "Line: " << line << std::endl;
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
 		
@@ -227,7 +229,7 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
-	packet.push_back(tasks.size()*6 + 1 + 2);	/* Message length */
+	packet.push_back(tasks.size()*TASK_DESCRIPTOR_SIZE + 1 + 2);	/* Message length */
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
