@@ -282,9 +282,10 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		for (unsigned i = 0; i < task_line; i++)
 			std::getline(repository, line);
 
-		std::getline(repository, line);	/* Task ID*/
-		std::getline(repository, line);	/* static mapped PE*/
-		
+		std::getline(repository, line);	/* Task ID */
+		std::getline(repository, line);	/* static mapped PE */
+		std::getline(repository, line);	/* task type tag */
+
 		std::getline(repository, line);
 		unsigned txt_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Txt size: " << txt_size << std::endl;

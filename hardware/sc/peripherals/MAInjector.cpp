@@ -214,7 +214,8 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 void MAInjector::ma_load()
 {
 	/* Memphis packet + message protocol (type + size) + task address */
-	unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + tasks.size()*6 + 1;
+	unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + tasks.size()*TASK_DESCRIPTOR_SIZE + 1;
+
 	packet.clear();
 	packet.reserve(packet_size);
 
@@ -233,17 +234,40 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 
 	packet.push_back(NEW_APP);	/* Protocol: MA_ALLOCATION */
-	packet.push_back(tasks.size()*6 + 1);		/* Descriptor size */
+	packet.push_back(tasks.size()*TASK_DESCRIPTOR_SIZE + 1);		/* Descriptor size */
 
 	packet.push_back(tasks.size());
 
 	for(unsigned i = 0; i < tasks.size(); i++){
-		packet.push_back(i);
+		std::string path = "../management/" + tasks[i].first + "/repository.txt";
+		std::ifstream repo(path);
+
+		packet.push_back(i);				/* Task ID */
 		packet.push_back(tasks[i].second);	/* Task Address */
-		packet.push_back(0);
-		packet.push_back(0);
-		packet.push_back(0);
-		packet.push_back(0);
+
+		std::string line;
+
+		std::getline(repo, line);
+		// std::cout << "TTT: " << line << std::endl;
+		unsigned task_type_tag = std::stoul(line, nullptr, 16);
+		packet.push_back(task_type_tag);
+
+		std::getline(repo, line);
+		// std::cout << "txt_size: " << line << std::endl;
+		unsigned txt_size = std::stoul(line, nullptr, 16);
+		packet.push_back(txt_size);
+
+		std::getline(repo, line);
+		// std::cout << "data_size: " << line << std::endl;
+		unsigned data_size = std::stoul(line, nullptr, 16);
+		packet.push_back(data_size);
+
+		std::getline(repo, line);
+		// std::cout << "bss_size: " << line << std::endl;
+		unsigned bss_size = std::stoul(line, nullptr, 16);
+		packet.push_back(bss_size);
+
+		packet.push_back(0);			/* Initial address */
 	}
 
 	// std::cout << "MAInjector: NEW_APP packet size = " << packet.size() << std::endl;
