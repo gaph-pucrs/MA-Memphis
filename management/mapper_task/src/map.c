@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "mapper.h"
+#include "tag.h"
 
 void map_init(mapper_t *mapper)
 {
@@ -158,11 +159,14 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	// msg.msg[1] = appid_shift | i;
 	// msg.msg[2] = app->task[i]->data_sz;
 	// msg.msg[3] = app->task[i]->bss_sz;
-	msg.msg[4] = app->task_cnt;
+	// msg.msg[4] = observer_task;
+	// msg.msg[5] = observer_address;
+	msg.msg[6] = app->task_cnt;
+
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.msg[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.msg[i + 7] = mapper->processors[app->task[i]->proc_idx].addr;
 	
-	msg.length = app->task_cnt + 5;
+	msg.length = app->task_cnt + 7;
 
 	int appid_shift = app->id << 8;
 	for(int i = 0; i < app->task_cnt; i++){
@@ -171,8 +175,18 @@ void map_task_release(mapper_t *mapper, app_t *app)
 		msg.msg[2] = app->task[i]->data_sz;
 		msg.msg[3] = app->task[i]->bss_sz;
 
+		task_t *observer = map_nearest_observer(mapper, &(mapper->apps[0]), msg.msg[i + 7]);
+
+		if(observer == NULL){
+			msg.msg[4] = -1;
+			msg.msg[5] = 1;
+		} else {
+			msg.msg[4] = observer->id;
+			msg.msg[5] = mapper->processors[observer->proc_idx].addr;
+		}
+
 		/* Send message directed to kernel at task address */
-		SSend(&msg, KERNEL_MSG | msg.msg[i + 5]);
+		SSend(&msg, KERNEL_MSG | msg.msg[i + 7]);
 
 		/* Mark task as running */
 		app->task[i]->status = RUNNING;
@@ -289,4 +303,39 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 	} else {
 		mapper->pending_map_app = app;
 	}
+}
+
+task_t *map_nearest_observer(mapper_t *mapper, app_t *ma, int address)
+{
+	task_t *observer = NULL;
+	unsigned distance = -1;
+
+	/* Search all Management tasks */
+	/* Don't break if task id is -1 because MA IDs could be reused in the future */
+	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
+		if(ma->task[i]->type_tag & (OBSERVE | O_QOS) == (OBSERVE | O_QOS)){
+			/* QoS Observer found! Check distance */
+			unsigned new_dist = map_manhattan_distance(address, mapper->processors[ma->task[i]->proc_idx].addr);
+			if(new_dist < distance){
+				distance = new_dist;
+				observer = ma->task[i];
+			}
+		}
+	}
+
+	return observer;
+}
+
+unsigned map_manhattan_distance(int source, int target)
+{
+	int src_x = source >> 8;
+	int src_y = source & 0xFF;
+
+	int tgt_x = target >> 8;
+	int tgt_y = target & 0xFF;
+
+	int dist_x = abs(src_x - tgt_x);
+	int dist_y = abs(src_y - tgt_y);
+
+	return dist_x + dist_y;
 }

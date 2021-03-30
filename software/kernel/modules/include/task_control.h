@@ -25,16 +25,18 @@
 /** @brief This structure stores information of the running tasks */
 typedef struct _tcb {
 	unsigned int registers[HAL_MAX_REGISTERS];	//!< Register bank
-	unsigned int pc;								//!< Register file
-	unsigned int offset;			//!< Initial address of the task code in page
+	unsigned int pc;							//!< Register file
+	unsigned int offset;						//!< Initial address of the task code in page
 
-	int id;						//!< TCB identifier
+	int id;							//!< TCB identifier
 	unsigned int text_lenght;		//!< Memory TEXT section lenght in bytes
 	unsigned int data_lenght;		//!< Memory DATA section lenght in bytes
 	unsigned int bss_lenght;		//!< Memory BSS section lenght in bytes
 
 	int mapper_address;
 	int mapper_task;
+	int observer_address;
+	int observer_task;
 
 	int proc_to_migrate;	//!< Processor to migrate the task
 

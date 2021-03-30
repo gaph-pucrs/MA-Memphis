@@ -86,12 +86,22 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr);
  * @param id ID of the task to release
  * @param data_sz Length of the data section
  * @param bss_sz Length of the bss section
+ * @param observer_task ID of the observer MA task
+ * @param observer_address Address of the observer MA task
  * @param task_number Number of the app's tasks
  * @param task_location Pointer to task location array
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_release(int id, int data_sz, int bss_sz, int task_number, int *task_location);
+bool os_task_release(
+	int id, 
+	int data_sz, 
+	int bss_sz, 
+	int observer_task,
+	int observer_address,
+	int task_number, 
+	int *task_location
+);
 
 /**
  * @brief Handles a update task location packet

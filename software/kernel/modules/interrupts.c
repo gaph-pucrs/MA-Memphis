@@ -58,8 +58,12 @@ void os_isr(unsigned int status)
 		HAL_SLACK_TIME_MONITOR = 0;
 	}
 
-	if(status & HAL_IRQ_SCHEDULER)
+	if(status & HAL_IRQ_SCHEDULER){
 		call_scheduler = true;
+
+		/* Interrupt caused by scheduler. Will send monitoring status */
+		// llm_task(sched_get_current());
+	}
 
 	if(call_scheduler){
 		sched_run();
@@ -302,8 +306,15 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 	
 }
 
-bool os_task_release(int id, int data_sz, int bss_sz, int task_number, int *task_location)
-{
+bool os_task_release(
+	int id, 
+	int data_sz, 
+	int bss_sz, 
+	int observer_task, 
+	int observer_address, 
+	int task_number, 
+	int *task_location
+){
 	/* Get task to release */
 	tcb_t *task = tcb_search(id);
 
@@ -312,6 +323,9 @@ bool os_task_release(int id, int data_sz, int bss_sz, int task_number, int *task
 
 	/* Update TCB with received info */
 	tcb_update_sections(task, data_sz, bss_sz);
+
+	task->observer_task = observer_task;
+	task->observer_address = observer_address;
 
 	/* Write task location */
 	/** @todo Use memcpy */

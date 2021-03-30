@@ -369,7 +369,15 @@ bool os_kernel_syscall(int *message, int length)
 	switch(message[0]){
 		case TASK_RELEASE:
 			// putsv("will call release with ntasks=", message[4]);
-			return os_task_release(message[1], message[2], message[3], message[4], &message[5]);
+			return os_task_release(
+				message[1], 
+				message[2], 
+				message[3], 
+				message[4], 
+				message[5], 
+				message[6], 
+				&message[7]
+			);
 		case TASK_MIGRATION:
 			return os_task_migration(message[1], message[2]);
 		case RELEASE_PERIPHERAL:
