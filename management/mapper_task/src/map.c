@@ -183,6 +183,8 @@ void map_task_release(mapper_t *mapper, app_t *app)
 		} else {
 			msg.msg[4] = observer->id;
 			msg.msg[5] = mapper->processors[observer->proc_idx].addr;
+
+			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(mapper->processors[observer->proc_idx].addr));
 		}
 
 		/* Send message directed to kernel at task address */
@@ -313,13 +315,19 @@ task_t *map_nearest_observer(mapper_t *mapper, app_t *ma, int address)
 	/* Search all Management tasks */
 	/* Don't break if task id is -1 because MA IDs could be reused in the future */
 	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
-		if(ma->task[i]->type_tag & (OBSERVE | O_QOS) == (OBSERVE | O_QOS)){
-			/* QoS Observer found! Check distance */
-			unsigned new_dist = map_manhattan_distance(address, mapper->processors[ma->task[i]->proc_idx].addr);
-			if(new_dist < distance){
-				distance = new_dist;
-				observer = ma->task[i];
+		if(ma->task[i] != NULL){
+			// Echo("Trying MA id "); Echo(itoa(ma->task[i]->id)); Echo("\n");
+			// Echo("Task tag is "); Echo(itoa(ma->task[i]->type_tag)); Echo("\n");
+
+			if((ma->task[i]->type_tag & (OBSERVE | O_QOS)) == (OBSERVE | O_QOS)){
+				/* QoS Observer found! Check distance */
+				unsigned new_dist = map_manhattan_distance(address, mapper->processors[ma->task[i]->proc_idx].addr);
+				if(new_dist < distance){
+					distance = new_dist;
+					observer = ma->task[i];
+				}
 			}
+
 		}
 	}
 

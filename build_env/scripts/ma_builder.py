@@ -186,7 +186,7 @@ def get_task_type_tag(reader, task):
 
 	try:
 		observe = reader["observe"]
-		ttt |= 0x04
+		ttt |= 0x08
 
 		for capability in observe:
 			if capability == "qos":
