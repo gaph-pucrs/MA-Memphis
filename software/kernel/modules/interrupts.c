@@ -62,7 +62,7 @@ void os_isr(unsigned int status)
 		call_scheduler = true;
 
 		/* Interrupt caused by scheduler. Will send monitoring status */
-		// llm_task(sched_get_current());
+		llm_task(sched_get_current());
 	}
 
 	if(call_scheduler){

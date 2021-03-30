@@ -13,12 +13,18 @@
 
 #include "llm.h"
 
+#include "syscall.h"
+#include "services.h"
+
 void llm_task(tcb_t *task)
 {
 	/* What parameters? Deadline? */
 	/* Maybe send a full-featured status */
 	/* Deadline, execution time, etc. LLM should not process too much info */
 
-	/* How to know where is the configured observer? This info may be contained in task release! */
-	/* But how mapper knows where it put the observer? Tag from the Injector? */
+	/* Build a message */
+	if(task->observer_task != -1){
+		int message[4] = {MONITOR, task->scheduler.deadline, task->scheduler.period, task->scheduler.execution_time};
+		os_kernel_writepipe(task->observer_task, task->observer_address, 4, message);
+	}
 }

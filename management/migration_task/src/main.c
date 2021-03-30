@@ -1,7 +1,7 @@
 #include <api.h>
 #include <stdlib.h>
 
-#include "pkg.h"
+#include "ma_pkg.h"
 
 #warning Migration depends on mapper. Please include it in the testcase.
 
