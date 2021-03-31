@@ -25,6 +25,14 @@ int main()
 		switch(msg.msg[0]){
 		case MONITOR:
 			Echo("Received from LLM: "); Echo(itoa(msg.msg[1])); Echo(itoa(msg.msg[2])); Echo(itoa(msg.msg[3]));
+			if(qos_decide != -1){
+				msg.msg[0] = OBSERVE_PACKET;
+				msg.msg[1] = msg.msg[1];
+				msg.msg[2] = msg.msg[2];
+				msg.msg[3] = msg.msg[3];
+				msg.length = 4;
+				SSend(&msg, qos_decide);
+			}
 			break;
 		case SERVICE_PROVIDER:
 			if(msg.msg[1] == (DECIDE | D_QOS) && msg.msg[2] != -1){
