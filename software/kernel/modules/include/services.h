@@ -51,6 +51,8 @@
 #define TASK_MIGRATION_MAP				0x00000460
 #define RELEASE_PERIPHERAL				0x00000470
 #define MONITOR							0x00000480
+#define REQUEST_SERVICE					0x00000490
+#define SERVICE_PROVIDER				0x00000500
 
 #define EXIT		0
 #define WRITEPIPE	1
@@ -58,4 +60,5 @@
 #define GETTICK		3
 #define ECHO		4
 #define REALTIME	5
-#define APPID		8
+#define GETID		8
+#define GETLOCATION	9

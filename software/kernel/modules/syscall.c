@@ -39,6 +39,10 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			return os_echo(a1);
 		case REALTIME:
 			return os_realtime(a1, a2, a3);
+		case GETLOCATION:
+			return os_get_location();
+		case GETID:
+			return os_get_id();
 		default:
 			putsv("ERROR: Unknown service ", service);
 			return 0;
@@ -426,4 +430,14 @@ bool os_release_peripheral()
 {
 	HAL_MEM_REG_PERIPHERALS = 1;
 	puts("Peripherals released");
+}
+
+int os_get_location()
+{
+	return HAL_NI_CONFIG;
+}
+
+int os_get_id()
+{
+	return sched_get_current()->id;
 }

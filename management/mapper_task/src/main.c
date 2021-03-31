@@ -33,6 +33,9 @@ int main()
 			case TASK_MIGRATED:
 				tm_migration_complete(&mapper, msg.msg[1]);
 				break;
+			case REQUEST_SERVICE:
+				map_request_service(&mapper, msg.msg[1], msg.msg[2], msg.msg[3]);
+				break;
 			default:
 				Echo("Invalid service received: "); Echo(itoa(msg.msg[0])); Echo("\n");
 				break;

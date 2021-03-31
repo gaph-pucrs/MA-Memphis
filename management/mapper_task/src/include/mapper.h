@@ -34,5 +34,6 @@ void map_task_allocation(app_t *app, processor_t *processors);
 void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors);
 void map_task_release(mapper_t *mapper, app_t *app);
 void map_app_mapping_complete(app_t *app);
-task_t *map_nearest_observer(mapper_t *mapper, app_t *ma, int address);
+task_t *map_nearest_tag(mapper_t *mapper, app_t *ma, int address, unsigned tag);
 unsigned map_manhattan_distance(int source, int target);
+void map_request_service(mapper_t *mapper, int address, unsigned tag, int requester);

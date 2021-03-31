@@ -175,7 +175,7 @@ void map_task_release(mapper_t *mapper, app_t *app)
 		msg.msg[2] = app->task[i]->data_sz;
 		msg.msg[3] = app->task[i]->bss_sz;
 
-		task_t *observer = map_nearest_observer(mapper, &(mapper->apps[0]), msg.msg[i + 7]);
+		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.msg[i + 7], (OBSERVE | O_QOS));
 
 		if(observer == NULL){
 			msg.msg[4] = -1;
@@ -307,9 +307,9 @@ void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, proc
 	}
 }
 
-task_t *map_nearest_observer(mapper_t *mapper, app_t *ma, int address)
+task_t *map_nearest_tag(mapper_t *mapper, app_t *ma, int address, unsigned tag)
 {
-	task_t *observer = NULL;
+	task_t *oda = NULL;
 	unsigned distance = -1;
 
 	/* Search all Management tasks */
@@ -319,19 +319,18 @@ task_t *map_nearest_observer(mapper_t *mapper, app_t *ma, int address)
 			// Echo("Trying MA id "); Echo(itoa(ma->task[i]->id)); Echo("\n");
 			// Echo("Task tag is "); Echo(itoa(ma->task[i]->type_tag)); Echo("\n");
 
-			if((ma->task[i]->type_tag & (OBSERVE | O_QOS)) == (OBSERVE | O_QOS)){
-				/* QoS Observer found! Check distance */
+			if((ma->task[i]->type_tag & tag) == tag){
+				/* Tag found! Check distance */
 				unsigned new_dist = map_manhattan_distance(address, mapper->processors[ma->task[i]->proc_idx].addr);
 				if(new_dist < distance){
 					distance = new_dist;
-					observer = ma->task[i];
+					oda = ma->task[i];
 				}
 			}
-
 		}
 	}
 
-	return observer;
+	return oda;
 }
 
 unsigned map_manhattan_distance(int source, int target)
@@ -346,4 +345,20 @@ unsigned map_manhattan_distance(int source, int target)
 	int dist_y = abs(src_y - tgt_y);
 
 	return dist_x + dist_y;
+}
+
+void map_request_service(mapper_t *mapper, int address, unsigned tag, int requester)
+{
+	task_t *oda = map_nearest_tag(mapper, &mapper->apps[0], address, tag);
+
+	int id = -1;
+	if(oda != NULL)
+		id = oda->id;
+	
+	Message msg;
+	msg.msg[0] = SERVICE_PROVIDER;
+	msg.msg[1] = tag;
+	msg.msg[2] = id;
+	msg.length = 3;
+	SSend(&msg, requester);
 }

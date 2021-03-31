@@ -40,6 +40,8 @@ extern int SystemCall();
 #define exit(status) while(!SystemCall(EXIT, status, 0, 0))
 #define SSend(msg, app_target) while(!SystemCall(WRITEPIPE, (unsigned int*)msg, app_target, 1))
 #define SReceive(msg) while(!SystemCall(READPIPE, (unsigned int*)msg, 0, 1))
+#define get_location() SystemCall(GETLOCATION, 0, 0, 0)
+#define get_id()		SystemCall(GETID, 0, 0, 0)
 
 //Real-Time API - time represented in microseconds
 #define RealTime(period, deadline, execution_time) while(!SystemCall(REALTIME, period, deadline, execution_time))

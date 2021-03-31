@@ -114,3 +114,17 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg);
  * @return False
  */
 bool os_release_peripheral();
+
+/**
+ * @brief Gets the net address.
+ * 
+ * @return Net address value.
+ */
+int os_get_address();
+
+/**
+ * @brief Gets the running complete task ID
+ * 
+ * @return Task ID (with application ID)
+ */
+int os_get_id();
