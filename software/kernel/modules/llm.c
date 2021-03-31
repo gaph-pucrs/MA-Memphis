@@ -23,7 +23,7 @@ void llm_task(tcb_t *task)
 	/* Deadline, execution time, etc. LLM should not process too much info */
 
 	/* Build a message */
-	if(task->observer_task != -1){
+	if(task->observer_task != -1 && task->scheduler.deadline != -1){
 		int message[4] = {MONITOR, task->scheduler.deadline, task->scheduler.period, task->scheduler.execution_time};
 		os_kernel_writepipe(task->observer_task, task->observer_address, 4, message);
 	}
