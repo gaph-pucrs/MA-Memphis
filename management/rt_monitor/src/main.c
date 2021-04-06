@@ -6,6 +6,8 @@
 #include "ma_pkg.h"
 #include "tag.h"
 
+#include "rt.h"
+
 int main()
 {
 	static Message msg;
@@ -24,7 +26,17 @@ int main()
 		SReceive(&msg);
 		switch(msg.msg[0]){
 		case MONITOR:
-			Echo("Received from LLM: "); Echo(itoa(msg.msg[1])); Echo(itoa(msg.msg[2])); Echo(itoa(msg.msg[3]));
+			Echo("Received from LLM: "); Echo(itoa(msg.msg[1])); Echo(itoa(msg.msg[2])); Echo(itoa(msg.msg[3])); Echo(itoa(msg.msg[4])); Echo(itoa(msg.msg[5])); Echo("\n");
+			rt_test(msg.msg[1], msg.msg[2], msg.msg[3], msg.msg[4], msg.msg[5]);
+
+			/**
+			 * Criar por tarefa
+			 * 
+			 * Tarefa em estado crítico -> envia para decisão
+			 * Tarefa em estado 'muito bom' -> envia para decisão
+			 * 
+			 * Avisar com base em thresholds
+			 */
 			if(qos_decide != -1){
 				msg.msg[0] = OBSERVE_PACKET;
 				msg.msg[1] = msg.msg[1];

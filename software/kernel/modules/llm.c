@@ -24,7 +24,14 @@ void llm_task(tcb_t *task)
 
 	/* Build a message */
 	if(task->observer_task != -1 && task->scheduler.deadline != -1){
-		int message[4] = {MONITOR, task->scheduler.deadline, task->scheduler.period, task->scheduler.execution_time};
-		os_kernel_writepipe(task->observer_task, task->observer_address, 4, message);
+		int message[6] = {
+			MONITOR, 
+			task->id,
+			task->scheduler.waiting_msg,
+			task->scheduler.slack_time, 
+			task->scheduler.execution_time, 
+			task->scheduler.remaining_exec_time
+		};
+		os_kernel_writepipe(task->observer_task, task->observer_address, 6, message);
 	}
 }

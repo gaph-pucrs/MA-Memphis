@@ -323,8 +323,13 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 			}
 
 			/* Check deadline miss */
-			if(!tasks[i].scheduler.waiting_msg && !tasks[i].scheduler.slack_time && tasks[i].scheduler.remaining_exec_time > (tasks[i].scheduler.execution_time/10))
+			if(!tasks[i].scheduler.waiting_msg && !tasks[i].scheduler.slack_time && tasks[i].scheduler.remaining_exec_time > (tasks[i].scheduler.execution_time/10)){
 				puts("#### -------->>>  Deadline miss\n");
+				// putsvsv("P = ", tasks[i].scheduler.period, "; D = ", tasks[i].scheduler.deadline);
+				// putsvsv("; ET = ", tasks[i].scheduler.execution_time, "; RT = ", tasks[i].scheduler.remaining_exec_time);
+				// putsv("; S = ", tasks[i].scheduler.slack_time);
+				// puts("\n");
+			}
 		}
 
 		/* Below this region, the task chosen is a valid real-time task */
@@ -333,6 +338,7 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 			tasks[i].scheduler.ready_time += tasks[i].scheduler.period;
 			tasks[i].scheduler.remaining_exec_time = tasks[i].scheduler.execution_time;
 
+			/* Fim do período -- pronto para executar */
 			tasks[i].scheduler.status = SCHED_READY;
 		}
 
