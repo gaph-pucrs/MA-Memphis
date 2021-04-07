@@ -3,16 +3,17 @@
 #include <api.h>
 #include <stdlib.h>
 
+#include "decider.h"
+#include "migration.h"
 #include "ma_pkg.h"
 #include "tag.h"
-
-#warning Migration depends on mapper. Please include it in the testcase.
 
 int main()
 {
 	static Message msg;
 
 	Echo("Migration started at "); Echo(itoa(GetTick())); Echo("\n");
+	migration_init();
 
 	decider_request_actor();
 

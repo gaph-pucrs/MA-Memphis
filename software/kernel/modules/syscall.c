@@ -430,6 +430,7 @@ bool os_release_peripheral()
 {
 	HAL_MEM_REG_PERIPHERALS = 1;
 	puts("Peripherals released");
+	return false;
 }
 
 int os_get_location()

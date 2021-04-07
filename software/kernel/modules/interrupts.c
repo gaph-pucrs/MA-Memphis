@@ -19,6 +19,7 @@
 #include "task_location.h"
 #include "utils.h"
 #include "syscall.h"
+#include "llm.h"
 
 void os_isr(unsigned int status)
 {

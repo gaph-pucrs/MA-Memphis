@@ -120,7 +120,7 @@ bool os_release_peripheral();
  * 
  * @return Net address value.
  */
-int os_get_address();
+int os_get_location();
 
 /**
  * @brief Gets the running complete task ID
