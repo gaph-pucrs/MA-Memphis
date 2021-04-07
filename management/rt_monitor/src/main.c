@@ -7,58 +7,22 @@
 #include "tag.h"
 
 #include "rt.h"
+#include "monitor.h"
 
 int main()
 {
-	static Message msg;
-	int qos_decide = -1;
-
-	/* Ask the mapper whom to send the observe messages */
-	msg.msg[0] = REQUEST_SERVICE;
-	msg.msg[1] = get_location();
-	msg.msg[2] = (DECIDE | D_QOS);
-	msg.msg[3] = get_id();
-	msg.length = 4;
-
-	SSend(&msg, mapper_task[0]);
+	monitor_request_decider();
 
 	while(true){
+		static Message msg;
 		SReceive(&msg);
 		switch(msg.msg[0]){
 		case MONITOR:
-			Echo("Received from LLM: "); Echo(itoa(msg.msg[1])); Echo(itoa(msg.msg[2])); Echo(itoa(msg.msg[3])); Echo(itoa(msg.msg[4])); Echo(itoa(msg.msg[5])); Echo("\n");
+			// Echo("Received from LLM: "); Echo(itoa(msg.msg[1])); Echo(itoa(msg.msg[2])); Echo(itoa(msg.msg[3])); Echo(itoa(msg.msg[4])); Echo(itoa(msg.msg[5])); Echo("\n");
 			rt_test(msg.msg[1], msg.msg[2], msg.msg[3], msg.msg[4], msg.msg[5]);
-
-			/**
-			 * Criar por tarefa
-			 * 
-			 * Tarefa em estado crítico -> envia para decisão
-			 * Tarefa em estado 'muito bom' -> envia para decisão
-			 * 
-			 * Avisar com base em thresholds
-			 */
-			if(qos_decide != -1){
-				msg.msg[0] = OBSERVE_PACKET;
-				msg.msg[1] = msg.msg[1];
-				msg.msg[2] = msg.msg[2];
-				msg.msg[3] = msg.msg[3];
-				msg.length = 4;
-				SSend(&msg, qos_decide);
-			}
 			break;
 		case SERVICE_PROVIDER:
-			if(msg.msg[1] == (DECIDE | D_QOS) && msg.msg[2] != -1){
-				qos_decide = msg.msg[2];
-				Echo("Decide task is "); Echo(itoa(qos_decide)); Echo("\n");
-			} else {
-				/* Invalid answer, request again! */
-				msg.msg[0] = REQUEST_SERVICE;
-				msg.msg[1] = get_location();
-				msg.msg[2] = (DECIDE | D_QOS);
-				msg.msg[3] = get_id();
-				msg.length = 4;
-				SSend(&msg, mapper_task[0]);
-			}
+			monitor_service_provider(msg.msg[1], msg.msg[2]);
 			break;
 		}
 	}
