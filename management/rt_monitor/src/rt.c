@@ -6,9 +6,10 @@
 
 #include "ma_pkg.h"
 
-void rt_test(int id, int waiting_msg, int slack_time, int exec_time, int remaining_time)
+void rt_test(int id, int waiting_msg, int slack_time, int remaining_time)
 {
-	if(!waiting_msg && !slack_time && remaining_time > (exec_time/10)){
+	// Echo("Waiting = "); Echo(itoa(waiting_msg)); Echo("Slack = "); Echo(itoa(slack_time)); Echo(" Exec = "); Echo(itoa(exec_time)); Echo(" Remaining = "); Echo(itoa(remaining_time));
+	if(!waiting_msg && remaining_time > slack_time){
 		Echo("Deadline violation detected by task "); Echo(itoa(id)); Echo("\n");
 
 		if(monitor_enabled()){

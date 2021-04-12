@@ -22,6 +22,7 @@
 #include "services.h"
 #include "task_migration.h"
 #include "utils.h"
+#include "llm.h"
 
 const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
 
@@ -48,7 +49,7 @@ void sched_clear(tcb_t *tcb)
 {
 	if(tcb->scheduler.deadline != SCHED_NO_DEADLINE){
 		cpu_utilization -= tcb->scheduler.utilization;
-		putsv(" ----> CPU utilization decremented: ", cpu_utilization);
+		putsvsv(" ----> CPU utilization decremented in ", tcb->scheduler.utilization, ", now is ", cpu_utilization);
 	}
 
 	tcb->scheduler.ready_time = 0;
@@ -205,7 +206,6 @@ void sched_run()
 tcb_t *sched_lst(unsigned int current_time)
 {
 	static unsigned int schedule_overhead = 500;	//!<Used to dynamically estimate the scheduler overhead
-	// Scheduling * scheduled_task, * task;
 
 	unsigned int instant_overhead = current_time;
 	current_time += schedule_overhead;
@@ -323,13 +323,13 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 			}
 
 			/* Check deadline miss */
-			if(!tasks[i].scheduler.waiting_msg && !tasks[i].scheduler.slack_time && tasks[i].scheduler.remaining_exec_time > (tasks[i].scheduler.execution_time/10)){
-				puts("#### -------->>>  Deadline miss\n");
-				// putsvsv("P = ", tasks[i].scheduler.period, "; D = ", tasks[i].scheduler.deadline);
-				// putsvsv("; ET = ", tasks[i].scheduler.execution_time, "; RT = ", tasks[i].scheduler.remaining_exec_time);
-				// putsv("; S = ", tasks[i].scheduler.slack_time);
-				// puts("\n");
-			}
+			// if(!tasks[i].scheduler.waiting_msg && !tasks[i].scheduler.slack_time && tasks[i].scheduler.remaining_exec_time > (tasks[i].scheduler.execution_time/10)){
+			// 	putsv("#### -------->>>  Deadline miss at task ", tasks[i].id);
+			// 	// putsvsv("P = ", tasks[i].scheduler.period, "; D = ", tasks[i].scheduler.deadline);
+			// 	// putsvsv("; ET = ", tasks[i].scheduler.execution_time, "; RT = ", tasks[i].scheduler.remaining_exec_time);
+			// 	// putsv("; S = ", tasks[i].scheduler.slack_time);
+			// 	// puts("\n");
+			// }
 		}
 
 		/* Below this region, the task chosen is a valid real-time task */
@@ -347,6 +347,9 @@ void sched_rt_update(unsigned int current_time, unsigned int schedule_overhead)
 			sched_update_task_slack_time(&tasks[i], current_time);
 		
 	}
+
+	/* Monitor all RT tasks */
+	llm_rt(tasks);
 }
 
 void sched_update_task_slack_time(tcb_t *task, unsigned int current_time)

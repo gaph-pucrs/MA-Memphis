@@ -429,7 +429,7 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 bool os_release_peripheral()
 {
 	HAL_MEM_REG_PERIPHERALS = 1;
-	puts("Peripherals released");
+	puts("Peripherals released\n");
 	return false;
 }
 

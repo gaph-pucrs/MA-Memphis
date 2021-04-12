@@ -59,16 +59,11 @@ void os_isr(unsigned int status)
 		HAL_SLACK_TIME_MONITOR = 0;
 	}
 
-	if(status & HAL_IRQ_SCHEDULER){
+	if(status & HAL_IRQ_SCHEDULER)
 		call_scheduler = true;
-
-		/* Interrupt caused by scheduler. Will send monitoring status */
-		llm_task(sched_get_current());
-	}
 
 	if(call_scheduler){
 		sched_run();
-
 	} else if(sched_is_idle()){
 		sched_update_idle_time();
 
