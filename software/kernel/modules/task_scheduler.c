@@ -62,6 +62,8 @@ void sched_clear(tcb_t *tcb)
 	tcb->scheduler.running_start_time = 0;
 	tcb->scheduler.utilization = 0;
 	tcb->scheduler.waiting_msg = 0;
+	tcb->observer_address = -1;
+	tcb->observer_task = -1;
 }
 
 tcb_t *sched_get_current()

@@ -177,9 +177,9 @@ void map_task_release(mapper_t *mapper, app_t *app)
 
 		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.msg[i + 7], (OBSERVE | O_QOS));
 
-		if(observer == NULL){
+		if(observer == NULL || app->id == 0){
 			msg.msg[4] = -1;
-			msg.msg[5] = 1;
+			msg.msg[5] = -1;
 		} else {
 			msg.msg[4] = observer->id;
 			msg.msg[5] = mapper->processors[observer->proc_idx].addr;
