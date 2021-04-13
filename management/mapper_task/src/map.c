@@ -143,7 +143,8 @@ void map_task_allocated(mapper_t *mapper, int id)
 
 	if(app->allocated_cnt == app->task_cnt){
 		/* All tasks allocated, send task release */
-		Echo("All tasks allocated. Sending TASK_RELEASE\n");
+		Echo("All tasks allocated from app "); Echo(itoa(app->id)); 
+		Echo("Sending TASK_RELEASE at time "); Echo(itoa(GetTick())); Echo("\n");
 
 		map_task_release(mapper, app);
 		map_app_mapping_complete(app);
@@ -213,7 +214,7 @@ void map_app_mapping_complete(app_t *app)
 
 void map_task_terminated(mapper_t *mapper, int id)
 {
-	Echo("Received task terminated from id "); Echo(itoa(id)); Echo("\n");
+	Echo("Received task terminated from id "); Echo(itoa(id)); Echo(" at time "); Echo(itoa(GetTick())); Echo("\n");
 
 	int appid = id >> 8;
 	int taskid = id & 0xFF;

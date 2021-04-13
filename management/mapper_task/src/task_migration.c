@@ -8,7 +8,7 @@
 
 void tm_migrate(mapper_t *mapper, int task_id)
 {
-	Echo("Received migration request to task id "); Echo(itoa(task_id)); Echo("\n");
+	Echo("Received migration request to task id "); Echo(itoa(task_id)); Echo(" at time "); Echo(itoa(GetTick())); Echo("\n");
 
 	app_t *app = app_search(mapper->apps, task_id >> 8);
 	if(app == NULL){
@@ -54,7 +54,7 @@ void tm_migrate(mapper_t *mapper, int task_id)
 
 void tm_migration_complete(mapper_t *mapper, int task_id)
 {
-	Echo("Received migration completed to task id "); Echo(itoa(task_id)); Echo("\n");
+	Echo("Received migration completed to task id "); Echo(itoa(task_id)); Echo(" at time "); Echo(itoa(GetTick())); Echo("\n");
 
 	app_t *app = app_search(mapper->apps, task_id >> 8);
 	if(app == NULL){
