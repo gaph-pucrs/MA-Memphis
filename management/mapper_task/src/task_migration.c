@@ -27,7 +27,10 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	}
 
 	task->old_proc = task->proc_idx;
+	// unsigned then = GetTick();
 	task->proc_idx = processors_get_first_most_free(mapper->processors, task->old_proc);
+	// unsigned now = GetTick();
+	// Echo("Ticks of mapping task for migration = "); Echo(itoa(now - then)); Echo("\n");
 
 	if(task->old_proc == task->proc_idx){
 		Echo("Will not migrate. Task is in the same PE as the target address\n");
