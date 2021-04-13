@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	Message msg;
 	int rank = 2;
 
-	//RealTime(200000, 200000, 90000, 0);
+	RealTime(200000, 200000, 90000);
 
 	qtdEnvios = 0;
 
@@ -126,7 +126,7 @@ void dijkstra(int myID) {
 	int chStart, chEnd;
 	int u =-1;
 
-	//RealTime(103349, 103349, 11796, 0);
+	RealTime(43200, 43200, 11796);
 
 	for(x=tasks[myID][0]; x<tasks[myID][1]; x++){
 		chStart = nodes_tasks[x][0];	//Start node
