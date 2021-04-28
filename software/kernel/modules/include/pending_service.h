@@ -91,3 +91,10 @@ pending_msg_t *pending_msg_search(int id);
  * @param addr Address of the consumer task
  */ 
 void pending_msg_send(pending_msg_t *msg, int addr);
+
+/**
+ * @brief Gets a message pointer based on the message service (index 0)
+ * 
+ * @param svc Service of the desired message
+ */
+pending_msg_t *pending_msg_search_svc(int svc);

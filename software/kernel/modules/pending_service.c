@@ -65,9 +65,14 @@ bool pending_msg_push(int task, int size, int *msg)
 	pending_msg_t *pending = pending_msg_search(-1);
 
 	if(!pending){
-		puts("ERROR: No available slots in kernel 'pipe'\n");
-		while(1);
-		return false;
+		pending = pending_msg_search_svc(MONITOR);
+		if(!pending){
+			puts("FATAL: No available slots in kernel 'pipe' to replace\n");
+			while(1);
+			return false;
+		} else {
+			puts("WARNING: Dropping MONITOR packet\n");
+		}
 	}
 
 	/* Push message to buffer */
@@ -122,4 +127,13 @@ void pending_msg_send(pending_msg_t *msg, int addr)
 	msg->task = -1;
 
 	pkt_send(packet, (unsigned*)msg->message, msg->size);
+}
+
+pending_msg_t *pending_msg_search_svc(int svc)
+{
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
+		if(pending_msgs[i].task != -1 && pending_msgs[i].message[0] == svc)
+			return &pending_msgs[i];
+	}
+	return NULL;
 }
