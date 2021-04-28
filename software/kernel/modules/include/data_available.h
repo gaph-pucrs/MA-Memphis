@@ -17,6 +17,8 @@
 
 #include "pkg.h"
 
+#define DATA_AV_SIZE PKG_MAX_TASKS_APP+PKG_N_PE
+
 /* Forward declaration */
 typedef struct _tcb tcb_t;
 
@@ -26,7 +28,7 @@ typedef struct _data_av {
 } data_av_t;
 
 typedef struct _data_av_fifo {
-	data_av_t buffer[PKG_MAX_TASKS_APP];
+	data_av_t buffer[DATA_AV_SIZE];
 	unsigned char head;
 	unsigned char tail;
 	bool empty;

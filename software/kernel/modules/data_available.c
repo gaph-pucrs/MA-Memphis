@@ -38,7 +38,7 @@ bool data_av_insert(tcb_t *tcb, int producer_task, int producer_addr)
 	tcb->data_av.buffer[tcb->data_av.tail].requester_addr = producer_addr;
 
 	tcb->data_av.tail++;
-	tcb->data_av.tail %= PKG_MAX_TASKS_APP;
+	tcb->data_av.tail %= DATA_AV_SIZE;
 
 	tcb->data_av.full = (tcb->data_av.tail == tcb->data_av.head);
 	tcb->data_av.empty = false;
@@ -68,7 +68,7 @@ data_av_t *data_av_pop(tcb_t *tcb)
 		return NULL;
 
 	data_av_t *ret = &(tcb->data_av.buffer[tcb->data_av.head++]);
-	tcb->data_av.head %= PKG_MAX_TASKS_APP;
+	tcb->data_av.head %= DATA_AV_SIZE;
 
 	if(tcb->data_av.head == tcb->data_av.tail)
 		tcb->data_av.empty = true;
