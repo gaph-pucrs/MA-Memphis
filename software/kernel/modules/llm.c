@@ -26,7 +26,7 @@ void llm_task(tcb_t *task)
 
 	/* Build a message */
 	if(task->id != -1 && task->observer_task != -1 && task->scheduler.deadline != -1){
-		int message[6] = {
+		int message[5] = {
 			MONITOR, 
 			task->id,
 			task->scheduler.waiting_msg,
