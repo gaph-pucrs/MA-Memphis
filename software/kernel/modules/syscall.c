@@ -281,6 +281,12 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			/* Remove pending DATA_AV */
 			data_av_pop(current);
 
+			/* Add a new data available if kernel has message to this task */
+			if(pending_msg_search(cons_task) != NULL){
+				/* Add a new to the last position of the FIFO */
+				data_av_insert(current, 0x10000000 | HAL_NI_CONFIG, HAL_NI_CONFIG);
+			}
+
 			return true;
 		} else {
 			/* Get the producer TCB */
@@ -394,6 +400,9 @@ bool os_kernel_syscall(int *message, int length)
 
 bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 {
+	/* Send data available only if target task hasn't received data available from this source */
+	bool send_data_av = (pending_msg_search(task) == NULL);
+
 	/* Avoid overwriting pending messages */
 	while(HAL_DMNI_SEND_ACTIVE);
 
@@ -401,26 +410,28 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 	/* Insert message in kernel output message buffer */
 	pending_msg_push(task, size, msg);
 
-	/* Check if local consumer / migrated task */
-	tcb_t *cons_tcb = NULL;
-	if(addr == HAL_NI_CONFIG){
-		cons_tcb = tcb_search(task);
-		if(!cons_tcb)
-			addr = tm_get_migrated_addr(task);
-	}
-
-	if(cons_tcb){
-		/* Insert the packet to TCB */
-		data_av_insert(cons_tcb, 0x10000000 | HAL_NI_CONFIG, HAL_NI_CONFIG);
-
-		/* If the consumer task is waiting for a DATA_AV, release it */
-		if(sched_is_waiting_data_av(cons_tcb)){
-			sched_release_wait(cons_tcb);
-			return sched_is_idle();
+	if(send_data_av){
+		/* Check if local consumer / migrated task */
+		tcb_t *cons_tcb = NULL;
+		if(addr == HAL_NI_CONFIG){
+			cons_tcb = tcb_search(task);
+			if(!cons_tcb)
+				addr = tm_get_migrated_addr(task);
 		}
-	} else {
-		/* Send data available to the right processor */
-		data_av_send(task, 0x10000000 | HAL_NI_CONFIG, addr, HAL_NI_CONFIG);
+
+		if(cons_tcb){
+			/* Insert the packet to TCB */
+			data_av_insert(cons_tcb, 0x10000000 | HAL_NI_CONFIG, HAL_NI_CONFIG);
+
+			/* If the consumer task is waiting for a DATA_AV, release it */
+			if(sched_is_waiting_data_av(cons_tcb)){
+				sched_release_wait(cons_tcb);
+				return sched_is_idle();
+			}
+		} else {
+			/* Send data available to the right processor */
+			data_av_send(task, 0x10000000 | HAL_NI_CONFIG, addr, HAL_NI_CONFIG);
+		}
 	}
 
 	return false;

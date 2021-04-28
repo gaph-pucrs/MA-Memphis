@@ -135,6 +135,12 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 		}
 		/* Send it like a MESSAGE_DELIVERY */
 		pending_msg_send(msg, cons_addr);
+
+		/* If still pending messages to requesting task, also send a data available */
+		if(pending_msg_search(cons_task) != NULL){
+			/* Send data available to the right processor */
+			data_av_send(cons_task, 0x10000000 | HAL_NI_CONFIG, cons_addr, HAL_NI_CONFIG);
+		}
 	} else {
 		// putsvsv("Received message request from task ", cons_task, " to task ", prod_task);
 		/* Get the producer task */
