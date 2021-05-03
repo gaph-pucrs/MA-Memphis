@@ -22,17 +22,20 @@
  * \return The int return is only to avoid a build-in warning
  */
 int puts(char *string) {
+	MemoryWrite(UART_WRITE, string);
 
-	int *str_part;
-	//This is the most crazy and complicated FOR declaration that I ever seen. For obviously purposes, I divided the FOR section in lines
-	//PS: This indicates a hardware developer putting its hands on software development
-	for(
-			str_part = (int*)string,  MemoryWrite(UART_WRITE,*str_part);
+	/* Uncomment for VHDL compatibility */
+	// int *str_part;
+	// //This is the most crazy and complicated FOR declaration that I ever seen. For obviously purposes, I divided the FOR section in lines
+	// //PS: This indicates a hardware developer putting its hands on software development
+	// for(
+	// 		str_part = (int*)string,  MemoryWrite(UART_WRITE,*str_part);
 
-			!( ( (char*)str_part )[0] == 0 || ( (char*)str_part )[1] == 0 || ( (char*)str_part )[2] == 0 || ( (char*)str_part )[3] == 0);
+	// 		!( ( (char*)str_part )[0] == 0 || ( (char*)str_part )[1] == 0 || ( (char*)str_part )[2] == 0 || ( (char*)str_part )[3] == 0);
 
-			*str_part++,MemoryWrite(UART_WRITE, *str_part)
-	);
+	// 		*str_part++,MemoryWrite(UART_WRITE, *str_part)
+	// );
+
 	return 0;
 }
 
