@@ -20,16 +20,11 @@
  * \param string array of chars
  * \return The int return is only to avoid a build-in warning
  */
-int puts(char *string) {
-	char *ptr = string;
-	while(true){
-		HAL_UART_DATA = *((unsigned int*)ptr);
-		for(int i = 0; i < sizeof(unsigned int); i++){
-			if(!ptr[i])
-				return 0;
-		}
-		ptr += 4;
-	}
+int puts(char *string)
+{
+	HAL_UART_DATA = string;
+
+	return 0;
 }
 
 /**Converts a integer number to its decimal representation in a array of char

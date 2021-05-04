@@ -104,7 +104,6 @@ void pe::reset_n_attr(){
 void pe::sequential_attr(){
 
 	FILE *fp;
-	char c, end;
 
 	if (reset.read() == 1) {
 		cpu_mem_address_reg.write(0);
@@ -158,21 +157,21 @@ void pe::sequential_attr(){
 			sprintf(aux, "log/log%dx%d.txt", (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 
-			end = 0;
-			for(int i=0;i<4;i++) {
-				c = cpu_mem_data_write_reg.read().range(31-i*8,24-i*8);
+			bool end = false;
+			uint32_t address = cpu_mem_data_write_reg.read()/4;
+			while(!end){
+				unsigned long word = mem->ram_data[address++];
+				word = __builtin_bswap32(word);
+				char str[5] = {};
+				memcpy(str, &word, 4);
 
-				//Writes a string in the line
-				if(c != 10 && c != 0 && !end){
-					fprintf(fp,"%c",c);
-				}
-				//Detects the string end
-				else if(c == 0){
-					end = true;
-				}
-				//Line feed detected. Writes the line in the file
-				else if(c == 10){
-					fprintf(fp,"%c",c);
+				fprintf(fp, "%s", str);
+
+				for(int i = 0; i < 4; i++){
+					if(str[i] == 0){
+						end = true;
+						break;
+					}
 				}
 			}
 
