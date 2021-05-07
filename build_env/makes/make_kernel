@@ -25,7 +25,7 @@ CCOBJ = $(patsubst %.c,%.o, $(CCSRC))
 ASSRC = $(wildcard $(HALDIR)/*.s)
 ASOBJ = $(patsubst %.s,%.o, $(ASSRC))
 
-CFLAGS = -O2 -Wall -fms-extensions -G 0 -std=c99
+CFLAGS = -Os -Wall -fms-extensions -G 0 -std=c99
 
 all: $(TARGET).txt $(TARGET).lst
 
