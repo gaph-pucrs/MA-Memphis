@@ -22,7 +22,7 @@
  */
 int puts(char *string)
 {
-	HAL_UART_DATA = string;
+	HAL_UART_DATA = (unsigned int)string;
 
 	return 0;
 }
