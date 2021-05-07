@@ -13,14 +13,14 @@ from build_utils import *
 #When defined, a main function must be called in the last line of the script, take a look at the end of file
 def main():
     
-    MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
+    MA_MEMPHIS_PATH = os.getenv("MA_MEMPHIS_PATH", 0)
     MEMPHIS_HOME = os.getenv("MEMPHIS_HOME", 0)
     
-    if MEMPHIS_PATH == 0:
-        sys.exit("ENV PATH ERROR: MEMPHIS_PATH not defined")
+    if MA_MEMPHIS_PATH == 0:
+        sys.exit("ENV PATH ERROR: MA_MEMPHIS_PATH not defined")
     if MEMPHIS_HOME == 0:
-        print "WARNING: MEMPHIS_HOME not defined, using as default testcase dir MEMPHIS_PATH/testcases"
-        MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+        print "WARNING: MEMPHIS_HOME not defined, using as default testcase dir MA_MEMPHIS_PATH/testcases"
+        MEMPHIS_HOME = MA_MEMPHIS_PATH + "/testcases"
         
     INPUT_TESTCASE_FILE_PATH    = sys.argv[1]
     
@@ -37,16 +37,16 @@ def main():
     if os.path.exists(APP_PATH):
         os.system("cd "+APP_PATH+"; make clean")
     
-    #Selects the application source code from the MEMPHIS_PATH or from MEMPHIS_HOME
+    #Selects the application source code from the MA_MEMPHIS_PATH or from MEMPHIS_HOME
     source_app_path = ""
     try:
-        source_app_path = MEMPHIS_PATH + "/applications/" + APP_NAME
+        source_app_path = MA_MEMPHIS_PATH + "/applications/" + APP_NAME
         if os.path.exists(APP_PATH) == False and os.path.exists(source_app_path) == False:
             raise Exception()
         elif os.path.exists(APP_PATH) == True:
             source_app_path = APP_PATH
         else:
-            print "\nWARNING: App path not found at:\n-" + APP_PATH + "\nGetting app path from MEMPHIS_PATH="+source_app_path
+            print "\nWARNING: App path not found at:\n-" + APP_PATH + "\nGetting app path from MA_MEMPHIS_PATH="+source_app_path
     except:
         sys.exit("\n\nERROR: Invalid application name passed as 2nd argument: "+APP_NAME+"\nThe application was not found either in:\n- " + APP_PATH + "\n- "+ source_app_path)
 
@@ -62,8 +62,8 @@ def main():
     page_size_KB = get_page_size_KB(yaml_r)
     page_size_bytes = get_page_size_KB(yaml_r) * 1024
     
-    #Copies the app make from MEMPHIS_PATH to the application folder
-    copy_app_make(MEMPHIS_PATH, APP_PATH, page_size_KB)
+    #Copies the app make from MA_MEMPHIS_PATH to the application folder
+    copy_app_make(MA_MEMPHIS_PATH, APP_PATH, page_size_KB)
     NCPU = multiprocessing.cpu_count()
     #Compiles the application
     exit_status = os.system("cd "+APP_PATH+"; make "+"-j"+str(NCPU))

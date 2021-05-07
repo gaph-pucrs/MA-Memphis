@@ -13,14 +13,14 @@ from build_utils import *
 #When defined, a main function must be called in the last line of the script, take a look at the end of file
 def main():
 	
-	MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
+	MA_MEMPHIS_PATH = os.getenv("MA_MEMPHIS_PATH", 0)
 	MEMPHIS_HOME = os.getenv("MEMPHIS_HOME", 0)
 	
-	if MEMPHIS_PATH == 0:
-		sys.exit("ENV PATH ERROR: MEMPHIS_PATH not defined")
+	if MA_MEMPHIS_PATH == 0:
+		sys.exit("ENV PATH ERROR: MA_MEMPHIS_PATH not defined")
 	if MEMPHIS_HOME == 0:
-		print "WARNING: MEMPHIS_HOME not defined, using as default testcase dir MEMPHIS_PATH/testcases"
-		MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+		print "WARNING: MEMPHIS_HOME not defined, using as default testcase dir MA_MEMPHIS_PATH/testcases"
+		MEMPHIS_HOME = MA_MEMPHIS_PATH + "/testcases"
 		
 	INPUT_TESTCASE_FILE_PATH    = sys.argv[1]
 	
@@ -41,8 +41,8 @@ def main():
 	#Generate the APP id file
 	generate_apps_id(APP_PATH, ma_id_list)
 
-	#Copies the app make from MEMPHIS_PATH to the application folder
-	copy_app_make(MEMPHIS_PATH, APP_PATH, page_size_KB, ma_task_list)
+	#Copies the app make from MA_MEMPHIS_PATH to the application folder
+	copy_app_make(MA_MEMPHIS_PATH, APP_PATH, page_size_KB, ma_task_list)
 	NCPU = multiprocessing.cpu_count()
 	#Compiles the application
 	exit_status = os.system("cd "+APP_PATH+"; make "+"-j"+str(NCPU))

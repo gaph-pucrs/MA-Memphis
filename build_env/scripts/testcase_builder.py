@@ -22,14 +22,14 @@ from wave_builder import generate_wave
 def main():
    
 	#This script copies and compile a given app
-	MEMPHIS_PATH = os.getenv("MEMPHIS_PATH", 0)
+	MA_MEMPHIS_PATH = os.getenv("MA_MEMPHIS_PATH", 0)
 	MEMPHIS_HOME = os.getenv("MEMPHIS_HOME", 0)
 	print "\n"
 	 
-	#Test if testcase file MEMPHIS_PATH is valid
+	#Test if testcase file MA_MEMPHIS_PATH is valid
 	if MEMPHIS_HOME == 0:
-		print "\nWARNING: MEMPHIS_HOME not defined, using as default testcase dir MEMPHIS_PATH/testcases\n"
-		MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+		print "\nWARNING: MEMPHIS_HOME not defined, using as default testcase dir MA_MEMPHIS_PATH/testcases\n"
+		MEMPHIS_HOME = MA_MEMPHIS_PATH + "/testcases"
 
 	INPUT_TESTCASE_FILE_PATH = sys.argv[1]
 	   
@@ -40,7 +40,7 @@ def main():
 	TESTCASE_NAME = input_yaml_name.split(".")[0]
 		
 	#print "Path Summary: "
-	#print "MEMPHIS_PATH: ", MEMPHIS_PATH
+	#print "MA_MEMPHIS_PATH: ", MA_MEMPHIS_PATH
 	#print "MEMPHIS_HOME: ",MEMPHIS_HOME
 	#print "TESTCASE_PATH:",TESTCASE_PATH
 	#print "TESTCASE_NAME:",TESTCASE_NAME
@@ -74,17 +74,17 @@ def main():
 	create_ifn_exists(TESTCASE_PATH+"/base_scenario")
 	
 	#Testcase generation: updates source files...
-	copy_scripts ( MEMPHIS_PATH,  TESTCASE_PATH)
-	copy_kernel( MEMPHIS_PATH,  TESTCASE_PATH)
-	copy_management(MEMPHIS_PATH, TESTCASE_PATH, ma_task_list)
-	copy_hardware( MEMPHIS_PATH,  TESTCASE_PATH, model_description)
-	copy_makefiles( MEMPHIS_PATH,  TESTCASE_PATH, page_size_KB, memory_size_KB, model_description)
+	copy_scripts ( MA_MEMPHIS_PATH,  TESTCASE_PATH)
+	copy_kernel( MA_MEMPHIS_PATH,  TESTCASE_PATH)
+	copy_management(MA_MEMPHIS_PATH, TESTCASE_PATH, ma_task_list)
+	copy_hardware( MA_MEMPHIS_PATH,  TESTCASE_PATH, model_description)
+	copy_makefiles( MA_MEMPHIS_PATH,  TESTCASE_PATH, page_size_KB, memory_size_KB, model_description)
 	copy_testcase_file( testcase_file_inside_dir, INPUT_TESTCASE_FILE_PATH)
 	
 	#Create other important dirs
 	create_ifn_exists(TESTCASE_PATH+"/include")
 	
-	#Calls the memphis-wave_gen script if
+	#Calls the mm-wave_gen script if
 	generate_wave(TESTCASE_PATH, yaml_reader)
 	
 	#Compile the hw and kernel by calling hw_builder and kernel_builder    

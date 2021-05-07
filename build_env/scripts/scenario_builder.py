@@ -15,17 +15,17 @@ from build_utils import *
 def main():
 	
 	#This script copies and compile a given app
-	MEMPHIS_PATH                  = os.getenv("MEMPHIS_PATH", 0)
+	MA_MEMPHIS_PATH                  = os.getenv("MA_MEMPHIS_PATH", 0)
 	MEMPHIS_HOME                  = os.getenv("MEMPHIS_HOME", 0)
 	INPUT_TESTCASE_FILE_PATH    = sys.argv[1]
 	INPUT_SCENARIO_FILE_PATH    = sys.argv[2]
 	SIM_TIME                    = sys.argv[3]
 	
 	print ""
-	 #Test if testcase file MEMPHIS_PATH is valid
+	 #Test if testcase file MA_MEMPHIS_PATH is valid
 	if MEMPHIS_HOME == 0:
-		print "\nWARNING: MEMPHIS_HOME not defined, using as default testcase dir MEMPHIS_PATH/testcases\n"
-		MEMPHIS_HOME = MEMPHIS_PATH + "/testcases"
+		print "\nWARNING: MEMPHIS_HOME not defined, using as default testcase dir MA_MEMPHIS_PATH/testcases\n"
+		MEMPHIS_HOME = MA_MEMPHIS_PATH + "/testcases"
 		
 	path_list = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
 	input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
@@ -113,7 +113,7 @@ def check_app_exist(app_name_list, testcase_path):
 	   
 	app_not_found_list = list(set(app_not_found_list))#Remove redundant instance
 	if app_not_found_list:
-		print "\nERROR: The following application(s) were not compiled yet (use memphis-app to compile):"
+		print "\nERROR: The following application(s) were not compiled yet (use mm-app to compile):"
 		for app_name in app_not_found_list:
 			print "- " + app_name
 	

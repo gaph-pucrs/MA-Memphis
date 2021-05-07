@@ -3,5 +3,5 @@ import os
 import sys
 
 
-os.system("cat $MEMPHIS_PATH/README.txt")
+os.system("cat $MA_MEMPHIS_PATH/README.txt")
 

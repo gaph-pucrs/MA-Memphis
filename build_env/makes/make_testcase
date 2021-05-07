@@ -7,7 +7,7 @@ default: $(MY_SCENARIO)
 all: banner kernel ma hw apps
 
 update:
-	@cd ..; memphis-gen $(YAML_FILE); cd $(TC_NAME);
+	@cd ..; mm-gen $(YAML_FILE); cd $(TC_NAME);
 	
 banner:
 	@python2 build/banner.py
