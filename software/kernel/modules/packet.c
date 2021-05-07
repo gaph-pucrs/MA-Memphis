@@ -36,18 +36,15 @@ void pkt_init()
 		pkt_slots[i].free = true;
 }
 
-packet_t pkt_read(){
-	volatile packet_t packet;
-	
+void pkt_read(volatile packet_t *packet)
+{	
 	HAL_DMNI_SIZE = PKT_SIZE;
 	HAL_DMNI_OP = HAL_DMNI_WRITE;
-	HAL_DMNI_ADDRESS = (unsigned int)&packet;
+	HAL_DMNI_ADDRESS = (unsigned int)packet;
 	HAL_DMNI_START = 1;
 	
 	/* Wait for data transfer */
 	while(HAL_DMNI_RECEIVE_ACTIVE);
-
-	return packet;
 }
 
 packet_t *pkt_slot_get()

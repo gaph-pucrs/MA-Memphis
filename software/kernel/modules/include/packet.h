@@ -100,11 +100,11 @@ typedef struct _pkt_slot_t {
 void pkt_init();
 
 /**
- * @brief Reads a packet in the DMNI?
+ * @brief Reads a packet from the DMNI
  * 
- * @return A packet structure filled with the information
+ * @param packet A pointer to a packet structure.
  */
-packet_t pkt_read();
+void pkt_read(volatile packet_t *packet);
 
 /**
  * @brief Searches for a free packet slot.

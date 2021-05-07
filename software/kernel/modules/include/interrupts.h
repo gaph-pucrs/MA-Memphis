@@ -32,7 +32,7 @@ void os_isr(unsigned int status);
  * 
  * @return True if the scheduler should be called.
  */
-bool os_handle_pkt(packet_t *packet);
+bool os_handle_pkt(volatile packet_t *packet);
 
 /**
  * @brief Receive a message request and add to the proper task TCB

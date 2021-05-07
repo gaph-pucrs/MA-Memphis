@@ -31,7 +31,8 @@ void os_isr(unsigned int status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & HAL_IRQ_NOC){
-		packet_t packet = pkt_read();
+		volatile packet_t packet; 
+		pkt_read(&packet);
 
 		if(
 			HAL_DMNI_SEND_ACTIVE && (
@@ -78,7 +79,7 @@ void os_isr(unsigned int status)
     hal_run_task((void*)sched_get_current());
 }
 
-bool os_handle_pkt(packet_t *packet)
+bool os_handle_pkt(volatile packet_t *packet)
 {
 	switch(packet->service){
 		case MESSAGE_REQUEST:

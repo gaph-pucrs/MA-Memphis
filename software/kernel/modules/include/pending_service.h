@@ -55,7 +55,7 @@ void pending_msg_init();
  *
  * @return True if sucess
  */
-bool pending_svc_push(const packet_t *packet);
+bool pending_svc_push(const volatile packet_t *packet);
 
 /**
  * @brief Adds a service to pending structure

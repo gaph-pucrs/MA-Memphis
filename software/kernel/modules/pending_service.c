@@ -33,8 +33,8 @@ void pending_msg_init()
 		pending_msgs[i].task = -1;
 }
 
-bool pending_svc_push(const packet_t *packet){
-
+bool pending_svc_push(const volatile packet_t *packet)
+{
 	if(pending_svcs.full){
 		puts("ERROR: Pending service FIFO FULL\n");
 		while(1);
@@ -42,7 +42,22 @@ bool pending_svc_push(const packet_t *packet){
 	}
 
 	/* Push packet to buffer */
-	pending_svcs.buffer[pending_svcs.tail++] = *packet;
+	/* Do it manually to avoid generating a memcpy */
+	pending_svcs.buffer[pending_svcs.tail].header = packet->header;
+	pending_svcs.buffer[pending_svcs.tail].payload_size = packet->payload_size;
+	pending_svcs.buffer[pending_svcs.tail].service = packet->service;
+	pending_svcs.buffer[pending_svcs.tail].producer_task = packet->producer_task;
+	pending_svcs.buffer[pending_svcs.tail].consumer_task = packet->consumer_task;
+	pending_svcs.buffer[pending_svcs.tail].source_PE = packet->source_PE;
+	pending_svcs.buffer[pending_svcs.tail].timestamp = packet->timestamp;
+	pending_svcs.buffer[pending_svcs.tail].transaction = packet->transaction;
+	pending_svcs.buffer[pending_svcs.tail].mapper_task = packet->mapper_task;
+	pending_svcs.buffer[pending_svcs.tail].pkt_size = packet->pkt_size;
+	pending_svcs.buffer[pending_svcs.tail].code_size = packet->code_size;
+	pending_svcs.buffer[pending_svcs.tail].bss_size = packet->bss_size;
+	pending_svcs.buffer[pending_svcs.tail].initial_address = packet->initial_address;
+
+	pending_svcs.tail++;
 	pending_svcs.tail %= PKG_PENDING_SVC_MAX;
 	pending_svcs.full = (pending_svcs.tail == pending_svcs.head);
 	pending_svcs.empty = false;
