@@ -37,7 +37,7 @@ SC_MODULE(test_bench) {
 	sc_signal<regflit>	memphis_injector_data_in;
 
 	//Create the signals of your IO component here:
-  sc_signal<bool>		memphis_mai_tx;
+	sc_signal<bool>		memphis_mai_tx;
 	sc_signal<bool>		memphis_mai_credit_i;
 	sc_signal<regflit> 	memphis_mai_data_out;
 	sc_signal<bool>		memphis_mai_rx;
@@ -51,7 +51,7 @@ SC_MODULE(test_bench) {
 	
 	memphis * MPSoC;
 	AppInjector * io_app;
-  MAInjector * ma_app;
+	MAInjector * ma_app;
 
 	char aux[255];
 	FILE *fp;
@@ -72,7 +72,7 @@ SC_MODULE(test_bench) {
 		MPSoC->memphis_app_injector_credit_o(memphis_injector_credit_o);
 		MPSoC->memphis_app_injector_data_in(memphis_injector_data_in);
    
-    MPSoC->memphis_ma_injector_tx(memphis_mai_tx);
+    	MPSoC->memphis_ma_injector_tx(memphis_mai_tx);
 		MPSoC->memphis_ma_injector_credit_i(memphis_mai_credit_i);
 		MPSoC->memphis_ma_injector_data_out(memphis_mai_data_out);
 		MPSoC->memphis_ma_injector_rx(memphis_mai_rx);
