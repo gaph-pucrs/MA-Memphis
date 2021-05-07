@@ -124,7 +124,7 @@ When the mm-run command executes, it runs the simulation and opens the graphical
 To open manually after a simulation is already done, run:
 
 ```console
-$ memphis-debugger $MEMPHIS_HOME/testcase/scenario
+$ mm-debugger $MEMPHIS_HOME/testcase/scenario
 ```
 
 ### Main window
