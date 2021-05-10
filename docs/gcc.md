@@ -2,10 +2,10 @@
 
 ## Ubuntu (apt-based distros)
 
-Run (WARNING: maybe its missing rsync and bsdmainutils (for hexdump)):
+Install the compiler tools (build-essential) and git, 
 ```console
 # apt-get update
-# apt-get install build-essential
+# apt-get install build-essential git
 ```
 
 ## Arch (pacman/aur distros)

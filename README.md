@@ -46,8 +46,7 @@ Create a directory for sandboxing the experiments:
 $ mkdir ~/sandbox_memphis
 ```
 
-Add MA-Memphis to your PATH. 
-In this example we use the `.bashrc` to add it persistently:
+Export the environment variables. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
 $ echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport MEMPHIS_HOME=~/sandbox_memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
 ```
@@ -95,7 +94,7 @@ apps:                   # Application properties
   - name: prod_cons     # Application prod_cons
     start_time_ms: 5    # Application start time. When absent is 0. Should be manually sorted.
     static_mapping:     # Optional static mapping
-      prod: [1,1]	    # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
+      prod: [1,1]       # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
 ```
 
 After creating the description of the testcase and the scenario, the testcase should be generated:
@@ -106,6 +105,11 @@ $ mm-gen testcase.yaml
 Then, the applications should be compiled:
 ```
 $ mm-app testcase.yaml -all scenario.yaml
+```
+
+To stop the simulation before the ending time, kill the scenario process (without ".yaml"):
+```console
+$ killall scenario
 ```
 
 ## Simulating
