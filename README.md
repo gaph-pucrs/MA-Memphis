@@ -86,6 +86,8 @@ hw:                         # Hardware properties
 
 ```
 
+**WARNING:** The VHDL model supported by Memphis is still not validated with MA-Memphis.
+
 The scenario contains a description of the applications that will be evaluated in the platform.
 Create a yaml file (in this example we will use the name scenario.yaml) that contains:
 ```yaml
