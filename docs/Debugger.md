@@ -2,7 +2,7 @@
 
 ## Pre-requisites
 
-* Java RE (check [how to acquire Java](docs/java.md))
+* Java RE (check [how to acquire Java](java.md))
 
 ## Acquiring the Debugger
 
