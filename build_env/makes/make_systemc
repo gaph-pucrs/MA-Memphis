@@ -4,7 +4,7 @@ NC   =\033[0m # No Color
 CFLAGS =
 
 #systemc g++ compiler
-SC_C = g++ -c -g -Wall -O2 -fpermissive -Wno-write-strings $(CFLAGS)
+SC_C = g++ -c -g -Wall -O2 -fpermissive -Wno-write-strings $(CFLAGS) -std=c++11
 #MEMPHIS_TGT=$(MEMPHIS_TGT)
 MEMPHIS_TGT=$(notdir $(patsubst %/,%,$(dir $(CURDIR))))
 
