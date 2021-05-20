@@ -15,3 +15,7 @@ Run:
 # pacman -Syu
 # pacman -S base-devel rsync coreutils --needed
 ```
+
+## Windows
+
+Download and install git from the [download page](https://git-scm.com/download/win).

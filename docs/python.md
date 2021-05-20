@@ -13,5 +13,14 @@ Run:
 Run:
 ```console
 # pacman -Syu
-# pacman -S python2 libyaml
+# pacman -S python2 python2-pip
+# pip2 install pyyaml
+```
+
+## Windows
+
+First download and install Python latest version from [download page](https://www.python.org/downloads/), remembering to check the "Add Python to PATH" option.
+Then, open PowerShell and run:
+```
+pip install pyyaml
 ```

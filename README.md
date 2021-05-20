@@ -18,9 +18,8 @@ For more information, check the [platform documentation](/docs/Platform.md).
 
 ## Installation
 
-The MA-Memphis platform is made to run in a Linux environment.
-It is possible to use the WSL to run MA-Memphis platform under Windows.
-Check our [guide](docs/WSL.md) to the MA-Memphis under WSL to set-up and then follow the steps below.
+The MA-Memphis is compatible with Linux and Windows.
+It is possible to run under MAC, although it is not validated yet.
 
 ### Pre-requisites
 
