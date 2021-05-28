@@ -11,7 +11,8 @@
 
 int main()
 {
-	monitor_request_decider(); //requisição para uma tarefa de decisao
+	monitor_request_decider();
+
 	while(true){
 		static Message msg;
 		SReceive(&msg);

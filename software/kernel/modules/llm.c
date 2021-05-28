@@ -35,6 +35,18 @@ void llm_task(tcb_t *task)
 		};
 		os_kernel_writepipe(task->observer_task, task->observer_address, 5, message);
 	}
+
+		/* Build a message */
+	if(task->id != -1 && task->observer_task != -1 && task->scheduler.deadline != -1){
+		int message[5] = {
+			MONITOR, 
+			task->id,
+			task->scheduler.waiting_msg,
+			task->scheduler.slack_time, 
+			task->scheduler.remaining_exec_time
+		};
+		os_kernel_writepipe(task->observer_task, task->observer_address, 5, message);
+	}
 }
 
 void llm_rt(tcb_t *tasks)
@@ -42,6 +54,21 @@ void llm_rt(tcb_t *tasks)
 	unsigned now = HAL_TICK_COUNTER;
 	if(now - last_rt > PKG_SLACK_TIME_WINDOW){
 		last_rt = now;
+		for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+			llm_task(&tasks[i]);
+		}
+	}
+}
+
+
+/* Desenvolvimento do monitoramento de power
+
+*/
+void llm_pw(tcb_t *tasks)
+{
+	unsigned now = HAL_TICK_COUNTER;
+	if(now - last_pw > PKG_SLACK_TIME_WINDOW){
+		last_pw = now;
 		for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 			llm_task(&tasks[i]);
 		}

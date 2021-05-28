@@ -147,7 +147,17 @@ void map_task_allocated(mapper_t *mapper, int id)
 		Echo("Sending TASK_RELEASE at time "); Echo(itoa(GetTick())); Echo("\n");
 
 		map_task_release(mapper, app);
+
+
 		map_app_mapping_complete(app);
+
+		//fazer 
+		if (appid==0) //manda release para o monitor dele
+		{
+
+
+		}
+
 		mapper->appid_cnt++;
 	}
 }
@@ -178,6 +188,8 @@ void map_task_release(mapper_t *mapper, app_t *app)
 
 		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.msg[i + 7], (OBSERVE | O_QOS));
 
+		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.msg[i + 7], (OBSERVE | O_PW));
+
 		if(observer == NULL || app->id == 0){
 			msg.msg[4] = -1;
 			msg.msg[5] = -1;
@@ -207,6 +219,11 @@ void map_app_mapping_complete(app_t *app)
 		msg.msg[0] = RELEASE_PERIPHERAL;
 		msg.length = 1;
 		SSend(&msg, (APP_INJECTOR & ~0xE0000000) | KERNEL_MSG);
+
+		//send enviar pro kernel de mais proximo
+		
+
+
 	} else {
 		SSend(&msg, APP_INJECTOR);
 	}

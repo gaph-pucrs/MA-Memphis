@@ -7,6 +7,8 @@
 
 #define O_QOS		0x0100
 
+#define O_PW		0x0200 //referente a power
+
 #define D_QOS		0x010000
 
 #define A_MIGRATION	0x01000000

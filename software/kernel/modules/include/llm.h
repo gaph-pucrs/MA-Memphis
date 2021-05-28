@@ -13,6 +13,17 @@
 
 #include "task_control.h"
 
+
+// criar aqui
+typedef struct powe
+{
+    int addr=0;
+    
+    /* data */
+};
+
+
+
 /**
  * @brief Runs the LLM procedure for a task.
  * 

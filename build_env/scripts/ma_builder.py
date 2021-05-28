@@ -188,9 +188,13 @@ def get_task_type_tag(reader, task):
 		observe = reader["observe"]
 		ttt |= 0x08
 
+# Adicionando novos objetivos de monitoramento
 		for capability in observe:
 			if capability == "qos":
 				ttt |= 0x0100
+
+			if capability == "power":
+				ttt |= 0x0200
 			else:
 				print "Management task "+ task +": unknown observe capability '"+capability+"'\n"
 	except:

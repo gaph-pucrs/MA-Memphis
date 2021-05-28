@@ -64,7 +64,7 @@ void os_isr(unsigned int status)
 		call_scheduler = true;
 
 	if(call_scheduler){
-		sched_run();
+		sched_run(); //chama o escalonador
 	} else if(sched_is_idle()){
 		sched_update_idle_time();
 
