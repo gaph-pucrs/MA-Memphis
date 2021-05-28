@@ -443,7 +443,10 @@ int os_putc(char c)
 
 int os_puts(char *str)
 {
-	MMR_UART_DATA = (tcb_get_offset(sched_get_current()) | (unsigned int)str);
+	tcb_t *current = sched_get_current();
+	int id = sched_get_current_id();
+	int addr = MMR_NI_CONFIG;
+	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)str);
 
-	return 0;
+	return printf("$$$_%dx%d_%d_%d_%s\n", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, msg_ptr);
 }

@@ -82,16 +82,6 @@ int sprintf_(char* buffer, const char* format, ...);
 int  snprintf_(char* buffer, size_t count, const char* format, ...);
 int vsnprintf_(char* buffer, size_t count, const char* format, va_list va);
 
-
-/**
- * Tiny vprintf implementation
- * \param format A string that specifies the format of the output
- * \param va A value identifying a variable arguments list
- * \return The number of characters that are WRITTEN into the buffer, not counting the terminating null character
- */
-int vprintf_(const char* format, va_list va);
-
-
 /**
  * printf with output function
  * You may use this as dynamic alternative to printf() with its fixed _putchar() output
