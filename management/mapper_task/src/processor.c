@@ -1,5 +1,4 @@
 #include "processor.h"
-#include "ma_pkg.h"
 
 void processor_init(processor_t *processors)
 {

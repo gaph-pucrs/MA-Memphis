@@ -1,6 +1,8 @@
 #ifndef AES_defs
 #define AES_defs
 
+#include <stddef.h>
+
 /****************************** MACROS ******************************/
 // The least significant byte of the word is rotated to the end.
 #define KE_ROTWORD(x) (((x) << 8) | ((x) >> 24))
@@ -314,8 +316,8 @@ void AddRoundKey(BYTE state[][4], const WORD w[])
 	subkey[2] = (w[0] >> 8) & 0xFF;
 	subkey[3] = (w[0]) & 0xFF;
 	
-	//Echo(" ");
-	//Echo("subkey");
+	//puts(" ");
+	//puts("subkey");
 	//for(j=0; j<4;j++){
 	//	Echo(itoh(subkey[j]));		
 	//}
@@ -361,14 +363,12 @@ void AddRoundKey(BYTE state[][4], const WORD w[])
 	state[3][3] ^= subkey[3];
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("AddRoundKey");
+	puts("AddRoundKey");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			printf("%x ", state[j][i]);
 		}
 	}
-	Echo(" ");		
 #endif
 	
 }
@@ -402,14 +402,12 @@ void SubBytes(BYTE state[][4])
 	state[3][3] = aes_sbox[state[3][3] >> 4][state[3][3] & 0x0F];
 	
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("SubBytes");
+	puts("SubBytes");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			printf("%x ", state[j][i]);
 		}
 	}
-	Echo(" ");		
 #endif	
 	
 }
@@ -437,14 +435,12 @@ void InvSubBytes(BYTE state[][4])
 	state[3][3] = aes_invsbox[state[3][3] >> 4][state[3][3] & 0x0F];
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("InvSubBytes");
+	puts("InvSubBytes");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			printf("%x ", state[j][i]);
 		}
 	}
-	Echo(" ");		
 #endif		
 	
 }
@@ -482,14 +478,12 @@ void ShiftRows(BYTE state[][4])
 	state[3][1] = t;
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("ShiftRows");
+	puts("ShiftRows");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			printf("%x ", state[j][i]);
 		}
 	}
-	Echo(" ");		
 #endif		
 
 	
@@ -523,14 +517,12 @@ void InvShiftRows(BYTE state[][4])
 	state[3][2] = t;
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("InvShiftRows");
+	puts("InvShiftRows");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			printf("%x ", state[j][i]));
 		}
 	}
-	Echo(" ");		
 #endif			
 		
 }
@@ -635,7 +627,6 @@ void MixColumns(BYTE state[][4])
 	state[3][3] ^= gf_mul[col[3]][0];
 
 #ifdef debug_aes_on	
-	Echo(" ");
 	Echo("MixColumns");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
@@ -804,7 +795,7 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	// Perform the necessary number of rounds. The round key is added first.
 	// The last round does not perform the MixColumns step.
 	AddRoundKey(state,&key[0]);
-	Echo("ROUND 0 finished.");
+	puts("ROUND 0 finished.\n");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[4]);
 	//Echo("ROUND 1 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[8]);
@@ -842,7 +833,7 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	else {
 		SubBytes(state); ShiftRows(state); AddRoundKey(state,&key[40]);
 	}
-	Echo("ROUND Final finished.");
+	puts("ROUND Final finished.");
 	// Copy the state to the output array.
 	out[0] = state[0][0];
 	out[1] = state[1][0];
@@ -896,20 +887,20 @@ void aes_decrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	if (keysize > 128) {
 		if (keysize > 192) {
 			AddRoundKey(state,&key[56]);
-			Echo("ROUND 0 finished.");
+			puts("ROUND 0 finished.");
 			InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[52]);InvMixColumns(state);
 			InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[48]);InvMixColumns(state);
 		}
 		else {
 			AddRoundKey(state,&key[48]);
-			Echo("ROUND 0 finished.");
+			puts("ROUND 0 finished.");
 		}
 		InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[44]);InvMixColumns(state);
 		InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[40]);InvMixColumns(state);
 	}
 	else {
 		AddRoundKey(state,&key[40]);
-		Echo("ROUND 0 finished.");
+		puts("ROUND 0 finished.");
 	}
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[36]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[32]);InvMixColumns(state);
@@ -921,7 +912,7 @@ void aes_decrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[8]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[4]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[0]);
-	Echo("ROUND Final finished.");
+	puts("ROUND Final finished.");
 
 	// Copy the state to the output array.
 	out[0] = state[0][0];

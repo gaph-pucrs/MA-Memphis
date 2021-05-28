@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-#include <api.h>
 #include "app.h"
 #include "processor.h"
 
@@ -12,7 +11,7 @@ typedef struct _mapper {
 	unsigned pending_task_cnt;
 
 	unsigned pending_descr_sz;
-	int pending_descr[MSG_SIZE - 3];
+	int pending_descr[PKG_MAX_MSG_SIZE - 3];
 	app_t *pending_map_app;
 
 	unsigned fail_map_cnt;

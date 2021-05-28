@@ -2,8 +2,11 @@
 #include <stddef.h>
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <memphis.h>
 
 #include "mapper.h"
+#include "services.h"
 #include "tag.h"
 
 void map_init(mapper_t *mapper)
@@ -21,13 +24,13 @@ void map_init(mapper_t *mapper)
 
 void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned desc_sz)
 {
-	Echo("New app received.\n");
+	puts("New app received.\n");
 	// Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
-	Echo("App ID: "); Echo(itoa(mapper->appid_cnt)); Echo("\n");
-	Echo("Task cnt: "); Echo(itoa(task_cnt)); Echo("\n");
+	printf("App ID: %d\n", mapper->appid_cnt);
+	printf("Task cnt: %d\n", task_cnt);
 
 	if(task_cnt > mapper->available_slots){
-		Echo("No available slots.\n");
+		puts("No available slots.\n");
 
 		/* Save pending app descriptor and try to map on TASK_RELEASE */
 		mapper->pending_task_cnt = task_cnt;
@@ -93,7 +96,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 			/* This is needed because more than 1 task can be statically mapped to the same processor */
 			processors[proc_idx].pending_map_cnt++;
 			if(processors[proc_idx].pending_map_cnt > processors[proc_idx].free_page_cnt){
-				Echo("No available page for statically mapped task "); Echo(itoa(app->task[i]->id)); Echo("\n");
+				printf("No available pages for statically mapped task %d\n", app->task[i]->id);
 				map_failed = true;
 			}
 		}
@@ -112,7 +115,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 		for(int i = 0; i < app->task_cnt; i++){
 			int proc_idx = app->task[i]->proc_idx;
 			if(proc_idx != -1){
-				Echo("Statically mapped task "); Echo(itoa(app->task[i]->id)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
+				printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
 				processors[proc_idx].pending_map_cnt = 0;
 				processors[proc_idx].free_page_cnt--;
 			}
@@ -122,7 +125,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 		for(int i = 0; i < app->task_cnt; i++){
 			if(app->task[i]->proc_idx == -1){
 				int proc_idx = processors_get_first_most_free(processors, -1);
-				Echo("Dinamically mapped task "); Echo(itoa(app->task[i]->id)); Echo("at address "); Echo(itoa(processors[proc_idx].addr));
+				printf("Dinamically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
 				processors[proc_idx].free_page_cnt--;
 				app->task[i]->proc_idx = proc_idx;
 			}
@@ -134,7 +137,7 @@ bool map_app_mapping(app_t *app, processor_t *processors)
 
 void map_task_allocated(mapper_t *mapper, int id)
 {
-	Echo("Received task allocated from id "); Echo(itoa(id)); Echo("\n");
+	printf("Received task allocated from id %d\n", id);
 
 	int appid = id >> 8;
 
@@ -143,8 +146,8 @@ void map_task_allocated(mapper_t *mapper, int id)
 
 	if(app->allocated_cnt == app->task_cnt){
 		/* All tasks allocated, send task release */
-		Echo("All tasks allocated from app "); Echo(itoa(app->id)); 
-		Echo("Sending TASK_RELEASE at time "); Echo(itoa(GetTick())); Echo("\n");
+		printf("All tasks allocated from app %d\n", app->id);
+		printf("Sending TASK_RELEASE at time %d\n", memphis_get_tick());
 
 		map_task_release(mapper, app);
 		map_app_mapping_complete(app);
@@ -155,41 +158,41 @@ void map_task_allocated(mapper_t *mapper, int id)
 void map_task_release(mapper_t *mapper, app_t *app)
 {
 	/* Assemble and send task release */
-	Message msg;
-	msg.msg[0] = TASK_RELEASE;
-	// msg.msg[1] = appid_shift | i;
-	// msg.msg[2] = app->task[i]->data_sz;
-	// msg.msg[3] = app->task[i]->bss_sz;
-	// msg.msg[4] = observer_task;
-	// msg.msg[5] = observer_address;
-	msg.msg[6] = app->task_cnt;
+	message_t msg;
+	msg.payload[0] = TASK_RELEASE;
+	// msg.payload[1] = appid_shift | i;
+	// msg.payload[2] = app->task[i]->data_sz;
+	// msg.payload[3] = app->task[i]->bss_sz;
+	// msg.payload[4] = observer_task;
+	// msg.payload[5] = observer_address;
+	msg.payload[6] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.msg[i + 7] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.payload[i + 7] = mapper->processors[app->task[i]->proc_idx].addr;
 	
 	msg.length = app->task_cnt + 7;
 
 	int appid_shift = app->id << 8;
 	for(int i = 0; i < app->task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
-		msg.msg[1] = appid_shift | i;
-		msg.msg[2] = app->task[i]->data_sz;
-		msg.msg[3] = app->task[i]->bss_sz;
+		msg.payload[1] = appid_shift | i;
+		msg.payload[2] = app->task[i]->data_sz;
+		msg.payload[3] = app->task[i]->bss_sz;
 
-		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.msg[i + 7], (OBSERVE | O_QOS));
+		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 7], (OBSERVE | O_QOS));
 
 		if(observer == NULL || app->id == 0){
-			msg.msg[4] = -1;
-			msg.msg[5] = -1;
+			msg.payload[4] = -1;
+			msg.payload[5] = -1;
 		} else {
-			msg.msg[4] = observer->id;
-			msg.msg[5] = mapper->processors[observer->proc_idx].addr;
+			msg.payload[4] = observer->id;
+			msg.payload[5] = mapper->processors[observer->proc_idx].addr;
 
 			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(mapper->processors[observer->proc_idx].addr));
 		}
 
 		/* Send message directed to kernel at task address */
-		SSend(&msg, KERNEL_MSG | msg.msg[i + 7]);
+		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 7]);
 
 		/* Mark task as running */
 		app->task[i]->status = RUNNING;
@@ -198,23 +201,23 @@ void map_task_release(mapper_t *mapper, app_t *app)
 
 void map_app_mapping_complete(app_t *app)
 {
-	Message msg;
-	msg.msg[0] = APP_MAPPING_COMPLETE;
+	message_t msg;
+	msg.payload[0] = APP_MAPPING_COMPLETE;
 	msg.length = 1;
 	if(app->id == 0){
-		SSend(&msg, MAINJECTOR);
+		memphis_send_any(&msg, MAINJECTOR);
 
-		msg.msg[0] = RELEASE_PERIPHERAL;
+		msg.payload[0] = RELEASE_PERIPHERAL;
 		msg.length = 1;
-		SSend(&msg, (APP_INJECTOR & ~0xE0000000) | KERNEL_MSG);
+		memphis_send_any(&msg, (APP_INJECTOR & ~0xE0000000) | MEMPHIS_KERNEL_MSG);
 	} else {
-		SSend(&msg, APP_INJECTOR);
+		memphis_send_any(&msg, APP_INJECTOR);
 	}
 }
 
 void map_task_terminated(mapper_t *mapper, int id)
 {
-	Echo("Received task terminated from id "); Echo(itoa(id)); Echo(" at time "); Echo(itoa(GetTick())); Echo("\n");
+	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
 
 	int appid = id >> 8;
 	int taskid = id & 0xFF;
@@ -238,7 +241,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
-		Echo("App terminated. ID: "); Echo(itoa(app->id)); Echo("; At time: "); Echo(itoa(GetTick())); Echo("\n");
+		printf("App %d terminated at time %d\n", app->id, memphis_get_tick());
 		app->id = -1;
 	}
 
@@ -267,13 +270,13 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 void map_task_allocation(app_t *app, processor_t *processors)
 {
-	Echo("Mapping success! Requesting task allocation.\n");
+	puts("Mapping success! Requesting task allocation.\n");
 
 	/* Ask injector for task allocation */
-	Message msg;
+	message_t msg;
 
-	msg.msg[0] = APP_ALLOCATION_REQUEST;
-	int *payload = &msg.msg[1];
+	msg.payload[0] = APP_ALLOCATION_REQUEST;
+	unsigned int *payload = &msg.payload[1];
 
 	for(int i = 0; i < app->task_cnt; i++){
 		payload[i*2] = app->task[i]->id;
@@ -283,14 +286,14 @@ void map_task_allocation(app_t *app, processor_t *processors)
 	msg.length = app->task_cnt * 2 + 1;
 
 	if(app->id == 0)
-		SSend(&msg, MAINJECTOR);
+		memphis_send_any(&msg, MAINJECTOR);
 	else
-		SSend(&msg, APP_INJECTOR);
+		memphis_send_any(&msg, APP_INJECTOR);
 }
 
 void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors)
 {
-	Echo("Mapping application...\n");
+	puts("Mapping application...\n");
 		
 	app_t *app = map_build_app(mapper, mapper->appid_cnt, descr, task_cnt);
 
@@ -356,10 +359,10 @@ void map_request_service(mapper_t *mapper, int address, unsigned tag, int reques
 	if(oda != NULL)
 		id = oda->id;
 	
-	Message msg;
-	msg.msg[0] = SERVICE_PROVIDER;
-	msg.msg[1] = tag;
-	msg.msg[2] = id;
+	message_t msg;
+	msg.payload[0] = SERVICE_PROVIDER;
+	msg.payload[1] = tag;
+	msg.payload[2] = id;
 	msg.length = 3;
-	SSend(&msg, requester);
+	memphis_send_any(&msg, requester);
 }

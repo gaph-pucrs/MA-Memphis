@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef enum _task_status {
 	BLOCKED,
 	RUNNING,
@@ -16,6 +18,8 @@ typedef struct _task {
 	unsigned bss_sz;
 	unsigned init_addr;
 	task_status_t status;
+
+	bool consumers[PKG_MAX_TASKS_APP];
 } task_t;
 
 task_t *task_get_free(task_t *tasks);

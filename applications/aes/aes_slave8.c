@@ -9,11 +9,12 @@
 
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
-#include <api.h>
+#include <memphis.h>
+#include <stdio.h>
 #include "aes.h"
 /**************************** VARIABLES *****************************/
 
-Message msg;
+message_t msg;
 
 /*************************** MAIN PROGRAM ***************************/
 
@@ -27,21 +28,18 @@ int main()
 		{0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4}
 	};
 
-	Echo(itoa(GetTick()));
-    Echo("task AES SLAVE started - ID:"); 
+	printf("task AES SLAVE %d started at %d\n", memphis_get_id(), memphis_get_tick());
 	aes_key_setup(&key[0][0], key_schedule, 256);    
     
     while(flag){
-		Receive(&msg, aes_master);
-		__builtin_memcpy(input_text, msg.msg, 12);
+		memphis_receive(&msg, aes_master);
+		__builtin_memcpy(input_text, msg.payload, 12);
 			
 #ifdef debug_comunication_on
-	Echo(" ");  
-	Echo("Slave configuration");
+	puts("Slave configuration: \n");
 	for(i=0; i<3;i++){
-		Echo(itoh(input_text[i]));		
+		printf("%x ", input_text[i]);
 	}
-	Echo(" "); 
 #endif 
 				
 		op_mode = input_text[0];
@@ -50,46 +48,42 @@ int main()
 		
 		if(id == -1){
 				id = x;
-				Echo(itoa(id));
+				printf("%d ", id);
 		}	
-		Echo("Operation:"); 
-		Echo(itoa(op_mode));
-		Echo("Blocks:"); 		
-		Echo(itoa(qtd_messages));
+		puts("Operation: "); 
+		printf("%d\n", op_mode);
+		puts("Blocks: ");
+		printf("%d\n", qtd_messages);
 
 		if (op_mode == END_TASK){
 			flag = 0;
 			qtd_messages = 0;
 		}
 		for(x = 0; x < qtd_messages; x++){
-			Receive(&msg, aes_master);		
-			__builtin_memcpy(input_text, msg.msg, 4*AES_BLOCK_SIZE);
+			memphis_receive(&msg, aes_master);		
+			__builtin_memcpy(input_text, msg.payload, 4*AES_BLOCK_SIZE);
 			
 #ifdef debug_comunication_on
-	Echo(" ");  
-	Echo("received msg");
+	puts("received msg: ");
 	for(i=0; i<16;i++){
-		Echo(itoh(input_text[i]));		
+		printf("%x ", input_text[i]);
 	}
-	Echo(" "); 
 #endif 
 			
 			if(op_mode == CIPHER_MODE){
-				Echo("encript");				
+				puts("encript");
 				aes_encrypt(input_text, enc_buf, key_schedule, KEY_SIZE);	
 			}
 			else{
-				Echo("decript");					
+				puts("decript");
 				aes_decrypt(input_text, enc_buf, key_schedule, KEY_SIZE);
 			}			
 			msg.length = AES_BLOCK_SIZE;
-			__builtin_memcpy( msg.msg, enc_buf,4*AES_BLOCK_SIZE);
-			Send(&msg, aes_master);	
+			__builtin_memcpy(msg.payload, enc_buf,4*AES_BLOCK_SIZE);
+			memphis_send(&msg, aes_master);	
 		}
 	}
-    Echo("task AES SLAVE finished  - ID: ");
-    Echo(itoa(id));
-    Echo(itoa(GetTick()));
+    printf("task AES SLAVE %d finished at %d\n", memphis_get_id(), memphis_get_tick());
    
-	return 0;	
+	return 0;
 }

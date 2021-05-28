@@ -9,7 +9,8 @@
 
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
-#include <api.h>
+#include <memphis.h>
+#include <stdio.h>
 #include "aes_master.h"
 /***************************** DEFINES ******************************/
 // total message length
@@ -23,7 +24,7 @@
 
 //index of slaves (slave names)
 int Slave[MAX_SLAVES] = {aes_slave1,aes_slave2,aes_slave3,aes_slave4,aes_slave5,aes_slave6,aes_slave7,aes_slave8};
-Message msg;
+message_t msg;
 
 /*************************** MAIN PROGRAM ***************************/
 
@@ -42,23 +43,19 @@ int main()
 		plain_msg[x] = ((x/16)%26)+0x41;
 	}
 	
-    Echo("task AES started.");
-    Echo(itoa(GetTick()));
+    printf("task AES started %d\n", memphis_get_tick());
 
 	// calculate number of block and pad value (PCKS5) of last block
 	// msg_length = MSG_LENGHT;
 	blocks = (MSG_LENGHT%AES_BLOCK_SIZE)==0 ? (MSG_LENGHT/AES_BLOCK_SIZE) : (MSG_LENGHT/AES_BLOCK_SIZE)+1;
 	// pad_value = (AES_BLOCK_SIZE - (msg_length%AES_BLOCK_SIZE))%AES_BLOCK_SIZE;	
 	
-	Echo(" ");
-	Echo("Blocks:");	
-	Echo(itoa(blocks));
+	printf("Blocks: %d\n", blocks);
 
-#ifdef debug_comunication_on	
-    Echo(" ");
-    Echo("plain msg");
+#ifdef debug_comunication_on
+    puts("plain msg: ");
     for(x=0; x<MSG_LENGHT-1;x++){
-		Echo(itoh(plain_msg[x]));		
+		printf("%x ", plain_msg[x]);
 	}
 #endif
 
@@ -85,8 +82,8 @@ int main()
 		aux_msg[2] = x+1;
 		if(x >= NUMBER_OF_SLAVES) // zero messages to Slave not used
 			aux_msg[0] = END_TASK;
-		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
-		Send(&msg, Slave[x]);  
+		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
+		memphis_send(&msg, Slave[x]);  
 	}
 
 	// Send blocks to Cipher and 
@@ -96,19 +93,19 @@ int main()
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
 				msg.length = AES_BLOCK_SIZE;
-				__builtin_memcpy(msg.msg, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				__builtin_memcpy(msg.payload, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				memphis_send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
 			}
 		}
 	
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				Receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				memphis_receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
-					cipher_msg[i] = msg.msg[j];
+					cipher_msg[i] = msg.payload[j];
 					j++;
 				}
 				j = 0;
@@ -117,12 +114,10 @@ int main()
 		}
 	}
 #ifdef debug_comunication_on
-	Echo(" ");  
-	Echo("cipher msg");
+	puts("cipher msg: \n");
 	for(i=0; i<MSG_LENGHT;i++){
-		Echo(itoh(cipher_msg[i]));		
+		printf("%x ", cipher_msg[i]);
 	}
-	Echo(" "); 
 #endif 
 	
 	////////////////////////////////////////////////
@@ -140,8 +135,8 @@ int main()
 		msg.length = sizeof(aux_msg);
 		aux_msg[0] = DECIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
-		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
-		Send(&msg, Slave[x]);  
+		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
+		memphis_send(&msg, Slave[x]);  
 	}
 
 	// Send blocks to Cipher and 
@@ -151,18 +146,18 @@ int main()
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
 				msg.length = AES_BLOCK_SIZE;
-				__builtin_memcpy(msg.msg, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);   
+				__builtin_memcpy(msg.payload, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				memphis_send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);   
 			} 
 		}
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				Receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				memphis_receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
-					decipher_msg[i] = msg.msg[j];
+					decipher_msg[i] = msg.payload[j];
 					j++;
 				}
 				j = 0;
@@ -171,9 +166,9 @@ int main()
 		}
 	}
 #ifdef debug_comunication_on	
-	Echo("decipher msg");
+	puts("decipher msg: \n");
     for(x=0; x<MSG_LENGHT-1;x++){
-		Echo(itoh(decipher_msg[x]));		
+		printf("%x ", decipher_msg[x]);
 	}
 #endif
 	//  End tasks still running
@@ -182,22 +177,20 @@ int main()
 		msg.length = sizeof(aux_msg)/4;
 		aux_msg[0] = END_TASK;
 		aux_msg[1] = 0;
-		__builtin_memcpy(&msg.msg, &aux_msg, sizeof(aux_msg));
-		Send(&msg, Slave[x]);  
-	}	
-    Echo("task AES finished.");
-    Echo(itoa(GetTick()));
+		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
+		memphis_send(&msg, Slave[x]);  
+	}
+	printf("task AES finished at %d\n", memphis_get_tick());
 
 //#ifdef debug_comunication_on	
-	Echo(" ");
-	Echo("Final Result");
+	puts("Final Result: \n");
 	unsigned int int_aux2 = 0;
     for(x=0; x<MSG_LENGHT;x+=4){
 		int_aux2 = decipher_msg[0+x] << 24;
 		int_aux2 = int_aux2 | decipher_msg[1+x] << 16;
 		int_aux2 = int_aux2 | decipher_msg[2+x] << 8;
 		int_aux2 = int_aux2 | decipher_msg[3+x];
-		Echo( &int_aux2 );
+		puts((char*)&int_aux2);
 		int_aux2 = 0;
 	}
 //#endif 
