@@ -79,18 +79,18 @@ void MAInjector::ma_boot()
 				while(std::getline(ma_boot_info, task_name)){
 					std::string addrstr;
 					std::getline(ma_boot_info, addrstr);
-					std::cout << "maboot.txt line: " << addrstr << std::endl;
+					// std::cout << "maboot.txt line: " << addrstr << std::endl;
 					int address = std::stoi(addrstr);
-					std::cout << "Converted value: " << address << std::endl;
+					// std::cout << "Converted value: " << address << std::endl;
 
 					tasks.push_back(std::make_pair(task_name, address));
 
-					std::cout << "Task name: " << task_name << std::endl;
-					std::cout << "Address: " << address << std::endl;
+					// std::cout << "Task name: " << task_name << std::endl;
+					// std::cout << "Address: " << address << std::endl;
 					ma_boot_task_cnt++;
 				}
 
-				std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
+				// std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
 
 				/* First task should be the mapper directly injected to the system with static mapping */
 				if(tasks[0].first.compare("mapper_task") != 0){
@@ -113,7 +113,7 @@ void MAInjector::ma_boot()
 		case BOOT_WAIT:
 			/* Waits ends of boot packet transmission */
 			if(send_pkt_state == SEND_FINISHED){
-				std::cout << "bootloader send ok" << std::endl;
+				// std::cout << "bootloader send ok" << std::endl;
 
 				/* Now will request the MA mapping */
 				/* All MA startup information is already loaded into 'tasks' structure */
@@ -137,7 +137,7 @@ void MAInjector::ma_boot()
 		case BOOT_SEND:
 			if(send_pkt_state == SEND_FINISHED){
 				sent_task++;
-				std::cout << "Sent = " << sent_task << "; packet size = " << packet_in.size() << std::endl;
+				// std::cout << "Sent = " << sent_task << "; packet size = " << packet_in.size() << std::endl;
 				if(1 + sent_task*2 < packet_in.size()){
 					ma_boot_state = BOOT_MAP;
 				} else {
@@ -170,15 +170,15 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 
 		std::getline(repo, line);
 		unsigned txt_size = std::stoul(line, nullptr, 16);
-		std::cout << "Txt size: " << txt_size << std::endl;
+		// std::cout << "Txt size: " << txt_size << std::endl;
 
 		std::getline(repo, line);
 		unsigned data_size = std::stoul(line, nullptr, 16);
-		std::cout << "Data size: " << data_size << std::endl;
+		// std::cout << "Data size: " << data_size << std::endl;
 
 		std::getline(repo, line);
 		unsigned bss_size = std::stoul(line, nullptr, 16);
-		std::cout << "Bss size: " << bss_size << std::endl;
+		// std::cout << "Bss size: " << bss_size << std::endl;
 		
 		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;
 		
@@ -199,7 +199,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		packet.push_back(bss_size);				/* BSS section size */
 		packet.push_back(0);
 
-		std::cout << "PACKET SIZE: " << packet.size() << std::endl;
+		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 
 		/* Assembles payload */
 		for(unsigned i = 0; i < txt_size; i++){
@@ -208,7 +208,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 			packet.push_back(std::stoul(line, nullptr, 16));
 			// std::cout << packet[ptr_index - 1] << std::endl;
 		}
-		std::cout << "Generated packet size: " << packet.size() << std::endl;
+		// std::cout << "Generated packet size: " << packet.size() << std::endl;
 	} else {
 		std::cout << "ERROR: cannot read the file at path " << path << std::endl;
 	}
@@ -251,29 +251,29 @@ void MAInjector::ma_load()
 		std::string line;
 
 		std::getline(repo, line);
-		std::cout << "TTT: " << line << std::endl;
+		// std::cout << "TTT: " << line << std::endl;
 		unsigned task_type_tag = std::stoul(line, nullptr, 16);
 		packet.push_back(task_type_tag);
 
 		std::getline(repo, line);
-		std::cout << "txt_size: " << line << std::endl;
+		// std::cout << "txt_size: " << line << std::endl;
 		unsigned txt_size = std::stoul(line, nullptr, 16);
 		packet.push_back(txt_size);
 
 		std::getline(repo, line);
-		std::cout << "data_size: " << line << std::endl;
+		// std::cout << "data_size: " << line << std::endl;
 		unsigned data_size = std::stoul(line, nullptr, 16);
 		packet.push_back(data_size);
 
 		std::getline(repo, line);
-		std::cout << "bss_size: " << line << std::endl;
+		// std::cout << "bss_size: " << line << std::endl;
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		packet.push_back(bss_size);
 
 		packet.push_back(0);			/* Initial address */
 	}
 
-	std::cout << "MAInjector: NEW_APP packet size = " << packet.size() << std::endl;
+	// std::cout << "MAInjector: NEW_APP packet size = " << packet.size() << std::endl;
 }
 
 void MAInjector::send_packet()
@@ -292,7 +292,7 @@ void MAInjector::send_packet()
 			if(ma_boot_state == BOOT_WAIT || ma_boot_state == BOOT_SEND){
 				if(credit_in.read()){
 					if(!packet.empty()){
-						std::cout << "MAInjector: Packet send triggered" << std::endl;
+						// std::cout << "MAInjector: Packet send triggered" << std::endl;
 						send_pkt_state = SEND_PKT;
 						packet_idx = 0;
 					} else {
@@ -350,7 +350,7 @@ void MAInjector::send_packet()
 			break;
 		case SEND_FINISHED:
 			send_pkt_state = SEND_IDLE;
-			std::cout << "MAInjector: Packet sent" << std::endl;
+			// std::cout << "MAInjector: Packet sent" << std::endl;
 			break;
 		case WAIT_CREDIT:
 			if(credit_in.read()){

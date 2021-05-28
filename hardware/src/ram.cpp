@@ -44,7 +44,6 @@ void ram::load_ram(){
 	} else {
 		cout << "Unable to open file " << ram_path << endl;
 	}
-	std::cout << "RAM LOADED" << std::endl;
 }
 
 /*** Memory read port A ***/

@@ -46,6 +46,7 @@ class Application:
 		address = 7*len(self.tasks)*4 + 4
 		for t in range(len(self.tasks)):
 			repo.add(t, self.tasks[t])
+			repo.add(0, "Mapping [Legacy]")
 			repo.add(task_type, "Task type tag")
 			
 			txt_size = self.__get_txt_size(self.tasks[t])
