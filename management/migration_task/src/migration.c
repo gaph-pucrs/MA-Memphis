@@ -1,9 +1,11 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stddef.h>
 
 #include "migration.h"
 #include "decider.h"
-#include "ma_pkg.h"
+#include "services.h"
 #include "tag.h"
 
 migration_ring_t migration_ring;
@@ -30,13 +32,13 @@ void migration_test(int id, int remaining)
 		migration_update_deadline_miss(task);
 		if(decider_enabled() && migration_miss_count(task) >= 3){
 			migration_clear_miss(task);
-			Message msg;
-			msg.msg[0] = TASK_MIGRATION_MAP;
-			msg.msg[1] = id;
+			message_t msg;
+			msg.payload[0] = TASK_MIGRATION_MAP;
+			msg.payload[1] = id;
 			msg.length = 2;
-			Echo("Requesting migration for task "); Echo(itoa(id)); Echo("\n");
+			printf("Requesting migration for task %d\n", id);
 
-			SSend(&msg, decider_get_actor());
+			memphis_send_any(&msg, decider_get_actor());
 		}
 	}
 }

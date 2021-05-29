@@ -26,24 +26,29 @@ class Scenario:
 
 		app_names = []
 		self.app_instances = []
-		for app in yaml["apps"]:
-			app_names.append(app["name"])
-
-			start_time_ms = 0
-			try:
-				start_time_ms = int(app["start_time_ms"])
-			except:
-				pass
-
-			self.app_instances.append((app, start_time_ms))
-
-		self.app_instances.sort(key=lambda x: x[1])
-
-		app_names = set(app_names)
-
 		self.applications = {}
-		for app in app_names:
-			self.applications[app] = Application(app, self.platform_path, self.testcase_path)
+
+		try:
+			for app in yaml["apps"]:
+				app_names.append(app["name"])
+
+				start_time_ms = 0
+				try:
+					start_time_ms = int(app["start_time_ms"])
+				except:
+					pass
+
+				self.app_instances.append((app, start_time_ms))
+
+			self.app_instances.sort(key=lambda x: x[1])
+
+			app_names = set(app_names)
+
+		
+			for app in app_names:
+				self.applications[app] = Application(app, self.platform_path, self.testcase_path)
+		except:
+			pass
 		
 	def copy(self):
 		makedirs(self.base_dir+"/debug/pipe", exist_ok=True)

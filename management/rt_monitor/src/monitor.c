@@ -1,5 +1,6 @@
 #include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "monitor.h"
 #include "tag.h"

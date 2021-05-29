@@ -24,7 +24,8 @@ void map_init(mapper_t *mapper)
 
 void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned desc_sz)
 {
-	puts("New app received.\n");
+	unsigned time = memphis_get_tick();
+	printf("New app received at %d\n", time);
 	// Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
 	printf("App ID: %d\n", mapper->appid_cnt);
 	printf("Task cnt: %d\n", task_cnt);

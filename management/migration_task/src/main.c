@@ -1,31 +1,33 @@
 #include <stdbool.h>
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "decider.h"
 #include "migration.h"
-#include "ma_pkg.h"
 #include "tag.h"
+#include "services.h"
 
 int main()
 {
-	static Message msg;
+	static message_t msg;
 
-	Echo("Migration started at "); Echo(itoa(GetTick())); Echo("\n");
+	printf("Migration started at %d\n", memphis_get_tick());
+	
 	migration_init();
 
 	decider_request_actor();
 
 	while(true){
-		SReceive(&msg);
-		switch(msg.msg[0]){
+		memphis_receive_any(&msg);
+		switch(msg.payload[0]){
 		case OBSERVE_PACKET:
 			// Echo("Hello, received observe packet\n");
-			migration_test(msg.msg[1], msg.msg[2]);
+			migration_test(msg.payload[1], msg.payload[2]);
 			break;
 		case SERVICE_PROVIDER:
-			decider_service_provider(msg.msg[1], msg.msg[2]);
+			decider_service_provider(msg.payload[1], msg.payload[2]);
 			break;
 		}
 	}

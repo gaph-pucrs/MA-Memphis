@@ -2,8 +2,6 @@
 
 #include <stdbool.h>
 
-#include "ma_pkg.h"
-
 typedef struct _migration_task {
 	int id;
 	int missed_cnt;

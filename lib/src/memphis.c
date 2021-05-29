@@ -15,12 +15,14 @@ int memphis_get_addr()
 
 int memphis_send(message_t *msg, int target_id)
 {
-	return system_call(WRITEPIPE, msg, target_id, 0);
+	while(!system_call(WRITEPIPE, msg, target_id, 0));
+	return 0;
 }
 
 int memphis_receive(message_t *msg, int source_id)
 {
-	return system_call(READPIPE, msg, source_id, 0);
+	while(!system_call(READPIPE, msg, source_id, 0));
+	return 0;
 }
 
 int memphis_get_tick()
@@ -30,12 +32,14 @@ int memphis_get_tick()
 
 int memphis_send_any(message_t *msg, int target_id)
 {
-	return system_call(WRITEPIPE, msg, target_id, 1);
+	while(!system_call(WRITEPIPE, msg, target_id, 1));
+	return 0;
 }
 
 int memphis_receive_any(message_t *msg)
 {
-	return system_call(READPIPE, msg, 0, 1);
+	while(!system_call(READPIPE, msg, 0, 1));
+	return 0;
 }
 
 int memphis_real_time(int period, int deadline, int exec_time)
