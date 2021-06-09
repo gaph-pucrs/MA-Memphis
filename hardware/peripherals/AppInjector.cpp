@@ -165,46 +165,59 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 	std::ifstream repository(path);
 
 	if(repository.is_open()){
-		/* +1 because the descriptor stores task count at the first line */
-		unsigned file_length = (TASK_DESCRIPTOR_SIZE * task_cnt) + 1;
-		unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + file_length;
-
 		packet.clear();
-		packet.reserve(packet_size);
 
 		packet.push_back(0x0000);				/* Header: mapper task address */
-		packet.push_back(packet_size - 2);		/* Payload size */
+		packet.push_back(0);					/* Payload size: will be filled later */
 		packet.push_back(MESSAGE_DELIVERY);		/* Service */
 		packet.push_back(APP_INJECTOR_ADDRESS);	/* producer_task */
 		packet.push_back(0x0000);				/* consumer_task: mapper task id */
 		packet.push_back(0);
 		packet.push_back(0);
 		packet.push_back(0);
-		packet.push_back(file_length + 2);		/* Message length */
+		packet.push_back(0);					/* Message length: will be filled later */
 		packet.push_back(0);
 		packet.push_back(0);
 		packet.push_back(0);
 		packet.push_back(0);
 
 		packet.push_back(NEW_APP);				/* Protocol: NEW_APP */
-		packet.push_back(file_length);
 
-		unsigned addr_idx = 2; /* Static mapping address in repository */
-		unsigned task_id = 0;
+		std::string line;
+		std::getline(repository, line);			/* Task cnt */
+		packet.push_back(task_cnt);
 
-		for(unsigned i = 0; i < file_length; i++){
-			std::string line;
-			std::getline(repository, line);
+		for(unsigned i = 0; i < task_cnt; i++){
+			packet.push_back(static_mapping[i]);			/* Task address from app_start.txt */
 
-			if(i == addr_idx){
-				packet.push_back(static_mapping[task_id++]);
-				addr_idx += TASK_DESCRIPTOR_SIZE;
-			} else {
-				packet.push_back(std::stoul(line, nullptr, 16));
-			}
+			packet.push_back(0x01);							/* Task type tag */
+
+			std::getline(repository, line);		/* txt */
+			std::getline(repository, line);		/* data */
+			std::getline(repository, line);		/* bss */
+			std::getline(repository, line);		/* addr */
 		}
 
 		static_mapping.clear();
+
+		/* Base length is 2 flits per task + 2 header flits */
+		unsigned message_len = task_cnt * 2 + 2;
+
+		for(unsigned i = 0; i < task_cnt; i++){
+			int consumer = 0;
+			do {
+				std::getline(repository, line);
+				consumer = std::stol(line, nullptr, 16);	/* Consumers */
+				packet.push_back(consumer);
+				message_len++;
+			} while(consumer > 0);
+		}
+
+		unsigned packet_size = CONSTANT_PACKET_SIZE + message_len;
+
+		/* Fill previous flits */
+		packet[1] = packet_size - 2;
+		packet[8] = message_len;
 
 		// for(unsigned i = 0; i < packet_size; i++){
 		// 	std::cout << hex << packet[i] << std::endl;
@@ -232,7 +245,7 @@ std::string AppInjector::get_app_repo_path(unsigned app_id){
 	if(repository.is_open()){
 		std::string line;
 		for(unsigned app_cnt = 0; app_cnt < app_id; app_cnt++){
-			/* Each descriptor in app_start start always with 4 information */
+			/* Each descriptor in app_start start always with 3 information */
 			for(int i = 0; i < 3; i++){
 				std::getline(repository,line);
 				// std::cout << line << std::endl;
@@ -241,9 +254,9 @@ std::string AppInjector::get_app_repo_path(unsigned app_id){
 			// std::cout << "Task number: " << task_number << std::endl;
 
 			/* Skips the proper number of tasks */
-			for(unsigned i = 0; i < task_cnt; i++){
+			for(unsigned i = 0; i < task_cnt; i++)
 				std::getline(repository, line);
-			}
+			
 		}
 
 		std::getline(repository,line);
@@ -275,7 +288,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		std::getline(repository, line);
 		unsigned task_cnt = std::stoul(line, nullptr, 16);
 
-		if(task_id + 1 > task_cnt)
+		if(task_id >= task_cnt)
 			throw std::invalid_argument("ERROR[1] - task_id is out of range");
 
 		/* Skips TASK_DESCRIPTOR_SIZE lines - TASK_DESCRIPTOR_SIZE is the size of each task description in repository.txt for each app */
@@ -283,19 +296,13 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		for (unsigned i = 0; i < task_line; i++)
 			std::getline(repository, line);
 
-		std::getline(repository, line);	/* Task ID */
-		std::getline(repository, line);	/* static mapped PE */
-		std::getline(repository, line);	/* task type tag */
-
 		std::getline(repository, line);
 		unsigned txt_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Txt size: " << txt_size << std::endl;
 		std::getline(repository, line);
-		// std::cout << "Line: " << line << std::endl;
 		unsigned data_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Data size: " << data_size << std::endl;
 		std::getline(repository, line);
-		// std::cout << "Line: " << line << std::endl;
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
 
@@ -306,9 +313,9 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		// std::cout << "Current line: " << current_line << std::endl;
 
 		/* Points the reader to the beggining of task code */
-		for(unsigned current_line = task_line + TASK_DESCRIPTOR_SIZE + 1; current_line < init_addr; current_line++){
+		for(unsigned current_line = task_line + TASK_DESCRIPTOR_SIZE + 1; current_line < init_addr; current_line++)
 			std::getline(repository, line);
-		}
+		
 		// std::cout << "Task ID " << task_id << " code size " << txt_size << " code_line " << init_addr << std::endl;
 
 		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;

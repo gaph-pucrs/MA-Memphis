@@ -185,16 +185,16 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		packet.clear();
 		packet.reserve(packet_size);
 
-		packet.push_back(address);			/* Target address */
-		packet.push_back(packet_size - 2);	/* Packet size */
-		packet.push_back(TASK_ALLOCATION);	/* Platform service */
+		packet.push_back(address);				/* Target address */
+		packet.push_back(packet_size - 2);		/* Packet size */
+		packet.push_back(TASK_ALLOCATION);		/* Platform service */
 		packet.push_back(id);					/* Task ID */
 		packet.push_back(mapper_address);		/* Mapper address */
 		packet.push_back(0);
 		packet.push_back(0);
 		packet.push_back(0);
-		packet.push_back(mapper_id);				/* Mapper ID */
-		packet.push_back(data_size);				/* Data section size */
+		packet.push_back(mapper_id);			/* Mapper ID */
+		packet.push_back(data_size);			/* Data section size */
 		packet.push_back(txt_size);				/* Text section size */
 		packet.push_back(bss_size);				/* BSS section size */
 		packet.push_back(0);
@@ -216,8 +216,11 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 
 void MAInjector::ma_load()
 {
+	/* Message length is type_tag + static_map per task + 0 (no comm) per task + 2 header flits */
+	unsigned message_len = tasks.size()*3 + 2;
+
 	/* Memphis packet + message protocol (type + size) + task address */
-	unsigned packet_size = CONSTANT_PACKET_SIZE + 2 + tasks.size()*TASK_DESCRIPTOR_SIZE + 1;
+	unsigned packet_size = CONSTANT_PACKET_SIZE + message_len;
 
 	packet.clear();
 	packet.reserve(packet_size);
@@ -230,24 +233,20 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
-	packet.push_back(tasks.size()*TASK_DESCRIPTOR_SIZE + 1 + 2);	/* Message length */
+	packet.push_back(message_len);	/* Message length */
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
 
-	packet.push_back(NEW_APP);	/* Protocol: MA_ALLOCATION */
-	packet.push_back(tasks.size()*TASK_DESCRIPTOR_SIZE + 1);		/* Descriptor size */
-
-	packet.push_back(tasks.size());
+	packet.push_back(NEW_APP);			/* Protocol: MA_ALLOCATION */
+	packet.push_back(tasks.size());		/* Task count */
 
 	for(unsigned i = 0; i < tasks.size(); i++){
 		std::string path = this->path+"/management/" + tasks[i].first + ".txt";
 		std::ifstream repo(path);
 
-		packet.push_back(i);				/* Task ID */
-		packet.push_back(tasks[i].second);	/* Task Address */
-
+		packet.push_back(tasks[i].second);	/* Task Address from ma_start.txt */
 		std::string line;
 
 		std::getline(repo, line);
@@ -255,23 +254,10 @@ void MAInjector::ma_load()
 		unsigned task_type_tag = std::stoul(line, nullptr, 16);
 		packet.push_back(task_type_tag);
 
-		std::getline(repo, line);
-		// std::cout << "txt_size: " << line << std::endl;
-		unsigned txt_size = std::stoul(line, nullptr, 16);
-		packet.push_back(txt_size);
-
-		std::getline(repo, line);
-		// std::cout << "data_size: " << line << std::endl;
-		unsigned data_size = std::stoul(line, nullptr, 16);
-		packet.push_back(data_size);
-
-		std::getline(repo, line);
-		// std::cout << "bss_size: " << line << std::endl;
-		unsigned bss_size = std::stoul(line, nullptr, 16);
-		packet.push_back(bss_size);
-
-		packet.push_back(0);			/* Initial address */
 	}
+
+	for(unsigned i = 0; i < tasks.size(); i++)
+		packet.push_back(0);	/* No consumers */
 
 	// std::cout << "MAInjector: NEW_APP packet size = " << packet.size() << std::endl;
 }

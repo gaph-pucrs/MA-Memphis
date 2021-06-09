@@ -11,22 +11,24 @@
 
 void map_init(mapper_t *mapper)
 {
-	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
 	mapper->pending_task_cnt = 0;
-	mapper->fail_map_cnt = 0;
-	mapper->appid_cnt = 0;
+
 	mapper->pending_map_app = NULL;
 
-	task_init(mapper->tasks);
+	mapper->fail_map_cnt = 0;
+
+	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
+	mapper->appid_cnt = 0;
+
 	app_init(mapper->apps);
+	task_init(mapper->tasks);
 	processor_init(mapper->processors);
 }
 
-void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned desc_sz)
+void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *communication)
 {
 	unsigned time = memphis_get_tick();
 	printf("New app received at %d\n", time);
-	// Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
 	printf("App ID: %d\n", mapper->appid_cnt);
 	printf("Task cnt: %d\n", task_cnt);
 
@@ -35,16 +37,28 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned 
 
 		/* Save pending app descriptor and try to map on TASK_RELEASE */
 		mapper->pending_task_cnt = task_cnt;
-		mapper->pending_descr_sz = desc_sz;
+		
 		/** @todo memcpy */
-		for(int i = 0; i < desc_sz; i++)
+		for(int i = 0; i < task_cnt * 2; i++)
 			mapper->pending_descr[i] = descriptor[i];
+
+		int comm_i = 0;
+		/* Copy the communication dependence list */
+		for(int i = 0; i < task_cnt; i++){
+			/* For all tasks, keep copying until signaled for next task */
+			int consumer;
+			do {
+				consumer = communication[comm_i];
+				mapper->pending_comm[comm_i] = communication[comm_i];
+				comm_i++;
+			} while(consumer > 0);
+		}
 	} else {
-		map_try_mapping(mapper, mapper->appid_cnt, descriptor, task_cnt, mapper->processors);
+		map_try_mapping(mapper, mapper->appid_cnt, task_cnt, descriptor, communication, mapper->processors);
 	}
 }
 
-app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task_cnt)
+app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descriptor, int *communication)
 {
 	app_t *app = app_get_free(mapper->apps);
 
@@ -58,28 +72,39 @@ app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task
 		 * This is usually = descriptor[i*6] & 0xFF.
 		 * But using & in this statement acts as | besides the proper instruction being generated and executed.
 		 */
-		int task_id = descriptor[i*TASK_DESCRIPTOR_SIZE];
-		app->task[task_id]->status = BLOCKED;
+		app->task[i] = task_get_free(mapper->tasks);
+
+		app->task[i]->id = appid << 8 | i;
 		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
-		app->task[task_id] = task_get_free(mapper->tasks);
 
-		app->task[task_id]->id = appid << 8 | task_id;
-
-		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
+		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE];
 		// Echo("Processor address: "); Echo(itoa(proc_idx));
 		if(proc_idx != -1)
 			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
 		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
-		app->task[task_id]->proc_idx = proc_idx;
+		app->task[i]->proc_idx = proc_idx;
 		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
 
-		app->task[task_id]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 2];
+		app->task[i]->old_proc = -1;
+
+		app->task[i]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
 		// Echo("Task type tag: "); Echo(itoa(app->task[task_id]->type_tag)); Echo("\n");
 
-		app->task[task_id]->code_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 3];
-		app->task[task_id]->data_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 4];
-		app->task[task_id]->bss_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 5];
-		app->task[task_id]->init_addr = descriptor[i*TASK_DESCRIPTOR_SIZE + 6];
+		app->task[i]->status = BLOCKED;
+	}
+
+	int comm_i = 0;
+	for(int i = 0; i < app->task_cnt; i++){
+		int cons_i = 0;
+		int encoded_consumer;
+		do {
+			encoded_consumer = communication[comm_i++];
+			int consumer = abs(encoded_consumer) - 1;
+
+			if(consumer >= 0)
+				app->task[i]->consumers[cons_i++] = app->task[consumer];
+
+		} while(encoded_consumer > 0);
 	}
 
 	return app;
@@ -177,8 +202,6 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	for(int i = 0; i < app->task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
 		msg.payload[1] = appid_shift | i;
-		msg.payload[2] = app->task[i]->data_sz;
-		msg.payload[3] = app->task[i]->bss_sz;
 
 		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 7], (OBSERVE | O_QOS));
 
@@ -248,7 +271,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
 		/* Pending NEW_APP and resources freed. Map pending task */
-		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_descr, mapper->pending_task_cnt, mapper->processors);
+		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
 	} else if(
 		mapper->fail_map_cnt > 0 &&																	/* Pending mapping */
 		mapper->processors[proc_idx].pending_map_cnt > 0 && 										/* Terminated task freed desired processor */
@@ -292,11 +315,11 @@ void map_task_allocation(app_t *app, processor_t *processors)
 		memphis_send_any(&msg, APP_INJECTOR);
 }
 
-void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors)
+void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int *comm, processor_t *processors)
 {
 	puts("Mapping application...\n");
 		
-	app_t *app = map_build_app(mapper, mapper->appid_cnt, descr, task_cnt);
+	app_t *app = map_build_app(mapper, mapper->appid_cnt, task_cnt, descr, comm);
 
 	mapper->fail_map_cnt = map_app_mapping(app, mapper->processors);
 	if(!mapper->fail_map_cnt){

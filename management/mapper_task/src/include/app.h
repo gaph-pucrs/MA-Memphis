@@ -7,6 +7,7 @@ typedef struct _app {
 	unsigned task_cnt;
 	unsigned allocated_cnt;
 	task_t *task[PKG_MAX_TASKS_APP];
+	// unsigned mapping score * 100
 } app_t;
 
 app_t *app_get_free(app_t *apps);

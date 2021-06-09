@@ -20,7 +20,7 @@ int main()
 		/* Check what service has been received */
 		switch(msg.payload[0]){
 			case NEW_APP:
-				map_new_app(&mapper, msg.payload[2], (int*)&msg.payload[3], msg.payload[1] - 1);
+				map_new_app(&mapper, msg.payload[1], (int*)&msg.payload[2], (int*)&msg.payload[2*msg.payload[1] + 2]);
 				break;
 			case TASK_ALLOCATED:
 				map_task_allocated(&mapper, msg.payload[1]);

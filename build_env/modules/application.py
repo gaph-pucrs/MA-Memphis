@@ -4,6 +4,7 @@ from os import listdir, makedirs
 from subprocess import run
 from multiprocessing import cpu_count
 from repository import Repository
+from yaml import safe_load
 
 class Application:
 	def __init__(self, app_name, platform_path, testcase_path):
@@ -18,6 +19,14 @@ class Application:
 			if file.endswith(".c"):
 				task = file.split(".")[0]
 				self.tasks.append(task)
+
+		self.tasks.sort()
+
+		self.communication = {}
+		try:
+			self.communication = safe_load(open("{}/applications/{}/config.yaml".format(self.platform_path, self.app_name)))["communication"]
+		except:
+			pass
 
 		self.tasks.sort()
 
@@ -42,20 +51,27 @@ class Application:
 
 		repo.add(len(self.tasks), "Number of tasks of application {}".format(self.app_name))
 
-		task_type = 0x01
-		address = 7*len(self.tasks)*4 + 4
-		for t in range(len(self.tasks)):
-			repo.add(t, self.tasks[t])
-			repo.add(0, "Mapping [Legacy]")
-			repo.add(task_type, "Task type tag")
-			
-			txt_size = self.__get_txt_size(self.tasks[t])
+		dep_list, dep_list_len = self.__get_dep_list()
+
+		address = 4 + 4*len(self.tasks)*4 + dep_list_len*4
+		for task in self.tasks:
+			txt_size = self.__get_txt_size(task)
 			repo.add(txt_size, "txt size")
-			repo.add(0, "data size [Legacy]")
-			repo.add(0, "bss size [Legacy]")
-			repo.add(address, "Initial address")
+			repo.add(0, "data size")
+			repo.add(0, "bss size")
+			repo.add(address, "Repository address")
 
 			address += txt_size*4
+
+		for t in range(len(self.tasks)):
+			for c in range(len(dep_list[t])):
+					consumer = dep_list[t][c] + 1
+					if c == len(dep_list[t]) - 1:
+						consumer *= -1	
+					repo.add(consumer, "Task {} is producer of task {}".format(self.tasks[t], self.tasks[dep_list[t][c]]))
+
+			if len(dep_list[t]) == 0:
+				repo.add(0, "Task {} has no consumers".format(self.tasks[t]))
 
 		for task in self.tasks:
 			task_hex = open(self.testcase_path+"/applications/"+self.app_name+"/"+task+".txt", "r")
@@ -73,6 +89,29 @@ class Application:
 
 	def __get_txt_size(self, task):
 		return sum(1 for line in open(self.testcase_path+"/applications/"+self.app_name+"/"+task+".txt"))
+
+	def __get_dep_list(self):
+		dep_list = []
+
+		dep_list_len = 0
+		for task in self.tasks:
+			sucessors = []
+
+			consumers = {}
+			try:
+				consumers = self.communication[task]["consumers"]
+			except:
+				pass
+			
+			for consumer in consumers:
+				sucessors.append(self.tasks.index(consumer))
+
+			dep_list.append(sucessors)
+			dep_list_len += len(sucessors)
+			if len(sucessors) == 0:
+				dep_list_len += 1
+
+		return dep_list, dep_list_len
 
 class ApplicationIds:
 	def __init__(self):

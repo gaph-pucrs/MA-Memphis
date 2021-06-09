@@ -60,6 +60,9 @@ class Management:
 		for i in range(len(output_tasks)):
 			ids.add(output_tasks[i], sizes[i], task_ids[i])
 
+		if output_tasks[0] != "mapper_task":
+			raise Exception("Mapper task must be the first in the management list")
+
 		ids.write(self.testcase_path+"/management/id_tasks.h")
 
 	def build(self):
@@ -79,8 +82,8 @@ class Management:
 			txt_size = self.__get_txt_size(task)
 			repo.add(txt_size, "txt size")
 
-			repo.add(0, "data size [Legacy]")
-			repo.add(0, "bss size [Legacy]")
+			repo.add(0, "data size")
+			repo.add(0, "bss size")
 
 			task_hex = open(self.testcase_path+"/management/"+task+"/"+task+".txt", "r")
 
@@ -99,19 +102,15 @@ class Management:
 			name = task["task"]
 			start.add(name, "Task name")
 
-			address = -1
-			map_comment = ""
 			try:
 				address = task["static_mapping"]
 				addr_x = int(address[0])
 				addr_y = int(address[1])
 				address = addr_x << 8 | addr_y
 				map_comment = "statically mapped to PE {}x{}".format(addr_x, addr_y)
+				start.add(str(address), "Task {} is {}".format(name, map_comment))
 			except:
-				address = -1
-				map_comment = "dinamically mapped"
-			
-			start.add(str(address), "Task {} is {}".format(name, map_comment))
+				raise Exception("All management tasks must be STATICALLY MAPPED")			
 		
 		start.write(scenario_path+"/ma_start.txt")
 		start.write_debug(scenario_path+"/ma_start_debug.txt")
