@@ -1,0 +1,35 @@
+communication:
+  aes_master:
+    consumers:
+      - "aes_slave1"
+      - "aes_slave2"
+      - "aes_slave3"
+      - "aes_slave4"
+      - "aes_slave5"
+      - "aes_slave6"
+      - "aes_slave7"
+      - "aes_slave8"
+  aes_slave1:
+    consumers:
+      - "aes_master"
+  aes_slave2:
+    consumers:
+      - "aes_master"
+  aes_slave3:
+    consumers:
+      - "aes_master"
+  aes_slave4:
+    consumers:
+      - "aes_master"
+  aes_slave5:
+    consumers:
+      - "aes_master"
+  aes_slave6:
+    consumers:
+      - "aes_master"
+  aes_slave7:
+    consumers:
+      - "aes_master"
+  aes_slave8:
+    consumers:
+      - "aes_master"
