@@ -107,6 +107,13 @@ app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descri
 		} while(encoded_consumer > 0);
 	}
 
+	// for(int i = 0; i < app->task_cnt; i++){
+	// 	printf("Task %d consumers: ", i);
+	// 	for(int j = 0; j < PKG_MAX_TASKS_APP && app->task[i]->consumers[j] != NULL; j++){
+	// 		printf("%d ", app->task[i]->consumers[j]->id);
+	// 	}
+	// }
+
 	return app;
 }
 
