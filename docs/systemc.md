@@ -12,11 +12,11 @@ Obtain the source, extract, compile and install:
 ```console
 $ cd ~/systemc
 $ wget https://accellera.org/images/downloads/standards/systemc/systemc-2.3.3.tar.gz
-$ tar xvf systemc-2.3.3.tar.gz
+$ tar xf systemc-2.3.3.tar.gz
 $ cd systemc-2.3.3
 $ mkdir build
 $ cd build
-$ ../configure --prefix=$HOME/tools_memphis/systemc
+$ cmake .. -DCMAKE_CXX_STANDARD=11 -DCMAKE_INSTALL_PREFIX=$HOME/tools_memphis/systemc
 $ make -j `nproc --all`
 $ make install
 ```
