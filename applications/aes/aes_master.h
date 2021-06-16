@@ -4,7 +4,7 @@
 #define TRUE  1
 #define FALSE 0
 
-#define debug_comunication_on
+// #define debug_comunication_on
 
 #define KEY_SIZE	256
 #define AES_BLOCK_SIZE 16        // AES operates on 16 bytes at a time
