@@ -50,10 +50,8 @@ int main()
 				id = x;
 				printf("%d ", id);
 		}	
-		puts("Operation: "); 
-		printf("%d\n", op_mode);
-		puts("Blocks: ");
-		printf("%d\n", qtd_messages);
+		printf("Operation: %d\n", op_mode);
+		printf("Blocks: %d\n", qtd_messages);
 
 		if (op_mode == END_TASK){
 			flag = 0;
