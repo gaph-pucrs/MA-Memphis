@@ -17,7 +17,7 @@ struct _task {
 	unsigned type_tag;
 	task_status_t status;
 
-	task_t *consumers[PKG_MAX_TASKS_APP];
+	task_t *consumers[PKG_MAX_TASKS_APP - 1];
 };
 
 task_t *task_get_free(task_t *tasks);

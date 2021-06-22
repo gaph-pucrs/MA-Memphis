@@ -311,8 +311,6 @@ bool os_task_allocation(int id, int length, int mapper_task, int mapper_addr)
 
 bool os_task_release(
 	int id, 
-	int data_sz, 
-	int bss_sz, 
 	int observer_task, 
 	int observer_address, 
 	int task_number, 
@@ -325,7 +323,7 @@ bool os_task_release(
 	// putsv("-> Task count: ", task_number);
 
 	/* Update TCB with received info */
-	tcb_update_sections(task, data_sz, bss_sz);
+	// tcb_update_sections(task, data_sz, bss_sz);
 
 	task->observer_task = observer_task;
 	task->observer_address = observer_address;

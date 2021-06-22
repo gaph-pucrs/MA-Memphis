@@ -364,9 +364,7 @@ bool os_kernel_syscall(unsigned int *message, int length)
 				message[2], 
 				message[3], 
 				message[4], 
-				message[5], 
-				message[6], 
-				(int*)&message[7]
+				(int*)&message[5]
 			);
 		case TASK_MIGRATION:
 			return os_task_migration(message[1], message[2]);
