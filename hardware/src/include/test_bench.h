@@ -59,7 +59,7 @@ SC_MODULE(test_bench) {
 	std::string path;
 	
 	SC_HAS_PROCESS(test_bench);
-	test_bench(sc_module_name name_, char *filename_= "output_master.txt", std::string program_path = "") :
+	test_bench(sc_module_name name_, const char *filename_= "output_master.txt", std::string program_path = "") :
     sc_module(name_), filename(filename_)
     {
 		path = program_path.substr(0, program_path.find_last_of("/"));
@@ -214,7 +214,7 @@ SC_MODULE(test_bench) {
 					
 	}
 	private:
-		char *filename;
+		const char *filename;
 };
 
 
@@ -223,7 +223,7 @@ SC_MODULE(test_bench) {
 int sc_main(int argc, char *argv[]){
 	int time_to_run=0;
 	int i;
-	char *filename = "output_master.txt";
+	const char *filename = "output_master.txt";
 	
 	if(argc<3){
 		cout << "Sintax: " << argv[0] << " -c <milisecons to execute> [-o <output filename>]" << endl;

@@ -10,7 +10,7 @@ PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
 CXX = g++
-CXXFLAGS = -g -Wall -Og -fpermissive -Wno-write-strings -std=c++11 $(INCLUDE) --include definitions.h
+CXXFLAGS = -Wall -O2 -fpermissive -std=c++11 $(INCLUDE) --include definitions.h
 LDFLAGS = -lsystemc
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
