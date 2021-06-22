@@ -179,8 +179,8 @@ window_t map_select_window(app_t *app, processor_t *processors)
 			last_window.wy++;
 			raise_x = true;
 		}
-		last_window.x = PKG_N_PE_X - MAP_MIN_WX;
-		last_window.y = PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY;
+		last_window.x = PKG_N_PE_X - last_window.wx;
+		last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
 	}
 	printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
@@ -233,8 +233,8 @@ window_t map_select_window(app_t *app, processor_t *processors)
 			last_window.wy++;
 			raise_x = true;
 		}
-		last_window.wx = PKG_N_PE_X - MAP_MIN_WX;
-		last_window.wy = PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY;
+		last_window.x = PKG_N_PE_X - last_window.wx;
+		last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
 		window = last_window;
 		map_next_window(&window);
 	}
