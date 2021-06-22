@@ -21,7 +21,7 @@ message_t msg;
 int main()
 {
 	unsigned int key_schedule[60];
-	int qtd_messages, op_mode, x, flag=1, id = -1, i;
+	int qtd_messages, op_mode, x, flag=1, id = -1;
 	unsigned int enc_buf[128];
 	unsigned int input_text[16]; 
 	unsigned int key[1][32] = {
@@ -37,7 +37,7 @@ int main()
 			
 #ifdef debug_comunication_on
 	puts("Slave configuration: \n");
-	for(i=0; i<3;i++){
+	for(int i=0; i<3;i++){
 		printf("%x ", input_text[i]);
 	}
 #endif 
@@ -63,7 +63,7 @@ int main()
 			
 #ifdef debug_comunication_on
 	puts("received msg: ");
-	for(i=0; i<16;i++){
+	for(int i=0; i<16;i++){
 		printf("%x ", input_text[i]);
 	}
 #endif 
