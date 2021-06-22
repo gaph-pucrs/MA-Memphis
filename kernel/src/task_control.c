@@ -66,7 +66,7 @@ tcb_t *tcb_search(int task)
 tcb_t* tcb_free_get()
 {
     for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(tcbs[i].scheduler.status == SCHED_FREE)
+		if(tcbs[i].id == -1)
 			return &tcbs[i];
 	}
 

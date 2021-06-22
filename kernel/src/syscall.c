@@ -445,6 +445,9 @@ int os_puts(char *str)
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;
 	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)str);
+	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
+	puts(msg_ptr);
+	puts("\n");
 
-	return printf("$$$_%dx%d_%d_%d_%s\n", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, msg_ptr);
+	return 0;
 }
