@@ -80,7 +80,7 @@ app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descri
 		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE];
 		// Echo("Processor address: "); Echo(itoa(proc_idx));
 		if(proc_idx != -1)
-			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
+			proc_idx = (proc_idx >> 8) + (proc_idx & 0xFF)*PKG_N_PE_X;
 		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
 		app->task[i]->proc_idx = proc_idx;
 		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
@@ -147,7 +147,7 @@ void map_static_tasks(app_t *app, processor_t *processors)
 	for(int i = 0; i < app->task_cnt; i++){
 		int proc_idx = app->task[i]->proc_idx;
 		if(proc_idx != -1){
-			printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
+			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
 			// processors[proc_idx].pending_map_cnt = 0;
 			processors[proc_idx].free_page_cnt--;
 		}
@@ -261,6 +261,7 @@ void map_next_window(window_t *window)
 			window->x = PKG_N_PE_X - window->wx;
 	} else if(window->y + window->wy < PKG_N_PE/PKG_N_PE_X){
 		window->y += MAP_STRIDE;
+		window->x = 0;
 
 		if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
 			window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
@@ -395,6 +396,9 @@ void map_task_terminated(mapper_t *mapper, int id)
 			map_static_tasks(mapper->pending_map_app, mapper->processors);
 			map_sliding_window(mapper->pending_map_app, mapper->processors);
 
+			/* Send task allocation to injector */
+			map_task_allocation(mapper->pending_map_app, mapper->processors);
+
 			map_set_score(mapper->pending_map_app, mapper->processors);
 
 			mapper->pending_map_app = NULL;
@@ -463,7 +467,12 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 	if(!mapper->fail_map_cnt){
 		/* 2nd phase: dynamic mapping (guaranteed to suceed) */
 		map_static_tasks(app, processors);
-		map_sliding_window(app, processors);
+
+		if(mapper->appid_cnt != 0)
+			map_sliding_window(app, processors);
+
+		/* Send task allocation to injector */
+		map_task_allocation(app, processors);
 
 		map_set_score(app, processors);
 		
@@ -564,7 +573,7 @@ void map_sliding_window(app_t *app, processor_t *processors)
 {
 	/* 1st step: select a window */
 	window_t window = map_select_window(app, processors);
-	// printf("Selected window %dx%d\n", window.x, window.y);
+	printf("Selected window %dx%d\n", window.x, window.y);
 
 	/* 2nd step: get the mapping order */
 	task_t *mapping_order[app->task_cnt];
@@ -572,9 +581,6 @@ void map_sliding_window(app_t *app, processor_t *processors)
 
 	/* 3rd step: map with the least communication cost and most parallelism */
 	map_dynamic_tasks(app, mapping_order, processors, &window);
-
-	/* Send task allocation to injector */
-	map_task_allocation(app, processors);
 }
 
 void map_dynamic_tasks(app_t *app, task_t *order[], processor_t *processors, window_t *window)
@@ -591,6 +597,10 @@ void map_dynamic_tasks(app_t *app, task_t *order[], processor_t *processors, win
 		for(int x = window->x; x < window->x + window->wx; x++){
 			for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
 				processor_t *pe = processors_get(processors, x, y);
+				
+				if(pe->free_page_cnt == 0)	/* Skip full PEs */
+					continue;
+
 				unsigned c = 0;
 
 				/* 1st: Keep tasks from different apps apart from each other */
