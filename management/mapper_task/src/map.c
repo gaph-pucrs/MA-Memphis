@@ -29,8 +29,8 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *comm
 {
 	unsigned time = memphis_get_tick();
 	printf("New app received at %d\n", time);
-	printf("App ID: %d\n", mapper->appid_cnt);
-	printf("Task cnt: %d\n", task_cnt);
+	// printf("App ID: %d\n", mapper->appid_cnt);
+	// printf("Task cnt: %d\n", task_cnt);
 
 	if(task_cnt > mapper->available_slots){
 		puts("No available slots.\n");
@@ -182,7 +182,7 @@ window_t map_select_window(app_t *app, processor_t *processors)
 		last_window.x = PKG_N_PE_X - last_window.wx;
 		last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
 	}
-	printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
+	// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
 	window_t window = last_window;
 	map_next_window(&window);
@@ -190,9 +190,9 @@ window_t map_select_window(app_t *app, processor_t *processors)
 	while(true){
 		/* From last window to top right corner */
 		while(window.x > last_window.x || window.y > last_window.y){
-			printf("Verifying window %dx%d\n", window.x, window.y);
+			// printf("Verifying window %dx%d\n", window.x, window.y);
 			unsigned free_pages = map_window_pages(processors, window);
-			printf("Free pages = %d\n", free_pages);
+			// printf("Free pages = %d\n", free_pages);
 
 			if(free_pages >= app->task_cnt){
 				last_window = window;
@@ -204,9 +204,9 @@ window_t map_select_window(app_t *app, processor_t *processors)
 
 		/* From bottom left corner to last window */
 		while(window.x < last_window.x || window.y < last_window.y){
-			printf("Verifying window %dx%d\n", window.x, window.y);
+			// printf("Verifying window %dx%d\n", window.x, window.y);
 			unsigned free_pages = map_window_pages(processors, window);
-			printf("Free pages = %d\n", free_pages);
+			// printf("Free pages = %d\n", free_pages);
 
 			if(free_pages >= app->task_cnt){
 				last_window = window;
@@ -217,9 +217,9 @@ window_t map_select_window(app_t *app, processor_t *processors)
 		}
 
 		/* Exactly last window */
-		printf("Verifying window %dx%d\n", window.x, window.y);
+		// printf("Verifying window %dx%d\n", window.x, window.y);
 		unsigned free_pages = map_window_pages(processors, window);
-		printf("Free pages = %d\n", free_pages);
+		// printf("Free pages = %d\n", free_pages);
 		if(free_pages >= app->task_cnt){
 			last_window = window;
 			return window;
@@ -573,7 +573,7 @@ void map_sliding_window(app_t *app, processor_t *processors)
 {
 	/* 1st step: select a window */
 	window_t window = map_select_window(app, processors);
-	printf("Selected window %dx%d\n", window.x, window.y);
+	// printf("Selected window %dx%d\n", window.x, window.y);
 
 	/* 2nd step: get the mapping order */
 	task_t *mapping_order[app->task_cnt];
@@ -650,7 +650,7 @@ void map_dynamic_tasks(app_t *app, task_t *order[], processor_t *processors, win
 		task->proc_idx = seq;
 		processors[seq].free_page_cnt--;
 		processors[seq].pending_map_cnt++;
-		printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
+		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
 
