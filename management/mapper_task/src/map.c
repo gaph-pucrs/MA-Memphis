@@ -376,6 +376,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
 		/* Pending NEW_APP and resources freed. Map pending application which isn't built yet */
 		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
+		mapper->pending_task_cnt = 0;
 	} else if(
 		mapper->fail_map_cnt > 0 &&																	/* Pending static mapping */
 		mapper->processors[proc_idx].failed_map &&													/* Pending static map at desired PE */
