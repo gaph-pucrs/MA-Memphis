@@ -179,6 +179,7 @@ void sched_set_remaining_time(tcb_t *tcb, unsigned int timeslice)
 
 void sched_run()
 {
+	// puts("Scheduler called!\n");
 	unsigned int scheduler_call_time = MMR_TICK_COUNTER;
 
 	MMR_SCHEDULING_REPORT = MMR_SCHEDULER;
@@ -187,11 +188,12 @@ void sched_run()
 		tm_migrate(current);
 
 	tcb_t *scheduled = sched_lst(scheduler_call_time);
+	// printf("Scheduled TCB addr is %x\n", (unsigned)scheduled);
 
 	if(scheduled){
 		current = scheduled;
 		MMR_SCHEDULING_REPORT = tcb_get_id(current);
-
+		// printf("Current TCB addr is %x\n", (unsigned)current);
 	} else {
 		/* Schedules the idle task */
 		current = tcb_get_idle();

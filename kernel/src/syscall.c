@@ -26,6 +26,7 @@ bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
 int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
 {
+	// puts("Syscall called\n");
 	schedule_after_syscall = false;
 	switch(service){
 		case EXIT:
