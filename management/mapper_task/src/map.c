@@ -114,12 +114,15 @@ app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descri
 unsigned map_try_static(app_t *app, processor_t *processors)
 {
 	unsigned fail_cnt = 0;
+	app->has_static_tasks = false;
 
 	/* First check for static mapping availability */
 	for(int i = 0; i < app->task_cnt; i++){
 		int proc_idx = app->task[i]->proc_idx;
 		if(proc_idx != -1){
 			/* Statically mapped task found */
+			app->has_static_tasks = true;
+
 			/* This is needed because more than 1 task can be statically mapped to the same processor */
 			processors[proc_idx].pending_map_cnt++;
 			if(processors[proc_idx].pending_map_cnt > processors[proc_idx].free_page_cnt){
@@ -137,6 +140,10 @@ unsigned map_try_static(app_t *app, processor_t *processors)
 
 void map_static_tasks(app_t *app, processor_t *processors)
 {
+	unsigned static_cnt = 0;
+	app->center_x = 0;
+	app->center_y = 0;
+
 	/* First map statically mapped tasks */
 	for(int i = 0; i < app->task_cnt; i++){
 		int proc_idx = app->task[i]->proc_idx;
@@ -144,93 +151,154 @@ void map_static_tasks(app_t *app, processor_t *processors)
 			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
 			// processors[proc_idx].pending_map_cnt = 0;
 			processors[proc_idx].free_page_cnt--;
+			app->center_x += processors[proc_idx].addr >> 8;
+			app->center_y += processors[proc_idx].addr & 0xFF;
+			static_cnt++;
 		}
 	}
+
+	/* Will not divide by 0. Function only called on has_static_tasks == true */
+	app->center_x /= static_cnt;
+	app->center_y /= static_cnt;
 }
 
 window_t map_select_window(app_t *app, processor_t *processors)
 {
-	static window_t last_window = {
-		x: PKG_N_PE_X - MAP_MIN_WX, 
-		y: PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY, 
-		wx: -1, 
-		wy: -1
-	};
-	
-	bool raise_x = false;
-	last_window.wx = MAP_MIN_WX;
-	last_window.wy = MAP_MIN_WY;
+	if(app->has_static_tasks){
+		/* Select a window without changing last_window */
+		/* Window will be based on the center of the static tasks */
+		window_t window = {
+			x: app->center_x - MAP_MIN_WX / 2,
+			y: app->center_y - MAP_MIN_WY / 2,
+			wx: MAP_MIN_WX,
+			wy: MAP_MIN_WY
+		};
 
-	/**
-	 * @todo This is disregard of the static mapped tasks.
-	 * 	Do a special window selection for apps with static mapped tasks
-	 */
-	while(last_window.wx*last_window.wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
-		if(raise_x){
-			last_window.wx++;
-			raise_x = false;
-		} else {
-			last_window.wy++;
-			raise_x = true;
+		if(window.x < 0)
+			window.x = 0;
+		
+		if(window.y < 0)
+			window.y = 0;
+
+		bool raise_x = false;
+		while(window.wx*window.wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
+			if(raise_x){
+				window.wx++;
+				raise_x = false;
+			} else {
+				window.wy++;
+				raise_x = true;
+			}
 		}
-		last_window.x = PKG_N_PE_X - last_window.wx;
-		last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
-	}
-	// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
-	window_t window = last_window;
-	map_next_window(&window);
+		if(window.x + window.wx > PKG_N_PE_X)
+			window.x = PKG_N_PE_X - window.wx;
+		
+		if(window.y + window.wy > PKG_N_PE/PKG_N_PE_X)
+			window.y = PKG_N_PE/PKG_N_PE_X - window.wy;
 
-	while(true){
-		/* From last window to top right corner */
-		while(window.x > last_window.x || window.y > last_window.y){
-			// printf("Verifying window %dx%d\n", window.x, window.y);
-			unsigned free_pages = map_window_pages(processors, window);
-			// printf("Free pages = %d\n", free_pages);
-
-			if(free_pages >= app->task_cnt){
-				last_window = window;
-				return window;
+		while(map_window_pages(processors, window) < app->task_cnt){
+			/* Select window by changing W instead of sliding */		
+			if(raise_x){
+				window.wx++;
+				raise_x = false;
+			} else {
+				window.wy++;
+				raise_x = true;
 			}
 
-			map_next_window(&window);
+			if(window.x + window.wx > PKG_N_PE_X)
+				window.x = PKG_N_PE_X - window.wx;
+			
+			if(window.y + window.wy > PKG_N_PE/PKG_N_PE_X)
+				window.y = PKG_N_PE/PKG_N_PE_X - window.wy;
 		}
 
-		/* From bottom left corner to last window */
-		while(window.x < last_window.x || window.y < last_window.y){
-			// printf("Verifying window %dx%d\n", window.x, window.y);
-			unsigned free_pages = map_window_pages(processors, window);
-			// printf("Free pages = %d\n", free_pages);
+		return window;
+		
+	} else {
+		static window_t last_window = {
+			x: PKG_N_PE_X - MAP_MIN_WX, 
+			y: PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY, 
+			wx: -1, 
+			wy: -1
+		};
+		
+		bool raise_x = false;
+		last_window.wx = MAP_MIN_WX;
+		last_window.wy = MAP_MIN_WY;
 
-			if(free_pages >= app->task_cnt){
-				last_window = window;
-				return window;
+		/**
+		 * @todo This is disregard of the static mapped tasks.
+		 * 	Do a special window selection for apps with static mapped tasks
+		 */
+		while(last_window.wx*last_window.wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
+			if(raise_x){
+				last_window.wx++;
+				raise_x = false;
+			} else {
+				last_window.wy++;
+				raise_x = true;
 			}
-
-			map_next_window(&window);
+			last_window.x = PKG_N_PE_X - last_window.wx;
+			last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
 		}
+		// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
-		/* Exactly last window */
-		// printf("Verifying window %dx%d\n", window.x, window.y);
-		unsigned free_pages = map_window_pages(processors, window);
-		// printf("Free pages = %d\n", free_pages);
-		if(free_pages >= app->task_cnt){
-			last_window = window;
-			return window;
-		}
-
-		/* No window found */
-		if(raise_x){
-			last_window.wx++;
-			raise_x = false;
-		} else {
-			last_window.wy++;
-			raise_x = true;
-		}
-		last_window.x = PKG_N_PE_X - last_window.wx;
-		last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
-		window = last_window;
+		window_t window = last_window;
 		map_next_window(&window);
+
+		while(true){
+			/* From last window to top right corner */
+			while(window.x > last_window.x || window.y > last_window.y){
+				// printf("Verifying window %dx%d\n", window.x, window.y);
+				unsigned free_pages = map_window_pages(processors, window);
+				// printf("Free pages = %d\n", free_pages);
+
+				if(free_pages >= app->task_cnt){
+					last_window = window;
+					return window;
+				}
+
+				map_next_window(&window);
+			}
+
+			/* From bottom left corner to last window */
+			while(window.x < last_window.x || window.y < last_window.y){
+				// printf("Verifying window %dx%d\n", window.x, window.y);
+				unsigned free_pages = map_window_pages(processors, window);
+				// printf("Free pages = %d\n", free_pages);
+
+				if(free_pages >= app->task_cnt){
+					last_window = window;
+					return window;
+				}
+
+				map_next_window(&window);
+			}
+
+			/* Exactly last window */
+			// printf("Verifying window %dx%d\n", window.x, window.y);
+			unsigned free_pages = map_window_pages(processors, window);
+			// printf("Free pages = %d\n", free_pages);
+			if(free_pages >= app->task_cnt){
+				last_window = window;
+				return window;
+			}
+
+			/* No window found */
+			if(raise_x){
+				last_window.wx++;
+				raise_x = false;
+			} else {
+				last_window.wy++;
+				raise_x = true;
+			}
+			last_window.x = PKG_N_PE_X - last_window.wx;
+			last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
+			window = last_window;
+			map_next_window(&window);
+		}	
 	}
 }
 
@@ -378,7 +446,6 @@ void map_task_terminated(mapper_t *mapper, int id)
 		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
 		mapper->pending_task_cnt = 0;
 	} else if(
-		mapper->fail_map_cnt > 0 &&																	/* Pending static mapping */
 		mapper->processors[proc_idx].failed_map &&													/* Pending static map at desired PE */
 		mapper->processors[proc_idx].free_page_cnt >= mapper->processors[proc_idx].pending_map_cnt	/* All slots needed in this processor are freed! */
 	){
@@ -387,6 +454,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 		if(mapper->fail_map_cnt == 0){
 			/* All needed processor slots are freed. Map and allocate now */
 			map_static_tasks(mapper->pending_map_app, mapper->processors);
+
 			map_sliding_window(mapper->pending_map_app, mapper->processors);
 
 			/* Send task allocation to injector */
@@ -459,7 +527,8 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 
 	if(!mapper->fail_map_cnt){
 		/* 2nd phase: dynamic mapping (guaranteed to suceed) */
-		map_static_tasks(app, processors);
+		if(app->has_static_tasks)
+			map_static_tasks(app, processors);
 
 		if(mapper->appid_cnt != 0)
 			map_sliding_window(app, processors);
