@@ -11,7 +11,7 @@ class Hardware:
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
 
-		self.memory_size = self.PKG_PAGE_SIZE*self.PKG_MAX_LOCAL_TASKS
+		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1) # 1 page for kernel
 
 		self.PKG_N_PE = self.PKG_N_PE_X * self.PKG_N_PE_Y
 
