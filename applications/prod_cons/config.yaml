@@ -1,0 +1,4 @@
+communication:
+  prod:
+    consumers:
+      - "cons"

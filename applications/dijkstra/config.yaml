@@ -1,0 +1,23 @@
+communication:
+  dijkstra_0:
+    consumers:
+      - "print"
+  dijkstra_1:
+    consumers:
+      - "print"
+  dijkstra_2:
+    consumers:
+      - "print"
+  dijkstra_3:
+    consumers:
+      - "print"
+  dijkstra_4:
+    consumers:
+      - "print"
+  divider:
+    consumers:
+      - "dijkstra_0"
+      - "dijkstra_1"
+      - "dijkstra_2"
+      - "dijkstra_3"
+      - "dijkstra_4"

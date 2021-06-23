@@ -1,0 +1,13 @@
+communication:
+  idct:
+    consumers:
+      - "print"
+  iquant:
+    consumers:
+      - "idct"
+  ivlc:
+    consumers:
+      - "iquant"
+  start:
+    consumers:
+      - "ivlc"

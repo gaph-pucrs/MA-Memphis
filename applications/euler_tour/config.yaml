@@ -1,0 +1,15 @@
+communication:
+  manager:
+    consumers:
+      - "node_a"
+      - "node_b"
+      - "node_c"
+  node_a:
+    consumers:
+      - "manager"
+  node_b:
+    consumers:
+      - "manager"
+  node_c:
+    consumers:
+      - "manager"

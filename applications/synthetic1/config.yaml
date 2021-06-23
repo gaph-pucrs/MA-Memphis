@@ -1,0 +1,17 @@
+communication:
+  taskA:
+    consumers:
+      - "taskC"
+  taskB:
+    consumers:
+      - "taskC"
+  taskC:
+    consumers:
+      - "taskD"
+      - "taskE"
+  taskD:
+    consumers:
+      - "taskF"
+  taskE:
+    consumers:
+      - "taskF"

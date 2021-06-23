@@ -1,0 +1,35 @@
+communication:
+  LAB1:
+    consumers:
+      - "DLAB"
+  LAB2:
+    consumers:
+      - "DLAB"
+  p1:
+    consumers:
+      - "RMS"
+      - "WRMS"
+      - "GFC"
+      - "XYZ1"
+  p2:
+    consumers:
+      - "RMS"
+      - "WRMS"
+      - "GFC"
+      - "XYZ2"
+  RGB1:
+    consumers:
+      - "DRGB"
+  RGB2:
+    consumers:
+      - "DRGB"
+  XYZ1:
+    consumers:
+      - "LAB1"
+      - "DXYZ"
+      - "RGB1"
+  XYZ2:
+    consumers:
+      - "LAB2"
+      - "DXYZ"
+      - "RGB2"
