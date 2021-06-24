@@ -13,4 +13,6 @@ class Libs:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/lib", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/lib", "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error building libraries.")

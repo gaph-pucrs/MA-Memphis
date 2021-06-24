@@ -66,7 +66,9 @@ class Kernel:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/kernel", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/kernel", "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error building kernel.")
 
 	def check_size(self):
 		path = "{}/kernel/kernel.elf".format(self.testcase_path)

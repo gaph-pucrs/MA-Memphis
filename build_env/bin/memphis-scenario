@@ -32,4 +32,7 @@ if __name__ == "__main__":
 	if not exists(testcase_file):
 		sys.exit("ERROR: Testcase "+testcase_file+" not found.")
 
-	scenario_build(PLATFORM_PATH, testcase_folder, scenario_file)
+	try:
+		scenario_build(PLATFORM_PATH, testcase_folder, scenario_file)
+	except Exception as ex:
+		sys.exit("\nERROR: {}".format(ex))

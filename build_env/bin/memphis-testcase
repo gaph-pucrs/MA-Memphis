@@ -24,5 +24,7 @@ if __name__ == "__main__":
 	testcase_file = args.testcase
 	if not exists(testcase_file):
 		sys.exit("ERROR: Testcase "+testcase_file+" not found.")
-
-	testcase_build(PLATFORM_PATH, testcase_file)
+	try:
+		testcase_build(PLATFORM_PATH, testcase_file)
+	except Exception as ex:
+		sys.exit("\nERROR: {}".format(ex))

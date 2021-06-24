@@ -44,7 +44,9 @@ class Application:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/applications/"+self.app_name, "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/applications/"+self.app_name, "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error build application {}.".format(self.app_name))
 
 	def check_count(self, max_tasks_app):
 		if len(self.tasks) > max_tasks_app:
@@ -65,14 +67,14 @@ class Application:
 			self.bss_sizes[task] = int(out[2])
 
 			
-		print("\n******************** Task page size report ********************")
+		print("\n************ {} page size report ************".format(self.app_name.center(20)))
 		for task in self.tasks:
 			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
 			if size <= page_size:
 				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
 			else:
 				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
-		print("****************** End task page size report ******************")
+		print("********** End {} page size report **********".format(self.app_name.center(20)))
 
 	def generate_repo(self, scenario_path):
 		repo = Repository()

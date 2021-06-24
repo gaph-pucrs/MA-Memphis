@@ -68,7 +68,9 @@ class Management:
 	def build(self):
 		NCPU = cpu_count()
 		for task in self.unique_tasks:
-			run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
+			make = run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
+			if make.returncode != 0:
+				raise Exception("Error build MA task {}.".format(task))
 
 	def check_count(self, max_tasks_app):
 		if len(self.tasks) > max_tasks_app:
@@ -89,14 +91,14 @@ class Management:
 			self.bss_sizes[task] = int(out[2])
 
 			
-		print("\n******************** Task page size report ********************")
+		print("\n********************* MA page size report *********************")
 		for task in self.unique_tasks:
 			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
 			if size <= page_size:
 				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
 			else:
 				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
-		print("****************** End task page size report ******************")
+		print("******************* End MA page size report *******************")
 
 	def generate_repo(self, scenario_path):
 		for task in self.unique_tasks:

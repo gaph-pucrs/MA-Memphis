@@ -56,10 +56,11 @@ class Testcase:
 		self.libs.build()
 		
 		self.kernel.build()
-		self.kernel.check_size()
 
 		self.bootloader.build()
 		self.hardware.build()
+
+		self.kernel.check_size()
 
 	def __is_obsolete(self):
 		if exists(self.file):
