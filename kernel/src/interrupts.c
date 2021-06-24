@@ -293,7 +293,7 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
 	printf("Task id %d allocated at %d\n", id, MMR_TICK_COUNTER);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)free_tcb->offset, length);
+	dmni_read((unsigned int*)free_tcb->offset, (length+data_len)/4);
 
 	// printf("Code lenght: %x\n", length);
 	// printf("Mapper task: %d\n", mapper_task);

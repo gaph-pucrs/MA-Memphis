@@ -105,13 +105,6 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->mapper_address = mapper_addr;
 }
 
-void tcb_update_sections(tcb_t *tcb, unsigned int data_sz, unsigned int bss_sz)
-{
-	tcb->data_lenght = data_sz;
-	tcb->bss_lenght = bss_sz;
-	tcb->text_lenght -= data_sz;
-}
-
 message_t *tcb_get_message(tcb_t *tcb)
 {
 	return (message_t*)(tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1]);

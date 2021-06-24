@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from distutils.dir_util import copy_tree
 from distutils.file_util import copy_file
-from subprocess import run
+from subprocess import run, check_output
 from multiprocessing import cpu_count
 
 class Kernel:
@@ -13,6 +13,7 @@ class Kernel:
 		self.PKG_N_PE_X 			= hw["mpsoc_dimension"][0]
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
+		self.stack_size				= hw["stack_size"]
 
 		self.PKG_N_PE = self.PKG_N_PE_X * self.PKG_N_PE_Y
 
@@ -65,7 +66,24 @@ class Kernel:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/kernel", "-j", str(NCPU)])		
+		run(["make", "-C", self.testcase_path+"/kernel", "-j", str(NCPU)])
+
+	def check_size(self):
+		path = "{}/kernel/kernel.elf".format(self.testcase_path)
+
+		out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+
+		size = self.__get_txt_size()*4 + self.stack_size + int(out[2])
+					
+		print("\n******************* Kernel page size report *******************")
+		if size <= self.PKG_PAGE_SIZE*1024:
+			print("Kernel memory usage {}/{} bytes".format(str(size).rjust(30), str(self.PKG_PAGE_SIZE*1024).ljust(6)))
+		else:
+			raise Exception("Kernel memory usage of {} is bigger than page size of {}".format(size, self.PKG_PAGE_SIZE*1024))
+		print("***************** End kernel page size report *****************")
+
+	def __get_txt_size(self):
+		return sum(1 for line in open(self.testcase_path+"/kernel/kernel.txt"))
 		
 class KernelDefinitions:
 	def __init__(self):

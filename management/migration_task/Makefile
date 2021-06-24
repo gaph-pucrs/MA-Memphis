@@ -9,12 +9,12 @@ INCLIB = ../../lib/src/include
 INCDEF = ../../include
 INCMAN = ../
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCDEF) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
+CFLAGS	= -Os -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCDEF) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
 CC		= mips-elf-gcc
 AS		= mips-elf-as
 LD		= mips-elf-ld
 OBJDUMP	= mips-elf-objdump
-OBJCOPY	= mips-elf-objcopy -I elf32-bigmips -O binary
+OBJCOPY	= mips-elf-objcopy
 
 LIBDIR = ../../lib/src
 INCLIB = $(LIBDIR)/include
@@ -37,7 +37,7 @@ $(TARGET).txt: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@
+	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
 
 $(TARGET).elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
@@ -49,7 +49,7 @@ $(TARGET).lst: $(TARGET)_debug.elf
 
 $(TARGET)_debug.elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking debug task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD)  --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
+	@$(LD) --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"

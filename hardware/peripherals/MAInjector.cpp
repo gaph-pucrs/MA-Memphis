@@ -180,7 +180,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
 		
-		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;
+		unsigned packet_size = (txt_size + data_size)/4 + CONSTANT_PACKET_SIZE;
 		
 		packet.clear();
 		packet.reserve(packet_size);
@@ -202,7 +202,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 
 		/* Assembles payload */
-		for(unsigned i = 0; i < txt_size; i++){
+		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
 			std::getline(repo, line);
 			// std::cout << line << std::endl;
 			packet.push_back(std::stoul(line, nullptr, 16));

@@ -2,7 +2,7 @@
 from distutils.dir_util import copy_tree
 from distutils.file_util import copy_file
 from os import makedirs
-from subprocess import run
+from subprocess import run, check_output
 from multiprocessing import cpu_count
 from descriptor import Descriptor
 from repository import Repository, Start
@@ -70,6 +70,34 @@ class Management:
 		for task in self.unique_tasks:
 			run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
 
+	def check_count(self, max_tasks_app):
+		if len(self.tasks) > max_tasks_app:
+			raise Exception("Number of management tasks exceeds the maximum allowed (max_tasks_app).")
+
+	def check_size(self, page_size, stack_size):
+		self.text_sizes = {}
+		self.data_sizes = {}
+		self.bss_sizes	= {}
+
+		for task in self.unique_tasks:
+			path = "{}/management/{}/{}.elf".format(self.testcase_path, task, task)
+
+			out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+
+			self.data_sizes[task] = int(out[1])
+			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
+			self.bss_sizes[task] = int(out[2])
+
+			
+		print("\n******************** Task page size report ********************")
+		for task in self.unique_tasks:
+			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
+			if size <= page_size:
+				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
+			else:
+				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
+		print("****************** End task page size report ******************")
+
 	def generate_repo(self, scenario_path):
 		for task in self.unique_tasks:
 			repo = Repository()
@@ -79,11 +107,9 @@ class Management:
 			task_type = descr.get_type()
 			repo.add(task_type, "Task type tag")
 
-			txt_size = self.__get_txt_size(task)
-			repo.add(txt_size, "txt size")
-
-			repo.add(0, "data size")
-			repo.add(0, "bss size")
+			repo.add(self.text_sizes[task], "txt size")
+			repo.add(self.data_sizes[task], "data size")
+			repo.add(self.bss_sizes[task], "bss size")
 
 			task_hex = open(self.testcase_path+"/management/"+task+"/"+task+".txt", "r")
 
@@ -121,7 +147,7 @@ class Management:
 	def __get_txt_size(self, task):
 		return sum(1 for line in open(self.testcase_path+"/management/"+task+"/"+task+".txt"))
 
-	
+
 class ManagementIds:
 	def __init__(self):
 		self.lines = []

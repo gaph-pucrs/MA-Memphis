@@ -318,7 +318,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		
 		// std::cout << "Task ID " << task_id << " code size " << txt_size << " code_line " << init_addr << std::endl;
 
-		unsigned packet_size = txt_size + CONSTANT_PACKET_SIZE;
+		unsigned packet_size = (txt_size+data_size)/4 + CONSTANT_PACKET_SIZE;
 
 		packet.clear();
 		packet.reserve(packet_size);
@@ -337,7 +337,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		packet.push_back(bss_size);
 		packet.push_back(0);
 
-		for(unsigned i = 0; i < txt_size; i++){
+		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
 			std::getline(repository, line);
 			packet.push_back(std::stoul(line, nullptr, 16));
 			// std::cout << line << std::endl;

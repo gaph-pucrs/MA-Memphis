@@ -115,15 +115,6 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr);
 
 /**
- * @brief Updates the TCB with proper section sizes
- * 
- * @param tcb Pointer to the TCB
- * @param data_sz Size of the section data
- * @param bss_sz Size of the section bss
- */
-void tcb_update_sections(tcb_t *tcb, unsigned int data_sz, unsigned int bss_sz);
-
-/**
  * @brief Gets the pointer to the message variable
  * 
  * @param tcb Pointer to the TCB

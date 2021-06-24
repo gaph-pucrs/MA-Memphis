@@ -53,8 +53,11 @@ class Testcase:
 		self.hardware.copy()
 
 	def build(self):
-		self.libs.build()		
+		self.libs.build()
+		
 		self.kernel.build()
+		self.kernel.check_size()
+
 		self.bootloader.build()
 		self.hardware.build()
 

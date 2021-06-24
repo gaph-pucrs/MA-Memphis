@@ -162,59 +162,55 @@ void map_static_tasks(app_t *app, processor_t *processors)
 	app->center_y /= static_cnt;
 }
 
-window_t map_select_window(app_t *app, processor_t *processors)
+void map_select_window(app_t *app, processor_t *processors, window_t *window)
 {
 	if(app->has_static_tasks){
 		/* Select a window without changing last_window */
 		/* Window will be based on the center of the static tasks */
-		window_t window = {
-			x: app->center_x - MAP_MIN_WX / 2,
-			y: app->center_y - MAP_MIN_WY / 2,
-			wx: MAP_MIN_WX,
-			wy: MAP_MIN_WY
-		};
+		window->x = app->center_x - MAP_MIN_WX / 2;
+		window->y = app->center_y - MAP_MIN_WY / 2;
+		window->wx = MAP_MIN_WX;
+		window->wy = MAP_MIN_WY;
 
-		if(window.x < 0)
-			window.x = 0;
+		if(window->x < 0)
+			window->x = 0;
 		
-		if(window.y < 0)
-			window.y = 0;
+		if(window->y < 0)
+			window->y = 0;
 
 		bool raise_x = false;
-		while(window.wx*window.wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
+		while(window->wx*window->wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
 			if(raise_x){
-				window.wx++;
+				window->wx++;
 				raise_x = false;
 			} else {
-				window.wy++;
+				window->wy++;
 				raise_x = true;
 			}
 		}
 
-		if(window.x + window.wx > PKG_N_PE_X)
-			window.x = PKG_N_PE_X - window.wx;
+		if(window->x + window->wx > PKG_N_PE_X)
+			window->x = PKG_N_PE_X - window->wx;
 		
-		if(window.y + window.wy > PKG_N_PE/PKG_N_PE_X)
-			window.y = PKG_N_PE/PKG_N_PE_X - window.wy;
+		if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
+			window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
 
 		while(map_window_pages(processors, window) < app->task_cnt){
 			/* Select window by changing W instead of sliding */		
 			if(raise_x){
-				window.wx++;
+				window->wx++;
 				raise_x = false;
 			} else {
-				window.wy++;
+				window->wy++;
 				raise_x = true;
 			}
 
-			if(window.x + window.wx > PKG_N_PE_X)
-				window.x = PKG_N_PE_X - window.wx;
+			if(window->x + window->wx > PKG_N_PE_X)
+				window->x = PKG_N_PE_X - window->wx;
 			
-			if(window.y + window.wy > PKG_N_PE/PKG_N_PE_X)
-				window.y = PKG_N_PE/PKG_N_PE_X - window.wy;
+			if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
+				window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
 		}
-
-		return window;
 		
 	} else {
 		static window_t last_window = {
@@ -245,36 +241,45 @@ window_t map_select_window(app_t *app, processor_t *processors)
 		}
 		// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
-		window_t window = last_window;
-		map_next_window(&window);
+		window->x = app->center_x - MAP_MIN_WX / 2;
+		window->y = app->center_y - MAP_MIN_WY / 2;
+		window->wx = MAP_MIN_WX;
+		window->wy = MAP_MIN_WY;
+		map_next_window(window);
 
 		while(true){
 			/* From last window to top right corner */
-			while(window.x > last_window.x || window.y > last_window.y){
+			while(window->x > last_window.x || window->y > last_window.y){
 				// printf("Verifying window %dx%d\n", window.x, window.y);
 				unsigned free_pages = map_window_pages(processors, window);
 				// printf("Free pages = %d\n", free_pages);
 
 				if(free_pages >= app->task_cnt){
-					last_window = window;
-					return window;
+					last_window.x = window->x;
+					last_window.y = window->y;
+					last_window.wx = window->wx;
+					last_window.wy = window->wy;
+					return;
 				}
 
-				map_next_window(&window);
+				map_next_window(window);
 			}
 
 			/* From bottom left corner to last window */
-			while(window.x < last_window.x || window.y < last_window.y){
+			while(window->x < last_window.x || window->y < last_window.y){
 				// printf("Verifying window %dx%d\n", window.x, window.y);
 				unsigned free_pages = map_window_pages(processors, window);
 				// printf("Free pages = %d\n", free_pages);
 
 				if(free_pages >= app->task_cnt){
-					last_window = window;
-					return window;
+					last_window.x = window->x;
+					last_window.y = window->y;
+					last_window.wx = window->wx;
+					last_window.wy = window->wy;
+					return;
 				}
 
-				map_next_window(&window);
+				map_next_window(window);
 			}
 
 			/* Exactly last window */
@@ -282,8 +287,11 @@ window_t map_select_window(app_t *app, processor_t *processors)
 			unsigned free_pages = map_window_pages(processors, window);
 			// printf("Free pages = %d\n", free_pages);
 			if(free_pages >= app->task_cnt){
-				last_window = window;
-				return window;
+				last_window.x = window->x;
+				last_window.y = window->y;
+				last_window.wx = window->wx;
+				last_window.wy = window->wy;
+				return;
 			}
 
 			/* No window found */
@@ -296,17 +304,20 @@ window_t map_select_window(app_t *app, processor_t *processors)
 			}
 			last_window.x = PKG_N_PE_X - last_window.wx;
 			last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
-			window = last_window;
-			map_next_window(&window);
+			window->x = last_window.x;
+			window->y = last_window.y;
+			window->wx = last_window.wx;
+			window->wy = last_window.wy;
+			map_next_window(window);
 		}	
 	}
 }
 
-unsigned map_window_pages(processor_t *processors, window_t window)
+unsigned map_window_pages(processor_t *processors, window_t *window)
 {
 	unsigned pages = 0;
-	for(int x = window.x; x < window.x + window.wx; x++){
-		for(int y = window.y; y < window.y + window.wy; y++){
+	for(int x = window->x; x < window->x + window->wx; x++){
+		for(int y = window->y; y < window->y + window->wy; y++){
 			int seq = x + y*PKG_N_PE_X;
 			pages += processors[seq].free_page_cnt;
 		}
@@ -634,7 +645,8 @@ bool map_is_task_ordered(task_t *order[], task_t *task, unsigned order_cnt)
 void map_sliding_window(app_t *app, processor_t *processors)
 {
 	/* 1st step: select a window */
-	window_t window = map_select_window(app, processors);
+	window_t window;
+	map_select_window(app, processors, &window);
 	// printf("Selected window %dx%d\n", window.x, window.y);
 
 	/* 2nd step: get the mapping order */

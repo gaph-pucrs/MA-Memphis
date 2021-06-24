@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from distutils.dir_util import copy_tree
 from os import listdir, makedirs
-from subprocess import run
+from subprocess import run, check_output
 from multiprocessing import cpu_count
 from repository import Repository
 from yaml import safe_load
@@ -46,6 +46,34 @@ class Application:
 		NCPU = cpu_count()
 		run(["make", "-C", self.testcase_path+"/applications/"+self.app_name, "-j", str(NCPU)])
 
+	def check_count(self, max_tasks_app):
+		if len(self.tasks) > max_tasks_app:
+			raise Exception("Number of management tasks exceeds the maximum allowed (max_tasks_app).")
+
+	def check_size(self, page_size, stack_size):
+		self.text_sizes = {}
+		self.data_sizes = {}
+		self.bss_sizes	= {}
+
+		for task in self.tasks:
+			path = "{}/applications/{}/{}.elf".format(self.testcase_path, self.app_name, task)
+
+			out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+
+			self.data_sizes[task] = int(out[1])
+			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
+			self.bss_sizes[task] = int(out[2])
+
+			
+		print("\n******************** Task page size report ********************")
+		for task in self.tasks:
+			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
+			if size <= page_size:
+				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
+			else:
+				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
+		print("****************** End task page size report ******************")
+
 	def generate_repo(self, scenario_path):
 		repo = Repository()
 
@@ -55,13 +83,12 @@ class Application:
 
 		address = 4 + 4*len(self.tasks)*4 + dep_list_len*4
 		for task in self.tasks:
-			txt_size = self.__get_txt_size(task)
-			repo.add(txt_size, "txt size")
-			repo.add(0, "data size")
-			repo.add(0, "bss size")
+			repo.add(self.text_sizes[task], "txt size")
+			repo.add(self.data_sizes[task], "data size")
+			repo.add(self.bss_sizes[task], "bss size")
 			repo.add(address, "Repository address")
 
-			address += txt_size*4
+			address += self.text_sizes[task] + self.data_sizes[task]
 
 		for t in range(len(self.tasks)):
 			for c in range(len(dep_list[t])):

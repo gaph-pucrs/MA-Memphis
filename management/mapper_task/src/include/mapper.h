@@ -41,9 +41,9 @@ app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descri
 unsigned map_try_static(app_t *app, processor_t *processors);
 void map_static_tasks(app_t *app, processor_t *processors);
 void map_sliding_window(app_t *app, processor_t *processors);
-window_t map_select_window(app_t *app, processor_t *processors);
+void map_select_window(app_t *app, processor_t *processors, window_t *window);
 void map_next_window(window_t *window);
-unsigned map_window_pages(processor_t *processors, window_t window);
+unsigned map_window_pages(processor_t *processors, window_t *window);
 void map_get_order(app_t *app, task_t *order[]);
 void map_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt);
 bool map_is_task_ordered(task_t *order[], task_t *task, unsigned order_cnt);
