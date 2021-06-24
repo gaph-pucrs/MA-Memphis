@@ -395,7 +395,7 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	mr_init(free_tcb);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz);
+	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz/4);
 
 	// putsvsv("Received MIGRATION_CODE from task id ", id, " with size ", code_sz);
 
@@ -488,7 +488,7 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 	tcb->bss_lenght = bss_len;
 
 	if(bss_len + data_len)
-		dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), bss_len + data_len);
+		dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (bss_len + data_len)/4);
 
 	sched_release(tcb);
 	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
