@@ -2,6 +2,8 @@
 import sys
 from argparse import ArgumentParser
 from os import getenv
+from distutils.dir_util import remove_tree
+from os import makedirs
 from subprocess import Popen
 import signal
 
@@ -22,6 +24,12 @@ if __name__ == "__main__":
 
 	scenario_folder = args.scenario_folder
 	time_limit = args.time_limit
+
+	try:
+		remove_tree("{}/log".format(scenario_folder))
+		makedirs("{}/log".format(scenario_folder))
+	except:
+		pass
 
 	signal.signal(signal.SIGINT, signal_handler)
 
