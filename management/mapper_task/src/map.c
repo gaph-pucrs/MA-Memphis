@@ -6,6 +6,7 @@
 #include <memphis.h>
 
 #include "mapper.h"
+#include "sliding_window.h"
 #include "services.h"
 #include "tag.h"
 
@@ -164,101 +165,53 @@ void map_static_tasks(app_t *app, processor_t *processors)
 
 void map_select_window(app_t *app, processor_t *processors, window_t *window)
 {
+	bool raise_x = false;
+	int wx = MAP_MIN_WX;
+	int wy = MAP_MIN_WY;
+
+	while(wx*wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
+		if(raise_x){
+			wx++;
+			raise_x = false;
+		} else {
+			wy++;
+			raise_x = true;
+		}
+	}
+
+	if(wx > PKG_N_PE_X)
+		wx = PKG_N_PE_X;
+
+	if(wy > PKG_N_PE/PKG_N_PE_X)
+		wy = PKG_N_PE/PKG_N_PE_X;
+
 	if(app->has_static_tasks){
 		/* Select a window without changing last_window */
-		/* Window will be based on the center of the static tasks */
-		window->x = app->center_x - MAP_MIN_WX / 2;
-		window->y = app->center_y - MAP_MIN_WY / 2;
-		window->wx = MAP_MIN_WX;
-		window->wy = MAP_MIN_WY;
-
-		if(window->x < 0)
-			window->x = 0;
-		
-		if(window->y < 0)
-			window->y = 0;
-
-		bool raise_x = false;
-		while(window->wx*window->wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
-			if(raise_x){
-				window->wx++;
-				raise_x = false;
-			} else {
-				window->wy++;
-				raise_x = true;
-			}
-		}
-
-		if(window->x + window->wx > PKG_N_PE_X)
-			window->x = PKG_N_PE_X - window->wx;
-		
-		if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
-			window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
-
-		while(map_window_pages(processors, window) < app->task_cnt){
-			/* Select window by changing W instead of sliding */		
-			if(raise_x){
-				window->wx++;
-				raise_x = false;
-			} else {
-				window->wy++;
-				raise_x = true;
-			}
-
-			if(window->x + window->wx > PKG_N_PE_X)
-				window->x = PKG_N_PE_X - window->wx;
-			
-			if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
-				window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
-		}
+		window_set_from_center(processors, app, window, app->task_cnt, wx, wy, raise_x);
 		
 	} else {
-		static window_t last_window = {
-			x: PKG_N_PE_X - MAP_MIN_WX, 
-			y: PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY, 
-			wx: -1, 
-			wy: -1
-		};
-		
-		bool raise_x = false;
-		last_window.wx = MAP_MIN_WX;
-		last_window.wy = MAP_MIN_WY;
+		static int last_x = PKG_N_PE_X - MAP_MIN_WX;
+		static int last_y = PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY;
 
-		/**
-		 * @todo This is disregard of the static mapped tasks.
-		 * 	Do a special window selection for apps with static mapped tasks
-		 */
-		while(last_window.wx*last_window.wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
-			if(raise_x){
-				last_window.wx++;
-				raise_x = false;
-			} else {
-				last_window.wy++;
-				raise_x = true;
-			}
-			last_window.x = PKG_N_PE_X - last_window.wx;
-			last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
+		if(wx != MAP_MIN_WX || wy != MAP_MIN_WY){
+			last_x = PKG_N_PE_X - wx;
+			last_y = PKG_N_PE/PKG_N_PE_X - wy;
 		}
 		// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
-		window->x = app->center_x - MAP_MIN_WX / 2;
-		window->y = app->center_y - MAP_MIN_WY / 2;
-		window->wx = MAP_MIN_WX;
-		window->wy = MAP_MIN_WY;
+		window->x = last_x;
+		window->y = last_y;
+		window->wx = wx;
+		window->wy = wy;
 		map_next_window(window);
 
 		while(true){
 			/* From last window to top right corner */
-			while(window->x > last_window.x || window->y > last_window.y){
-				// printf("Verifying window %dx%d\n", window.x, window.y);
-				unsigned free_pages = map_window_pages(processors, window);
-				// printf("Free pages = %d\n", free_pages);
+			while(window->x > last_x || window->y > last_y){
 
-				if(free_pages >= app->task_cnt){
-					last_window.x = window->x;
-					last_window.y = window->y;
-					last_window.wx = window->wx;
-					last_window.wy = window->wy;
+				if(window_has_pages(processors, window, app->task_cnt)){
+					last_x = window->x;
+					last_y = window->y;
 					return;
 				}
 
@@ -266,16 +219,11 @@ void map_select_window(app_t *app, processor_t *processors, window_t *window)
 			}
 
 			/* From bottom left corner to last window */
-			while(window->x < last_window.x || window->y < last_window.y){
-				// printf("Verifying window %dx%d\n", window.x, window.y);
-				unsigned free_pages = map_window_pages(processors, window);
-				// printf("Free pages = %d\n", free_pages);
+			while(window->x < last_x || window->y < last_y){
 
-				if(free_pages >= app->task_cnt){
-					last_window.x = window->x;
-					last_window.y = window->y;
-					last_window.wx = window->wx;
-					last_window.wy = window->wy;
+				if(window_has_pages(processors, window, app->task_cnt)){
+					last_x = window->x;
+					last_y = window->y;
 					return;
 				}
 
@@ -283,46 +231,28 @@ void map_select_window(app_t *app, processor_t *processors, window_t *window)
 			}
 
 			/* Exactly last window */
-			// printf("Verifying window %dx%d\n", window.x, window.y);
-			unsigned free_pages = map_window_pages(processors, window);
-			// printf("Free pages = %d\n", free_pages);
-			if(free_pages >= app->task_cnt){
-				last_window.x = window->x;
-				last_window.y = window->y;
-				last_window.wx = window->wx;
-				last_window.wy = window->wy;
+			if(window_has_pages(processors, window, app->task_cnt)){
+				last_x = window->x;
+				last_y = window->y;
 				return;
 			}
 
 			/* No window found */
 			if(raise_x){
-				last_window.wx++;
+				window->wx++;
 				raise_x = false;
 			} else {
-				last_window.wy++;
+				window->wy++;
 				raise_x = true;
 			}
-			last_window.x = PKG_N_PE_X - last_window.wx;
-			last_window.y = PKG_N_PE/PKG_N_PE_X - last_window.wy;
-			window->x = last_window.x;
-			window->y = last_window.y;
-			window->wx = last_window.wx;
-			window->wy = last_window.wy;
+			last_x = PKG_N_PE_X - wx;
+			last_y = PKG_N_PE/PKG_N_PE_X - wy;
+
+			window->x = last_x;
+			window->y = last_y;
 			map_next_window(window);
 		}	
 	}
-}
-
-unsigned map_window_pages(processor_t *processors, window_t *window)
-{
-	unsigned pages = 0;
-	for(int x = window->x; x < window->x + window->wx; x++){
-		for(int y = window->y; y < window->y + window->wy; y++){
-			int seq = x + y*PKG_N_PE_X;
-			pages += processors[seq].free_page_cnt;
-		}
-	}
-	return pages;
 }
 
 void map_next_window(window_t *window)
@@ -665,62 +595,8 @@ void map_dynamic_tasks(app_t *app, task_t *order[], processor_t *processors, win
 		if(task->proc_idx != -1)	/* Skip tasks already mapped */
 			continue;
 
-		unsigned cost = -1; /* Start at infinite cost */
-		int sel_x = -1;
-		int sel_y = -1;
-		for(int x = window->x; x < window->x + window->wx; x++){
-			for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
-				processor_t *pe = processors_get(processors, x, y);
-				
-				if(pe->free_page_cnt == 0)	/* Skip full PEs */
-					continue;
+		int seq = sw_map_task(app, task, processors, window);
 
-				unsigned c = 0;
-
-				/* 1st: Keep tasks from different apps apart from each other */
-				c += (PKG_MAX_LOCAL_TASKS - (pe->free_page_cnt + pe->pending_map_cnt)) * 4;
-
-				/* 2nd: Keep tasks from the same app apart */
-				c += pe->pending_map_cnt * 2;
-
-				/* 3rd: Add a cost for each hop in consumer tasks */
-				for(int t = 0; t < app->task_cnt - 1 && task->consumers[t] != NULL; t++){
-					task_t *consumer = task->consumers[t];
-					if(consumer->proc_idx != -1)	/* Manhattan distance from mapped consumers */
-						c += map_manhattan_distance(x << 8 | y, processors[consumer->proc_idx].addr);
-				}
-
-				/* 4th: Add a cost for each hop in producer tasks */
-				for(int t = 0; t < app->task_cnt; t++){
-					if(t == i)		/* Ignore same task */
-						continue;
-
-					task_t *producer = app->task[t];
-					for(int j = 0; j < app->task_cnt - 1 && producer->consumers[j] != NULL; j++){
-						task_t *consumer = producer->consumers[j];
-						if(consumer == task){
-							/* Task 'producer' is producer of task 'task' */
-							if(consumer->proc_idx != -1)
-								c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
-
-							break;
-						}
-					}
-				}
-
-				if(c < cost){
-					cost = c;
-					sel_x = x;
-					sel_y = y;
-				}
-				/**
-				 * @todo
-				 *  if cost == 0 return x,y -> useful for initials 
-				 */
-			}
-		}
-
-		int seq = sel_x + sel_y*PKG_N_PE_X;
 		task->proc_idx = seq;
 		processors[seq].free_page_cnt--;
 		processors[seq].pending_map_cnt++;

@@ -4,6 +4,7 @@
 
 #include "app.h"
 #include "processor.h"
+#include "window.h"
 
 #define TASK_DESCRIPTOR_SIZE 2
 
@@ -26,14 +27,6 @@ typedef struct _mapper {
 	task_t tasks[PKG_MAX_LOCAL_TASKS*PKG_N_PE];
 	processor_t processors[PKG_N_PE];
 } mapper_t;
-
-typedef struct _window {
-	int x;
-	int y;
-
-	int wx;
-	int wy;
-} window_t;
 
 void map_init(mapper_t *mapper);
 void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *communication);
