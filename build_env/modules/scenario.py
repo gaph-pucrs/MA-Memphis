@@ -2,7 +2,7 @@
 from yaml import safe_load
 from os import makedirs
 from distutils.dir_util import copy_tree
-from shutil import copyfile
+from shutil import copyfile, copy
 from management import Management
 from application import Application
 from repository import Start
@@ -65,7 +65,7 @@ class Scenario:
 		makedirs(self.base_dir+"/management", exist_ok=True)
 		makedirs(self.base_dir+"/applications", exist_ok=True)
 
-		copyfile("{}/hardware/memphis".format(self.testcase_path), "{}/memphis".format(self.base_dir))
+		copy("{}/hardware/memphis".format(self.testcase_path), "{}/memphis".format(self.base_dir))
 		copyfile("{}/kernel/kernel.txt".format(self.testcase_path), "{}/bootrom.txt".format(self.base_dir))
 
 		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
