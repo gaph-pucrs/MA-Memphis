@@ -90,6 +90,7 @@ private:
 
 	unsigned long tick_cnt;
 	std::string path;
+	int mapper_address;
 
 	void app_descriptor_loader(std::string name, unsigned task_cnt, std::vector<int>& static_mapping);
 	void task_allocation_loader(unsigned id, unsigned addr, unsigned mapper_id, unsigned mapper_addr);

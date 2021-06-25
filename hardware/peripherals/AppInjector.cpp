@@ -23,6 +23,17 @@ AppInjector::AppInjector(sc_module_name _name, std::string _path) :
 	send_pkt_state = SEND_IDLE;
 	monitor_state = MONITOR_ACTIVE;
 
+	std::ifstream ma_boot_info(path+"/ma_start.txt");
+	std::string line;
+	std::getline(ma_boot_info, line);
+	if(line.compare("mapper_task") != 0){
+		std::cout << "AppInjector: ERROR: first task must be 'mapper_task'" << std::endl;
+		monitor_state = MONITOR_IDLE;
+	} else {
+		std::getline(ma_boot_info, line);
+		mapper_address = std::stoi(line);
+	}
+
 	tick_cnt = 0;
 
 	SC_METHOD(timer);
@@ -137,7 +148,7 @@ void AppInjector::monitor_new_app()
 			break;
 		case MONITOR_MAP:
 			if(rcv_pkt_state == RCV_WAIT_ALLOCATION){
-				task_allocation_loader(packet_in[1 + sent_task*2], packet_in[1 + sent_task*2 + 1], 0, 0);
+				task_allocation_loader(packet_in[1 + sent_task*2], packet_in[1 + sent_task*2 + 1], 0, mapper_address);
 				monitor_state = MONITOR_SEND_TASK;
 			}
 			break;
@@ -167,7 +178,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 	if(repository.is_open()){
 		packet.clear();
 
-		packet.push_back(0x0000);				/* Header: mapper task address */
+		packet.push_back(mapper_address);		/* Header: mapper task address */
 		packet.push_back(0);					/* Payload size: will be filled later */
 		packet.push_back(MESSAGE_DELIVERY);		/* Service */
 		packet.push_back(APP_INJECTOR_ADDRESS);	/* producer_task */
@@ -542,7 +553,7 @@ void AppInjector::send_packet(){
 				if(credit_in.read()){
 					/* Can send */
 					aux_idx = 0;
-					aux_pkt[0] = 0x0000; 					/* Header: mapper task address */
+					aux_pkt[0] = mapper_address;			/* Header: mapper task address */
 					aux_pkt[1] = CONSTANT_PACKET_SIZE - 2;	/* Payload size */
 					aux_pkt[2] = DATA_AV;					/* Service */
 					aux_pkt[3] = APP_INJECTOR_ADDRESS;		/* producer_task */
@@ -557,7 +568,7 @@ void AppInjector::send_packet(){
 				if(credit_in.read()){
 					/* Can send */
 					aux_idx = 0;
-					aux_pkt[0] = 0x0000; 					/* Header: mapper task address */
+					aux_pkt[0] = mapper_address; 			/* Header: mapper task address */
 					aux_pkt[1] = CONSTANT_PACKET_SIZE - 2; 	/* Payload size */
 					aux_pkt[2] = MESSAGE_REQUEST;			/* Service */
 					aux_pkt[3] = 0x0000;					/* producer_task: mapper task id */
