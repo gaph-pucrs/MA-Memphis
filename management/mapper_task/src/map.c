@@ -483,8 +483,14 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 		map_set_score(app, processors);
 		
 		/* Mapper task is already allocated */
-		if(mapper->appid_cnt == 0)
+		if(mapper->appid_cnt == 0){
 			app->allocated_cnt++;
+			/* Check if mapper task is the only MA task */
+			if(app->allocated_cnt == app->task_cnt){
+				map_app_mapping_complete(app);
+				mapper->appid_cnt++;
+			}
+		}
 		
 		mapper->available_slots -= app->task_cnt;
 

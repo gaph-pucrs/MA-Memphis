@@ -124,8 +124,12 @@ void MAInjector::ma_boot()
 			break;
 		case BOOT_TASKS:
 			if(send_pkt_state == SEND_FINISHED){
-				sent_task = 1;	/* Start at 1. Mapper task is already mapped */
-				ma_boot_state = BOOT_MAP;
+				sent_task = 0;	/* Start at 1. Mapper task is already mapped */
+				if(1 + sent_task*2 < packet_in.size()){
+					ma_boot_state = BOOT_MAP;
+				} else {
+					ma_boot_state = BOOT_CONFIRM;
+				}
 			}
 			break;
 		case BOOT_MAP:
@@ -141,7 +145,6 @@ void MAInjector::ma_boot()
 				if(1 + sent_task*2 < packet_in.size()){
 					ma_boot_state = BOOT_MAP;
 				} else {
-
 					ma_boot_state = BOOT_CONFIRM;
 				}
 			}
