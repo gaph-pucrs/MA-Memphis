@@ -13,10 +13,6 @@
 
 #pragma once
 
-#include <stdbool.h>
-
-#include "app.h"
-#include "processor.h"
 #include "window.h"
 
 #define TASK_DESCRIPTOR_SIZE 2

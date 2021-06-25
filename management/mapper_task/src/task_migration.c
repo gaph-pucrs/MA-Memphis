@@ -12,16 +12,12 @@
  */
 
 #include <stddef.h>
-
-#include <memphis.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <memphis.h>
 
 #include "task_migration.h"
-#include "window.h"
 #include "sliding_window.h"
 #include "services.h"
-#include "app.h"
 
 void tm_migrate(mapper_t *mapper, int task_id)
 {

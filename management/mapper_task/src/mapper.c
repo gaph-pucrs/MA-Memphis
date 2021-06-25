@@ -11,12 +11,9 @@
  * @brief Main mapper functions
  */
 
-#include <stdbool.h>
-#include <stddef.h>
-
-#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <memphis.h>
 
 #include "mapper.h"

@@ -11,13 +11,10 @@
  * @brief Main file of the MA-Memphis mapper
  */
 
-#include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <memphis.h>
 
 #include "services.h"
-#include "mapper.h"
 #include "task_migration.h"
 
 int main()

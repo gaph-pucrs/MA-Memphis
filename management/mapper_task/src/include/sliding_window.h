@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include "app.h"
-#include "processor.h"
 #include "window.h"
 
 /**
