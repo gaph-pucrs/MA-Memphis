@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+#include "app.h"
+
 typedef enum _task_status {
 	BLOCKED,
 	RUNNING,
@@ -22,3 +24,4 @@ struct _task {
 
 task_t *task_get_free(task_t *tasks);
 void task_init(task_t *tasks);
+unsigned task_get_predecessors(task_t *task, app_t *app, task_t *predecessors[]);

@@ -2,6 +2,9 @@
 
 #include "task.h"
 
+/* Forward declaration */
+typedef struct _task task_t;
+
 typedef struct _app {
 	int id;
 	unsigned task_cnt;

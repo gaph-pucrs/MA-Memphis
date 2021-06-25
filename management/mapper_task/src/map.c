@@ -460,13 +460,7 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 		
 	app_t *app = map_build_app(mapper, mapper->appid_cnt, task_cnt, descr, comm);
 
-	/**
-	 * Separate into 2 phases:
-	 * 1st phase: static mapping
-	 * 	If if fails, keep the fail count and failed PEs flags to wait for TASK_TERMINATED
-	 *  @todo
-	 * 		Return a window center to change the LAST_WINDOW, to keep the window near the tasks
-	 */
+	/* 1st phase: static mapping */
 	mapper->fail_map_cnt = map_try_static(app, processors);
 
 	if(!mapper->fail_map_cnt){

@@ -9,10 +9,8 @@ int sw_map_task(app_t *app, task_t *task, processor_t *processors, window_t *win
 	int sel_x = -1;
 	int sel_y = -1;
 
-	/**
-	 * @todo
-	 * Get predecessors first to lower computational cost
-	 */
+	task_t *predecessors[PKG_MAX_TASKS_APP - 1];
+	unsigned pred_cnt = task_get_predecessors(task, app, predecessors);
 
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
@@ -37,22 +35,10 @@ int sw_map_task(app_t *app, task_t *task, processor_t *processors, window_t *win
 			}
 
 			/* 4th: Add a cost for each hop in producer tasks */
-			int i = task->id & 0xFF;
-			for(int t = 0; t < app->task_cnt; t++){
-				if(t == i)		/* Ignore same task */
-					continue;
-
-				task_t *producer = app->task[t];
-				for(int j = 0; j < app->task_cnt - 1 && producer->consumers[j] != NULL; j++){
-					task_t *consumer = producer->consumers[j];
-					if(consumer == task){
-						/* Task 'producer' is producer of task 'task' */
-						if(consumer->proc_idx != -1)
-							c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
-
-						break;
-					}
-				}
+			for(int t = 0; t < pred_cnt; t++){
+				task_t *producer = predecessors[t];
+				if(producer->proc_idx != -1)
+					c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
 			}
 
 			if(c == 0){
