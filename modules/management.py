@@ -24,7 +24,6 @@ class Management:
 
 	def copy(self):
 		makedirs(self.testcase_path+"/management", exist_ok=True)
-		copy_file(self.platform_path+"/management/tag.h", self.testcase_path+"/management/tag.h", update=1)
 
 		for task in self.unique_tasks:
 			copy_tree(self.platform_path+"/management/"+task, self.testcase_path+"/management/"+task, update=1)

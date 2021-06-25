@@ -1,13 +1,21 @@
-#include <stdbool.h>
+/**
+ * MA-Memphis
+ * @file main.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Main migration decider file
+ */
 
 #include <memphis.h>
-#include <stdlib.h>
-#include <stdio.h>
 
-#include "decider.h"
 #include "migration.h"
-#include "tag.h"
 #include "services.h"
+#include "tag.h"
 
 int main()
 {
@@ -15,19 +23,22 @@ int main()
 
 	printf("Migration started at %d\n", memphis_get_tick());
 	
-	migration_init();
+	migration_ring_t decider;
+	migration_init(&decider);
 
-	decider_request_actor();
+	oda_t actuator;
+	oda_init(&actuator);
+	oda_request_service(&actuator, ODA_ACT | A_MIGRATION);
 
 	while(true){
 		memphis_receive_any(&msg);
 		switch(msg.payload[0]){
 		case OBSERVE_PACKET:
 			// Echo("Hello, received observe packet\n");
-			migration_test(msg.payload[1], msg.payload[2]);
+			migration_check_rt(&decider, &actuator, msg.payload[1], msg.payload[2]);
 			break;
 		case SERVICE_PROVIDER:
-			decider_service_provider(msg.payload[1], msg.payload[2]);
+			oda_service_provider(&actuator, msg.payload[1], msg.payload[2]);
 			break;
 		}
 	}

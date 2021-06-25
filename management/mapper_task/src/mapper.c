@@ -157,7 +157,7 @@ void map_task_release(mapper_t *mapper, app_t *app)
 		/* Tell kernel to populate the proper task by sending the ID */
 		msg.payload[1] = appid_shift | i;
 
-		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 5], (OBSERVE | O_QOS));
+		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 5], (ODA_OBSERVE | O_QOS));
 
 		if(observer == NULL || app->id == 0){
 			msg.payload[2] = -1;

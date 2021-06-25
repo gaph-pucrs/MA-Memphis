@@ -2,6 +2,7 @@
 
 #include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "tag.h"
 
