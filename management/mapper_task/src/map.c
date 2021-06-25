@@ -197,6 +197,8 @@ void map_select_window(app_t *app, processor_t *processors, window_t *window)
 			last_x = PKG_N_PE_X - wx;
 			last_y = PKG_N_PE/PKG_N_PE_X - wy;
 		}
+		// printf("LW %dx%d\n", last_x, last_y);
+		// printf("SS %dx%d\n", wx, wy);
 		// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
 
 		window->x = last_x;
@@ -245,13 +247,14 @@ void map_select_window(app_t *app, processor_t *processors, window_t *window)
 				window->wy++;
 				raise_x = true;
 			}
-			last_x = PKG_N_PE_X - wx;
-			last_y = PKG_N_PE/PKG_N_PE_X - wy;
+			last_x = PKG_N_PE_X - window->wx++;
+			last_y = PKG_N_PE/PKG_N_PE_X - window->wy++;
+			// printf("CS %dx%d\n", window->wx, window->wy);
 
 			window->x = last_x;
 			window->y = last_y;
 			map_next_window(window);
-		}	
+		}
 	}
 }
 
