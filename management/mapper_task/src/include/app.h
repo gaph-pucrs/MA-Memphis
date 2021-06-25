@@ -16,6 +16,8 @@ typedef struct _app {
 	int center_y;
 } app_t;
 
-app_t *app_get_free(app_t *apps);
 void app_init(app_t *apps);
+app_t *app_get_free(app_t *apps);
+void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *communication, task_t *tasks);
 app_t *app_search(app_t *apps, int appid);
+void app_get_order(app_t *app, task_t *order[]);

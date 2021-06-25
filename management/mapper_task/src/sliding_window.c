@@ -3,7 +3,39 @@
 #include "sliding_window.h"
 #include "mapper.h"
 
-int sw_map_task(app_t *app, task_t *task, processor_t *processors, window_t *window)
+void sw_map_app(app_t *app, processor_t *processors)
+{
+	/* 1st step: select a window */
+	window_t window;
+	window_search(&window, processors, app);
+	// printf("Selected window %dx%d\n", window.x, window.y);
+
+	/* 2nd step: get the mapping order */
+	task_t *mapping_order[app->task_cnt];
+	app_get_order(app, mapping_order);
+
+	/* 3rd step: map with the least communication cost and most parallelism */
+	sw_map_dynamic(app, mapping_order, processors, &window);
+}
+
+void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window_t *window)
+{
+	for(int i = 0; i < app->task_cnt; i++){
+		task_t *task = order[i];
+
+		if(task->proc_idx != -1)	/* Skip tasks already mapped */
+			continue;
+
+		int seq = sw_map_task(task, app, processors, window);
+
+		task->proc_idx = seq;
+		processors[seq].free_page_cnt--;
+		processors[seq].pending_map_cnt++;
+		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
+	}
+}
+
+int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *window)
 {
 	unsigned cost = -1; /* Start at infinite cost */
 	int sel_x = -1;

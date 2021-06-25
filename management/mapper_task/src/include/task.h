@@ -27,4 +27,7 @@ struct _task {
 
 task_t *task_get_free(task_t *tasks);
 void task_init(task_t *tasks);
+void task_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt);
+bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt);
 unsigned task_get_predecessors(task_t *task, app_t *app, task_t *predecessors[]);
+int task_terminate(task_t *task, unsigned max_consumers);

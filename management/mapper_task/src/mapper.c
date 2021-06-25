@@ -57,60 +57,6 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *comm
 	}
 }
 
-app_t *map_build_app(mapper_t *mapper, int appid, unsigned task_cnt, int *descriptor, int *communication)
-{
-	app_t *app = app_get_free(mapper->apps);
-
-	app->id = appid;
-	app->task_cnt = task_cnt;
-	app->allocated_cnt = 0;
-
-	for(int i = 0; i < app->task_cnt; i++){
-		app->task[i] = task_get_free(mapper->tasks);
-
-		app->task[i]->id = appid << 8 | i;
-		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
-
-		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE];
-		// Echo("Processor address: "); Echo(itoa(proc_idx));
-		if(proc_idx != -1)
-			proc_idx = (proc_idx >> 8) + (proc_idx & 0xFF)*PKG_N_PE_X;
-		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
-		app->task[i]->proc_idx = proc_idx;
-		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
-
-		app->task[i]->old_proc = -1;
-
-		app->task[i]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
-		// Echo("Task type tag: "); Echo(itoa(app->task[task_id]->type_tag)); Echo("\n");
-
-		app->task[i]->status = BLOCKED;
-	}
-
-	int comm_i = 0;
-	for(int i = 0; i < app->task_cnt; i++){
-		int cons_i = 0;
-		int encoded_consumer;
-		do {
-			encoded_consumer = communication[comm_i++];
-			int consumer = abs(encoded_consumer) - 1;
-
-			if(consumer >= 0)
-				app->task[i]->consumers[cons_i++] = app->task[consumer];
-
-		} while(encoded_consumer > 0);
-	}
-
-	// for(int i = 0; i < app->task_cnt; i++){
-	// 	printf("Task %d consumers: ", i);
-	// 	for(int j = 0; j < PKG_MAX_TASKS_APP && app->task[i]->consumers[j] != NULL; j++){
-	// 		printf("%d ", app->task[i]->consumers[j]->id);
-	// 	}
-	// }
-
-	return app;
-}
-
 unsigned map_try_static(app_t *app, processor_t *processors)
 {
 	unsigned fail_cnt = 0;
@@ -160,120 +106,6 @@ void map_static_tasks(app_t *app, processor_t *processors)
 	/* Will not divide by 0. Function only called on has_static_tasks == true */
 	app->center_x /= static_cnt;
 	app->center_y /= static_cnt;
-}
-
-void map_select_window(app_t *app, processor_t *processors, window_t *window)
-{
-	bool raise_x = false;
-	int wx = MAP_MIN_WX;
-	int wy = MAP_MIN_WY;
-
-	while(wx*wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
-		if(raise_x){
-			wx++;
-			raise_x = false;
-		} else {
-			wy++;
-			raise_x = true;
-		}
-	}
-
-	if(wx > PKG_N_PE_X)
-		wx = PKG_N_PE_X;
-
-	if(wy > PKG_N_PE/PKG_N_PE_X)
-		wy = PKG_N_PE/PKG_N_PE_X;
-
-	if(app->has_static_tasks){
-		/* Select a window without changing last_window */
-		window_set_from_center(processors, app, window, app->task_cnt, wx, wy, raise_x);
-		
-	} else {
-		static int last_x = PKG_N_PE_X - MAP_MIN_WX;
-		static int last_y = PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY;
-
-		if(wx != MAP_MIN_WX || wy != MAP_MIN_WY){
-			last_x = PKG_N_PE_X - wx;
-			last_y = PKG_N_PE/PKG_N_PE_X - wy;
-		}
-		// printf("LW %dx%d\n", last_x, last_y);
-		// printf("SS %dx%d\n", wx, wy);
-		// printf("Starting window size is %dx%d\n", last_window.wx, last_window.wy);
-
-		window->x = last_x;
-		window->y = last_y;
-		window->wx = wx;
-		window->wy = wy;
-		map_next_window(window);
-
-		while(true){
-			/* From last window to top right corner */
-			while(window->x > last_x || window->y > last_y){
-
-				if(window_has_pages(processors, window, app->task_cnt)){
-					last_x = window->x;
-					last_y = window->y;
-					return;
-				}
-
-				map_next_window(window);
-			}
-
-			/* From bottom left corner to last window */
-			while(window->x < last_x || window->y < last_y){
-
-				if(window_has_pages(processors, window, app->task_cnt)){
-					last_x = window->x;
-					last_y = window->y;
-					return;
-				}
-
-				map_next_window(window);
-			}
-
-			/* Exactly last window */
-			if(window_has_pages(processors, window, app->task_cnt)){
-				last_x = window->x;
-				last_y = window->y;
-				return;
-			}
-
-			/* No window found */
-			if(raise_x){
-				window->wx++;
-				raise_x = false;
-			} else {
-				window->wy++;
-				raise_x = true;
-			}
-			last_x = PKG_N_PE_X - window->wx++;
-			last_y = PKG_N_PE/PKG_N_PE_X - window->wy++;
-			// printf("CS %dx%d\n", window->wx, window->wy);
-
-			window->x = last_x;
-			window->y = last_y;
-			map_next_window(window);
-		}
-	}
-}
-
-void map_next_window(window_t *window)
-{
-	if(window->x + window->wx < PKG_N_PE_X){
-		window->x += MAP_STRIDE;
-
-		if(window->x + window->wx > PKG_N_PE_X)
-			window->x = PKG_N_PE_X - window->wx;
-	} else if(window->y + window->wy < PKG_N_PE/PKG_N_PE_X){
-		window->y += MAP_STRIDE;
-		window->x = 0;
-
-		if(window->y + window->wy > PKG_N_PE/PKG_N_PE_X)
-			window->y = PKG_N_PE/PKG_N_PE_X - window->wy;
-	} else {
-		window->x = 0;
-		window->y = 0;
-	}
 }
 
 void map_task_allocated(mapper_t *mapper, int id)
@@ -361,20 +193,19 @@ void map_task_terminated(mapper_t *mapper, int id)
 	app_t *app = app_search(mapper->apps, appid);
 	int proc_idx = app->task[taskid]->proc_idx;
 
-	/* Deallocate */
-	if(app->task[taskid]->status == MIGRATING){
+	/* Terminate task */
+	int old_proc = task_terminate(app->task[taskid], app->task_cnt - 1);
+	if(old_proc != -1){
 		/* The task finished with a migration request on the fly */
 		mapper->available_slots++;
-		int old_proc = app->task[taskid]->old_proc;
 		mapper->processors[old_proc].free_page_cnt++;
 	}
-
-	for(int i = 0; i < app->task_cnt - 1 && app->task[taskid]->consumers[i] != NULL; i++)
-		app->task[taskid]->consumers[i] = NULL;
 	
-	app->task[taskid]->id = -1;
+	/* Deallocate task from app */
 	app->task[taskid] = NULL;
 	app->allocated_cnt--;
+
+	/* Deallocate task from mapper */
 	mapper->available_slots++;
 	mapper->processors[proc_idx].free_page_cnt++;
 
@@ -398,7 +229,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 			/* All needed processor slots are freed. Map and allocate now */
 			map_static_tasks(mapper->pending_map_app, mapper->processors);
 
-			map_sliding_window(mapper->pending_map_app, mapper->processors);
+			sw_map_app(mapper->pending_map_app, mapper->processors);
 
 			/* Send task allocation to injector */
 			map_task_allocation(mapper->pending_map_app, mapper->processors);
@@ -457,7 +288,8 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 {
 	puts("Mapping application...\n");
 		
-	app_t *app = map_build_app(mapper, mapper->appid_cnt, task_cnt, descr, comm);
+	app_t *app = app_get_free(mapper->apps);
+	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks);
 
 	/* 1st phase: static mapping */
 	mapper->fail_map_cnt = map_try_static(app, processors);
@@ -468,7 +300,7 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 			map_static_tasks(app, processors);
 
 		if(mapper->appid_cnt != 0)
-			map_sliding_window(app, processors);
+			sw_map_app(app, processors);
 
 		/* Send task allocation to injector */
 		map_task_allocation(app, processors);
@@ -486,123 +318,8 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 		}
 		
 		mapper->available_slots -= app->task_cnt;
-
 	} else {
 		mapper->pending_map_app = app;
-	}
-}
-
-void map_get_order(app_t *app, task_t *order[])
-{
-	task_t *initials[app->task_cnt];
-	int initial_idx = 0;
-
-	/* For all tasks */
-	for(int i = 0; i < app->task_cnt; i++){
-		task_t *task = app->task[i];
-
-		/* Check if task has producers */
-		bool producer_found = false;
-		for(int j = 0; i < app->task_cnt; j++){
-			if(i == j)		/* Don't search own task */
-				continue;
-
-			/* Check consumers of producer if task is present */
-			task_t *producer = app->task[j];
-			for(int k = 0; k < app->task_cnt - 1 && producer->consumers[k] != NULL; k++){
-				task_t *consumer = producer->consumers[k];
-				if(consumer == task){
-					/* Task is consumer, thus not initial */
-					producer_found = true;
-					break;
-				}
-			}
-			if(producer_found) /* No need to scan for other producers */
-				break;
-		}
-		if(!producer_found){
-			/* Task has no producers (is no consumer), thus is initial */
-			initials[initial_idx++] = task;
-		}
-	}
-
-	unsigned ordered = 0;
-	unsigned order_idx = 0;
-
-	/* The mapping order starts in each initial task */
-	for(int i = 0; i < initial_idx; i++){
-		order[order_idx++] = initials[i];
-	
-		/* Map all immediate consumers of the initial task and keep mapping its sucessors */
-		map_order_consumers(order, &ordered, &order_idx, app->task_cnt);
-	}
-
-	/* One or more cyclic dependences */
-	if(order_idx < app->task_cnt){
-		for(int i = 0; i < app->task_cnt; i++){
-			if(!map_is_task_ordered(order, app->task[i], order_idx)){
-				order[order_idx++] = app->task[i];
-				map_order_consumers(order, &ordered, &order_idx, app->task_cnt);
-			}
-		}
-	}
-}
-
-void map_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt)
-{
-	while(ordered < order_idx){
-		task_t *producer = order[*ordered];
-		for(int i = 0; i < task_cnt - 1 && producer->consumers[i] != NULL; i++){
-			/* Check if consumer is not ordered yet */
-			task_t *consumer = producer->consumers[i];
-			if(!map_is_task_ordered(order, consumer, *order_idx))
-				order[(*order_idx)++] = consumer;
-		}
-		(*ordered)++;
-	}
-}
-
-bool map_is_task_ordered(task_t *order[], task_t *task, unsigned order_cnt)
-{
-	bool task_ordered = false;
-	for(int i = 0; i < order_cnt; i++){
-		if(order[i] == task){
-			task_ordered = true;
-			break;
-		}
-	}
-	return task_ordered;
-}
-
-void map_sliding_window(app_t *app, processor_t *processors)
-{
-	/* 1st step: select a window */
-	window_t window;
-	map_select_window(app, processors, &window);
-	// printf("Selected window %dx%d\n", window.x, window.y);
-
-	/* 2nd step: get the mapping order */
-	task_t *mapping_order[app->task_cnt];
-	map_get_order(app, mapping_order);
-
-	/* 3rd step: map with the least communication cost and most parallelism */
-	map_dynamic_tasks(app, mapping_order, processors, &window);
-}
-
-void map_dynamic_tasks(app_t *app, task_t *order[], processor_t *processors, window_t *window)
-{
-	for(int i = 0; i < app->task_cnt; i++){
-		task_t *task = order[i];
-
-		if(task->proc_idx != -1)	/* Skip tasks already mapped */
-			continue;
-
-		int seq = sw_map_task(app, task, processors, window);
-
-		task->proc_idx = seq;
-		processors[seq].free_page_cnt--;
-		processors[seq].pending_map_cnt++;
-		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
 

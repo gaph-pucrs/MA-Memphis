@@ -13,5 +13,8 @@ typedef struct _window {
 	int wy;
 } window_t;
 
-void window_set_from_center(processor_t *processors, app_t *app, window_t *window, unsigned req_pages, int wx, int wy, bool raise_x);
-bool window_has_pages(processor_t *processors, window_t *window, int req_pages);
+void window_search(window_t *window, processor_t *processors, app_t *app);
+void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x);
+void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x);
+void window_next(window_t *window);
+bool window_has_pages(window_t *window, processor_t *processors, int req_pages);

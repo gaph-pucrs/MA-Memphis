@@ -48,10 +48,10 @@ void tm_migrate(mapper_t *mapper, int task_id)
 
 	/* Get window from this center (able to grow) */
 	window_t window;
-	window_set_from_center(mapper->processors, app, &window, 1, MAP_MIN_WX, MAP_MIN_WY, false);
+	window_set_from_center(&window, mapper->processors, app, 1, MAP_MIN_WX, MAP_MIN_WY, false);
 
 	/* Map to the specific window */
-	task->proc_idx = sw_map_task(app, task, mapper->processors, &window);
+	task->proc_idx = sw_map_task(task, app, mapper->processors, &window);
 
 	// unsigned now = GetTick();
 	// Echo("Ticks of mapping task for migration = "); Echo(itoa(now - then)); Echo("\n");
