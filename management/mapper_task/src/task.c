@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file task.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Task structures for the mapper
+ */
+
 #include <stddef.h>
 
 #include "task.h"
@@ -46,7 +59,7 @@ bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt)
 	return task_ordered;
 }
 
-unsigned task_get_predecessors(task_t *task, app_t *app, task_t *predecessors[])
+unsigned task_get_producers(task_t *task, app_t *app, task_t *producers[])
 {
 	unsigned cnt = 0;
 
@@ -60,7 +73,7 @@ unsigned task_get_predecessors(task_t *task, app_t *app, task_t *predecessors[])
 			task_t *consumer = producer->consumers[j];
 			if(consumer == task){
 				/* Task 'producer' is producer of task 'task' */
-				predecessors[cnt++] = producer;
+				producers[cnt++] = producer;
 				break;
 			}
 		}

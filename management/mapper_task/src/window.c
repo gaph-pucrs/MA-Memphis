@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file window.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date June 2021
+ * 
+ * @brief Window structures for the sliding window mapping heuristic
+ */
+
 #include "window.h"
 #include "mapper.h"
 

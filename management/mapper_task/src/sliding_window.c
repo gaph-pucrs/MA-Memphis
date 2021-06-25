@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file sliding_window.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date June 2021
+ * 
+ * @brief Sliding window mapping heuristic
+ */
+
 #include <stddef.h>
 
 #include "sliding_window.h"
@@ -41,8 +54,8 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 	int sel_x = -1;
 	int sel_y = -1;
 
-	task_t *predecessors[PKG_MAX_TASKS_APP - 1];
-	unsigned pred_cnt = task_get_predecessors(task, app, predecessors);
+	task_t *producers[PKG_MAX_TASKS_APP - 1];
+	unsigned pred_cnt = task_get_producers(task, app, producers);
 
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
@@ -68,7 +81,7 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 
 			/* 4th: Add a cost for each hop in producer tasks */
 			for(int t = 0; t < pred_cnt; t++){
-				task_t *producer = predecessors[t];
+				task_t *producer = producers[t];
 				if(producer->proc_idx != -1)
 					c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
 			}

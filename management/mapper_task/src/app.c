@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file app.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Application structures for the mapper
+ */
+
 #include <stddef.h>
 #include <stdlib.h>
 

@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file main.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Main file of the MA-Memphis mapper
+ */
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
