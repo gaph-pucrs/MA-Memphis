@@ -10,6 +10,9 @@ typedef enum _task_status {
 	MIGRATING
 } task_status_t;
 
+/* Forward declaration */
+typedef struct _app app_t;
+
 typedef struct _task task_t;
 
 struct _task {

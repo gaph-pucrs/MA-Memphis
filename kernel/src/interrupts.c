@@ -188,8 +188,6 @@ bool os_message_delivery(int cons_task, unsigned int length)
 {
 	if(cons_task & 0x10000000){
 		/* This message was directed to kernel */
-		/* Receive the message in stack. Maybe this is a bad idea. */
-		/** @todo Check this behavior for big messages */
 		static unsigned int rcvmsg[PKG_MAX_MSG_SIZE];
 		dmni_read(rcvmsg, length);
 

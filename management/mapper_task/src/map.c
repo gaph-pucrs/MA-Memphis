@@ -2,6 +2,7 @@
 #include <stddef.h>
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <memphis.h>
 
@@ -38,9 +39,7 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *comm
 		/* Save pending app descriptor and try to map on TASK_RELEASE */
 		mapper->pending_task_cnt = task_cnt;
 		
-		/** @todo memcpy */
-		for(int i = 0; i < task_cnt * 2; i++)
-			mapper->pending_descr[i] = descriptor[i];
+		memcpy(mapper->pending_descr, descriptor, task_cnt * 2 * sizeof(mapper->pending_descr[0]));
 
 		int comm_i = 0;
 		/* Copy the communication dependence list */

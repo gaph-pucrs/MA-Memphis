@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "syscall.h"
 #include "services.h"
@@ -275,9 +276,8 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			// putsv("Message length is ", msg->size);
 			// putsv("First word is ", msg->message[0]);
 			message->length = msg->size;
-			/** @todo Memcpy */
-			for(int i = 0; i < msg->size; i++)
-				message->payload[i] = msg->message[i];
+
+			memcpy(message->payload, msg->message, msg->size * sizeof(message->payload[0]));
 			
 			/* Free pending message */
 			msg->task = -1;
