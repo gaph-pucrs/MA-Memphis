@@ -1,16 +1,32 @@
+#include <stdint.h>
+
 #include "string.h"
 
-/* https://aticleworld.com/memset-in-c/ */
-void *memset(void *ptr, int value, size_t num)
+void *memcpy(void *destination, const void *source, size_t num)
 {
-	unsigned char *p = ptr;
+    /* Copy word-wise */
+    uint32_t *dst_word = (uint32_t*)destination;
+    const uint32_t *src_word = (const uint32_t*)source;
+    size_t len_word = num/4;
+    for(size_t i = 0; i < len_word; i++)
+        dst_word[i] = src_word[i];
     
-	while(num--)
-    {
-        *p++ = (unsigned char)value;
-    }
+    /* Copy halfword-wise */
+    num -= len_word*4;
+    uint16_t *dst_half = (uint16_t *)&dst_word[len_word];
+    const uint16_t *src_half = (const uint16_t *)&src_word[len_word];
+    size_t len_half = num/2;
+    for(size_t i = 0; i < len_half; i++)
+        dst_half[i] = src_half[i];
 
-    return ptr;
+    /* Copy byte-wise */
+    num -= len_half*2;
+    uint8_t *dst_byte = (uint8_t *)&dst_half[len_half];
+    const uint8_t *src_byte = (const uint8_t *)&src_half[len_half];
+    for(size_t i = 0; i < num; i++)
+        dst_byte[i] = src_byte[i];
+
+    return destination;
 }
 
 /* https://www.techiedelight.com/implement-strcpy-function-c/ */
@@ -37,6 +53,19 @@ char *strcpy(char *destination, const char *source)
     *destination = '\0';
  
     /* the destination is returned by standard `strcpy()` */
+    return ptr;
+}
+
+/* https://aticleworld.com/memset-in-c/ */
+void *memset(void *ptr, int value, size_t num)
+{
+	unsigned char *p = ptr;
+    
+	while(num--)
+    {
+        *p++ = (unsigned char)value;
+    }
+
     return ptr;
 }
 
