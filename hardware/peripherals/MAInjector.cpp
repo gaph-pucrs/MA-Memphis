@@ -124,18 +124,18 @@ void MAInjector::ma_boot()
 			break;
 		case BOOT_TASKS:
 			if(send_pkt_state == SEND_FINISHED){
-				sent_task = 0;	/* Start at 1. Mapper task is already mapped */
-				if(1 + sent_task*2 < packet_in.size()){
-					ma_boot_state = BOOT_MAP;
-				} else {
-					ma_boot_state = BOOT_CONFIRM;
-				}
+				sent_task = 1;	/* Start at 1. Mapper task is already mapped */
+				ma_boot_state = BOOT_MAP;
 			}
 			break;
 		case BOOT_MAP:
 			if(rcv_pkt_state == WAIT_ALLOCATION){
-				task_load(tasks[packet_in[1 + sent_task*2]].first, packet_in[1 + sent_task*2], packet_in[1 + sent_task*2 + 1], 0, tasks[0].second);
-				ma_boot_state = BOOT_SEND;
+				if(1 + sent_task*2 < packet_in.size()){
+					task_load(tasks[packet_in[1 + sent_task*2]].first, packet_in[1 + sent_task*2], packet_in[1 + sent_task*2 + 1], 0, tasks[0].second);
+					ma_boot_state = BOOT_SEND;
+				} else {
+					ma_boot_state = BOOT_CONFIRM;
+				}
 			}
 			break;
 		case BOOT_SEND:
