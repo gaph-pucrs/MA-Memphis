@@ -75,6 +75,18 @@ def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, time
 
 	simulate(debugger_path, "{}/{}".format(testcase_name, scenario_name), time_limit, nogui)
 
+def debug(debugger_path, scenario_folder):
+	if not exists(scenario_folder):
+		raise Exception("Scenario folder {} not found.".format(scenario_folder))
+
+	debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])
+
+	try:
+		debugger.wait()
+	except KeyboardInterrupt:
+		pass
+
+
 if __name__ == "__main__":
 	parser = ArgumentParser(description="MA-Memphis platform generator and simulator.")
 	subparsers = parser.add_subparsers(dest="option")
@@ -97,9 +109,37 @@ if __name__ == "__main__":
 	all_parser.add_argument("TIME_LIMIT", help="Simulation time limit in milliseconds")
 	all_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
 
+	dbg_parser = subparsers.add_parser("debug", help="Runs the debugger on a previous simulation")
+	dbg_parser.add_argument("SCENARIO_FOLDER", help="Path to simulated scenario folder")
+
 	args = parser.parse_args()
 
 	option = args.option
+
+	nogui = False
+
+	ENV_DEBUGGER_PATH = "MEMPHIS_DEBUGGER_PATH"
+	DEBUGGER_PATH = None
+	if option == "simulate" or option == "all" or option == "debug":
+		try:
+			nogui = args.nogui
+		except:
+			pass
+		if not nogui:
+			DEBUGGER_PATH = getenv(ENV_DEBUGGER_PATH)
+			if DEBUGGER_PATH is None:
+				sys.exit("ERROR: "+ENV_DEBUGGER_PATH+" not defined.")
+
+	scenario_folder = ""
+	if option == "simulate" or option == "debug":
+		scenario_folder = args.SCENARIO_FOLDER
+
+	if option == "debug":
+		try:
+			debug(DEBUGGER_PATH, scenario_folder)
+			exit(0)
+		except Exception as ex:
+			sys.exit("\nERROR: {}".format(ex))
 
 	ENV_PLATFORM_PATH = "MA_MEMPHIS_PATH"
 	PLATFORM_PATH = None
@@ -107,17 +147,6 @@ if __name__ == "__main__":
 		PLATFORM_PATH = getenv(ENV_PLATFORM_PATH)
 		if PLATFORM_PATH is None:
 			sys.exit("ERROR: "+ENV_PLATFORM_PATH+" not defined.")
-
-	nogui = False
-
-	ENV_DEBUGGER_PATH = "MEMPHIS_DEBUGGER_PATH"
-	DEBUGGER_PATH = None
-	if option == "simulate" or option == "all":
-		nogui = args.nogui
-		if not nogui:
-			DEBUGGER_PATH = getenv(ENV_DEBUGGER_PATH)
-			if DEBUGGER_PATH is None:
-				sys.exit("ERROR: "+ENV_DEBUGGER_PATH+" not defined.")
 
 	
 	testcase_file = ""
@@ -131,10 +160,6 @@ if __name__ == "__main__":
 	scenario_file = ""
 	if option == "scenario" or option == "all":
 		scenario_file = args.SCENARIO_FILE
-	
-	scenario_folder = ""
-	if option == "simulate":
-		scenario_folder = args.SCENARIO_FOLDER
 	
 	time_limit = ""
 	if option == "simulate" or option == "all":
