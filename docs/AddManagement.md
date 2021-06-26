@@ -18,7 +18,7 @@ To add a new management task, simply add a new task in the same file and folder 
 
 ## Adding new capabilities
 
-To add new capabilities, edit the [ma_builder](../build_env/scripts/ma_builder.py) and add to the `get_task_type_tag` function the desired tag with a exclusive bit indicating in the following format:
+To add new capabilities, edit the [descriptor builder](/modules/descriptor.py) and add to the `get_type` function the desired tag with a exclusive bit indicating in the following format:
 
 LSB indicates the type of the task (Actuation, Decision, Observation or User task):
 | 7 | 6 | 5 | 4 | 3       | 2      | 1   | 0    |
@@ -41,3 +41,8 @@ And finally the MSB indicates the Actuation capabilities:
 |    |    |    |    |    |    |    | Migration |
 
 Empty spaces in the tables above indicates that there is no defined capability yet.
+
+## Using the standard ODA library
+
+MA-Memphis provides a standard ODA library by including [`oda.h`](/lib/src/include/oda.h).
+It is possible to ask for deciders or actuators in a standard way by setting the parameters to comply with the table above. Check the library header for further documentation.
