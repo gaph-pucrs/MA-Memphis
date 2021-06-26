@@ -11,6 +11,7 @@
  * @brief Main migration decider file
  */
 
+#include <stdio.h>
 #include <memphis.h>
 
 #include "migration.h"
