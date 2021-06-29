@@ -1,6 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-//#include <stdio.h>
+#include <stdio.h>
 
 #define NUM_NODES                  16		//16 for small input; 160 for large input; 30 for medium input;
 #define MAXPROCESSORS			   64		//The amount of processor
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	// char *m_argv[3];
 	ended = 0;
 
-	RealTime(103349, 103349, 87835);
+	memphis_real_time(103349, 103349, 87835);
 
 	pthread_n_workers = NPROC;
 
@@ -37,61 +37,61 @@ int main(int argc, char *argv[])
 
 void startThreads(void) {
 	int i, j;
-	Message msg;
+	message_t msg;
 
 	/* SEND nodes_tasks[NUM_NODES*(NUM_NODES-1)/2][2] */
 	msg.length = NUM_NODES*(NUM_NODES-1)/2;
 	// Send X of nodes_tasks
 	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
 	{
-		msg.msg[i] = nodes_tasks[i][0];
+		msg.payload[i] = nodes_tasks[i][0];
 	}
-	Send(&msg, dijkstra_0);
-	Send(&msg, dijkstra_1);
-	Send(&msg, dijkstra_2);
-	Send(&msg, dijkstra_3);
-	Send(&msg, dijkstra_4);
+	memphis_send(&msg, dijkstra_0);
+	memphis_send(&msg, dijkstra_1);
+	memphis_send(&msg, dijkstra_2);
+	memphis_send(&msg, dijkstra_3);
+	memphis_send(&msg, dijkstra_4);
 
 	// Send Y of nodes_tasks
 	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
-		msg.msg[i] = nodes_tasks[i][1];
-	Send(&msg, dijkstra_0);
-	Send(&msg, dijkstra_1);
-	Send(&msg, dijkstra_2);
-	Send(&msg, dijkstra_3);
-	Send(&msg, dijkstra_4);
+		msg.payload[i] = nodes_tasks[i][1];
+	memphis_send(&msg, dijkstra_0);
+	memphis_send(&msg, dijkstra_1);
+	memphis_send(&msg, dijkstra_2);
+	memphis_send(&msg, dijkstra_3);
+	memphis_send(&msg, dijkstra_4);
 
 	/* SEND tasks[MAXPROCESSORS][2] */
 	msg.length = MAXPROCESSORS;
 	// Send X of tasks
 	for (i=0; i<MAXPROCESSORS; i++)
-		msg.msg[i] = tasks[i][0];
-	Send(&msg, dijkstra_0);
-	Send(&msg, dijkstra_1);
-	Send(&msg, dijkstra_2);
-	Send(&msg, dijkstra_3);
-	Send(&msg, dijkstra_4);
+		msg.payload[i] = tasks[i][0];
+	memphis_send(&msg, dijkstra_0);
+	memphis_send(&msg, dijkstra_1);
+	memphis_send(&msg, dijkstra_2);
+	memphis_send(&msg, dijkstra_3);
+	memphis_send(&msg, dijkstra_4);
 
 	// Send Y of tasks
 	for (i=0; i<MAXPROCESSORS; i++)
-		msg.msg[i] = tasks[i][1];
-	Send(&msg, dijkstra_0);
-	Send(&msg, dijkstra_1);
-	Send(&msg, dijkstra_2);
-	Send(&msg, dijkstra_3);
-	Send(&msg, dijkstra_4);
+		msg.payload[i] = tasks[i][1];
+	memphis_send(&msg, dijkstra_0);
+	memphis_send(&msg, dijkstra_1);
+	memphis_send(&msg, dijkstra_2);
+	memphis_send(&msg, dijkstra_3);
+	memphis_send(&msg, dijkstra_4);
 
 	/* SEND AdjMatrix[NUM_NODES][NUM_NODES] */
 	msg.length = NUM_NODES;
 	for (i=0; i<NUM_NODES; i++) {
 		for (j=0; j<NUM_NODES; j++) {
-			msg.msg[j] = AdjMatrix[j][i];
+			msg.payload[j] = AdjMatrix[j][i];
 		}
-		Send(&msg, dijkstra_0);
-		Send(&msg, dijkstra_1);
-		Send(&msg, dijkstra_2);
-		Send(&msg, dijkstra_3);
-		Send(&msg, dijkstra_4);
+		memphis_send(&msg, dijkstra_0);
+		memphis_send(&msg, dijkstra_1);
+		memphis_send(&msg, dijkstra_2);
+		memphis_send(&msg, dijkstra_3);
+		memphis_send(&msg, dijkstra_4);
 	}
 }
 
