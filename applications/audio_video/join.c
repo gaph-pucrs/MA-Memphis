@@ -12,8 +12,7 @@ int main() {
     int k;
 
     puts("Join start...\n");
-    puts("Number of frames\n");
-	//printf(itoa(FRAMES));
+    printf("Number of frames: %d\n", FRAMES);
 
 	//RealTime(AUDIO_VIDEO_PERIOD, JOIN_deadline, JOIN_exe_time);
 
