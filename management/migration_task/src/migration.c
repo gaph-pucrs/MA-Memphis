@@ -18,26 +18,20 @@
 #include "migration.h"
 #include "services.h"
 
-void migration_init(migration_ring_t *migration)
+void migration_init(migration_task_t *tasks)
 {
-	// migration_ring.empty = true;
-	// migration_ring.full = false;
-	migration->head = 0;
-	// migration_ring.tail = 0;
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		migration->tasks[i].id = -1;
-		migration->tasks[i].missed_cnt = 0;
-	}
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++)
+		tasks[i].id = -1;
 }
 
-void migration_check_rt(migration_ring_t *migration, oda_t *actuator, int id, int remaining)
+void migration_check_rt(migration_task_t *tasks, oda_t *actuator, int id, int remaining)
 {
 	if(remaining < 0){
-		migration_task_t *task = migration_search_task(migration, id);
+		migration_task_t *task = migration_search_task(tasks, id);
 		if(task == NULL)
-			task = migration_task_insert(migration, id);
+			task = migration_task_insert(tasks, id);
 		
-		migration_task_inc_miss(task);
+		migration_task_inc_miss(tasks, task);
 		if(oda_is_enabled(actuator) && migration_task_get_miss(task) >= 3){
 			migration_task_clear(task);
 			message_t msg;
@@ -51,31 +45,47 @@ void migration_check_rt(migration_ring_t *migration, oda_t *actuator, int id, in
 	}
 }
 
-migration_task_t *migration_search_task(migration_ring_t *migration, int id)
+migration_task_t *migration_search_task(migration_task_t *tasks, int id)
 {
 	migration_task_t *task = NULL;
 	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		if(migration->tasks[i].id == id){
-			task = &migration->tasks[i];
+		if(tasks[i].id == id){
+			task = &tasks[i];
 			break;
 		}
 	}
 	return task;
 }
 
-migration_task_t *migration_task_insert(migration_ring_t *migration, int id)
+migration_task_t *migration_task_insert(migration_task_t *tasks, int id)
 {
-	migration_task_t *task = &migration->tasks[migration->head++];
-	migration->head %= PKG_PENDING_SVC_MAX;
+	migration_task_t *task = NULL;
+
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
+		if(tasks[i].id == -1){
+			task = &tasks[i];
+			break;
+		} else if(task == NULL || task[i].lru_cnt > task->lru_cnt){
+			task = &tasks[i];
+		}
+	}
 
 	task->id = id;
 	task->missed_cnt = 0;
+
 	return task;
 }
 
-void migration_task_inc_miss(migration_task_t *task)
+void migration_task_inc_miss(migration_task_t *tasks, migration_task_t *task)
 {
 	task->missed_cnt++;
+
+	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
+		if(task[i].id != -1)
+			task[i].lru_cnt++;
+	}
+
+	task->lru_cnt = 1;
 }
 
 int migration_task_get_miss(migration_task_t *task)

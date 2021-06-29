@@ -18,59 +18,53 @@
 typedef struct _migration_task {
 	int id;
 	int missed_cnt;
+	unsigned lru_cnt;
 } migration_task_t;
-
-typedef struct _migration_ring {
-	migration_task_t tasks[PKG_PENDING_SVC_MAX];
-	unsigned char head;
-	// unsigned char tail;
-	// bool empty;
-	// bool full;
-} migration_ring_t;
 
 /**
  * @brief Initializes the migration structure
  * 
- * @param migration Pointer to the migration ring structure
+ * @param tasks Array of tasks
  */
-void migration_init(migration_ring_t *migration);
+void migration_init(migration_task_t *tasks);
 
 /**
  * @brief Checks for a deadline violation that can trigger migration
  * 
- * @param migration Pointer to the migration ring structure
+ * @param tasks Array of tasks
  * @param actuator Pointer to the ODA actuator
  * @param id ID of the monitored message task
  * @param remaining Slack time remaining for the task
  */
-void migration_check_rt(migration_ring_t *migration, oda_t *actuator, int id, int remaining);
+void migration_check_rt(migration_task_t *tasks, oda_t *actuator, int id, int remaining);
 
 /**
  * @brief Searches for a task in the migration ring
  * 
- * @param migration Pointer to the migration ring structure
+ * @param tasks Array of tasks
  * @param id ID of the task to search
  * 
  * @return Pointer to the task. NULL if not found.
  */
-migration_task_t *migration_search_task(migration_ring_t *migration, int id);
+migration_task_t *migration_search_task(migration_task_t *tasks, int id);
 
 /**
  * @brief Inserts a new task into the migration ring
  * 
- * @param migration Pointer to the migration ring structure
+ * @param tasks Array of tasks
  * @param id ID of the task to insert
  * 
  * @return Pointer to the inserted task
  */
-migration_task_t *migration_task_insert(migration_ring_t *migration, int id);
+migration_task_t *migration_task_insert(migration_task_t *tasks, int id);
 
 /**
  * @brief Increments a miss for a desired task
  * 
- * @param task Pointer to the task structure
+ * @param tasks Array of tasks
+ * @param task Pointer to the task structure to increment a miss
  */
-void migration_task_inc_miss(migration_task_t *task);
+void migration_task_inc_miss(migration_task_t *tasks, migration_task_t *task);
 
 /**
  * @brief Gets the miss count of a task

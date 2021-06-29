@@ -24,8 +24,8 @@ int main()
 
 	printf("Migration started at %d\n", memphis_get_tick());
 	
-	migration_ring_t decider;
-	migration_init(&decider);
+	migration_task_t tasks[PKG_PENDING_SVC_MAX];
+	migration_init(tasks);
 
 	oda_t actuator;
 	oda_init(&actuator);
@@ -36,7 +36,7 @@ int main()
 		switch(msg.payload[0]){
 		case OBSERVE_PACKET:
 			// Echo("Hello, received observe packet\n");
-			migration_check_rt(&decider, &actuator, msg.payload[1], msg.payload[2]);
+			migration_check_rt(tasks, &actuator, msg.payload[1], msg.payload[2]);
 			break;
 		case SERVICE_PROVIDER:
 			oda_service_provider(&actuator, msg.payload[1], msg.payload[2]);
