@@ -7,7 +7,7 @@ class Repository:
 		self.addr = 0
 
 	def add(self, value, commentary):
-		str_value = "{0:0{1}X}".format(value, 8)
+		str_value = "{0:0{1}X}".format(int(value) & 0xFFFFFFFF, 8)
 		self.lines.append("{}\n".format(str_value))
 		self.commentary.append("{:x}\t{}\t{}\n".format(self.addr, str_value, commentary))
 		self.addr += 4

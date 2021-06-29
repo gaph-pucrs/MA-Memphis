@@ -12,6 +12,7 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 
 #include "pipe.h"
 #include "task_control.h"
@@ -68,9 +69,7 @@ bool pipe_is_full(tcb_t *tcb)
 void pipe_transfer(message_t *src, message_t *dst)
 {
 	dst->length = src->length;
-	/** @todo Memcpy */
-	for(volatile int i = 0; i < dst->length; i++)
-		dst->payload[i] = src->payload[i];
+	memcpy(dst->payload, src->payload, dst->length * sizeof(dst->payload[0]));
 }
 
 bool pipe_push(tcb_t *tcb, message_t *message, int cons_task)
@@ -81,9 +80,7 @@ bool pipe_push(tcb_t *tcb, message_t *message, int cons_task)
 	tcb->pipe.consumer_task = cons_task;
 	tcb->pipe.message.length = message->length;
 	// putsv("Pipe message length = ", tcb->pipe.message.length);
-	/** @todo memcpy */
-	for(volatile int i = 0; i < message->length; i++)
-		tcb->pipe.message.payload[i] = message->payload[i];
+	memcpy(tcb->pipe.message.payload, message->payload, message->length * sizeof(message->payload[0]));
 
 	return true;
 }

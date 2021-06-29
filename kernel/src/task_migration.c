@@ -99,7 +99,7 @@ void tm_send_code(tcb_t *tcb)
 	packet->mapper_task = tcb->mapper_task;
 	packet->mapper_address = tcb->mapper_address;
 
-	pkt_send(packet, (unsigned int*)tcb_get_offset(tcb), tcb_get_code_length(tcb));
+	pkt_send(packet, (unsigned int*)tcb_get_offset(tcb), tcb_get_code_length(tcb)/4);
 }
 
 void tm_send_tcb(tcb_t *tcb, int addr)
@@ -230,5 +230,5 @@ void tm_send_data_bss(tcb_t *tcb, int addr)
 	packet->data_size = tcb_get_data_length(tcb);
 	packet->bss_size = tcb_get_bss_length(tcb);
 
-	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)*4), (packet->data_size + packet->bss_size));
+	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (packet->data_size + packet->bss_size)/4);
 }

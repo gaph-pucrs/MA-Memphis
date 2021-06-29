@@ -1,12 +1,23 @@
-#include <stddef.h>
+/**
+ * MA-Memphis
+ * @file task_migration.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Task migration functions
+ */
 
-#include <memphis.h>
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <memphis.h>
 
 #include "task_migration.h"
+#include "sliding_window.h"
 #include "services.h"
-#include "app.h"
 
 void tm_migrate(mapper_t *mapper, int task_id)
 {
@@ -30,7 +41,27 @@ void tm_migrate(mapper_t *mapper, int task_id)
 
 	task->old_proc = task->proc_idx;
 	// unsigned then = GetTick();
-	task->proc_idx = processors_get_first_most_free(mapper->processors, task->old_proc);
+
+	/* Check the window center disregarding the task to migrate */
+	app->center_x = 0;
+	app->center_y = 0;
+	for(int i = 0; i < app->task_cnt; i++){
+		if(i == (task_id & 0xFF))
+			continue;
+
+		app->center_x += mapper->processors[app->task[i]->proc_idx].addr >> 8;
+		app->center_y += mapper->processors[app->task[i]->proc_idx].addr & 0xFF;
+	}
+	app->center_x /= (app->task_cnt - 1);
+	app->center_y /= (app->task_cnt - 1);
+
+	/* Get window from this center (able to grow) */
+	window_t window;
+	window_set_from_center(&window, mapper->processors, app, 1, MAP_MIN_WX, MAP_MIN_WY, false);
+
+	/* Map to the specific window */
+	task->proc_idx = sw_map_task(task, app, mapper->processors, &window);
+
 	// unsigned now = GetTick();
 	// Echo("Ticks of mapping task for migration = "); Echo(itoa(now - then)); Echo("\n");
 

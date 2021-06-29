@@ -1,139 +1,121 @@
-#include <stdbool.h>
-#include <stddef.h>
+/**
+ * MA-Memphis
+ * @file mapper.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Main mapper functions
+ */
 
-#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <memphis.h>
 
 #include "mapper.h"
+#include "sliding_window.h"
 #include "services.h"
 #include "tag.h"
 
 void map_init(mapper_t *mapper)
 {
-	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
 	mapper->pending_task_cnt = 0;
-	mapper->fail_map_cnt = 0;
-	mapper->appid_cnt = 0;
+
 	mapper->pending_map_app = NULL;
 
-	task_init(mapper->tasks);
+	mapper->fail_map_cnt = 0;
+
+	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
+	mapper->appid_cnt = 0;
+
 	app_init(mapper->apps);
+	task_init(mapper->tasks);
 	processor_init(mapper->processors);
 }
 
-void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, unsigned desc_sz)
+void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *communication)
 {
-	unsigned time = memphis_get_tick();
-	printf("New app received at %d\n", time);
-	// Echo("Descriptor size: "); Echo(itoa(desc_sz)); Echo("\n");
-	printf("App ID: %d\n", mapper->appid_cnt);
-	printf("Task cnt: %d\n", task_cnt);
+	printf("New app received at %d\n", memphis_get_tick());
+	// printf("App ID: %d\n", mapper->appid_cnt);
+	// printf("Task cnt: %d\n", task_cnt);
 
 	if(task_cnt > mapper->available_slots){
 		puts("No available slots.\n");
 
 		/* Save pending app descriptor and try to map on TASK_RELEASE */
 		mapper->pending_task_cnt = task_cnt;
-		mapper->pending_descr_sz = desc_sz;
-		/** @todo memcpy */
-		for(int i = 0; i < desc_sz; i++)
-			mapper->pending_descr[i] = descriptor[i];
+		
+		memcpy(mapper->pending_descr, descriptor, task_cnt * 2 * sizeof(mapper->pending_descr[0]));
+
+		int comm_i = 0;
+		/* Copy the communication dependence list */
+		for(int i = 0; i < task_cnt; i++){
+			/* For all tasks, keep copying until signaled for next task */
+			int consumer;
+			do {
+				consumer = communication[comm_i];
+				mapper->pending_comm[comm_i] = communication[comm_i];
+				comm_i++;
+			} while(consumer > 0);
+		}
 	} else {
-		map_try_mapping(mapper, mapper->appid_cnt, descriptor, task_cnt, mapper->processors);
+		map_try_mapping(mapper, mapper->appid_cnt, task_cnt, descriptor, communication, mapper->processors);
 	}
 }
 
-app_t *map_build_app(mapper_t *mapper, int appid, int *descriptor, unsigned task_cnt)
+unsigned map_try_static(app_t *app, processor_t *processors)
 {
-	app_t *app = app_get_free(mapper->apps);
-
-	app->id = appid;
-	app->task_cnt = task_cnt;
-	app->allocated_cnt = 0;
-
-	for(int i = 0; i < app->task_cnt; i++){
-		/**
-		 * @todo Check this bug
-		 * This is usually = descriptor[i*6] & 0xFF.
-		 * But using & in this statement acts as | besides the proper instruction being generated and executed.
-		 */
-		int task_id = descriptor[i*TASK_DESCRIPTOR_SIZE];
-		app->task[task_id]->status = BLOCKED;
-		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
-		app->task[task_id] = task_get_free(mapper->tasks);
-
-		app->task[task_id]->id = appid << 8 | task_id;
-
-		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
-		// Echo("Processor address: "); Echo(itoa(proc_idx));
-		if(proc_idx != -1)
-			proc_idx = (proc_idx >> 8)*PKG_N_PE_X + (proc_idx & 0xFF);
-		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
-		app->task[task_id]->proc_idx = proc_idx;
-		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
-
-		app->task[task_id]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 2];
-		// Echo("Task type tag: "); Echo(itoa(app->task[task_id]->type_tag)); Echo("\n");
-
-		app->task[task_id]->code_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 3];
-		app->task[task_id]->data_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 4];
-		app->task[task_id]->bss_sz = descriptor[i*TASK_DESCRIPTOR_SIZE + 5];
-		app->task[task_id]->init_addr = descriptor[i*TASK_DESCRIPTOR_SIZE + 6];
-	}
-
-	return app;
-}
-
-bool map_app_mapping(app_t *app, processor_t *processors)
-{
-	bool map_failed = false;
+	unsigned fail_cnt = 0;
+	app->has_static_tasks = false;
 
 	/* First check for static mapping availability */
 	for(int i = 0; i < app->task_cnt; i++){
 		int proc_idx = app->task[i]->proc_idx;
 		if(proc_idx != -1){
 			/* Statically mapped task found */
+			app->has_static_tasks = true;
+
 			/* This is needed because more than 1 task can be statically mapped to the same processor */
 			processors[proc_idx].pending_map_cnt++;
 			if(processors[proc_idx].pending_map_cnt > processors[proc_idx].free_page_cnt){
 				printf("No available pages for statically mapped task %d\n", app->task[i]->id);
-				map_failed = true;
+				if(!processors[i].failed_map){
+					fail_cnt++;
+					processors[i].failed_map = true;
+				}
 			}
 		}
 	}
 
-	if(map_failed){
-		unsigned fail_cnt = 0;
-		for(int i = 0; i < PKG_N_PE; i++){
-			if(processors[i].pending_map_cnt > processors[i].free_page_cnt)
-				fail_cnt++;
-		}
-		/* Return the number of processors that need TASK_TERMINATED to retry map */
-		return fail_cnt;
-	} else {
-		/* First map statically mapped tasks */
-		for(int i = 0; i < app->task_cnt; i++){
-			int proc_idx = app->task[i]->proc_idx;
-			if(proc_idx != -1){
-				printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
-				processors[proc_idx].pending_map_cnt = 0;
-				processors[proc_idx].free_page_cnt--;
-			}
-		}
+	return fail_cnt;
+}
 
-		/* Now map dynamic tasks */
-		for(int i = 0; i < app->task_cnt; i++){
-			if(app->task[i]->proc_idx == -1){
-				int proc_idx = processors_get_first_most_free(processors, -1);
-				printf("Dinamically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
-				processors[proc_idx].free_page_cnt--;
-				app->task[i]->proc_idx = proc_idx;
-			}
-		}
+void map_static_tasks(app_t *app, processor_t *processors)
+{
+	unsigned static_cnt = 0;
+	app->center_x = 0;
+	app->center_y = 0;
 
-		return 0;
+	/* First map statically mapped tasks */
+	for(int i = 0; i < app->task_cnt; i++){
+		int proc_idx = app->task[i]->proc_idx;
+		if(proc_idx != -1){
+			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
+			// processors[proc_idx].pending_map_cnt = 0;
+			processors[proc_idx].free_page_cnt--;
+			app->center_x += processors[proc_idx].addr >> 8;
+			app->center_y += processors[proc_idx].addr & 0xFF;
+			static_cnt++;
+		}
 	}
+
+	/* Will not divide by 0. Function only called on has_static_tasks == true */
+	app->center_x /= static_cnt;
+	app->center_y /= static_cnt;
 }
 
 void map_task_allocated(mapper_t *mapper, int id)
@@ -147,8 +129,7 @@ void map_task_allocated(mapper_t *mapper, int id)
 
 	if(app->allocated_cnt == app->task_cnt){
 		/* All tasks allocated, send task release */
-		printf("All tasks allocated from app %d\n", app->id);
-		printf("Sending TASK_RELEASE at time %d\n", memphis_get_tick());
+		printf("Sending TASK_RELEASE at time %d for app %d\n", memphis_get_tick(), app->id);
 
 		map_task_release(mapper, app);
 		map_app_mapping_complete(app);
@@ -162,38 +143,34 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	message_t msg;
 	msg.payload[0] = TASK_RELEASE;
 	// msg.payload[1] = appid_shift | i;
-	// msg.payload[2] = app->task[i]->data_sz;
-	// msg.payload[3] = app->task[i]->bss_sz;
-	// msg.payload[4] = observer_task;
-	// msg.payload[5] = observer_address;
-	msg.payload[6] = app->task_cnt;
+	// msg.payload[2] = observer_task;
+	// msg.payload[3] = observer_address;
+	msg.payload[4] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 7] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.payload[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
 	
-	msg.length = app->task_cnt + 7;
+	msg.length = app->task_cnt + 5;
 
 	int appid_shift = app->id << 8;
 	for(int i = 0; i < app->task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
 		msg.payload[1] = appid_shift | i;
-		msg.payload[2] = app->task[i]->data_sz;
-		msg.payload[3] = app->task[i]->bss_sz;
 
-		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 7], (OBSERVE | O_QOS));
+		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 5], (ODA_OBSERVE | O_QOS));
 
 		if(observer == NULL || app->id == 0){
-			msg.payload[4] = -1;
-			msg.payload[5] = -1;
+			msg.payload[2] = -1;
+			msg.payload[3] = -1;
 		} else {
-			msg.payload[4] = observer->id;
-			msg.payload[5] = mapper->processors[observer->proc_idx].addr;
+			msg.payload[2] = observer->id;
+			msg.payload[3] = mapper->processors[observer->proc_idx].addr;
 
 			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(mapper->processors[observer->proc_idx].addr));
 		}
 
 		/* Send message directed to kernel at task address */
-		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 7]);
+		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 5]);
 
 		/* Mark task as running */
 		app->task[i]->status = RUNNING;
@@ -226,17 +203,19 @@ void map_task_terminated(mapper_t *mapper, int id)
 	app_t *app = app_search(mapper->apps, appid);
 	int proc_idx = app->task[taskid]->proc_idx;
 
-	/* Deallocate */
-	if(app->task[taskid]->status == MIGRATING){
+	/* Terminate task */
+	int old_proc = task_terminate(app->task[taskid], app->task_cnt - 1);
+	if(old_proc != -1){
 		/* The task finished with a migration request on the fly */
 		mapper->available_slots++;
-		int old_proc = app->task[taskid]->old_proc;
 		mapper->processors[old_proc].free_page_cnt++;
 	}
-
-	app->task[taskid]->id = -1;
+	
+	/* Deallocate task from app */
 	app->task[taskid] = NULL;
 	app->allocated_cnt--;
+
+	/* Deallocate task from mapper */
 	mapper->available_slots++;
 	mapper->processors[proc_idx].free_page_cnt++;
 
@@ -247,26 +226,49 @@ void map_task_terminated(mapper_t *mapper, int id)
 	}
 
 	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
-		/* Pending NEW_APP and resources freed. Map pending task */
-		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_descr, mapper->pending_task_cnt, mapper->processors);
+		/* Pending NEW_APP and resources freed. Map pending application which isn't built yet */
+		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
+		mapper->pending_task_cnt = 0;
 	} else if(
-		mapper->fail_map_cnt > 0 &&																	/* Pending mapping */
-		mapper->processors[proc_idx].pending_map_cnt > 0 && 										/* Terminated task freed desired processor */
+		mapper->processors[proc_idx].failed_map &&													/* Pending static map at desired PE */
 		mapper->processors[proc_idx].free_page_cnt >= mapper->processors[proc_idx].pending_map_cnt	/* All slots needed in this processor are freed! */
 	){
-		mapper->processors[proc_idx].pending_map_cnt = 0;
+		mapper->processors[proc_idx].failed_map = false;
 		mapper->fail_map_cnt--;
 		if(mapper->fail_map_cnt == 0){
 			/* All needed processor slots are freed. Map and allocate now */
-			mapper->fail_map_cnt = map_app_mapping(mapper->pending_map_app, mapper->processors);
-			if(!mapper->fail_map_cnt){
-				/* Send task allocation to injector */
-				map_task_allocation(mapper->pending_map_app, mapper->processors);
+			map_static_tasks(mapper->pending_map_app, mapper->processors);
 
-				mapper->pending_map_app = NULL;
-			}
+			sw_map_app(mapper->pending_map_app, mapper->processors);
+
+			/* Send task allocation to injector */
+			map_task_allocation(mapper->pending_map_app, mapper->processors);
+
+			map_set_score(mapper->pending_map_app, mapper->processors);
+
+			mapper->pending_map_app = NULL;
+
+			mapper->available_slots -= app->task_cnt;
 		}
 	}
+}
+
+void map_set_score(app_t *app, processor_t *processors)
+{
+	unsigned edges = 0;
+	unsigned cost = 0;
+	for(int i = 0; i < app->task_cnt; i++){
+		task_t *producer = app->task[i];
+		processors[producer->proc_idx].pending_map_cnt = 0;
+		for(int j = 0; j < app->task_cnt - 1 && producer->consumers[j] != NULL; j++){
+			task_t *consumer = producer->consumers[j];
+			cost += map_manhattan_distance(processors[producer->proc_idx].addr, processors[consumer->proc_idx].addr);
+			edges++;
+		}
+	}
+	unsigned score = edges ? cost * 100 / edges : 0; /* Careful with division by zero */
+	printf("Mapped with score %u\n", score);
+	app->mapping_score = score;
 }
 
 void map_task_allocation(app_t *app, processor_t *processors)
@@ -292,21 +294,40 @@ void map_task_allocation(app_t *app, processor_t *processors)
 		memphis_send_any(&msg, APP_INJECTOR);
 }
 
-void map_try_mapping(mapper_t *mapper, int appid, int *descr, int task_cnt, processor_t *processors)
+void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int *comm, processor_t *processors)
 {
 	puts("Mapping application...\n");
 		
-	app_t *app = map_build_app(mapper, mapper->appid_cnt, descr, task_cnt);
+	app_t *app = app_get_free(mapper->apps);
+	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks);
 
-	mapper->fail_map_cnt = map_app_mapping(app, mapper->processors);
+	/* 1st phase: static mapping */
+	mapper->fail_map_cnt = map_try_static(app, processors);
+
 	if(!mapper->fail_map_cnt){
+		/* 2nd phase: dynamic mapping (guaranteed to suceed) */
+		if(app->has_static_tasks)
+			map_static_tasks(app, processors);
+
+		if(mapper->appid_cnt != 0)
+			sw_map_app(app, processors);
+
 		/* Send task allocation to injector */
 		map_task_allocation(app, processors);
+
+		map_set_score(app, processors);
 		
 		/* Mapper task is already allocated */
-		if(mapper->appid_cnt == 0)
+		if(mapper->appid_cnt == 0){
 			app->allocated_cnt++;
-
+			/* Check if mapper task is the only MA task */
+			if(app->allocated_cnt == app->task_cnt){
+				map_app_mapping_complete(app);
+				mapper->appid_cnt++;
+			}
+		}
+		
+		mapper->available_slots -= app->task_cnt;
 	} else {
 		mapper->pending_map_app = app;
 	}

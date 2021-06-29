@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+import sys
+from argparse import ArgumentParser
+from os import getenv, makedirs
+from os.path import exists
+from distutils.dir_util import remove_tree
+from subprocess import Popen
+
+def testcase_build(platform_path, testcase_file):
+	if not exists(testcase_file):
+		raise Exception("Testcase {} not found.".format(testcase_file))
+		
+	sys.path.append(platform_path+"/modules")
+	from testcase import Testcase
+	tc = Testcase(platform_path, testcase_file)
+	tc.copy()
+	tc.build()
+
+def scenario_build(platform_path, testcase_folder, scenario_file):
+	testcase_name = testcase_folder.split("/")
+	testcase_name = testcase_name[len(testcase_name) - 1]
+	testcase_file = testcase_folder+"/"+ testcase_name+".yaml"
+
+	if not exists(testcase_file):
+		raise Exception("Testcase {} not found.".format(testcase_file))
+
+	if not exists(scenario_file):
+		raise Exception("Scenario {} not found.".format(scenario_file))
+
+	sys.path.append(platform_path+"/modules")
+	from scenario import Scenario
+	scenario = Scenario(platform_path, testcase_folder, scenario_file)
+	scenario.copy()
+	scenario.build()
+
+def simulate(debugger_path, scenario_folder, time_limit, nogui):
+	if not exists(scenario_folder):
+		raise Exception("Scenario folder {} not found.".format(scenario_folder))
+
+	time_limit = int(time_limit)
+	if time_limit < 0:
+		raise Exception("Time limit of {} should be positive.".format(time_limit))
+
+	try:
+		remove_tree("{}/log".format(scenario_folder))
+		makedirs("{}/log".format(scenario_folder))
+	except:
+		pass
+
+	simulation = Popen(["{}/memphis".format(scenario_folder), "-c", "{}".format(time_limit)])
+	if not nogui:
+		debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])
+
+	try:
+		simulation.wait()
+		if not nogui:
+			debugger.wait()
+	except KeyboardInterrupt:
+		pass
+
+def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, time_limit, nogui):
+	testcase_build(platform_path, testcase_file)
+
+	testcase_name = testcase_file.split(".")
+	testcase_name = testcase_name[len(testcase_name) - 2]
+	testcase_name = testcase_name.split("/")
+	testcase_name = testcase_name[len(testcase_name) - 1]
+
+	scenario_build(platform_path, testcase_name, scenario_file)
+
+	scenario_name = scenario_file.split(".")
+	scenario_name = scenario_name[len(scenario_name) - 2]
+	scenario_name = scenario_name.split("/")
+	scenario_name = scenario_name[len(scenario_name) - 1]
+
+	simulate(debugger_path, "{}/{}".format(testcase_name, scenario_name), time_limit, nogui)
+
+def debug(debugger_path, scenario_folder):
+	if not exists(scenario_folder):
+		raise Exception("Scenario folder {} not found.".format(scenario_folder))
+
+	debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])
+
+	try:
+		debugger.wait()
+	except KeyboardInterrupt:
+		pass
+
+
+if __name__ == "__main__":
+	parser = ArgumentParser(description="MA-Memphis platform generator and simulator.")
+	subparsers = parser.add_subparsers(dest="option")
+
+	tc_parser = subparsers.add_parser("testcase", help="Generate a testcase")
+	tc_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
+
+	sc_parser = subparsers.add_parser("scenario", help="Generate a scenario")
+	sc_parser.add_argument("TESTCASE_FOLDER", help="Path to generated testcase folder")
+	sc_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
+
+	sim_parser = subparsers.add_parser("simulate", help="Simulate a scenario")
+	sim_parser.add_argument("SCENARIO_FOLDER", help="Path to generated scenario folder")
+	sim_parser.add_argument("TIME_LIMIT", help="Simulation time limit in milliseconds")
+	sim_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
+
+	all_parser = subparsers.add_parser("all", help="Simulate a scenario")
+	all_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
+	all_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
+	all_parser.add_argument("TIME_LIMIT", help="Simulation time limit in milliseconds")
+	all_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
+
+	dbg_parser = subparsers.add_parser("debug", help="Runs the debugger on a previous simulation")
+	dbg_parser.add_argument("SCENARIO_FOLDER", help="Path to simulated scenario folder")
+
+	args = parser.parse_args()
+
+	option = args.option
+
+	nogui = False
+
+	ENV_DEBUGGER_PATH = "MEMPHIS_DEBUGGER_PATH"
+	DEBUGGER_PATH = None
+	if option == "simulate" or option == "all" or option == "debug":
+		try:
+			nogui = args.nogui
+		except:
+			pass
+		if not nogui:
+			DEBUGGER_PATH = getenv(ENV_DEBUGGER_PATH)
+			if DEBUGGER_PATH is None:
+				sys.exit("ERROR: "+ENV_DEBUGGER_PATH+" not defined.")
+
+	scenario_folder = ""
+	if option == "simulate" or option == "debug":
+		scenario_folder = args.SCENARIO_FOLDER
+
+	if option == "debug":
+		try:
+			debug(DEBUGGER_PATH, scenario_folder)
+			exit(0)
+		except Exception as ex:
+			sys.exit("\nERROR: {}".format(ex))
+
+	ENV_PLATFORM_PATH = "MA_MEMPHIS_PATH"
+	PLATFORM_PATH = None
+	if option == "testcase" or option == "scenario" or option == "all":
+		PLATFORM_PATH = getenv(ENV_PLATFORM_PATH)
+		if PLATFORM_PATH is None:
+			sys.exit("ERROR: "+ENV_PLATFORM_PATH+" not defined.")
+
+	
+	testcase_file = ""
+	if option == "testcase" or option == "all":
+		testcase_file = args.TESTCASE_FILE
+	
+	testcase_folder = ""
+	if option == "scenario":
+		testcase_folder = args.TESTCASE_FOLDER
+
+	scenario_file = ""
+	if option == "scenario" or option == "all":
+		scenario_file = args.SCENARIO_FILE
+	
+	time_limit = ""
+	if option == "simulate" or option == "all":
+		time_limit = args.TIME_LIMIT
+
+	try:
+		if option == "testcase":
+			testcase_build(PLATFORM_PATH, testcase_file)
+		elif option == "scenario":
+			scenario_build(PLATFORM_PATH, testcase_folder, scenario_file)
+		elif option == "simulate":
+			simulate(DEBUGGER_PATH, scenario_folder, time_limit, nogui)
+		else:
+			# all
+			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, time_limit, nogui)
+	except Exception as ex:
+		sys.exit("\nERROR: {}".format(ex))
+
+
+	# testcase_file = args.testcase
+
+	# try:
+	# 	testcase_build(PLATFORM_PATH, testcase_file)
+	# except Exception as ex:
+	# 	sys.exit("\nERROR: {}".format(ex))

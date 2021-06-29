@@ -246,10 +246,8 @@ system_call:
    nop
 .end system_call
 
-.globl  _has_priv        # _num is a global symbol, when it is defined
-.data               # switch to read-write data section
+.section .rodata	# Constants
 .align 4
-_has_priv:                   # declare the label 
-    .long  1           # 4 bytes of initialized storage after the label
-
-
+.globl _has_priv	# Set available for 'extern'
+_has_priv:			# Define is is priv. This does not set a privilege, only used to inform prior
+	.long  1

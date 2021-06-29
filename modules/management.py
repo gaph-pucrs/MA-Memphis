@@ -2,7 +2,7 @@
 from distutils.dir_util import copy_tree
 from distutils.file_util import copy_file
 from os import makedirs
-from subprocess import run
+from subprocess import run, check_output
 from multiprocessing import cpu_count
 from descriptor import Descriptor
 from repository import Repository, Start
@@ -24,7 +24,6 @@ class Management:
 
 	def copy(self):
 		makedirs(self.testcase_path+"/management", exist_ok=True)
-		copy_file(self.platform_path+"/management/tag.h", self.testcase_path+"/management/tag.h", update=1)
 
 		for task in self.unique_tasks:
 			copy_tree(self.platform_path+"/management/"+task, self.testcase_path+"/management/"+task, update=1)
@@ -60,12 +59,45 @@ class Management:
 		for i in range(len(output_tasks)):
 			ids.add(output_tasks[i], sizes[i], task_ids[i])
 
+		if output_tasks[0] != "mapper_task":
+			raise Exception("Mapper task must be the first in the management list")
+
 		ids.write(self.testcase_path+"/management/id_tasks.h")
 
 	def build(self):
 		NCPU = cpu_count()
 		for task in self.unique_tasks:
-			run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
+			make = run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
+			if make.returncode != 0:
+				raise Exception("Error build MA task {}.".format(task))
+
+	def check_count(self, max_tasks_app):
+		if len(self.tasks) > max_tasks_app:
+			raise Exception("Number of management tasks exceeds the maximum allowed (max_tasks_app).")
+
+	def check_size(self, page_size, stack_size):
+		self.text_sizes = {}
+		self.data_sizes = {}
+		self.bss_sizes	= {}
+
+		for task in self.unique_tasks:
+			path = "{}/management/{}/{}.elf".format(self.testcase_path, task, task)
+
+			out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+
+			self.data_sizes[task] = int(out[1])
+			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
+			self.bss_sizes[task] = int(out[2])
+
+			
+		print("\n********************* MA page size report *********************")
+		for task in self.unique_tasks:
+			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
+			if size <= page_size:
+				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
+			else:
+				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
+		print("******************* End MA page size report *******************")
 
 	def generate_repo(self, scenario_path):
 		for task in self.unique_tasks:
@@ -76,11 +108,9 @@ class Management:
 			task_type = descr.get_type()
 			repo.add(task_type, "Task type tag")
 
-			txt_size = self.__get_txt_size(task)
-			repo.add(txt_size, "txt size")
-
-			repo.add(0, "data size [Legacy]")
-			repo.add(0, "bss size [Legacy]")
+			repo.add(self.text_sizes[task], "txt size")
+			repo.add(self.data_sizes[task], "data size")
+			repo.add(self.bss_sizes[task], "bss size")
 
 			task_hex = open(self.testcase_path+"/management/"+task+"/"+task+".txt", "r")
 
@@ -99,19 +129,15 @@ class Management:
 			name = task["task"]
 			start.add(name, "Task name")
 
-			address = -1
-			map_comment = ""
 			try:
 				address = task["static_mapping"]
 				addr_x = int(address[0])
 				addr_y = int(address[1])
 				address = addr_x << 8 | addr_y
 				map_comment = "statically mapped to PE {}x{}".format(addr_x, addr_y)
+				start.add(str(address), "Task {} is {}".format(name, map_comment))
 			except:
-				address = -1
-				map_comment = "dinamically mapped"
-			
-			start.add(str(address), "Task {} is {}".format(name, map_comment))
+				raise Exception("All management tasks must be STATICALLY MAPPED")			
 		
 		start.write(scenario_path+"/ma_start.txt")
 		start.write_debug(scenario_path+"/ma_start_debug.txt")
@@ -122,7 +148,7 @@ class Management:
 	def __get_txt_size(self, task):
 		return sum(1 for line in open(self.testcase_path+"/management/"+task+"/"+task+".txt"))
 
-	
+
 class ManagementIds:
 	def __init__(self):
 		self.lines = []

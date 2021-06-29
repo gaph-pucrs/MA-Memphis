@@ -53,10 +53,14 @@ class Testcase:
 		self.hardware.copy()
 
 	def build(self):
-		self.libs.build()		
+		self.libs.build()
+		
 		self.kernel.build()
+
 		self.bootloader.build()
 		self.hardware.build()
+
+		self.kernel.check_size()
 
 	def __is_obsolete(self):
 		if exists(self.file):

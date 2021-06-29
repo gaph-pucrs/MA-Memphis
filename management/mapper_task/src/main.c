@@ -1,10 +1,20 @@
-#include <stdbool.h>
-#include <stdlib.h>
+/**
+ * MA-Memphis
+ * @file main.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2021
+ * 
+ * @brief Main file of the MA-Memphis mapper
+ */
+
 #include <stdio.h>
 #include <memphis.h>
 
 #include "services.h"
-#include "mapper.h"
 #include "task_migration.h"
 
 int main()
@@ -20,7 +30,7 @@ int main()
 		/* Check what service has been received */
 		switch(msg.payload[0]){
 			case NEW_APP:
-				map_new_app(&mapper, msg.payload[2], (int*)&msg.payload[3], msg.payload[1] - 1);
+				map_new_app(&mapper, msg.payload[1], (int*)&msg.payload[2], (int*)&msg.payload[2*msg.payload[1] + 2]);
 				break;
 			case TASK_ALLOCATED:
 				map_task_allocated(&mapper, msg.payload[1]);

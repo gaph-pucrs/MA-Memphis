@@ -22,4 +22,6 @@ class Bootloader:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/bootloader/mipsi", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/bootloader/mipsi", "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error assemblying bootloader.")

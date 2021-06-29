@@ -9,7 +9,7 @@ typedef struct _message {
 } message_t;
 
 extern int system_call();
-extern int _has_priv;
+extern const int _has_priv;
 
 int memphis_get_id();
 int memphis_get_addr();

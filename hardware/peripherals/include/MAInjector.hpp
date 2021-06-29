@@ -15,7 +15,6 @@
 
 /* Packet size. Check software/kernel/modules/include/packet.h. */
 #define CONSTANT_PACKET_SIZE	13
-#define TASK_DESCRIPTOR_SIZE	7
 
 /* Platform kernel/management services */
 #define MESSAGE_REQUEST			0x00000010

@@ -58,7 +58,9 @@ class Hardware:
 
 	def build(self):
 		NCPU = cpu_count()
-		run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error building hardware.")
 
 class HardwareDefinitions:
 	def __init__(self):

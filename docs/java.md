@@ -4,8 +4,8 @@
 
 Run:
 ```console
-# apt-get update
-# apt-get install default-jre
+# apt update
+# apt install default-jre
 ```
 
 ## Arch (pacman/aur distros)

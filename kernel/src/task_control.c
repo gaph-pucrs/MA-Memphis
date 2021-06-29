@@ -66,7 +66,7 @@ tcb_t *tcb_search(int task)
 tcb_t* tcb_free_get()
 {
     for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(tcbs[i].scheduler.status == SCHED_FREE)
+		if(tcbs[i].id == -1)
 			return &tcbs[i];
 	}
 
@@ -75,18 +75,24 @@ tcb_t* tcb_free_get()
     return NULL;
 }
 
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
+void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr)
 {
 	tcb->pc = 0;
+
 	tcb->id = id;
 	tcb->text_lenght = code_sz;
-	tcb->proc_to_migrate = -1;
-	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
-	tcb->scheduler.status = SCHED_BLOCKED;
+	tcb->data_lenght = data_sz;
+	tcb->bss_lenght = bss_sz;
+
 	tcb->mapper_address = mapper_addr;
 	tcb->mapper_task = mapper_task;
 	tcb->observer_address = -1;
 	tcb->observer_task = -1;
+
+	tcb->proc_to_migrate = -1;
+
+	tcb->scheduler.status = SCHED_BLOCKED;
+	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
 }
 
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
@@ -97,13 +103,6 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->proc_to_migrate = -1;
 	tcb->mapper_task = mapper_task;
 	tcb->mapper_address = mapper_addr;
-}
-
-void tcb_update_sections(tcb_t *tcb, unsigned int data_sz, unsigned int bss_sz)
-{
-	tcb->data_lenght = data_sz;
-	tcb->bss_lenght = bss_sz;
-	tcb->text_lenght -= data_sz;
 }
 
 message_t *tcb_get_message(tcb_t *tcb)

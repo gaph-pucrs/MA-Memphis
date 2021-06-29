@@ -17,7 +17,7 @@
 /* Packet size. Check software/kernel/modules/include/packet.h. */
 #define CONSTANT_PACKET_SIZE	13
 /* Number of lines to represent a task description. Check build_env/scripts/app_builder.py */
-#define TASK_DESCRIPTOR_SIZE	7
+#define TASK_DESCRIPTOR_SIZE	4
 // #define MPE_ADDR				0 	//PE address of the manager PE
 // #define TASK_NUMBER_INDEX		8 	//Index where is the app task number information within packet APP_REQ_ACK
 
@@ -90,6 +90,7 @@ private:
 
 	unsigned long tick_cnt;
 	std::string path;
+	int mapper_address;
 
 	void app_descriptor_loader(std::string name, unsigned task_cnt, std::vector<int>& static_mapping);
 	void task_allocation_loader(unsigned id, unsigned addr, unsigned mapper_id, unsigned mapper_addr);

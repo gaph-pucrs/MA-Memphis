@@ -2,7 +2,7 @@
 from yaml import safe_load
 from os import makedirs
 from distutils.dir_util import copy_tree
-from shutil import copyfile
+from shutil import copyfile, copy
 from management import Management
 from application import Application
 from repository import Start
@@ -21,6 +21,14 @@ class Scenario:
 		self.file = self.base_dir+"/"+name+".yaml"
 
 		yaml = safe_load(open(self.base, "r"))
+
+		tc_name = self.testcase_path.split("/")
+		tc_name = tc_name[len(tc_name) - 1]
+
+		tc_yaml = safe_load(open("{}/{}.yaml".format(self.testcase_path, tc_name), "r"))
+		self.max_tasks_app	= tc_yaml["sw"]["max_tasks_app"]
+		self.page_size		= tc_yaml["hw"]["page_size_KB"]*1024
+		self.stack_size		= tc_yaml["hw"]["stack_size"]
 
 		self.management = Management(yaml["management"], self.platform_path, self.testcase_path)
 
@@ -57,7 +65,7 @@ class Scenario:
 		makedirs(self.base_dir+"/management", exist_ok=True)
 		makedirs(self.base_dir+"/applications", exist_ok=True)
 
-		copyfile("{}/hardware/memphis".format(self.testcase_path), "{}/memphis".format(self.base_dir))
+		copy("{}/hardware/memphis".format(self.testcase_path), "{}/memphis".format(self.base_dir))
 		copyfile("{}/kernel/kernel.txt".format(self.testcase_path), "{}/bootrom.txt".format(self.base_dir))
 
 		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
@@ -73,13 +81,23 @@ class Scenario:
 
 	def build(self):
 		self.management.build()
-		self.management.generate_repo(self.base_dir)
-		self.management.generate_start(self.base_dir)
-
 		for app in self.applications:
 			self.applications[app].build()
+
+		self.management.check_count(self.max_tasks_app)
+		for app in self.applications:
+			self.applications[app].check_count(self.max_tasks_app)
+
+		self.management.check_size(self.page_size, self.stack_size)
+		for app in self.applications:
+			self.applications[app].check_size(self.page_size, self.stack_size)
+
+		self.management.generate_repo(self.base_dir)
+
+		for app in self.applications:
 			self.applications[app].generate_repo(self.base_dir)
 
+		self.management.generate_start(self.base_dir)
 		self.__generate_app_start()		
 
 	def __generate_app_start(self):

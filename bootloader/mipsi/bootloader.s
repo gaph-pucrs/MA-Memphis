@@ -44,8 +44,8 @@ system_call:
    nop
 .end system_call
 
-.globl  _has_priv        # _num is a global symbol, when it is defined
-.data               # switch to read-write data section
+.section .rodata              # switch to read-only data section
 .align 4
-_has_priv:                   # declare the label 
-    .long  0           # 4 bytes of initialized storage after the label
+.globl _has_priv     # _num is a global symbol, when it is defined
+_has_priv:           # declare the label 
+   .long  0          # 4 bytes of initialized storage after the label

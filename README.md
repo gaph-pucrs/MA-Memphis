@@ -19,16 +19,16 @@ For more information, check the [platform documentation](/docs/Platform.md).
 ## Installation
 
 The MA-Memphis platform is made to run in a Linux environment.
+It is possible, although not supported to run under a Mac environment.
 It is possible to use the WSL to run MA-Memphis platform under Windows.
-Check our [guide](docs/WSL.md) to the MA-Memphis under WSL to set-up and then follow the steps below.
 
 ### Pre-requisites
 
-* GCC (base development packages, check [how to acquire GCC](docs/gcc.md))
-* mips-elf-gcc (to compile OS and applications, check [how to acquire MIPS cross-compiler](docs/mips.md))
-* SystemC (to compile hardware model, check [how to acquire SystemC](docs/systemc.md))
-* Python and needed libraries (to generate platform, check [how to acquire Python](docs/python.md))
-* Graphical Debugger (optional, check [how to acquire Debugger](docs/Debugger.md))
+* GCC (base development packages, check [how to acquire GCC](/docs/gcc.md))
+* mips-elf-gcc (to compile OS and applications, check [how to acquire MIPS cross-compiler](/docs/mips.md))
+* SystemC (to compile hardware model, check [how to acquire SystemC](/docs/systemc.md))
+* Python and needed libraries (to generate platform, check [how to acquire Python](/docs/python.md))
+* Graphical Debugger (optional, check [how to acquire Debugger](/docs/Debugger.md))
 
 ### Acquiring MA-Memphis
 
@@ -41,40 +41,27 @@ $ cd ~
 $ git clone https://github.com/gaph-pucrs/MA-Memphis.git
 ```
 
-Create a directory for sandboxing the experiments:
-```console
-$ mkdir ~/sandbox_memphis
-```
+Export the environment variables:
+* MA_MEMPHIS_PATH
+* PATH
 
-Export the environment variables. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
+Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-$ echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport MEMPHIS_HOME=~/sandbox_memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
+$ echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
 ```
 
 ## Generating the model
 
-First, enter the sandbox directory:
-```console
-$ cd $MEMPHIS_HOME
-```
-
 MA-Memphis separates the _testcase_ from the _scenario_.
 A testcase contains a description of the hardware and operating system of the platform.
-Create a new yaml file (here the example name will be testcase.yaml) in the sandbox folder containing:
+Create a new yaml file (here the example name will be example_testcase.yaml) in the sandbox folder containing:
 ```yaml
 sw:                         # Operating System properties
   max_tasks_app: 10         # Maximum number of tasks per application allowed
-management:                 # Management application properties
-  - task: mapper_task       # The first in this list should ALWAYS be mapper_task
-    static_mapping: [0,0]   # and the mapper_task should ALWAYS have static_mapping to any desired PE
-  - task: migration_task    # migration_task is a QoS decider for real-time applications
-  - task: rt_monitor        # rt_monitor is a QoS observer for real-time applications
-    static_mapping: [0,1]   # Static mapping is optional for any other management task.
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
+  stack_size: 1024          # Size reserved for the stack (in bytes)
   tasks_per_PE: 4           # Maximum number of tasks in the same PE (will define memory size)
-  model_description: sc     # Hardware description model. Currently, only sc is supported.
-  noc_buffer_size: 8        # Size of the NoC buffer
   mpsoc_dimension: [3,3]    # Dimension of the many-core
   Peripherals:              # Attached peripherals
     - name: APP_INJECTOR    # Mandatory Application Injector peripheral
@@ -89,48 +76,48 @@ hw:                         # Hardware properties
 **WARNING:** The VHDL model supported by Memphis is still not validated with MA-Memphis.
 
 The scenario contains a description of the applications that will be evaluated in the platform.
-Create a yaml file (in this example we will use the name scenario.yaml) that contains:
+Create a yaml file (in this example we will use the name example_scenario.yaml) that contains:
 ```yaml
-apps:                   # Application properties
-  - name: synthetic     # Application synthetic
-  - name: prod_cons     # Application prod_cons
-    start_time_ms: 5    # Application start time. When absent is 0. Should be manually sorted.
-    static_mapping:     # Optional static mapping
-      prod: [1,1]       # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
+management:                 # Management application properties
+  - task: mapper_task       # The first in this list should ALWAYS be mapper_task
+    static_mapping: [0,0]   # All management task should have static mapping defined
+  - task: migration_task    # migration_task is a QoS decider for real-time applications
+    static_mapping: [0,1]   # All management task should have static mapping defined
+  - task: rt_monitor        # rt_monitor is a QoS observer for real-time applications
+    static_mapping: [0,2]   # All management task should have static mapping defined
+apps:                       # Application properties
+  - name: synthetic         # Application synthetic
+  - name: prod_cons         # Application prod_cons
+    start_time_ms: 5        # Application start time. When absent is 0. Should be manually sorted.
+    static_mapping:         # Optional static mapping
+      prod: [1,1]           # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
 ```
 
 After creating the description of the testcase and the scenario, the testcase should be generated:
 ```console
-$ mm-gen testcase.yaml
+$ memphis testcase example_testcase.yaml
 ```
 
-Then, the applications should be compiled:
-```
-$ mm-app testcase.yaml -all scenario.yaml
-```
-
-To stop the simulation before the ending time, kill the scenario process (without ".yaml"):
+Then, the scenario should be generated inside the testcase folder that was created by `memphis testcase`:
 ```console
-$ killall scenario
+$ memphis scenario example_testcase example_scenario.yaml 
 ```
 
 ## Simulating
 
-To simulate the generated model, run inside the folder containing the testcase and scenario (the sandbox folder):
+To simulate the generated model, run the simulation in the generated scenario folder for a chosen time limit (here the example is 50 ms):
 
 ```console
-$ mm-run testcase.yaml scenario.yaml 20
+$ memphis simulate example_testcase/example_scenario 50
 ```
-
-Where 20 is the simulation time in ms.
 
 ## Evaluating and Debugging
 
-When the mm-run command executes, it runs the simulation and opens the graphical debugger.
+When the `memphis simulate` command executes, it runs the simulation and opens the graphical debugger. To avoid opening the debugger (for example in remote execution), insert the `--nogui` argument.
 To open manually after a simulation is already done, run:
 
 ```console
-$ mm-debugger $MEMPHIS_HOME/testcase/scenario
+$ memphis debug example_testcase/example_scenario
 ```
 
 ### Main window

@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "syscall.h"
 #include "services.h"
@@ -26,6 +27,7 @@ bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
 int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
 {
+	// puts("Syscall called\n");
 	schedule_after_syscall = false;
 	switch(service){
 		case EXIT:
@@ -274,9 +276,8 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			// putsv("Message length is ", msg->size);
 			// putsv("First word is ", msg->message[0]);
 			message->length = msg->size;
-			/** @todo Memcpy */
-			for(int i = 0; i < msg->size; i++)
-				message->payload[i] = msg->message[i];
+
+			memcpy(message->payload, msg->message, msg->size * sizeof(message->payload[0]));
 			
 			/* Free pending message */
 			msg->task = -1;
@@ -364,9 +365,7 @@ bool os_kernel_syscall(unsigned int *message, int length)
 				message[2], 
 				message[3], 
 				message[4], 
-				message[5], 
-				message[6], 
-				(int*)&message[7]
+				(int*)&message[5]
 			);
 		case TASK_MIGRATION:
 			return os_task_migration(message[1], message[2]);
@@ -447,6 +446,9 @@ int os_puts(char *str)
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;
 	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)str);
+	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
+	puts(msg_ptr);
+	puts("\n");
 
-	return printf("$$$_%dx%d_%d_%d_%s\n", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, msg_ptr);
+	return 0;
 }

@@ -17,7 +17,10 @@ $ wget https://github.com/gaph-pucrs/GraphicalDebugger/releases/latest/download/
 $ mv Memphis_Debugger.jar ~/tools_memphis/GraphicalDebugger
 ```
 
-Export the environment variables. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
+Export the environment variable:
+* MEMPHIS_DEBUGGER_PATH
+
+Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
 $ echo -e "# Memphis Debugger\nexport MEMPHIS_DEBUGGER_PATH=~/tools_memphis/GraphicalDebugger\n" >> ~/.bashrc
 ```

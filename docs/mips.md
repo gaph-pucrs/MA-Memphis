@@ -25,8 +25,8 @@ $ make install
 
 Obtain MPC dependency:
 ```console
-# apt-get update
-# apt-get install libmpc-dev
+# apt update
+# apt install libmpc-dev
 ```
 
 Obtain GCC, extract, compile and install:
@@ -48,7 +48,11 @@ $ cd ~
 $ rm -rf ~/mips-cross
 ```
 
-Export the environment variables. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running:
+Export the environment variables:
+* PATH
+* MANPATH
+   
+Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running:
 ```console
 $ echo -e "# mips-elf-gcc\nPATH=~/tools_memphis/mips-elf-gcc/bin:\${PATH}\nexport MANPATH=~/tools_memphis/mips-elf-gcc/man:\${MANPATH}\n" >> ~/.bashrc
 ```

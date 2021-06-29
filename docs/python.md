@@ -4,8 +4,8 @@
 
 Run:
 ```console
-# apt-get update
-# apt-get install python python-yaml
+# apt update
+# apt install python3 python3-yaml
 ```
 
 ## Arch (pacman/aur distros)
@@ -13,5 +13,5 @@ Run:
 Run:
 ```console
 # pacman -Syu
-# pacman -S python2 libyaml
+# pacman -S python python-pyaml
 ```

@@ -2,7 +2,7 @@
 
 ## Creating the new files
 
-Add your new files inside the [hardware/sc/peripherals folder](/hardware/sc/).
+Add your new files inside the [hardware/peripherals folder](/hardware/peripherals/).
 This files will contain the peripheral class header and source (.hpp and .cpp files).
 It is important to provide the NoC interface inside the new module:
 ```cpp
@@ -37,7 +37,7 @@ private:
 
 ## Connecting the peripheral to the many-core
 
-In [memphis.h](/hardware/sc/memphis.h), create signals and add to the `pes_interconnection` sensitive list:
+In [memphis.h](/hardware/src/include/memphis.h), create signals and add to the `pes_interconnection` sensitive list:
 ```cpp
 ...
 
@@ -71,7 +71,7 @@ SC_MODULE(memphis) {
 };
 ```
 
-In [memphis.cpp](/hardware/sc/memphis.cpp), update the signals:
+In [memphis.cpp](/hardware/src/memphis.cpp), update the signals:
 ```cpp
 ...
 
@@ -98,7 +98,7 @@ void memphis::pes_interconnection(){
 
 ## Instatiating the peripheral
 
-In [test_bench.h](/hardware/sc/test_bench.h), include your peripheral header, add signals, create a pointer, instantiate and connect the signals:
+In [test_bench.h](/hardware/src/include/test_bench.h), include your peripheral header, add signals, create a pointer, instantiate and connect the signals:
 
 ```cpp
 ...
@@ -143,15 +143,6 @@ SC_MODULE(test_bench) {
 	}
 	...
 };
-```
-
-## Add the peripheral to the build recipe
-
-Edit [make_systemc](/build_env/makes/make_systemc) to compile your peripheral:
-```makefile
-...
-IO			=AppInjector MAInjector YourPeripheral
-...
 ```
 
 ## Add your peripheral to the testcase
