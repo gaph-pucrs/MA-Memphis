@@ -5,6 +5,7 @@ SRCDIR = .
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 TARGET = $(patsubst %.c, %.txt, $(SRC))
+ELFS = $(patsubst %.c, %.elf, $(SRC))
 
 INCLIB = ../../lib/src/include
 
@@ -12,7 +13,7 @@ CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99 -I$(INCLIB) --inclu
 CC		= mips-elf-gcc
 AS		= mips-elf-as
 LD		= mips-elf-ld
-OBJCOPY	= mips-elf-objcopy -I elf32-bigmips -O binary
+OBJCOPY	= mips-elf-objcopy
 
 LIBDIR = ../../lib/src
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
@@ -22,7 +23,7 @@ BOOTDIR = ../../bootloader/mipsi
 BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
 BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
 
-all: $(TARGET)
+all: $(TARGET) $(ELFS)
 
 $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 	@printf "${GREEN}Dumping task: %s ...${NC}\n" "$<"
@@ -30,7 +31,7 @@ $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 
 $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 	@printf "${GREEN}Generating binary for task: %s ...${NC}\n" "$<"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@
+	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
 
 $(SRCDIR)/%.elf: $(SRCDIR)/%.o $(BOOTOBJ) $(LIBOBJ)
 	@printf "${GREEN}Linking task: %s ...${NC}\n" "$<"
