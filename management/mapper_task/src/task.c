@@ -35,7 +35,7 @@ void task_init(task_t *tasks)
 
 void task_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt)
 {
-	while(ordered < order_idx){
+	while(*ordered < *order_idx){
 		task_t *producer = order[*ordered];
 		for(int i = 0; i < task_cnt - 1 && producer->consumers[i] != NULL; i++){
 			/* Check if consumer is not ordered yet */

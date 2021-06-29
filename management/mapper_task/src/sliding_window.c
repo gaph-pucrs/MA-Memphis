@@ -28,6 +28,9 @@ void sw_map_app(app_t *app, processor_t *processors)
 	task_t *mapping_order[app->task_cnt];
 	app_get_order(app, mapping_order);
 
+	// for(int i = 0; i < app->task_cnt; i++)
+	// 	printf("Order %d = %d\n", i, mapping_order[i]->id);
+
 	/* 3rd step: map with the least communication cost and most parallelism */
 	sw_map_dynamic(app, mapping_order, processors, &window);
 }
