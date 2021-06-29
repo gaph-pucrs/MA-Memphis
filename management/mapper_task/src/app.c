@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "app.h"
 #include "mapper.h"
@@ -105,7 +106,7 @@ void app_get_order(app_t *app, task_t *order[])
 
 		/* Check if task has producers */
 		bool producer_found = false;
-		for(int j = 0; i < app->task_cnt; j++){
+		for(int j = 0; j < app->task_cnt; j++){
 			if(i == j)		/* Don't search own task */
 				continue;
 
@@ -115,6 +116,7 @@ void app_get_order(app_t *app, task_t *order[])
 				task_t *consumer = producer->consumers[k];
 				if(consumer == task){
 					/* Task is consumer, thus not initial */
+					// printf("Task %d is producer of task %d\n", producer->id, consumer->id);
 					producer_found = true;
 					break;
 				}
@@ -127,6 +129,9 @@ void app_get_order(app_t *app, task_t *order[])
 			initials[initial_idx++] = task;
 		}
 	}
+
+	// for(int i = 0; i < initial_idx; i++)
+	// 	printf("Initial %d: %d\n", i, initials[i]->id);
 
 	unsigned ordered = 0;
 	unsigned order_idx = 0;

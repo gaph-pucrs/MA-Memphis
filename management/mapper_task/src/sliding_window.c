@@ -12,6 +12,7 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "sliding_window.h"
 #include "mapper.h"
@@ -44,7 +45,7 @@ void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window
 		task->proc_idx = seq;
 		processors[seq].free_page_cnt--;
 		processors[seq].pending_map_cnt++;
-		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
+		printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
 
@@ -67,10 +68,10 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 			unsigned c = 0;
 
 			/* 1st: Keep tasks from different apps apart from each other */
-			c += (PKG_MAX_LOCAL_TASKS - (pe->free_page_cnt + pe->pending_map_cnt)) * 4;
+			c += (PKG_MAX_LOCAL_TASKS - (pe->free_page_cnt + pe->pending_map_cnt)) << 2;
 
 			/* 2nd: Keep tasks from the same app apart */
-			c += pe->pending_map_cnt * 2;
+			c += pe->pending_map_cnt << 1;
 
 			/* 3rd: Add a cost for each hop in consumer tasks */
 			for(int t = 0; t < app->task_cnt - 1 && task->consumers[t] != NULL; t++){
