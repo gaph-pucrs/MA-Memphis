@@ -11,8 +11,9 @@
  * NIC-compiler. Christer Sandberg
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 /*--------------------------------------------------
  *---- INPUT DATA FOR TESTING
@@ -46,13 +47,13 @@ No return value.
 
 *************************************************************************/
 
-void fir_filter_int(int* in,int* out,int in_len,
-                    int* coef,int coef_len,
+void fir_filter_int(unsigned int* in,unsigned int* out,int in_len,
+                    unsigned int* coef,int coef_len,
                     int scale)
 {
   int i,j,coef_len2,acc_length;
   int acc;
-  int *in_ptr,*data_ptr,*coef_start,*coef_ptr,*in_end;
+  unsigned int *in_ptr,*data_ptr,*coef_start,*coef_ptr,*in_end;
 
   /* set up for coefficients */
   coef_start = coef;
@@ -98,30 +99,30 @@ void fir_filter_int(int* in,int* out,int in_len,
 
 int main () {
 	int k;
-	Message received_msg;
+	message_t received_msg;
 	// Message send_msg;
-	int * input_stream;
+	unsigned int * input_stream;
 
-	Echo("FIR - start");
+	puts("FIR - start\n");
 
 	//RealTime(AUDIO_VIDEO_PERIOD, FIR_deadline, FIR_exe_time);
 
 	for(k=0; k<FRAMES; k++ ) {
 
-		Receive(&received_msg, adpcm_dec);
-		input_stream = received_msg.msg;
+		memphis_receive(&received_msg, adpcm_dec);
+		input_stream = received_msg.payload;
 
 		/* Executes the filter over the input stream */
-		fir_filter_int(input_stream, received_msg.msg, COMPRESSED_SAMPLES*2, fir_int, 35, 285);
+		fir_filter_int(input_stream, received_msg.payload, COMPRESSED_SAMPLES*2, (unsigned int*) fir_int, 35, 285);
 
 		received_msg.length = COMPRESSED_SAMPLES;
 
 		/* Sends the adpcm uncompressed stream */
-		Send(&received_msg, join);
+		memphis_send(&received_msg, join);
 
 	}
 
-	Echo("FIR - end");
+	puts("FIR - end\n");
 
 	return 0;
 }

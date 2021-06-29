@@ -9,8 +9,7 @@ int main()
 	
 	int i;
 
-    Echo("synthetic task A started.");
-	Echo(itoa(GetTick()));
+	printf("synthetic task A started at %u\n", memphis_get_tick());
 	msg.length = 128;
 	for(i=0;i<128;i++) msg.msg[i]=i;
 
