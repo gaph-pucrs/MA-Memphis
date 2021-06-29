@@ -1,0 +1,40 @@
+communication:
+  ADSP_0:
+    consumers:
+      - "SDRAM_0"
+  BAB_0:
+    consumers:
+      - "SDRAM_0"
+  IDCT_0:
+    consumers:
+      - "SRAM2_0"
+  MCPU_0:
+    consumers:
+      - "SRAM1_0"
+  RAST_0:
+    consumers:
+      - "SDRAM_0"
+  RISC_0:
+    consumers:
+      - "SRAM2_0"
+  SDRAM_0:
+    consumers:
+      - "BAB_0"
+      - "UPSAMP_0"
+      - "ADSP_0"
+      - "MCPU_0"
+      - "RAST_0"
+      - "AU_0"
+      - "VU_0"
+  SRAM1_0:
+    consumers:
+      - "RAST_0"
+  SRAM2_0:
+    consumers:
+      - "RISC_0"
+      - "BAB_0"
+      - "IDCT_0"
+      - "UPSAMP_0"
+  UPSAMP_0:
+    consumers:
+      - "SDRAM_0"

@@ -10,8 +10,9 @@
  DESCRIPTION: This file contains the task2
  ---------------------------------------------------------------------*/
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 
 unsigned int vlc_array[128] = { // array containing the compressed data stream
@@ -27,8 +28,8 @@ unsigned int vlc_array[128] = { // array containing the compressed data stream
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-Message msg_video, msg1;
-Message compresssed_adpcm;
+message_t msg_video, msg1;
+message_t compresssed_adpcm;
 
 int main() {
 
@@ -36,29 +37,29 @@ int main() {
 	// char str[20];
 	// int compressed_adpcm[COMPRESSED_SAMPLES];
 
-	Echo("Task SPLIT start:  ");
+	puts("Task SPLIT start:  \n");
 
 	/* Generates the compressed adpcm stream */
 	for (i = 0; i < COMPRESSED_SAMPLES; i += 2)
-		compresssed_adpcm.msg[i] = i % 256;
+		compresssed_adpcm.payload[i] = i % 256;
 
 	compresssed_adpcm.length = COMPRESSED_SAMPLES;
 
 	for (i = 0; i < 128; i++)
-		msg1.msg[i] = vlc_array[i];
+		msg1.payload[i] = vlc_array[i];
 	msg1.length = 128;
 
 	//RealTime(AUDIO_VIDEO_PERIOD, SPLIT_deadline, SPLIT_exe_time);
 
 	for (i = 0; i < FRAMES; i++) {
 
-		Send(&compresssed_adpcm, adpcm_dec);
+		memphis_send(&compresssed_adpcm, adpcm_dec);
 
-		Send(&msg1, ivlc);
+		memphis_send(&msg1, ivlc);
 
 	}
 
-	Echo("End Task SPLIT");
+	puts("End Task SPLIT\n");
 
 	return 0;
 }

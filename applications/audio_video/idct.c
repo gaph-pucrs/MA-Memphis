@@ -38,8 +38,9 @@ DESCRIPTION: This file contains the task3
 // *  Number of clock cycles (with these inEcho) -> 4150 Cicli                                              *
 // **********************************************************************************************************
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 typedef int type_DATA; //unsigned
 
@@ -57,7 +58,7 @@ typedef int type_DATA; //unsigned
 
 int out;
 
-Message msg1;
+message_t msg1;
 
 
 /* iclip table */
@@ -227,7 +228,7 @@ int main()
     type_DATA block[64];
 
 
-    Echo("Task IDCT start:");
+    puts("Task IDCT start:\n");
 
     //RealTime(AUDIO_VIDEO_PERIOD, IDCT_deadline, IDCT_exe_time);
 
@@ -235,23 +236,23 @@ int main()
     {
 
 
-		Receive(&msg1,iquant);
+		memphis_receive(&msg1,iquant);
 
 		for(i=0;i<msg1.length;i++)
-			block[i] = msg1.msg[i];
+			block[i] = msg1.payload[i];
 
 		idct_(block, 8);  // 8x8 Blocks
 
 		msg1.length = 64;
 		for(i=0; i<msg1.length; i++)
-			msg1.msg[i] = block[i];
+			msg1.payload[i] = block[i];
 
 
-		Send(&msg1,join);
+		memphis_send(&msg1,join);
 
     }
 
-    Echo("End Task IDCT");
+    puts("End Task IDCT\n");
 
     return 0;
 }

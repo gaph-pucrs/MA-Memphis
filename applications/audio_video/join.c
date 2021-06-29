@@ -1,5 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 int main() {
 
@@ -7,30 +8,30 @@ int main() {
     // int samples[COMPRESSED_SAMPLES*2];
     // unsigned int j, time_arrive =0, last_arrive = 0, jitter[2000];
     // int block_size, blocks;
-    Message msg;
+    message_t msg;
     int k;
 
-    Echo("Join start...");
-    Echo("Number of frames");
-	Echo(itoa(FRAMES));
+    puts("Join start...\n");
+    puts("Number of frames\n");
+	//printf(itoa(FRAMES));
 
 	//RealTime(AUDIO_VIDEO_PERIOD, JOIN_deadline, JOIN_exe_time);
 
 	// j = 0;
 	for(k=0; k<FRAMES; k++ ) {
 
-		Receive(&msg, FIR);
+		memphis_receive(&msg, FIR);
 
-		Receive(&msg,idct);
+		memphis_receive(&msg,idct);
 
-		Echo(itoa(GetTick()));
+		//printf("%d", memphis_get_tick());
 
 	}
 
     //for(i=0; i<j; i++)
     //	Echo(itoa(jitter[i]));
 
-	Echo("Join finished.");
+	puts("Join finished.\n");
 
 	return 0;
 }

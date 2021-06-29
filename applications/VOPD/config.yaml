@@ -1,0 +1,39 @@
+communication:
+  ACDC_0:
+    consumers:
+      - "IQUANT_0"
+      - "STRIPEM_0"
+  ARM_0:
+    consumers:
+      - "IDCT2_0"
+  IDCT2_0:
+    consumers:
+      - "UPSAMP_0"
+  IQUANT_0:
+    consumers:
+      - "IDCT2_0"
+  ISCAN_0:
+    consumers:
+      - "ACDC_0"
+  PAD_0:
+    consumers:
+      - "VOPME_0"
+  RUN_0:
+    consumers:
+      - "ISCAN_0"
+  STRIPEN_0:
+    consumers:
+      - "IQUANT_0"
+  UPSAMP_0:
+    consumers:
+      - "VOPREC_0"
+  VLD_0:
+    consumers:
+      - "RUN_0"
+  VOPME_0:
+    consumers:
+      - "PAD_0"
+      - "VOPREC_0"
+  VOPREC_0:
+    consumers:
+      - "PAD_0"

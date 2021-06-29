@@ -1,0 +1,25 @@
+communication:
+  bank:
+    consumers:
+      - "p1"
+      - "p2"
+      - "p3"
+      - "p4"
+  p1:
+    consumers:
+      - "recognizer"
+  p2:
+    consumers:
+      - "recognizer"
+  p3:
+    consumers:
+      - "recognizer"
+  p4:
+    consumers:
+      - "recognizer"
+  recognizer:
+    consumers:
+      - "p1"
+      - "p2"
+      - "p3"
+      - "p4"

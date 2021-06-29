@@ -1,6 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-//#include <stdio.h>
+#include <stdio.h>
 
 #define NUM_NODES                  16		//16 for small input; 160 for large input; 30 for medium input;
 #define MAXPROCESSORS			   64		//The amount of processor
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	// char *m_argv[3];
 	ended = 0;
 
-	RealTime(103349, 103349, 87835);
+	memphis_real_time(103349, 103349, 87835);
 
 	pthread_n_workers = NPROC;
 
@@ -52,53 +52,53 @@ int execute() {
 	// int tasks = NUM_NODES*(NUM_NODES-1)/2;
 	int end_task[5] = {0, 0, 0, 0, 0};
 
-	Message msg;
+	message_t msg;
 	msg.length = 33;
 	while (1) {
 
 		if(end_task[0] != -1)
 		{
-			Receive(&msg, dijkstra_0);
+			memphis_receive(&msg, dijkstra_0);
 			for (k=0; k<33; k++)
-				result[k] = msg.msg[k];
+				result[k] = msg.payload[k];
 			//if(result[0] == -1) end_task[0] = -1;
 			ProcessMessage();
 		}
 		if(end_task[1] != -1)
 		{
-			Receive(&msg, dijkstra_1);
+			memphis_receive(&msg, dijkstra_1);
 			for (k=0; k<33; k++)
-				result[k] = msg.msg[k];
+				result[k] = msg.payload[k];
 			//if(result[0] == -1) end_task[1] = -1;
 			ProcessMessage();
 		}
 		if(end_task[2] != -1)
 		{
-			Receive(&msg, dijkstra_2);
+			memphis_receive(&msg, dijkstra_2);
 			for (k=0; k<33; k++)
-				result[k] = msg.msg[k];
+				result[k] = msg.payload[k];
 			//if(result[0] == -1) end_task[2] = -1;
 			ProcessMessage();
 		}
 		if(end_task[3] != -1)
 		{
-			Receive(&msg, dijkstra_3);
+			memphis_receive(&msg, dijkstra_3);
 			for (k=0; k<33; k++)
-				result[k] = msg.msg[k];
+				result[k] = msg.payload[k];
 			//if(result[0] == -1) end_task[3] = -1;
 			ProcessMessage();
 		}
 		if(end_task[4] != -1)
 		{
-			Receive(&msg, dijkstra_4);
+			memphis_receive(&msg, dijkstra_4);
 			for (k=0; k<33; k++)
-				result[k] = msg.msg[k];
+				result[k] = msg.payload[k];
 			//if(result[0] == -1) end_task[4] = -1;
 			ProcessMessage();
 		}
 
-		Echo("########");
-		Echo(itoa(GetTick()));
+		puts("########\n");
+		//printf("%d\n", memphis_get_tick());
 
 		if (ended == (NPROC)) {
 			return 0;

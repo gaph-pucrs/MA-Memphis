@@ -49,8 +49,9 @@
 //int putchar(int value);
 //int puts(const char *string);
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 
 /* common sampling rate for sound cards on IBM/PC */
@@ -575,12 +576,12 @@ void decode(int input)
 
 int main() {
 	int i, k;
-	int * compressed_adpcm;
+	unsigned int * compressed_adpcm;
 	// int result[COMPRESSED_SAMPLES*2];	/* Compression factor: 2 */
-	Message received_msg;
-	Message send_msg;
+	message_t received_msg;
+	message_t send_msg;
 
-	Echo("ADPCM Decoder - start");
+	puts("ADPCM Decoder - start\n");
 
     reset();
 
@@ -589,24 +590,24 @@ int main() {
 	for(k=0; k<FRAMES; k++ ) {
 
 
-		Receive(&received_msg, split);
-		compressed_adpcm = received_msg.msg;
+		memphis_receive(&received_msg, split);
+		compressed_adpcm = received_msg.payload;
 
 		/* Decodes the samples */
 		for(i = 0 ; i < COMPRESSED_SAMPLES*2 ; i += 2) {
 			decode(compressed_adpcm[i/2]);
-			send_msg.msg[i] = xout1;
-			send_msg.msg[i+1] = xout2;
+			send_msg.payload[i] = xout1;
+			send_msg.payload[i+1] = xout2;
 		}
 
 		send_msg.length = COMPRESSED_SAMPLES;
 
 		/* Sends the adpcm uncompressed stream */
-		Send(&send_msg, FIR);
+		memphis_send(&send_msg, FIR);
 
 	}
 
-    Echo("ADPCM Decoder - end");
+    puts("ADPCM Decoder - end\n");
 
     return 0;
 }

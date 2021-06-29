@@ -33,8 +33,9 @@ DESCRIPTION: This file contains the task1
 // *                                                                                                       *
 // *  Number of clock cycles (with these inEcho) -> 57026                                                  *
 // *********************************************************************************************************
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 typedef int type_DATA; //unsigned
 
@@ -458,7 +459,7 @@ void ivlc_(type_DATA *block, short int comp, short int lx, type_DATA *buffer)
   return;
 }
 
-Message msg1;
+message_t msg1;
 
 int main()
 {
@@ -468,17 +469,17 @@ int main()
 	type_DATA vlc_array[128];
 	type_DATA block[64];
 
-	Echo("Task IVLC start");
+	puts("Task IVLC start\n");
 
 	//RealTime(AUDIO_VIDEO_PERIOD, IVLC_deadline, IVLC_exe_time);
 
 	for(j=0;j<FRAMES;j++)
 	{
 
-		Receive(&msg1,split);
+		memphis_receive(&msg1,split);
 
 		for(i=0; i<msg1.length; i++)
-			vlc_array[i] = msg1.msg[i];
+			vlc_array[i] = msg1.payload[i];
 
 		for(i=0; i<64; i++)
 			block[i] = 0;
@@ -488,13 +489,13 @@ int main()
 
 		msg1.length = 64;
 		for(i=0; i<msg1.length; i++)
-		   msg1.msg[i] = block[i];
+		   msg1.payload[i] = block[i];
 
-		Send(&msg1,iquant);
+		memphis_send(&msg1,iquant);
 
 	}
 
-	Echo("End Task IVLC");
+	puts("End Task IVLC\n");
 
 	return 0;
 }

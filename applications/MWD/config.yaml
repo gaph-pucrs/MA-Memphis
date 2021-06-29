@@ -1,0 +1,36 @@
+communication:
+  HS:
+    consumers:
+      - "VS"
+  HVS:
+    consumers:
+      - "JUG2"
+  IN:
+    consumers:
+      - "HS"
+      - "NR"
+  JUG1:
+    consumers:
+      - "MEM3"
+  JUG2:
+    consumers:
+      - "MEM3"
+  MEM1:
+    consumers:
+      - "NR"
+  MEM2:
+    consumers:
+      - "HVS"
+  MEM3:
+    consumers:
+      - "SE"
+  NR:
+    consumers:
+      - "MEM1"
+      - "MEM2"
+  SE:
+    consumers:
+      - "BLEND"
+  VS:
+    consumers:
+      - "JUG1"

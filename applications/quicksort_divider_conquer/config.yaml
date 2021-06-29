@@ -1,0 +1,59 @@
+communication:
+  sorting_1:
+    consumers:
+      - "sorting_3"
+      - "sorting_4"
+      - "sorting_master"
+  sorting_2:
+    consumers:
+      - "sorting_5"
+      - "sorting_6"
+      - "sorting_master"
+  sorting_3:
+    consumers:
+      - "sorting_1"
+      - "sorting_7"
+      - "sorting_8"
+  sorting_4:
+    consumers:
+      - "sorting_1"
+      - "sorting_9"
+      - "sorting_10"
+  sorting_5:
+    consumers:
+      - "sorting_2"
+      - "sorting_11"
+      - "sorting_12"
+  sorting_6:
+    consumers:
+      - "sorting_2"
+      - "sorting_13"
+      - "sorting_14"
+  sorting_7:
+    consumers:
+      - "sorting_3"
+  sorting_8:
+    consumers:
+      - "sorting_3"
+  sorting_9:
+    consumers:
+      - "sorting_4"
+  sorting_10:
+    consumers:
+      - "sorting_4"
+  sorting_11:
+    consumers:
+      - "sorting_5"
+  sorting_12:
+    consumers:
+      - "sorting_5"
+  sorting_13:
+    consumers:
+      - "sorting_6"
+  sorting_14:
+    consumers:
+      - "sorting_6"
+  sorting_master:
+    consumers:
+      - "sorting_1"
+      - "sorting_2"

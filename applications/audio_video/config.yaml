@@ -1,0 +1,20 @@
+communication:
+  adpcm_dec:
+    consumers:
+      - "FIR"
+  FIR:
+    consumers:
+      - "join"
+  idct:
+    consumers:
+      - "join"
+  iquant:
+    consumers:
+      - "idct"
+  ivlc:
+    consumers:
+      - "iquant"
+  split:
+    consumers:
+      - "adpcm_dec"
+      - "ivlc"

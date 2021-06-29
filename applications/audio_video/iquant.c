@@ -36,13 +36,14 @@
 // *  Number of clock cycles (with these inEcho) -> 4214                                                   *
 // *********************************************************************************************************
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "audio_video_def.h"
 
 typedef int type_DATA; //unsigned
 
-Message msg1;
+message_t msg1;
 
 unsigned char intramatrix[64] = { 8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24,
 		27, 29, 34, 37, 19, 22, 26, 27, 29, 34, 34, 38, 22, 22, 26, 27, 29, 34,
@@ -80,28 +81,28 @@ int main() {
 	// type_DATA clk_count;
 	type_DATA block[64];
 
-	Echo("Task IQUANT start:");
+	puts("Task IQUANT start:\n");
 
 	//RealTime(AUDIO_VIDEO_PERIOD, IQUANT_deadline, IQUANT_exe_time);
 
 	for (j = 0; j < FRAMES; j++) {
 
-		Receive(&msg1, ivlc);
+		memphis_receive(&msg1, ivlc);
 
 		for (i = 0; i < msg1.length; i++)
-			block[i] = msg1.msg[i];
+			block[i] = msg1.payload[i];
 
 		iquant_(block, 8, 0, 1); // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
 
 		msg1.length = 64;
 		for (i = 0; i < msg1.length; i++)
-			msg1.msg[i] = block[i];
+			msg1.payload[i] = block[i];
 
-		Send(&msg1, idct);
+		memphis_send(&msg1, idct);
 
 	}
 
-	Echo("End Task IQUANT");
+	puts("End Task IQUANT\n");
 
 	return 0;
 }

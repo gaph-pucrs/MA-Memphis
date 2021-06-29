@@ -1,0 +1,23 @@
+communication:
+  master:
+    consumers:
+      - "slave1"
+      - "slave2"
+      - "slave3"
+      - "slave4"
+      - "slave5"
+  slave1:
+    consumers:
+      - "master"
+  slave2:
+    consumers:
+      - "master"
+  slave3:
+    consumers:
+      - "master"
+  slave4:
+    consumers:
+      - "master"
+  slave5:
+    consumers:
+      - "master"
