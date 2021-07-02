@@ -1,7 +1,10 @@
-#include <api.h>
+#include <memphis.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "dtw.h"
 
-Message msg;
+message_t msg;
 
 int main(){
 
@@ -9,33 +12,33 @@ int main(){
 	int pattern[SIZE][SIZE];
 	int result, j;
 
-	Receive(&msg, recognizer);
+	memphis_receive(&msg, recognizer);
 
-	Echo("Task P4 INIT\n");
+	puts("Task P4 INIT\n");
 
-	__builtin_memcpy(test, msg.msg, sizeof(test));
+	__builtin_memcpy(test, msg.payload, sizeof(test));
 
 	for(j=0; j<PATTERN_PER_TASK; j++){
 
-		memset(msg.msg,0, sizeof(int)*MSG_SIZE);
+		memset(msg.payload,0, sizeof(int)*msg.length);
 
-		Receive(&msg, bank);
+		memphis_receive(&msg, bank);
 
-		//Echo("Task P4 received pattern from bank\n");
+		//puts("Task P4 received pattern from bank\n");
 
-		__builtin_memcpy(pattern, msg.msg, sizeof(pattern));
+		__builtin_memcpy(pattern, msg.payload, sizeof(pattern));
 
 		result = dynamicTimeWarping(test, pattern);
 
 		msg.length = 1;
 
-		msg.msg[0] = result;
+		msg.payload[0] = result;
 
-		Send(&msg, recognizer);
+		memphis_send(&msg, recognizer);
 	}
 
-	Echo("Task P4 FINISHEDD IN\n");
-	Echo(itoa(GetTick()));
+	puts("Task P4 FINISHEDD IN\n");
+	//printf("%d\n", memphis_get_tick());
 
 	return 0;
 }

@@ -1,8 +1,10 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "dtw.h"
 
-Message msg;
+message_t msg;
 
 /*int test[SIZE][SIZE] = {
 		{7200, 4600},
@@ -31,24 +33,24 @@ int main(){
 
 	msg.length = SIZE*SIZE; //SIZE*SIZE nao pode ser maior que 128, senao usar o SendData
 
-	Echo("Rec ola\n");
-	Echo(itoa(GetTick()));
-	__builtin_memcpy(msg.msg, test, sizeof(test));
+	puts("Rec ola\n");
+	//printf("%d\n", memphis_get_tick());
+	__builtin_memcpy(msg.payload, test, sizeof(test));
 
 	for(i=0; i<TOTAL_TASKS; i++){
-		Send(&msg,P[i]);
+		memphis_send(&msg,P[i]);
 	}
 
-	Echo("Test Sendedd to all tasks\n");
+	puts("Test Sendedd to all tasks\n");
 	//Echo(itoa(PATTERN_PER_TASK));
 
 	for(j=0; j<PATTERN_PER_TASK; j++){
 		for(i=0; i<TOTAL_TASKS; i++){
-			Receive(&msg, P[i]);
+			memphis_receive(&msg, P[i]);
 			//distances[d_count] = msg.msg[0];
 			//sprintf(d, "DTW entre amostra de teste e o padrão %d = %d  TICK = %d", d_count, distances[d_count], GetTick());
 		}
-		Echo(itoa(GetTick()));
+		//printf("%d\n", memphis_get_tick());
 	}
 
 	/*j = distances[0];
@@ -58,7 +60,7 @@ int main(){
 			j = distances[i];
 	}*/
 
-	Echo("FIM DO RECONHECIMENTO DE PADROES, MENOR DISTANCIA:\n");
+	puts("FIM DO RECONHECIMENTO DE PADROES, MENOR DISTANCIA:\n");
 	/*Echo(itoa(j));
 	Echo("tempo: ");
 	Echo(itoa(GetTick()));*/

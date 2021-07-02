@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <api.h>
+#include <memphis.h>
 
 #define SIZE	11	//tamanho da matriz
 #define TOTAL_TASKS	4	//deve ser PAR para dividir igualmente o numero de padroes por task

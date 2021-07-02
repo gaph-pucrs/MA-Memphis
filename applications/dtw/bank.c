@@ -1,5 +1,7 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "dtw.h"
 
 
@@ -28,7 +30,7 @@ void randPattern(int in[SIZE][SIZE]){
 }
 
 
-Message msg;
+message_t msg;
 
 int main(){
 
@@ -41,15 +43,15 @@ int main(){
 	for(j=0; j<PATTERN_PER_TASK; j++){
 		for(i=0; i<TOTAL_TASKS; i++){
 			randPattern(pattern); //gera uma matriz de valores aleatorios, poderiam ser coeficientes MFCC
-			__builtin_memcpy(msg.msg, pattern, sizeof(pattern));
+			__builtin_memcpy(msg.payload, pattern, sizeof(pattern));
 			msg.length = SIZE * SIZE;
-			Send(&msg, P[i]);
+			memphis_send(&msg, P[i]);
 			//sprintf(a, "Bank sendedd pattern to task %d", (i+1));
 			//Echo(a);
 		}
 	}
 
-	Echo("Bank sendedd all patterns\n");
+	puts("Bank sendedd all patterns\n");
 
 	return 0;
 }
