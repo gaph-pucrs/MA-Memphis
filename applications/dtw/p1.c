@@ -39,8 +39,7 @@ int main(){
 		memphis_send(&msg, recognizer);
 	}
 
-	puts("Task P1 FINISHEDD IN\n");
-	//printf("%d\n", memphis_get_tick());
+	printf("Task P1 FINISHED AT %d\n", memphis_get_tick());
 
 	return 0;
 }

@@ -51,7 +51,7 @@ int main(){
 		}
 	}
 
-	puts("Bank sendedd all patterns\n");
+	puts("Bank sent all patterns\n");
 
 	return 0;
 }

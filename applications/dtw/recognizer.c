@@ -41,7 +41,7 @@ int main(){
 		memphis_send(&msg,P[i]);
 	}
 
-	puts("Test Sendedd to all tasks\n");
+	puts("Test sent to all tasks\n");
 	//Echo(itoa(PATTERN_PER_TASK));
 
 	for(j=0; j<PATTERN_PER_TASK; j++){
