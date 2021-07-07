@@ -38,8 +38,9 @@ DESCRIPTION: This file contains the task3
 // *  Number of clock cycles (with these inEcho) -> 4150 Cicli                                              *
 // **********************************************************************************************************
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
@@ -58,7 +59,7 @@ typedef int type_DATA; //unsigned
 
 int out;
 
-Message msg1;
+message_t msg1;
 
 
 /* iclip table */
@@ -228,29 +229,29 @@ int main()
     type_DATA block[64];
 
 
-    Echo("MPEG Task D start: iDCT ");
-    Echo(itoa(GetTick()));
+    puts("MPEG Task D start: iDCT \n");
+    //printf("%d\n", memphis_get_tick());
 
     for(j=0;j<MPEG_FRAMES;j++)
     {
-        Receive(&msg1,iquant);
+        memphis_receive(&msg1,iquant);
 
         for(i=0;i<msg1.length;i++)
-            block[i] = msg1.msg[i];
+            block[i] = msg1.payload[i];
 
         idct_func(block, 8);  // 8x8 Blocks
 
         msg1.length = 64;
         for(i=0; i<msg1.length; i++)
-            msg1.msg[i] = block[i];
+            msg1.payload[i] = block[i];
 
 
-        Send(&msg1,print);
+        memphis_send(&msg1,print);
 
     }
 
-    Echo(itoa(GetTick()));
-    Echo("End Task D - MPEG");
+    //printf("%d\n", memphis_get_tick());
+    puts("End Task D - MPEG\n");
 
     return 0;
 }

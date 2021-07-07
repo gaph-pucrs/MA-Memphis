@@ -34,8 +34,9 @@ DESCRIPTION: This file contains the task1
 // *  Number of clock cycles (with these inEcho) -> 57026                                                  *
 // *********************************************************************************************************
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
@@ -460,7 +461,7 @@ void ivlc_func(type_DATA *block, short int comp, short int lx, type_DATA *buffer
   return;
 }
 
-Message msg1;
+message_t msg1;
 
 int main()
 {
@@ -470,16 +471,16 @@ int main()
 	type_DATA vlc_array[128];
 	type_DATA block[64];
 
-	Echo("MPEG Task B start: iVLC ");
-	Echo(itoa(GetTick()));
+	puts("MPEG Task B start: iVLC \n");
+	//printf("%d\n", memphis_get_tick());
 
 	for(j=0;j<MPEG_FRAMES;j++)
 	{
 
-		Receive(&msg1,start);
+		memphis_receive(&msg1,start);
 
 		for(i=0; i<msg1.length; i++)
-			vlc_array[i] = msg1.msg[i];
+			vlc_array[i] = msg1.payload[i];
 
 		for(i=0; i<64; i++)
 			block[i] = 0;
@@ -488,14 +489,14 @@ int main()
 
 		msg1.length = 64;
 		for(i=0; i<msg1.length; i++)
-		   msg1.msg[i] = block[i];
+		   msg1.payload[i] = block[i];
 
-        Send(&msg1,iquant);
+        memphis_send(&msg1,iquant);
 
 	}
 
-	Echo(itoa(GetTick()));
-	Echo("End Task B - MPEG");
+	//printf("%d\n", memphis_get_tick());
+	puts("End Task B - MPEG\n");
 
 	return 0;
 }

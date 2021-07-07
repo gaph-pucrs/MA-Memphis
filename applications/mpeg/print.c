@@ -10,28 +10,29 @@ COPYRIGHT: Software placed into the public domain by the author.
 DESCRIPTION: This file contains the task3
 ---------------------------------------------------------------------*/
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
 
-Message msg1;
+message_t msg1;
 
 int main()
 {
     // unsigned int time_a, time_b;
     int i;
 
-    Echo("MPEG Task PRINT start:");
+    puts("MPEG Task PRINT start:\n");
 
     for(i=0;i<MPEG_FRAMES;i++)
     {
-        Receive(&msg1,idct);
-        Echo(itoa(GetTick()));
+        memphis_receive(&msg1,idct);
+        //printf("%d\n", memphis_get_tick());
     }
 
-    Echo("End Task E - MPEG");
+    puts("End Task E - MPEG\n");
 
     return 0;
 }
