@@ -5,30 +5,31 @@
  *      Author: mruaro
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "prod_cons_std.h"
 
-Message msg;
+message_t msg;
 
 int main()
 {
 	int i;
 	unsigned int time[PROD_CONS_ITERATIONS];
 
-	Echo("Inicio da aplicacao cons");
+	puts("Inicio da aplicacao cons\n");
 
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		Receive(&msg, prod);
-		time[i] = GetTick();
+		memphis_receive(&msg, prod);
+		time[i] = memphis_get_tick();
 	}
 
 
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		Echo(itoa(time[i]));
+		printf("%d\n",time[i]);
 	}
 
-	Echo("Fim da aplicacao cons");
+	puts("Fim da aplicacao cons\n");
 
 	return 0;
 }
