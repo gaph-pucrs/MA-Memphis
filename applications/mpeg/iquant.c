@@ -37,13 +37,14 @@ DESCRIPTION: This file contains the task2
 // *********************************************************************************************************
 
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
 
-Message msg1;
+message_t msg1;
 
 
 unsigned char intramatrix[64]={
@@ -93,28 +94,28 @@ int main()
     type_DATA block[64];
 
 
-    Echo("MPEG Task C start: iquant ");
-    Echo(itoa(GetTick()));
+    puts("MPEG Task C start: iquant \n");
+    //printf("%d\n", memphis_get_tick());
 
     for(j=0;j<MPEG_FRAMES;j++)
     {
-       Receive(&msg1,ivlc);
+       memphis_receive(&msg1,ivlc);
 
        for(i=0;i<msg1.length;i++)
-            block[i] = msg1.msg[i];
+            block[i] = msg1.payload[i];
 
         iquant_func(block, 8, 0, 1);  // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
 
         msg1.length = 64;
         for(i=0; i<msg1.length; i++)
-            msg1.msg[i] = block[i];
+            msg1.payload[i] = block[i];
 
-        Send(&msg1,idct);
+        memphis_send(&msg1,idct);
 
     }
 
-   Echo(itoa(GetTick()));
-   Echo("End Task C- MPEG");
+   //printf("%d\n", memphis_get_tick());
+   puts("End Task C- MPEG\n");
 
    return 0;
 }

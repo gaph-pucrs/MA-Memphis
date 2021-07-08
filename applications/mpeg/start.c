@@ -10,8 +10,9 @@ COPYRIGHT: Software placed into the public domain by the author.
 DESCRIPTION: This file contains the task2
 ---------------------------------------------------------------------*/
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "mpeg_std.h"
 
 unsigned int vlc_array[128] = { // array containing the compressed data stream
@@ -27,38 +28,36 @@ unsigned int vlc_array[128] = { // array containing the compressed data stream
                                  0xa7,0x3c,0x73,0xb6,0x31,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
-Message msg1;
+message_t msg1;
 
 int main(){
 
    unsigned int time_a, time_b;
    int i;
 
-   Echo("MPEG Task A start:  ");
-   Echo(itoa(GetTick()));
+   puts("MPEG Task A start:  \n");
+   //printf("%d\n", memphis_get_tick());
 
 
    for(i=0; i<128; i++)
-        msg1.msg[i] = vlc_array[i];
+        msg1.payload[i] = vlc_array[i];
 
 
     msg1.length = 128;
 
     for(i=0;i<MPEG_FRAMES;i++)                          // send 8 times the array to task 2
 	   {
-		   time_a = GetTick();
-		   Send(&msg1,ivlc);
-		   time_b = GetTick();
+		   time_a = memphis_get_tick();
+		   memphis_send(&msg1,ivlc);
+		   time_b = memphis_get_tick();
 
-		   Echo("T1");
-           Echo(itoa(time_a));
-		   Echo("T2");
-           Echo(itoa(time_b));
+           printf("TI: %d\n", time_a);
+           printf("T2: %d\n", time_b);
 
 	   }
 
-    Echo(itoa(GetTick()));
-    Echo("End Task A - MPEG");
+    //printf("%d\n", memphis_get_tick());
+    puts("End Task A - MPEG\n");
 
     return 0;
 }

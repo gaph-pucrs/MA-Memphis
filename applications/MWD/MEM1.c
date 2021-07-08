@@ -1,21 +1,22 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-Message msg;
+message_t msg;
 
 int main()
 {
 
 int j;
 
-	for(j=0;j<128;j++) msg.msg[j]=j;
+	for(j=0;j<128;j++) msg.payload[j]=j;
 
 	/*Comm NR 640*/
 	msg.length=128;
-	for(j=0;j<5;j++) Receive(&msg,NR);
+	for(j=0;j<5;j++) memphis_receive(&msg,NR);
 	/*Comm NR 640*/
 	msg.length=128;
-	for(j=0;j<5;j++) Send(&msg,NR);
+	for(j=0;j<5;j++) memphis_send(&msg,NR);
 
 return 0;
 

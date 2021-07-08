@@ -5,27 +5,28 @@
  *      Author: mruaro
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "prod_cons_std.h"
 
-Message msg;
+message_t msg;
 
 int main()
 {
 	int i;
 
-	Echo("Inicio da aplicacao prod");
+	puts("Inicio da aplicacao prod\n");
 
-	for(i=0;i<MSG_SIZE;i++) msg.msg[i]=i;
-	msg.length = MSG_SIZE;
+	for(i=0;i<PKG_MAX_MSG_SIZE;i++) msg.payload[i]=i;
+	msg.length = PKG_MAX_MSG_SIZE;
 
-	msg.msg[9]=0xBA;
+	msg.payload[9]=0xBA;
 
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		Send(&msg, cons);
+		memphis_send(&msg, cons);
 	}
 
-	Echo("Fim da aplicacao prod");
+	puts("Fim da aplicacao prod\n");
 	return 0;
 }
