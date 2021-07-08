@@ -11,8 +11,10 @@ class Application:
 		self.app_name = app_name
 		self.platform_path = platform_path
 		self.testcase_path = testcase_path
-
-		files = listdir(self.platform_path+"/applications/"+self.app_name)
+		try:
+			files = listdir(self.platform_path+"/applications/"+self.app_name)
+		except:
+			raise Exception("Application {} not found or has 0 tasks.".format(app_name))
 
 		self.tasks = []
 		for file in files:

@@ -51,12 +51,11 @@ class Scenario:
 			self.app_instances.sort(key=lambda x: x[1])
 
 			app_names = set(app_names)
-
-		
-			for app in app_names:
-				self.applications[app] = Application(app, self.platform_path, self.testcase_path)
 		except:
 			pass
+		
+		for app in app_names:
+			self.applications[app] = Application(app, self.platform_path, self.testcase_path)
 		
 	def copy(self):
 		makedirs(self.base_dir+"/debug/pipe", exist_ok=True)
