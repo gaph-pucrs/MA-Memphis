@@ -3,11 +3,12 @@ autor: Geaninne Marchezan
 contato: geaninne.mnl@gmail.com
 */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "multME.h"
 
-Message msg;
+message_t msg;
 
 /*vetores que armazenam: linha inicial, linha final e quantidade de elementos para cada task*/
 int ini[numTasks], fim[numTasks],qtdElemA[numTasks];
@@ -79,7 +80,7 @@ void receiveR(int *R){
 		for(j=0;j<numMSG;j++){
 
 		/*recebe mensagem*/
-			Receive(&msg,task[i]);
+			memphis_receive(&msg,task[i]);
 
 		/*verifica se está na ultima mensagem e o tamanho da mesma*/
 
@@ -91,8 +92,8 @@ void receiveR(int *R){
 			}
 
 			for(k=0;k<sizeMSG;k++){
-				//Echo(itoa(msg.msg[k]));
-				R[(j * sizeAnt) + (ini[i] * N) + k] = msg.msg[k];
+				//Echo(itoa(msg.payload[k]));
+				R[(j * sizeAnt) + (ini[i] * N) + k] = msg.payload[k];
 			}
 			sizeAnt = sizeMSG;
 
@@ -115,7 +116,7 @@ void sendB(int *B){
     Echo(itoa(sizeMSG));*/
 
 	/*armazena o numero de mensagem a serem enviadas na primeira posição da primeira mensagem*/
-	msg.msg[0] = numMSG;
+	msg.payload[0] = numMSG;
 
 	for(j=0;j<numMSG;j++){
 
@@ -129,13 +130,13 @@ void sendB(int *B){
 		if(j==0){
 
 			for(i=1;i<sizeMSG;i++){
-					msg.msg[i] = B[i-1];
+					msg.payload[i] = B[i-1];
 					//Echo(itoa(i-1));
 			}
 		}else{
 
 			for(i=0;i<sizeMSG;i++){
-					msg.msg[i] = B[(j * msg.length) +i -1];
+					msg.payload[i] = B[(j * msg.length) +i -1];
 					//Echo(itoa((j * msg.length) +i -1));
 			}	
 
@@ -146,13 +147,13 @@ void sendB(int *B){
 
 		/*envia mensagem para as tasks*/
 		for(i=0;i<numTasks;i++){
-			Send(&msg,task[i]);
+			memphis_send(&msg,task[i]);
 		}
 	}
 }
 
 void sendA( int *A){
-	Echo("Enviando A");
+	puts("Enviando A\n");
 	int i,j,k, numMSG,sizeMSG,aux;
 	
 	int tamanho;
@@ -182,21 +183,21 @@ void sendA( int *A){
 
 			if(j==0){
 
-				msg.msg[0] = ini[i];
-				msg.msg[1] = fim[i];
-				msg.msg[2] = numMSG;
-				msg.msg[3] = qtdElemA[i];
+				msg.payload[0] = ini[i];
+				msg.payload[1] = fim[i];
+				msg.payload[2] = numMSG;
+				msg.payload[3] = qtdElemA[i];
 
 				for(k=4;k<sizeMSG;k++){
-			 		msg.msg[k]= A[(k - 4 +(ini[i]*N))];
-			 		//Echo(itoa(msg.msg[k]));
+			 		msg.payload[k]= A[(k - 4 +(ini[i]*N))];
+			 		//Echo(itoa(msg.payload[k]));
 				}
 
 			}else{
 
 				for(k=0;k<sizeMSG;k++){
-			 		msg.msg[k]=A[(((sizeMSG*j)+ k - 4 + (ini[i]*N)))];
-			 		//Echo(itoa(msg.msg[k]));
+			 		msg.payload[k]=A[(((sizeMSG*j)+ k - 4 + (ini[i]*N)))];
+			 		//Echo(itoa(msg.payload[k]));
 
 
 				}
@@ -204,7 +205,7 @@ void sendA( int *A){
 
 			msg.length = sizeMSG;
 		//	Echo(itoa(msg.length));
-			Send(&msg, task[i]);
+			memphis_send(&msg, task[i]);
 
 		}
 	
@@ -215,9 +216,7 @@ void sendA( int *A){
  int main(){
      
 
-	Echo("Inicio da aplicacao master");
-	Echo(itoa(GetTick()));
-	Echo(itoa(N));
+	printf("Inicio da aplicacao master %d\n", memphis_get_tick());
 	/*Echo("SIZE");
 	Echo(itoa(SIZE));*/
 	int i;
@@ -229,7 +228,7 @@ void sendA( int *A){
 	/*matriz resultado*/
 	int R[SIZE];
 
-	Echo("Preenchendo matrizes");
+	puts("Preenchendo matrizes\n");
     /*preenche matrizes*/    
 	fillMatrix(A, B);
 
@@ -240,7 +239,7 @@ void sendA( int *A){
 	
 	/*envia matriz B*/
 
-	Echo("Enviando B");
+	puts("Enviando B\n");
 	sendB(B);
 
 
@@ -251,18 +250,17 @@ void sendA( int *A){
 	sendA(A);
 
 	
-	Echo("Esperando R");
+	puts("Esperando R\n");
 	/*recebe resultado e constroi matriz resultante*/
 	receiveR(R);
 
-	Echo("matriz resultante");
+	puts("matriz resultante\n");
 	for(i=0;i<SIZE;i++){
-		Echo(itoa(R[i]));
+		printf("%d ", R[i]);
 	}
 
 	
-	Echo("Fim da aplicação master");
-	Echo(itoa(GetTick()));
+	printf("Fim da aplicação master %d\n", memphis_get_tick());
 	
 	/*for(i=0;i<SIZE;i++){
 		Echo(itoa(R[i]));

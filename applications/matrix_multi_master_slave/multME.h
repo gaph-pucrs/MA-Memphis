@@ -6,7 +6,7 @@ Biblioteca aplicação multiplicação de matrizes paradigma mestre-escravo
 
 #include <stdlib.h>
 //#include <stdio.h>
-#include <api.h>
+#include <memphis.h>
 #define N 10
 #define SIZE N*N
 #define numTasks 5
@@ -34,10 +34,10 @@ int getSizeMSG(int numMSG,  int qtdElem){
 int getNumMSG( int qtdElem){
 	int numMSG;
 	if (((qtdElem)%128==0)){
-		numMSG = (qtdElem/MSG_SIZE);
+		numMSG = (qtdElem/PKG_MAX_MSG_SIZE );
 		return numMSG;
 	}else{
-		numMSG = ((qtdElem/MSG_SIZE)+1);
+		numMSG = ((qtdElem/PKG_MAX_MSG_SIZE )+1);
 		return numMSG;
 	}
 	
