@@ -120,7 +120,7 @@ void map_static_tasks(app_t *app, processor_t *processors)
 
 void map_task_allocated(mapper_t *mapper, int id)
 {
-	printf("Received task allocated from id %d\n", id);
+	// printf("Received task allocated from id %d\n", id);
 
 	int appid = id >> 8;
 
@@ -195,7 +195,7 @@ void map_app_mapping_complete(app_t *app)
 
 void map_task_terminated(mapper_t *mapper, int id)
 {
-	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
+	// printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
 
 	int appid = id >> 8;
 	int taskid = id & 0xFF;
@@ -204,7 +204,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 	int proc_idx = app->task[taskid]->proc_idx;
 
 	/* Terminate task */
-	int old_proc = task_terminate(app->task[taskid], app->task_cnt - 1);
+	int old_proc = task_terminate(app->task[taskid]);
 	if(old_proc != -1){
 		/* The task finished with a migration request on the fly */
 		mapper->available_slots++;
@@ -260,20 +260,20 @@ void map_set_score(app_t *app, processor_t *processors)
 	for(int i = 0; i < app->task_cnt; i++){
 		task_t *producer = app->task[i];
 		processors[producer->proc_idx].pending_map_cnt = 0;
-		for(int j = 0; j < app->task_cnt - 1 && producer->consumers[j] != NULL; j++){
+		for(int j = 0; j < producer->succ_cnt; j++){
 			task_t *consumer = producer->consumers[j];
 			cost += map_manhattan_distance(processors[producer->proc_idx].addr, processors[consumer->proc_idx].addr);
 			edges++;
 		}
 	}
 	unsigned score = edges ? cost * 100 / edges : 0; /* Careful with division by zero */
-	printf("Mapped with score %u\n", score);
+	printf("Mapped with score %u at %d\n", score, memphis_get_tick());
 	app->mapping_score = score;
 }
 
 void map_task_allocation(app_t *app, processor_t *processors)
 {
-	puts("Mapping success! Requesting task allocation.\n");
+	// puts("Mapping success! Requesting task allocation.\n");
 
 	/* Ask injector for task allocation */
 	message_t msg;
@@ -296,7 +296,7 @@ void map_task_allocation(app_t *app, processor_t *processors)
 
 void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int *comm, processor_t *processors)
 {
-	puts("Mapping application...\n");
+	// puts("Mapping application...\n");
 		
 	app_t *app = app_get_free(mapper->apps);
 	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks);

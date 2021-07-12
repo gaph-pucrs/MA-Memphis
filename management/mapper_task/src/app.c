@@ -66,15 +66,17 @@ void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *comm
 
 	int comm_i = 0;
 	for(int i = 0; i < app->task_cnt; i++){
-		int cons_i = 0;
 		int encoded_consumer;
+		task_t *vertex = app->task[i];
 		do {
 			encoded_consumer = communication[comm_i++];
 			int consumer = abs(encoded_consumer) - 1;
 
-			if(consumer >= 0)
-				app->task[i]->consumers[cons_i++] = app->task[consumer];
-
+			if(consumer >= 0){
+				task_t *successor = app->task[consumer];
+				vertex->consumers[vertex->succ_cnt++] = successor;			/* Add successor to task */
+				successor->predecessors[successor->pred_cnt++] = vertex; 	/* Add task to predecessor */
+			}
 		} while(encoded_consumer > 0);
 	}
 
@@ -103,35 +105,18 @@ void app_get_order(app_t *app, task_t *order[])
 	/* For all tasks */
 	for(int i = 0; i < app->task_cnt; i++){
 		task_t *task = app->task[i];
-
-		/* Check if task has producers */
-		bool producer_found = false;
-		for(int j = 0; j < app->task_cnt; j++){
-			if(i == j)		/* Don't search own task */
-				continue;
-
-			/* Check consumers of producer if task is present */
-			task_t *producer = app->task[j];
-			for(int k = 0; k < app->task_cnt - 1 && producer->consumers[k] != NULL; k++){
-				task_t *consumer = producer->consumers[k];
-				if(consumer == task){
-					/* Task is consumer, thus not initial */
-					// printf("Task %d is producer of task %d\n", producer->id, consumer->id);
-					producer_found = true;
-					break;
-				}
-			}
-			if(producer_found) /* No need to scan for other producers */
-				break;
-		}
-		if(!producer_found){
-			/* Task has no producers (is no consumer), thus is initial */
+		if(task->pred_cnt == 0){
+			/* Task has no predecessor, thus is initial */
 			initials[initial_idx++] = task;
 		}
 	}
 
 	// for(int i = 0; i < initial_idx; i++)
 	// 	printf("Initial %d: %d\n", i, initials[i]->id);
+
+	/* Solves cyclic dependences */
+	if(initial_idx == 0)
+		initials[initial_idx++] = app->task[0];
 
 	unsigned ordered = 0;
 	unsigned order_idx = 0;
@@ -142,15 +127,5 @@ void app_get_order(app_t *app, task_t *order[])
 	
 		/* Map all immediate consumers of the initial task and keep mapping its sucessors */
 		task_order_consumers(order, &ordered, &order_idx, app->task_cnt);
-	}
-
-	/* One or more cyclic dependences */
-	if(order_idx < app->task_cnt){
-		for(int i = 0; i < app->task_cnt; i++){
-			if(!task_is_ordered(app->task[i], order, order_idx)){
-				order[order_idx++] = app->task[i];
-				task_order_consumers(order, &ordered, &order_idx, app->task_cnt);
-			}
-		}
 	}
 }

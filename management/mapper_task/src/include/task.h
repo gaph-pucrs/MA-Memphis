@@ -35,6 +35,9 @@ struct _task {
 	unsigned type_tag;
 	task_status_t status;
 
+	unsigned pred_cnt;
+	task_t *predecessors[PKG_MAX_TASKS_APP - 1];
+	unsigned succ_cnt;
 	task_t *consumers[PKG_MAX_TASKS_APP - 1];
 };
 
@@ -78,24 +81,10 @@ void task_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_id
 bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt);
 
 /**
- * @brief Gets the producers of a desired task
- * 
- * @details The results are stored in the producers parameter
- * 
- * @param task Pointer to the desired task
- * @param app Pointer to the task app
- * @param producers Array of task pointers where producers will be stored
- * 
- * @return Number of producers
- */
-unsigned task_get_producers(task_t *task, app_t *app, task_t *producers[]);
-
-/**
  * @brief Terminates a task
  * 
  * @param task Pointer to task to terminate
- * @param max_consumers Maximum number of consumers (app task count minus one)
  * 
  * @return Address of old processor if migration was on the fly. -1 if task wasn't migrating.
  */
-int task_terminate(task_t *task, unsigned max_consumers);
+int task_terminate(task_t *task);

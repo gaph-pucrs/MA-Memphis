@@ -28,8 +28,12 @@ void task_init(task_t *tasks)
 {
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++){
 		tasks[i].id = -1;
-		for(int j = 0; j < PKG_MAX_TASKS_APP - 1; j++)
+		tasks[i].pred_cnt = 0;
+		tasks[i].succ_cnt = 0;
+		for(int j = 0; j < PKG_MAX_TASKS_APP - 1; j++){
+			tasks[i].predecessors[j] = NULL;
 			tasks[i].consumers[j] = NULL;
+		}
 	}
 }
 
@@ -37,7 +41,7 @@ void task_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_id
 {
 	while(*ordered < *order_idx){
 		task_t *producer = order[*ordered];
-		for(int i = 0; i < task_cnt - 1 && producer->consumers[i] != NULL; i++){
+		for(int i = 0; i < producer->succ_cnt; i++){
 			/* Check if consumer is not ordered yet */
 			task_t *consumer = producer->consumers[i];
 			if(!task_is_ordered(consumer, order, *order_idx))
@@ -59,36 +63,16 @@ bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt)
 	return task_ordered;
 }
 
-unsigned task_get_producers(task_t *task, app_t *app, task_t *producers[])
-{
-	unsigned cnt = 0;
-
-	int id = task->id & 0xFF;
-	for(int t = 0; t < app->task_cnt; t++){
-		if(t == id)		/* Ignore same task */
-			continue;
-
-		task_t *producer = app->task[t];
-		for(int j = 0; j < app->task_cnt - 1 && producer->consumers[j] != NULL; j++){
-			task_t *consumer = producer->consumers[j];
-			if(consumer == task){
-				/* Task 'producer' is producer of task 'task' */
-				producers[cnt++] = producer;
-				break;
-			}
-		}
-	}
-
-	return cnt;
-}
-
-int task_terminate(task_t *task, unsigned max_consumers)
+int task_terminate(task_t *task)
 {
 	task->id = -1;
 
 	/* Deallocate consumers */
-	for(int i = 0; i < max_consumers && task->consumers[i] != NULL; i++)
+	for(int i = 0; i < task->succ_cnt; i++)
 		task->consumers[i] = NULL;
+	
+	for(int i = 0; i < task->pred_cnt; i++)
+		task->predecessors[i] = NULL;
 
 	if(task->status == MIGRATING){
 		/* The task finished with a migration request on the fly */

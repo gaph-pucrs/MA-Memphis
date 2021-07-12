@@ -48,7 +48,7 @@ void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window
 		task->proc_idx = seq;
 		processors[seq].free_page_cnt--;
 		processors[seq].pending_map_cnt++;
-		printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
+		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
 
@@ -57,9 +57,6 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 	unsigned cost = -1; /* Start at infinite cost */
 	int sel_x = -1;
 	int sel_y = -1;
-
-	task_t *producers[PKG_MAX_TASKS_APP - 1];
-	unsigned pred_cnt = task_get_producers(task, app, producers);
 
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
@@ -77,15 +74,15 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 			c += pe->pending_map_cnt << 1;
 
 			/* 3rd: Add a cost for each hop in consumer tasks */
-			for(int t = 0; t < app->task_cnt - 1 && task->consumers[t] != NULL; t++){
+			for(int t = 0; t < task->succ_cnt; t++){
 				task_t *consumer = task->consumers[t];
 				if(consumer->proc_idx != -1)	/* Manhattan distance from mapped consumers */
 					c += map_manhattan_distance(x << 8 | y, processors[consumer->proc_idx].addr);
 			}
 
 			/* 4th: Add a cost for each hop in producer tasks */
-			for(int t = 0; t < pred_cnt; t++){
-				task_t *producer = producers[t];
+			for(int t = 0; t < task->pred_cnt; t++){
+				task_t *producer = task->predecessors[t];
 				if(producer->proc_idx != -1)
 					c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
 			}
