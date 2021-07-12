@@ -70,9 +70,13 @@ int task_terminate(task_t *task)
 	/* Deallocate consumers */
 	for(int i = 0; i < task->succ_cnt; i++)
 		task->consumers[i] = NULL;
+
+	task->succ_cnt = 0;
 	
 	for(int i = 0; i < task->pred_cnt; i++)
 		task->predecessors[i] = NULL;
+
+	task->pred_cnt = 0;
 
 	if(task->status == MIGRATING){
 		/* The task finished with a migration request on the fly */
