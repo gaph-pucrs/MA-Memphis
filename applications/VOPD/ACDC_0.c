@@ -1,26 +1,27 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 int main()
 {
 
-Message msg;
+message_t msg;
 int j;
 
-	for(j=0;j<128;j++) msg.msg[j]=j;
+	for(j=0;j<128;j++) msg.payload[j]=j;
 
 	msg.length=128;
-	for(j=0;j<8;j++) Receive(&msg,ISCAN_0);
+	for(j=0;j<8;j++) memphis_receive(&msg,ISCAN_0);
 	msg.length=88;
-	Receive(&msg,ISCAN_0);
+	memphis_receive(&msg,ISCAN_0);
 	msg.length=128;
-	Send(&msg,STRIPEM_0);
+	memphis_send(&msg,STRIPEM_0);
 	msg.length=22;
-	Send(&msg,STRIPEM_0);
+	memphis_send(&msg,STRIPEM_0);
 	msg.length=128;
-	for(j=0;j<8;j++) Send(&msg,IQUANT_0);
+	for(j=0;j<8;j++) memphis_send(&msg,IQUANT_0);
 	msg.length=88;
-	Send(&msg,IQUANT_0);
+	memphis_send(&msg,IQUANT_0);
 
 return 0;
 
