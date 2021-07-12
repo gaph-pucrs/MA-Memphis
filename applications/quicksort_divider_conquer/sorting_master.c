@@ -9,66 +9,67 @@
     - iacanaw@gmail.com
     06/2019
 */
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../quicksort_divider_conquer/sorting.h"
 
-Message msg;
+message_t msg;
 
 int main(){
     int vector[VECTOR_SIZE];
     int half1[HALF_VECTOR_SIZE];
 	int half2[HALF_VECTOR_SIZE];
     int i, j, k, aux, tamanho, halfTamanho;
-    Echo("Iniciando...");
+    puts("Iniciando...\n");
     // Inicializa o vetor com valores decrescentes
     aux = VECTOR_SIZE;
     for(i = 0; i<VECTOR_SIZE; i++){
         vector[i] = aux;
         aux = aux - 1;
-        Echo(itoa(vector[i]));
+        printf("%d\n", vector[i]);
     }
-    Echo("Vetor Preenchido!");
+    puts("Vetor Preenchido!\n");
     tamanho = VECTOR_SIZE;
 
     // Define o primeiro flit contendo o tamanho do vetor que está sendo enviado
-	Echo("Iniciando o envio das mensgaens de cada ramo...");
+	puts("Iniciando o envio das mensgaens de cada ramo...\n");
     halfTamanho = tamanho/2;
     aux = 0;
-    Echo("Ramo esquerdo:");
+    puts("Ramo esquerdo:\n");
     for(i=0; i<halfTamanho; i++){
-        msg.msg[i] = vector[aux];
-        Echo(itoa(msg.msg[i]));
+        msg.payload[i] = vector[aux];
+        printf("%d\n", msg.payload[i]);
         aux++;
     }
     msg.length = halfTamanho;
-    Send(&msg, sorting_1);
-    Echo("Ramo direito:");
+    memphis_send(&msg, sorting_1);
+    puts("Ramo direito:\n");
     for(i=0; i<halfTamanho; i++){
-        msg.msg[i] = vector[aux];
-        Echo(itoa(msg.msg[i]));
+        msg.payload[i] = vector[aux];
+        printf("%d\n", msg.payload[i]);
         aux++;
     }
     msg.length = halfTamanho;
-    Send(&msg, sorting_2);
+    memphis_send(&msg, sorting_2);
 
     // Aguarda o recebimento dos vetores organizados
-    Echo("Aguardando recebimento dos ramos:");
-    Echo("Ramo esquerdo:");
-    Receive(&msg, sorting_1);
+    puts("Aguardando recebimento dos ramos:\n");
+    puts("Ramo esquerdo:\n");
+    memphis_receive(&msg, sorting_1);
     for(i=0; i<msg.length; i++){
-        half1[i] = msg.msg[i];
-        Echo(itoa(msg.msg[i]));
+        half1[i] = msg.payload[i];
+        printf("%d\n", msg.payload[i]);
     }
-    Echo("Ramo direito:");
-    Receive(&msg, sorting_2);
+    puts("Ramo direito:\n");
+    memphis_receive(&msg, sorting_2);
     for(i=0; i<msg.length; i++){
-        half2[i] = msg.msg[i]; 
-        Echo(itoa(msg.msg[i]));
+        half2[i] = msg.payload[i]; 
+        printf("%d\n", msg.payload[i]);
     }
 
-    Echo("Realizando o merge:");
+    puts("Realizando o merge:\n");
     // Realiza o merge dos vetores
     j = 0;
     k = 0;
@@ -90,8 +91,8 @@ int main(){
             k++;
         }
         // Imprime o vetor organizado
-        Echo(itoa(vector[i]));
-        msg.msg[i] = vector[i];
+        printf("%d\n", vector[i]);
+        msg.payload[i] = vector[i];
     }
 	return 0;
 

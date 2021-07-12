@@ -9,12 +9,13 @@
     - iacanaw@gmail.com
     06/2019
 */
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../quicksort_divider_conquer/sorting.h"
 
-Message msg;
+message_t msg;
 
 void swap(int *xp, int *yp)
 {
@@ -69,29 +70,29 @@ void quickSort(int *arr, int low, int high)
 int main(){
     int vector[EIGHT_VECTOR_SIZE];
     int i, tamanho;
-    Echo("Aguardando o vetor!");
-    Receive(&msg, sorting_6); // AQUI
-    Echo("Recebendo o vetor:");
-    Echo("--> Tamanho do vetor:");
-    Echo(itoa(msg.length));
+    puts("Aguardando o vetor!\n");
+    memphis_receive(&msg, sorting_6); // AQUI
+    puts("Recebendo o vetor:\n");
+    puts("--> Tamanho do vetor:\n");
+    printf("%d\n", msg.length);
     tamanho = msg.length;
-    Echo("Vetor:");
+    puts("Vetor:\n");
     for(i=0; i<tamanho; i++){
-        vector[i] = msg.msg[i];
-        Echo(itoa(vector[i]));
+        vector[i] = msg.payload[i];
+        printf("%d\n", vector[i]);
     }
-    Echo("Começando QUICK SORT...");
+    puts("Começando QUICK SORT...\n");
     quickSort(vector, 0, EIGHT_VECTOR_SIZE-1);
-    Echo("QUICK SORT finalizado!");
+    puts("QUICK SORT finalizado!\n");
 
-    Echo("Vetor organizado:");
+    puts("Vetor organizado:\n");
     for(i=0; i<tamanho; i++){
-        msg.msg[i] = vector[i];
-        Echo(itoa(vector[i]));
+        msg.payload[i] = vector[i];
+        printf("%d\n", vector[i]);
     }
     msg.length = tamanho;
-    Echo("Retornando o vetor:");
-    Send(&msg, sorting_6); // AQUI
+    puts("Retornando o vetor:\n");
+    memphis_send(&msg, sorting_6); // AQUI
 
 	return 0;
 
