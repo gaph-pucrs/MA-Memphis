@@ -21,6 +21,6 @@ int j;
 
 	puts("Chamou exit\n");
 
-	exit(0);
+	return 0;
 
 }
