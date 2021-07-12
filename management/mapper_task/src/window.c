@@ -16,17 +16,14 @@
 
 void window_search(window_t *window, processor_t *processors, app_t *app)
 {
-	bool raise_x = false;
 	int wx = MAP_MIN_WX;
 	int wy = MAP_MIN_WY;
 
 	while(wx*wy*PKG_MAX_LOCAL_TASKS < app->task_cnt){
-		if(raise_x){
-			wx++;
-			raise_x = false;
-		} else {
+		if(wy <= wx){	/* Prefer to have y greater than x because window slides in x-axis */
 			wy++;
-			raise_x = true;
+		} else {
+			wx++;
 		}
 	}
 
@@ -38,14 +35,14 @@ void window_search(window_t *window, processor_t *processors, app_t *app)
 
 	if(app->has_static_tasks){
 		/* Select a window without changing last_window */
-		window_set_from_center(window, processors, app, app->task_cnt, wx, wy, raise_x);
+		window_set_from_center(window, processors, app, app->task_cnt, wx, wy);
 	} else {
 		/* Select a window based on the last window chosen */
-		window_set_from_last(window, processors, app, app->task_cnt, wx, wy, raise_x);
+		window_set_from_last(window, processors, app, app->task_cnt, wx, wy);
 	}
 }
 
-void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x)
+void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy)
 {
 	/* Window will be based on the center of the static tasks */
 	window->x = app->center_x - wx / 2;
@@ -67,12 +64,10 @@ void window_set_from_center(window_t *window, processor_t *processors, app_t *ap
 
 	while(!window_has_pages(window, processors, req_pages)){
 		/* Select window by changing W instead of sliding */		
-		if(raise_x){
-			window->wx++;
-			raise_x = false;
-		} else {
+		if(window->wy <= window->wx){
 			window->wy++;
-			raise_x = true;
+		} else {
+			window->wx++;
 		}
 
 		if(window->x + window->wx > PKG_N_PE_X)
@@ -83,7 +78,7 @@ void window_set_from_center(window_t *window, processor_t *processors, app_t *ap
 	}
 }
 
-void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x)
+void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy)
 {
 	static int last_x = PKG_N_PE_X - MAP_MIN_WX;
 	static int last_y = PKG_N_PE/PKG_N_PE_X - MAP_MIN_WY;
@@ -135,15 +130,13 @@ void window_set_from_last(window_t *window, processor_t *processors, app_t *app,
 		}
 
 		/* No window found */
-		if(raise_x){
-			window->wx++;
-			raise_x = false;
-		} else {
+		if(window->wy <= window->wx){
 			window->wy++;
-			raise_x = true;
+		} else {
+			window->wx++;
 		}
-		last_x = PKG_N_PE_X - window->wx++;
-		last_y = PKG_N_PE/PKG_N_PE_X - window->wy++;
+		last_x = PKG_N_PE_X - window->wx;
+		last_y = PKG_N_PE/PKG_N_PE_X - window->wy;
 		// printf("CS %dx%d\n", window->wx, window->wy);
 
 		window->x = last_x;

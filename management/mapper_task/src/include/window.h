@@ -46,9 +46,8 @@ void window_search(window_t *window, processor_t *processors, app_t *app);
  * @param req_pages Number of available pages to search for in the window
  * @param wx Starting size of the window in X
  * @param wy Starting size of the window in Y
- * @param raise_x If should raise X first instead of Y when growing the window
  */
-void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x);
+void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy);
 
 /**
  * @brief Searches a window to map based on the last searched window
@@ -59,9 +58,8 @@ void window_set_from_center(window_t *window, processor_t *processors, app_t *ap
  * @param req_pages Number of available pages to search for in the window
  * @param wx Starting size of the window in X
  * @param wy Starting size of the window in Y
- * @param raise_x If should raise X first instead of Y when growing the window
  */
-void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy, bool raise_x);
+void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy);
 
 /**
  * @brief Iterates the window
