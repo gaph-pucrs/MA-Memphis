@@ -62,7 +62,7 @@ void router_cc::traffic_monitor(){
 					case 2: //Service
 						service[i] = data_in[i].read();
 
-						if(service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x221 && service[i] != 0x10 && service[i] != 0x20)
+						if(service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x221 && service[i] != 0x10 && service[i] != 0x20 && service[i] != 0x310)
 							SM_traffic_monitor[i] = 5;
 						else
 							SM_traffic_monitor[i] = 3;
@@ -71,7 +71,7 @@ void router_cc::traffic_monitor(){
 					case 3: //If is task_allocation
 
 						task_id[i] = data_in[i].read();
-						if (service[i] == 0x10 || service[i] == 0x20)
+						if (service[i] == 0x10 || service[i] == 0x20 || service[i] == 0x310)
 							SM_traffic_monitor[i] = 4;
 						else
 							SM_traffic_monitor[i] = 5;
@@ -101,10 +101,10 @@ void router_cc::traffic_monitor(){
 							// Open a file called "aux" deferred on append mode
 							fp = fopen (aux, "a");
 
-							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x221 && service[i] != 0x10 && service[i] != 0x20){
+							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x221 && service[i] != 0x10 && service[i] != 0x20 && service[i] != 0x310){
 								sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter);
 							} else {
-								if (service[i] == 0x10 || service[i] == 0x20)
+								if (service[i] == 0x10 || service[i] == 0x20 || service[i] == 0x310)
 									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i], consumer_id[i]);
 								else
 									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i]);
