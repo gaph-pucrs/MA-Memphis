@@ -68,10 +68,10 @@ const int atop[TOTAL_TASKS][TOTAL_TASKS] = {{0, 0, 0, 0},
 
 // DONT CHANGE
 #define LENGHT 4
-#define MSG_OP msg.msg[0]
-#define MSG_SRC msg.msg[1]
-#define TUNUE msg.msg[2]
-#define BK_ADDR msg.msg[3]
+#define MSG_OP msg.payload[0]
+#define MSG_SRC msg.payload[1]
+#define TUNUE msg.payload[2]
+#define BK_ADDR msg.payload[3]
 
 #define FORWARD 1
 #define BACKTRACK -1

@@ -12,8 +12,9 @@
  * @date June 2018
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "euler.h"
 
 bool path_only = false;
@@ -42,9 +43,9 @@ bool check_eulerian()
 	}
 
 	if(odd_count){
-		Echo("Only path is possible.");
+		puts("Only path is possible.");
 	} else {
-		Echo("Circuit is possible.");
+		puts("Circuit is possible.");
 	}
 
 	return true;
@@ -53,11 +54,11 @@ bool check_eulerian()
 int main()
 {
 	if(!check_eulerian()){
-		Echo("The graph is not Eulerian. Quiting.");
-		return 0;
+		puts("The graph is not Eulerian. Quiting.");
+		return -1;
 	}
 
-	Message msg;
+	message_t msg;
 	msg.length = LENGHT;
 	MSG_OP = FORWARD;
 	MSG_SRC = NODE_M;
@@ -65,36 +66,36 @@ int main()
 	BK_ADDR = NODE_M;
 
 #if DEBUG == 1
-	Echo("DEBUG: SEND FORWARD TO START NODE");
+	puts("DEBUG: SEND FORWARD TO START NODE");
 #endif
-	Echo(start_msg[start]);
-	SSend(&msg, P[start]);
+	puts(start_msg[start]);
+	memphis_send_any(&msg, P[start]);
 #if DEBUG == 1
-	Echo("DEBUG: SENT FORWARD TO START NODE");
+	puts("DEBUG: SENT FORWARD TO START NODE");
 #endif
 
 #if DEBUG == 1
-	Echo("DEBUG: WAITING EXIT MESSAGE");
+	puts("DEBUG: WAITING EXIT MESSAGE");
 #endif
-	SReceive(&msg);
+	memphis_receive_any(&msg);
 #if DEBUG == 1
-	Echo("DEBUG: RECEIVED EXIT MESSAGE");
+	puts("DEBUG: RECEIVED EXIT MESSAGE");
 #endif
 
-	Echo(exit_msg[MSG_SRC]);
+	puts(exit_msg[MSG_SRC]);
 	MSG_OP = EXIT; //Exit
 	MSG_SRC = NODE_M; //From manager
-	Echo("Exiting nodes.");
+	puts("Exiting nodes.");
 	for(int i = 1; i < TOTAL_TASKS; i++){
 	#if DEBUG == 1
-		Echo("DEBUG: SEND EXIT TO NODE");
+		puts("DEBUG: SEND EXIT TO NODE");
 	#endif
-		SSend(&msg, P[i]);
+		memphis_send_any(&msg, P[i]);
 	#if DEBUG == 1
-		Echo("DEBUG: SENT EXIT TO NODE");
+		puts("DEBUG: SENT EXIT TO NODE");
 	#endif
 	}
 	
-	Echo("Exiting main");
+	puts("Exiting main");
 	return 0;
 }

@@ -13,8 +13,9 @@
  * @date June 2018
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "euler.h"
 
 
@@ -31,7 +32,7 @@ unsigned int counterf = 0;
 unsigned int node_i = 0;
 unsigned int backtracks = 0;
 
-Message msg;
+message_t msg;
 
 void next_hop()
 {
@@ -46,12 +47,12 @@ void next_hop()
 			if(!weight[i]){
 				weight[i] = ++counterf;
 			#if DEBUG == 1
-				Echo("DEBUG: SEND FORWARD");
+				puts("DEBUG: SEND FORWARD");
 			#endif
-				Echo(fwd_msg[atop[THIS_NODE][i]]);
-				SSend(&msg, P[atop[THIS_NODE][i]]);
+				puts(fwd_msg[atop[THIS_NODE][i]]);
+				memphis_send_any(&msg, P[atop[THIS_NODE][i]]);
 			#if DEBUG == 1
-				Echo("DEBUG: SENT FORWARD");
+				puts("DEBUG: SENT FORWARD");
 			#endif
 				break;
 			}
@@ -59,12 +60,12 @@ void next_hop()
 	} else { // Send Backtrack
 		MSG_OP = BACKTRACK;
 	#if DEBUG == 1
-		Echo("DEBUG: SEND BACKTRACK");
+		puts("DEBUG: SEND BACKTRACK");
 	#endif
-		Echo(bkt_msg[BK_ADDR]);
-		SSend(&msg, P[BK_ADDR]);
+		puts(bkt_msg[BK_ADDR]);
+		memphis_send_any(&msg, P[BK_ADDR]);
 	#if DEBUG == 1
-		Echo("DEBUG: SENT BACKTRACK");
+		puts("DEBUG: SENT BACKTRACK");
 	#endif
 	}
 }
@@ -72,38 +73,38 @@ void next_hop()
 
 int main()
 {
-	Echo(start_msg[THIS_NODE]);
+	puts(start_msg[THIS_NODE]);
 	while(true){
 	#if DEBUG == 1
-		Echo("DEBUG: WAITING COMMAND");
+		puts("DEBUG: WAITING COMMAND");
 	#endif
-		SReceive(&msg);
+		memphis_receive_any(&msg);
 	#if DEBUG == 1
-		Echo("DEBUG: COMMAND RECEIVED");
+		puts("DEBUG: COMMAND RECEIVED");
 	#endif
 
 		if(!MSG_OP){        // Exit
-			Echo(exit_msg[THIS_NODE]);
+			puts(exit_msg[THIS_NODE]);
 			return 0;
 		} else if(!TUNUE){
 			MSG_OP = EXIT;
 		#if DEBUG == 1
-			Echo("DEBUG: SEND EXIT REQUEST TO MANAGER");
+			puts("DEBUG: SEND EXIT REQUEST TO MANAGER");
 		#endif
-			Echo("No more unused edges. Exiting.");
-			SSend(&msg, P[0]);
+			puts("No more unused edges. Exiting.");
+			memphis_send_any(&msg, P[0]);
 		#if DEBUG == 1
-			Echo("DEBUG: SENT EXIT REQUEST TO MANAGER");
+			puts("DEBUG: SENT EXIT REQUEST TO MANAGER");
 		#endif
 		} else if(MSG_OP == FORWARD){
-			Echo(rcv_msg[MSG_SRC]);
+			puts(rcv_msg[MSG_SRC]);
 			if(MSG_SRC)
 				weight[ntoa[THIS_NODE][MSG_SRC]] = ++counterf;
 			
 			next_hop();
 		} else { // Backtrack
 			// Find backtracked edge
-			Echo(bkt_msg[MSG_SRC]);
+			puts(bkt_msg[MSG_SRC]);
 			int top = 0;
 			for(int i = 0; i < N_ADJ; i++){
 				if(weight[i]>weight[top])
