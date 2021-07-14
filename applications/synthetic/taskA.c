@@ -1,31 +1,32 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "syn_std.h"
 
 //MEMPHIS message structure
-Message msg1;
-Message msg2;
+message_t msg1;
+message_t msg2;
 
 int main()
 {
-    Echo("Task A started at time ");
-	Echo(itoa(GetTick()));
+    puts("Task A started at time \n");
+	//printf("%d\n", memphis_get_tick());
 
 	for(int i=0;i<SYNTHETIC_ITERATIONS;i++)
 	{
 		//Compute and send something
-		compute((unsigned int*)&msg1.msg);
+		compute((unsigned int*)&msg1.payload);
 		msg1.length = 128;
-		Send(&msg1,taskB);
+		memphis_send(&msg1,taskB);
 
 		//Compute and send something
-		compute((unsigned int*)&msg2.msg);
+		compute((unsigned int*)&msg2.payload);
 		msg2.length = 128;
-		Send(&msg2,taskC);
+		memphis_send(&msg2,taskC);
 	}
 
-    Echo("Task A finished at time");
-    Echo(itoa(GetTick()));
+    puts("Task A finished at time\n");
+    //printf("%d\n", memphis_get_tick());
 	return 0;
 }
