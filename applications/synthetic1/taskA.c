@@ -1,9 +1,10 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../synthetic1/syn_std.h"
 
-Message msg;
+message_t msg;
 
 int main()
 {
@@ -11,8 +12,8 @@ int main()
 	int i, j;
 	volatile int t;
 
-    Echo("Synthetic task A started.");
-	Echo(itoa(GetTick()));
+    puts("Synthetic task A started.\n");
+	//printf("%d\n", memphis_get_tick());
 
 	for(i=0;i<SYNTHETIC_ITERATIONS;i++)
 	{
@@ -21,12 +22,12 @@ int main()
 		msg.length = 30;
 		for(j=0;j<30;j++)
 		{
-			msg.msg[j]=i;
+			msg.payload[j]=i;
 		}
-		Send(&msg,taskC);
+		memphis_send(&msg,taskC);
 	}
 
-    Echo(itoa(GetTick()));
-    Echo("Synthetic task A finished.");
+    //printf("%d\n", memphis_get_tick());
+    puts("Synthetic task A finished.\n");
 	return 0;
 }
