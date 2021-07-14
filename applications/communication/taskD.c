@@ -1,26 +1,27 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "syn_std.h"
 
-Message msg;
+message_t msg;
 
 int main()
 {
 
 	int i;
 
-    Echo("synthetic task D started.");
-	Echo(itoa(GetTick()));
+    printf("synthetic task D started at %u\n", memphis_get_tick());
+
 
 for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	
-	Receive(&msg,taskB);
-	Receive(&msg,taskC);
+	memphis_receive(&msg,taskB);
+	memphis_receive(&msg,taskC);
 
 }
 
-	Echo(itoa(GetTick()));
-    Echo("synthetic task D finished.");
+	printf("%u\n", memphis_get_tick());
+    puts("synthetic task D finished.");
 
 	return 0;
 
