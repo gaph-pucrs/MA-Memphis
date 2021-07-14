@@ -20,6 +20,6 @@ for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 }
 
     printf("%u\n", memphis_get_tick());
-    puts("synthetic task A finished.");
+    puts("synthetic task A finished.\n");
 	return 0;
 }

@@ -21,7 +21,7 @@ for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 }
 
 	printf("%u\n", memphis_get_tick());
-    puts("synthetic task D finished.");
+    puts("synthetic task D finished.\n");
 
 	return 0;
 
