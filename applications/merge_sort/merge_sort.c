@@ -4,9 +4,10 @@
  *  Created on: 17 de set de 2018
  *      Author: mruaro
  */
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-#include "../sorting_single_task/sorting_util.h"
+#include <stdio.h>
+#include "sorting_util.h"
 
 
 // Merges two subarrays of arr[].
@@ -88,11 +89,11 @@ void mergeSort(int arr[], int l, int r)
 int main()
 {
     int n = sizeof(arr)/sizeof(arr[0]);
-    Echo("n:"); Echo(itoa(n));
-	Echo("Begin:");Echo(itoa(GetTick()));
+    printf("n: %d\n",n); 
+   	printf("Begin: %d\n", memphis_get_tick());
 	mergeSort(arr, 0, n - 1);
-	Echo("End:");Echo(itoa(GetTick()));
-	Echo("Sorted array");
+	printf("End: %d\n", memphis_get_tick());
+   	puts("Sorted array\n");
 	printArray(arr, n);
 	return 0;
 

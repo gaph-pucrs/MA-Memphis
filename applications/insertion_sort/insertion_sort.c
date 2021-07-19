@@ -5,9 +5,10 @@
  *      Author: mruaro
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-#include "../sorting_single_task/sorting_util.h"
+#include <stdio.h>
+#include "sorting_util.h"
 
 /* Function to sort an array using insertion sort*/
 void insertionSort(int arr[], int n)
@@ -35,11 +36,11 @@ void insertionSort(int arr[], int n)
 int main()
 {
     int n = sizeof(arr)/sizeof(arr[0]);
-    Echo("n:"); Echo(itoa(n));
-	Echo("Begin:");Echo(itoa(GetTick()));
+    printf("n: %d\n",n); 
+   	printf("Begin: %d\n", memphis_get_tick());
 	insertionSort(arr, n);
-	Echo("End:");Echo(itoa(GetTick()));
-	Echo("Sorted array");
+	printf("End: %d\n", memphis_get_tick());
+   	puts("Sorted array\n");
 	printArray(arr, n);
     return 0;
 }

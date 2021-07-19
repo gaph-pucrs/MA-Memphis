@@ -5,9 +5,10 @@
  *      Author: mruaro
  */
 
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-#include "../sorting_single_task/sorting_util.h"
+#include <stdio.h>
+#include "sorting_util.h"
 
 // A function to implement bubble sort
 void bubbleSort(int arr[], int n)
@@ -25,11 +26,11 @@ void bubbleSort(int arr[], int n)
 int main()
 {
     int n = sizeof(arr)/sizeof(arr[0]);
-    Echo("n:"); Echo(itoa(n));
-   	Echo("Begin:");Echo(itoa(GetTick()));
+    printf("n: %d\n",n); 
+   	printf("Begin: %d\n", memphis_get_tick());
    	bubbleSort(arr, n);
-   	Echo("End:");Echo(itoa(GetTick()));
-   	Echo("Sorted array");
+   	printf("End: %d\n", memphis_get_tick());
+   	puts("Sorted array\n");
    	printArray(arr, n);
     return 0;
 }
