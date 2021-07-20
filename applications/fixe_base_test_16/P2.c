@@ -1,5 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -10,7 +11,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
+#define add(a, b) (a + b)
+#define sub(a, b) (a - b)
 
 
 
@@ -156,7 +158,7 @@ int div(int a, int b)
 
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970
@@ -194,8 +196,8 @@ void calcul_moyenne(int* moyenne)
 
 int main()
 {
-	Echo("start Processeur 2");
-	Echo(itoa(GetTick()));
+	puts("start Processeur 2\n");
+	//printf("%d\n", memphis_get_tick());
 
 
     int moyenne[size],i;
@@ -204,18 +206,18 @@ int main()
 
     msg1.length=size;
     for(i=0;i<size;i++)
-         msg1.msg[i]=moyenne[i];
+         msg1.payload[i]=moyenne[i];
 
-    Echo("Valeur de la moyenne :");
-    Echo(fixetoa(moyenne[0]));
+    puts("Valeur de la moyenne :\n");
+    //printf("%d\n", fixetoa(moyenne[0]));
 
-    Send(&msg1,RMS);
-    Send(&msg1,WRMS);
-    Send(&msg1,GFC);
-    Send(&msg1,XYZ2);
+    memphis_send(&msg1,RMS);
+    memphis_send(&msg1,WRMS);
+    memphis_send(&msg1,GFC);
+    memphis_send(&msg1,XYZ2);
 
- 	Echo(itoa(GetTick()));
-    Echo("Communication Processeur 2 finished.");
+ 	//printf("%d\n", memphis_get_tick());
+    puts("Communication Processeur 2 finished.\n");
 return 0;
 }
 

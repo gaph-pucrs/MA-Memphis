@@ -1,5 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -10,7 +11,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
+#define add(a, b) (a + b)
+#define sub(a, b) (a - b)
 
 
 
@@ -83,7 +85,7 @@ int mult(int a, int b)
 
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970
@@ -121,28 +123,28 @@ int sommeXYZ(int* moyenne,int* tabref)
 int main()
 {
 	int i;
-	Echo("start XYZ 2");
-	Echo(itoa(GetTick()));
+	puts("start XYZ 2\n");
+	//printf("%d\n", memphis_get_tick());
 
 
-    Receive(&msg1,P2);
+    memphis_receive(&msg1,P2);
 
     msg2.length=3;
 
-    msg2.msg[0]=sommeXYZ(msg1.msg,tabrefX);
-    msg2.msg[1]=sommeXYZ(msg1.msg,tabrefY);
-    msg2.msg[2]=sommeXYZ(msg1.msg,tabrefZ);
-    Echo("XYZ :");
+    msg2.payload[0]=sommeXYZ((int *)msg1.payload,tabrefX);
+    msg2.payload[1]=sommeXYZ((int *)msg1.payload,tabrefY);
+    msg2.payload[2]=sommeXYZ((int *)msg1.payload,tabrefZ);
+    puts("XYZ :\n");
     for(i=0;i<3;i++)
-         Echo(fixetoa(msg2.msg[i]));
+         //printf("%d\n", fixetoa(msg2.payload[i]));
 
-    Send(&msg2,LAB2);
-    Send(&msg2,DXYZ);
-    Send(&msg2,RGB2);
+    memphis_send(&msg2,LAB2);
+    memphis_send(&msg2,DXYZ);
+    memphis_send(&msg2,RGB2);
 
 
-	Echo(itoa(GetTick()));
-    Echo("Communication XYZ 2 finished.");
+	//printf("%d\n", memphis_get_tick());
+    puts("Communication XYZ 2 finished.\n");
 return 0;
 }
 

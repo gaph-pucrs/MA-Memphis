@@ -1,5 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -10,7 +11,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
+#define add(a, b) (a + b)
+#define sub(a, b) (a - b)
 
 
 
@@ -179,34 +181,34 @@ int pow(int x,int y)
 }
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 
 int main()
 {
-	Echo("start dis_RGB");
-	Echo(itoa(GetTick()));
+	puts("start dis_RGB\n");
+	//printf("%d\n", memphis_get_tick());
 
 
 	int i;
 	int distance=0;
 
-    Receive(&msg1,RGB1);
-    Receive(&msg2,RGB2);
+    memphis_receive(&msg1,RGB1);
+    memphis_receive(&msg2,RGB2);
 
     for (i=0;i<3;i++)
     {
-        distance= add(pow(sub(msg1.msg[i],msg2.msg[i]),20000),distance);
+        distance= add(pow(sub(msg1.payload[i],msg2.payload[i]),20000),distance);
     }
 
    	distance=sqrt(distance);
 
-   	Echo("la distance RGB est : ");
-   	Echo(fixetoa(distance));
+   	puts("la distance RGB est : \n");
+   	//printf("%d\n", fixetoa(distance));
 
 
-    Echo(itoa(GetTick()));
-    Echo("Communication dis_RGB finished.");
+    //printf("%d\n", memphis_get_tick());
+    puts("Communication dis_RGB finished.\n");
 
 return 0;
 }
