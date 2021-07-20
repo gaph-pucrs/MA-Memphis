@@ -1,6 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
 #define MAX 1000000000 /*10^PU*/
@@ -10,11 +10,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
-
-
-
-
+#define add(a, b) ((int)a + (int)b)
+#define sub(a, b) ((int)a - (int)b)
 
 int mult(int a, int b)
 {
@@ -182,32 +179,28 @@ int pow(int x,int y)
 
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 int main()
 {
-	Echo("start dis_XYZ");
-	Echo(itoa(GetTick()));
+	puts("start dis_XYZ\n");
 
 	int i;
 	int distance=0;
 
-    Receive(&msg1,XYZ1);
-    Receive(&msg2,XYZ2);
+    memphis_receive(&msg1,XYZ1);
+    memphis_receive(&msg2,XYZ2);
 
     for (i=0;i<3;i++)
     {
-        distance= add(pow(sub(msg1.msg[i],msg2.msg[i]),20000),distance);
+        distance= add(pow(sub(msg1.payload[i],msg2.payload[i]),20000),distance);
     }
 
    	distance=sqrt(distance);
 
-   	Echo("la distance XYZ est : ");
-   	Echo(fixetoa(distance));
+   	printf("la distance XYZ est: %d\n", distance);
 
+    puts("Communication dis_XYZ finished.\n");
 
-    Echo(itoa(GetTick()));
-    Echo("Communication dis_XYZ finished.");
-
-return 0;
+	return 0;
 }

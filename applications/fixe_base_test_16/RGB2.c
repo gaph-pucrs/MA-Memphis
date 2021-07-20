@@ -1,6 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
 #define MAX 1000000000 /*10^PU*/
@@ -10,10 +10,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
-
-
-
+#define add(a, b) ((int)a + (int)b)
+#define sub(a, b) ((int)a - (int)b)
 
 int mult(int a, int b)
 {
@@ -82,7 +80,7 @@ int mult(int a, int b)
 
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 
 void rgb(int* sum,int* RGB)
@@ -97,29 +95,27 @@ void rgb(int* sum,int* RGB)
 
 int main()
 {
-	Echo("start RGB2");
-	Echo(itoa(GetTick()));
+	puts("start RGB2\n");
 
     int RGB[3],i;
 
-	Receive(&msg1,XYZ2);
+	memphis_receive(&msg1,XYZ2);
 
-	rgb(msg1.msg,RGB);
+	rgb((int*)msg1.payload,RGB);
 
     msg2.length=3;
     for(i=0;i<3;i++)
-         msg2.msg[i]=RGB[i];
+         msg2.payload[i]=RGB[i];
 
-    Echo("Valeur de RGB :");
-    for(i=0;i<3;i++)
-    {
-		Echo(fixetoa(RGB[i]));
-	}
+    // Echo("Valeur de RGB :");
+    // for(i=0;i<3;i++)
+    // {
+	// 	Echo(fixetoa(RGB[i]));
+	// }
 
-    Send(&msg2,DRGB);
+    memphis_send(&msg2,DRGB);
 
-	Echo(itoa(GetTick()));
-    Echo("Communication RGB2 finished.");
+	puts("Communication RGB2 finished.\n");
 
 	return 0;
 }

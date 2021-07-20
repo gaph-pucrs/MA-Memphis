@@ -1,6 +1,6 @@
-#include <api.h>
+#include <memphis.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
 #define MAX 1000000000 /*10^PU*/
@@ -10,11 +10,8 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-
-
-
-
-
+#define add(a, b) ((int)a + (int)b)
+#define sub(a, b) ((int)a - (int)b)
 
 int mult(int a, int b)
 {
@@ -167,29 +164,28 @@ int sqrt(int x)
 }
 
 
-Message msg1,msg2;
+message_t msg1,msg2;
 
 
 int main()
 {
-	Echo("start GFC");
-	Echo(itoa(GetTick()));
+	puts("start GFC");
 
 	int i;
 	int sum_Es,sum_Me,sum_EM;
 	int gfc;
 
-	Receive(&msg1,P1);
-	Receive(&msg2,P2);
+	memphis_receive(&msg1,P1);
+	memphis_receive(&msg2,P2);
 	
 	sum_Es=0;
     sum_Me=0;
     sum_EM=0;
     for (i=0;i<size;i++)
     {
-          sum_Es=add(mult(msg1.msg[i],msg1.msg[i]),sum_Es);
-          sum_Me=add(mult(msg2.msg[i],msg2.msg[i]),sum_Me);
-          sum_EM=add(mult(msg1.msg[i],msg2.msg[i]),sum_EM);
+          sum_Es=add(mult(msg1.payload[i],msg1.payload[i]),sum_Es);
+          sum_Me=add(mult(msg2.payload[i],msg2.payload[i]),sum_Me);
+          sum_EM=add(mult(msg1.payload[i],msg2.payload[i]),sum_EM);
     }
 
     if (sum_EM<0)
@@ -197,11 +193,9 @@ int main()
     gfc=mult(sqrt(sum_Es),sqrt(sum_Me));
     gfc=div(sum_EM,gfc);
 
-    Echo("distance GFC : ");
-    Echo(fixetoa(gfc));
+    printf("distance GFC: %d\n", gfc);
 
-    Echo(itoa(GetTick()));
-    Echo("Communication GFC finished.");
+    puts("Communication GFC finished.\n");
 
 return 0;
 }
