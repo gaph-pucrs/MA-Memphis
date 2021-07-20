@@ -1,6 +1,5 @@
-#include <memphis.h>
+#include <api.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -11,8 +10,7 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-#define add(a, b) (a + b)
-#define sub(a, b) (a - b)
+
 
 
 
@@ -169,36 +167,36 @@ int sqrt(int x)
 }
 
 
-message_t msg1,msg2;
+Message msg1,msg2;
 
 
 
 int main()
 {
-	puts("start WRMS\n");
-	//printf("%d\n", memphis_get_tick());
+	Echo("start WRMS");
+	Echo(itoa(GetTick()));
 
 	int i;
 	int sum;
 	int dis_wrms;
 
-	memphis_receive(&msg1,P1);
-    memphis_receive(&msg2,P2);
+	Receive(&msg1,P1);
+    Receive(&msg2,P2);
 
 	/*calcul distance WRMS*/
     sum=0;
     for(i=0;i<size;i++)
     {
-        //printf("%d\n", itoa(i));
-	    sum=add(div(mult(sub(msg1.payload[i],msg2.payload[i]),sub(msg1.payload[i],msg2.payload[i])),mult(sqrt(msg1.payload[i]),sqrt(msg2.payload[i]))),sum);
+        Echo(itoa(i));
+	    sum=add(div(mult(sub(msg1.msg[i],msg2.msg[i]),sub(msg1.msg[i],msg2.msg[i])),mult(sqrt(msg1.msg[i]),sqrt(msg2.msg[i]))),sum);
     }
 
 	dis_wrms=sqrt(div(sum,size_val));
-    puts("distance WRMS : \n");
-    //printf("%d\n", fixetoa(dis_wrms));
+    Echo("distance WRMS : ");
+    Echo(fixetoa(dis_wrms));
 
-    //printf("%d\n", memphis_get_tick());
-    puts("Communication WRMS finished.\n");
+    Echo(itoa(GetTick()));
+    Echo("Communication WRMS finished.");
 
 
 return 0;

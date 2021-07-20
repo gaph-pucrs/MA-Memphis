@@ -1,6 +1,5 @@
-#include <memphis.h>
+#include <api.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -11,8 +10,7 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-#define add(a, b) (a + b)
-#define sub(a, b) (a - b)
+
 
 
 int mult(int a, int b)
@@ -176,7 +174,7 @@ int	racine(int val,int expo)
 
 
 
-message_t msg1;
+Message msg1;
 
 void lab(int* sum,int* LAB)
 {
@@ -231,27 +229,27 @@ void lab(int* sum,int* LAB)
 
 int main()
 {
-	puts("start LAB2\n");
-	//printf("%d\n", memphis_get_tick());
+	Echo("start LAB2");
+	Echo(itoa(GetTick()));
 
 
 	int i;
 	int LAB[3]={0,0,0};
 
-	memphis_receive(&msg1,XYZ2);
+	Receive(&msg1,XYZ2);
 
-    lab((int *) msg1.payload,LAB);
+    lab(msg1.msg,LAB);
 
     for (i=0;i<3;i++)
     {
-        msg1.payload[i]=LAB[i];
-        //printf("%d\n", fixetoa(LAB[i]));
+        msg1.msg[i]=LAB[i];
+        Echo(fixetoa(LAB[i]));
     }
 
-    memphis_send(&msg1,DLAB);
+    Send(&msg1,DLAB);
 
-    //printf("%d\n", memphis_get_tick());
-    puts("Communication LAB2 finished.\n");
+    Echo(itoa(GetTick()));
+    Echo("Communication LAB2 finished.");
 
 return 0;
 }

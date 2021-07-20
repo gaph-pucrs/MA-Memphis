@@ -1,6 +1,5 @@
-#include <memphis.h>
+#include <api.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 
 #define FIXE 4 /*nb de chiffres après la virgule*/
@@ -11,8 +10,6 @@
 #define data_val 640000 /*valeur de data et size avec FIXE chiffres après la virgule*/
 #define size_val 160000
 #define region 1
-#define add(a, b) (a + b)
-#define sub(a, b) (a - b)
 
 
 
@@ -170,32 +167,32 @@ int sqrt(int x)
 
 
 
-message_t msg1,msg2;
+Message msg1,msg2;
 
 int main()
 {
-	puts("start dis_LAB\n");
-	//printf("%d\n", memphis_get_tick());
+	Echo("start dis_LAB");
+	Echo(itoa(GetTick()));
 
 
 	int i;
 	int distance=0;
-    memphis_receive(&msg1,LAB1);
-    memphis_receive(&msg2,LAB2);
+    Receive(&msg1,LAB1);
+    Receive(&msg2,LAB2);
 
     for (i=0;i<3;i++)
     {
-        distance= add(mult(sub(msg1.payload[i],msg2.payload[i]),sub(msg1.payload[i],msg2.payload[i])),distance);
+        distance= add(mult(sub(msg1.msg[i],msg2.msg[i]),sub(msg1.msg[i],msg2.msg[i])),distance);
     }
 
    	distance=sqrt(distance);
 
-    puts("la distance LAB est : \n");
-   	//printf("%d\n", fixetoa(distance));
+    Echo("la distance LAB est : ");
+   	Echo(fixetoa(distance));
 
 
-    //printf("%d\n", memphis_get_tick());
-    puts("Communication dis_LAB finished.\n");
+    Echo(itoa(GetTick()));
+    Echo("Communication dis_LAB finished.");
 
     return 0;
 }
