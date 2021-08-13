@@ -2,12 +2,6 @@
 
 ## Ubuntu (apt-based distros)
 
-Install the cmake pre-requisite:
-```console
-# apt update
-# apt install cmake
-```
-
 You need to compile it manually. Create a temporary folder and a destination folder:
 ```console
 $ mkdir ~/systemc
@@ -22,7 +16,7 @@ $ tar xf systemc-2.3.3.tar.gz
 $ cd systemc-2.3.3
 $ mkdir build
 $ cd build
-$ cmake .. -DCMAKE_CXX_STANDARD=11 -DCMAKE_INSTALL_PREFIX=$HOME/tools_memphis/systemc
+$ ../configure --prefix=$HOME/tools_memphis/systemc
 $ make -j `nproc --all`
 $ make install
 ```
