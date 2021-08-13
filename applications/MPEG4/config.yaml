@@ -1,24 +1,24 @@
-communication:
+ctg:
   ADSP_0:
-    consumers:
+    successors:
       - "SDRAM_0"
   BAB_0:
-    consumers:
+    successors:
       - "SDRAM_0"
   IDCT_0:
-    consumers:
+    successors:
       - "SRAM2_0"
   MCPU_0:
-    consumers:
+    successors:
       - "SRAM1_0"
   RAST_0:
-    consumers:
+    successors:
       - "SDRAM_0"
   RISC_0:
-    consumers:
+    successors:
       - "SRAM2_0"
   SDRAM_0:
-    consumers:
+    successors:
       - "BAB_0"
       - "UPSAMP_0"
       - "ADSP_0"
@@ -27,14 +27,14 @@ communication:
       - "AU_0"
       - "VU_0"
   SRAM1_0:
-    consumers:
+    successors:
       - "RAST_0"
   SRAM2_0:
-    consumers:
+    successors:
       - "RISC_0"
       - "BAB_0"
       - "IDCT_0"
       - "UPSAMP_0"
   UPSAMP_0:
-    consumers:
+    successors:
       - "SDRAM_0"

@@ -1,36 +1,36 @@
-communication:
+ctg:
   HS:
-    consumers:
+    successors:
       - "VS"
   HVS:
-    consumers:
+    successors:
       - "JUG2"
   IN:
-    consumers:
+    successors:
       - "HS"
       - "NR"
   JUG1:
-    consumers:
+    successors:
       - "MEM3"
   JUG2:
-    consumers:
+    successors:
       - "MEM3"
   MEM1:
-    consumers:
+    successors:
       - "NR"
   MEM2:
-    consumers:
+    successors:
       - "HVS"
   MEM3:
-    consumers:
+    successors:
       - "SE"
   NR:
-    consumers:
+    successors:
       - "MEM1"
       - "MEM2"
   SE:
-    consumers:
+    successors:
       - "BLEND"
   VS:
-    consumers:
+    successors:
       - "JUG1"

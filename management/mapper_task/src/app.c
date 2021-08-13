@@ -66,18 +66,18 @@ void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *comm
 
 	int comm_i = 0;
 	for(int i = 0; i < app->task_cnt; i++){
-		int encoded_consumer;
+		int encoded_successor;
 		task_t *vertex = app->task[i];
 		do {
-			encoded_consumer = communication[comm_i++];
-			int consumer = abs(encoded_consumer) - 1;
+			encoded_successor = communication[comm_i++];
+			int successor_id = abs(encoded_successor) - 1;
 
-			if(consumer >= 0){
-				task_t *successor = app->task[consumer];
-				vertex->consumers[vertex->succ_cnt++] = successor;			/* Add successor to task */
-				successor->predecessors[successor->pred_cnt++] = vertex; 	/* Add task to predecessor */
+			if(successor_id >= 0){
+				task_t *successor_task = app->task[successor_id];
+				vertex->successors[vertex->succ_cnt++] = successor_task;			/* Add successor to task */
+				successor_task->predecessors[successor_task->pred_cnt++] = vertex; 	/* Add task to predecessor */
 			}
-		} while(encoded_consumer > 0);
+		} while(encoded_successor > 0);
 	}
 
 	// for(int i = 0; i < app->task_cnt; i++){
@@ -125,7 +125,7 @@ void app_get_order(app_t *app, task_t *order[])
 	for(int i = 0; i < initial_idx; i++){
 		order[order_idx++] = initials[i];
 	
-		/* Map all immediate consumers of the initial task and keep mapping its sucessors */
-		task_order_consumers(order, &ordered, &order_idx, app->task_cnt);
+		/* Map all immediate successors of the initial task and keep mapping its sucessors */
+		task_order_successors(order, &ordered, &order_idx, app->task_cnt);
 	}
 }

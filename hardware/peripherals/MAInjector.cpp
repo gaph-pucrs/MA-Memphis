@@ -260,7 +260,7 @@ void MAInjector::ma_load()
 	}
 
 	for(unsigned i = 0; i < tasks.size(); i++)
-		packet.push_back(0);	/* No consumers */
+		packet.push_back(0);	/* No successors */
 
 	// std::cout << "MAInjector: NEW_APP packet size = " << packet.size() << std::endl;
 }

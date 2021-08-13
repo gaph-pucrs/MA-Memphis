@@ -1,4 +1,4 @@
-communication:
+ctg:
   prod:
-    consumers:
+    successors:
       - "cons"

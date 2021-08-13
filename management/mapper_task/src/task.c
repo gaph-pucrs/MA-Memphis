@@ -32,20 +32,20 @@ void task_init(task_t *tasks)
 		tasks[i].succ_cnt = 0;
 		for(int j = 0; j < PKG_MAX_TASKS_APP - 1; j++){
 			tasks[i].predecessors[j] = NULL;
-			tasks[i].consumers[j] = NULL;
+			tasks[i].successors[j] = NULL;
 		}
 	}
 }
 
-void task_order_consumers(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt)
+void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt)
 {
 	while(*ordered < *order_idx){
-		task_t *producer = order[*ordered];
-		for(int i = 0; i < producer->succ_cnt; i++){
-			/* Check if consumer is not ordered yet */
-			task_t *consumer = producer->consumers[i];
-			if(!task_is_ordered(consumer, order, *order_idx))
-				order[(*order_idx)++] = consumer;
+		task_t *predecessor = order[*ordered];
+		for(int i = 0; i < predecessor->succ_cnt; i++){
+			/* Check if successor is not ordered yet */
+			task_t *successor = predecessor->successors[i];
+			if(!task_is_ordered(successor, order, *order_idx))
+				order[(*order_idx)++] = successor;
 		}
 		(*ordered)++;
 	}
@@ -67,9 +67,9 @@ int task_terminate(task_t *task)
 {
 	task->id = -1;
 
-	/* Deallocate consumers */
+	/* Deallocate successors */
 	for(int i = 0; i < task->succ_cnt; i++)
-		task->consumers[i] = NULL;
+		task->successors[i] = NULL;
 
 	task->succ_cnt = 0;
 	

@@ -1,23 +1,23 @@
-communication:
+ctg:
   master:
-    consumers:
+    successors:
       - "slave1"
       - "slave2"
       - "slave3"
       - "slave4"
       - "slave5"
   slave1:
-    consumers:
+    successors:
       - "master"
   slave2:
-    consumers:
+    successors:
       - "master"
   slave3:
-    consumers:
+    successors:
       - "master"
   slave4:
-    consumers:
+    successors:
       - "master"
   slave5:
-    consumers:
+    successors:
       - "master"

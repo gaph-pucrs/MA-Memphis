@@ -1,6 +1,6 @@
-communication:
+ctg:
   aes_master:
-    consumers:
+    successors:
       - "aes_slave1"
       - "aes_slave2"
       - "aes_slave3"
@@ -10,26 +10,26 @@ communication:
       - "aes_slave7"
       - "aes_slave8"
   aes_slave1:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave2:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave3:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave4:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave5:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave6:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave7:
-    consumers:
+    successors:
       - "aes_master"
   aes_slave8:
-    consumers:
+    successors:
       - "aes_master"

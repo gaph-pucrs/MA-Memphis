@@ -1,24 +1,24 @@
-communication:
+ctg:
   bank:
-    consumers:
+    successors:
       - "p1"
       - "p2"
       - "p3"
       - "p4"
   p1:
-    consumers:
+    successors:
       - "recognizer"
   p2:
-    consumers:
+    successors:
       - "recognizer"
   p3:
-    consumers:
+    successors:
       - "recognizer"
   p4:
-    consumers:
+    successors:
       - "recognizer"
   recognizer:
-    consumers:
+    successors:
       - "p1"
       - "p2"
       - "p3"

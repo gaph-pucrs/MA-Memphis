@@ -1,20 +1,20 @@
-communication:
+ctg:
   adpcm_dec:
-    consumers:
+    successors:
       - "FIR"
   FIR:
-    consumers:
+    successors:
       - "join"
   idct:
-    consumers:
+    successors:
       - "join"
   iquant:
-    consumers:
+    successors:
       - "idct"
   ivlc:
-    consumers:
+    successors:
       - "iquant"
   split:
-    consumers:
+    successors:
       - "adpcm_dec"
       - "ivlc"

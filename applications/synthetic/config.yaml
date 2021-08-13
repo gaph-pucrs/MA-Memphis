@@ -1,12 +1,12 @@
-communication:
+ctg:
   taskA:
-    consumers:
+    successors:
       - "taskB"
       - "taskC"
   taskB:
-    consumers:
+    successors:
       - "taskD"
   taskC:
-    consumers:
+    successors:
       - "taskD"
   

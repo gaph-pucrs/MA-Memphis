@@ -1,13 +1,13 @@
-communication:
+ctg:
   manager:
-    consumers:
+    successors:
       - "node_b"
   node_a:
-    consumers:
+    successors:
       - "node_c"
   node_b:
-    consumers:
+    successors:
       - "node_a"
   node_c:
-    consumers:
+    successors:
       - "node_b"

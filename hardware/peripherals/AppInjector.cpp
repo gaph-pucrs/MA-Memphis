@@ -215,13 +215,13 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 		unsigned message_len = task_cnt * 2 + 2;
 
 		for(unsigned i = 0; i < task_cnt; i++){
-			int consumer = 0;
+			int successor = 0;
 			do {
 				std::getline(repository, line);
-				consumer = std::stol(line, nullptr, 16);	/* Consumers */
-				packet.push_back(consumer);
+				successor = std::stol(line, nullptr, 16);	/* Consumers */
+				packet.push_back(successor);
 				message_len++;
-			} while(consumer > 0);
+			} while(successor > 0);
 		}
 
 		unsigned packet_size = CONSTANT_PACKET_SIZE + message_len;

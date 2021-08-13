@@ -55,12 +55,12 @@ void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *comm
 		/* Copy the communication dependence list */
 		for(int i = 0; i < task_cnt; i++){
 			/* For all tasks, keep copying until signaled for next task */
-			int consumer;
+			int successor;
 			do {
-				consumer = communication[comm_i];
+				successor = communication[comm_i];
 				mapper->pending_comm[comm_i] = communication[comm_i];
 				comm_i++;
-			} while(consumer > 0);
+			} while(successor > 0);
 		}
 	} else {
 		map_try_mapping(mapper, mapper->appid_cnt, task_cnt, descriptor, communication, mapper->processors);
@@ -258,11 +258,11 @@ void map_set_score(app_t *app, processor_t *processors)
 	unsigned edges = 0;
 	unsigned cost = 0;
 	for(int i = 0; i < app->task_cnt; i++){
-		task_t *producer = app->task[i];
-		processors[producer->proc_idx].pending_map_cnt = 0;
-		for(int j = 0; j < producer->succ_cnt; j++){
-			task_t *consumer = producer->consumers[j];
-			cost += map_manhattan_distance(processors[producer->proc_idx].addr, processors[consumer->proc_idx].addr);
+		task_t *predecessor = app->task[i];
+		processors[predecessor->proc_idx].pending_map_cnt = 0;
+		for(int j = 0; j < predecessor->succ_cnt; j++){
+			task_t *successor = predecessor->successors[j];
+			cost += map_manhattan_distance(processors[predecessor->proc_idx].addr, processors[successor->proc_idx].addr);
 			edges++;
 		}
 	}

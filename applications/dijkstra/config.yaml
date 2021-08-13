@@ -1,21 +1,21 @@
-communication:
+ctg:
   dijkstra_0:
-    consumers:
+    successors:
       - "print"
   dijkstra_1:
-    consumers:
+    successors:
       - "print"
   dijkstra_2:
-    consumers:
+    successors:
       - "print"
   dijkstra_3:
-    consumers:
+    successors:
       - "print"
   dijkstra_4:
-    consumers:
+    successors:
       - "print"
   divider:
-    consumers:
+    successors:
       - "dijkstra_0"
       - "dijkstra_1"
       - "dijkstra_2"

@@ -24,9 +24,9 @@ class Application:
 
 		self.tasks.sort()
 
-		self.communication = {}
+		self.ctg = {}
 		try:
-			self.communication = safe_load(open("{}/applications/{}/config.yaml".format(self.platform_path, self.app_name)))["communication"]
+			self.ctg = safe_load(open("{}/applications/{}/config.yaml".format(self.platform_path, self.app_name)))["ctg"]
 		except:
 			pass
 
@@ -96,13 +96,13 @@ class Application:
 
 		for t in range(len(self.tasks)):
 			for c in range(len(dep_list[t])):
-					consumer = dep_list[t][c] + 1
+					successor = dep_list[t][c] + 1
 					if c == len(dep_list[t]) - 1:
-						consumer *= -1	
-					repo.add(consumer, "Task {} is producer of task {}".format(self.tasks[t], self.tasks[dep_list[t][c]]))
+						successor *= -1	
+					repo.add(successor, "Task {} is predecessor of task {}".format(self.tasks[t], self.tasks[dep_list[t][c]]))
 
 			if len(dep_list[t]) == 0:
-				repo.add(0, "Task {} has no consumers".format(self.tasks[t]))
+				repo.add(0, "Task {} has no successors".format(self.tasks[t]))
 
 		for task in self.tasks:
 			task_hex = open(self.testcase_path+"/applications/"+self.app_name+"/"+task+".txt", "r")
@@ -126,20 +126,20 @@ class Application:
 
 		dep_list_len = 0
 		for task in self.tasks:
-			sucessors = []
+			sucessors_list = []
 
-			consumers = {}
+			successors = {}
 			try:
-				consumers = self.communication[task]["consumers"]
+				successors = self.ctg[task]["successors"]
 			except:
 				pass
 			
-			for consumer in consumers:
-				sucessors.append(self.tasks.index(consumer))
+			for successor in successors:
+				sucessors_list.append(self.tasks.index(successor))
 
-			dep_list.append(sucessors)
-			dep_list_len += len(sucessors)
-			if len(sucessors) == 0:
+			dep_list.append(sucessors_list)
+			dep_list_len += len(sucessors_list)
+			if len(sucessors_list) == 0:
 				dep_list_len += 1
 
 		return dep_list, dep_list_len

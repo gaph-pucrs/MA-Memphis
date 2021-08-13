@@ -1,35 +1,35 @@
-communication:
+ctg:
   LAB1:
-    consumers:
+    successors:
       - "DLAB"
   LAB2:
-    consumers:
+    successors:
       - "DLAB"
   p1:
-    consumers:
+    successors:
       - "RMS"
       - "WRMS"
       - "GFC"
       - "XYZ1"
   p2:
-    consumers:
+    successors:
       - "RMS"
       - "WRMS"
       - "GFC"
       - "XYZ2"
   RGB1:
-    consumers:
+    successors:
       - "DRGB"
   RGB2:
-    consumers:
+    successors:
       - "DRGB"
   XYZ1:
-    consumers:
+    successors:
       - "LAB1"
       - "DXYZ"
       - "RGB1"
   XYZ2:
-    consumers:
+    successors:
       - "LAB2"
       - "DXYZ"
       - "RGB2"

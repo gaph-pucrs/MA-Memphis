@@ -73,18 +73,18 @@ int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *win
 			/* 2nd: Keep tasks from the same app apart */
 			c += pe->pending_map_cnt << 1;
 
-			/* 3rd: Add a cost for each hop in consumer tasks */
+			/* 3rd: Add a cost for each hop in successor tasks */
 			for(int t = 0; t < task->succ_cnt; t++){
-				task_t *consumer = task->consumers[t];
-				if(consumer->proc_idx != -1)	/* Manhattan distance from mapped consumers */
-					c += map_manhattan_distance(x << 8 | y, processors[consumer->proc_idx].addr);
+				task_t *successor = task->successors[t];
+				if(successor->proc_idx != -1)	/* Manhattan distance from mapped successors */
+					c += map_manhattan_distance(x << 8 | y, processors[successor->proc_idx].addr);
 			}
 
-			/* 4th: Add a cost for each hop in producer tasks */
+			/* 4th: Add a cost for each hop in predecessor tasks */
 			for(int t = 0; t < task->pred_cnt; t++){
-				task_t *producer = task->predecessors[t];
-				if(producer->proc_idx != -1)
-					c += map_manhattan_distance(x << 8 | y, processors[producer->proc_idx].addr);
+				task_t *predecessor = task->predecessors[t];
+				if(predecessor->proc_idx != -1)
+					c += map_manhattan_distance(x << 8 | y, processors[predecessor->proc_idx].addr);
 			}
 
 			if(c == 0){

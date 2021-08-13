@@ -1,13 +1,13 @@
-communication:
+ctg:
   idct:
-    consumers:
+    successors:
       - "print"
   iquant:
-    consumers:
+    successors:
       - "idct"
   ivlc:
-    consumers:
+    successors:
       - "iquant"
   start:
-    consumers:
+    successors:
       - "ivlc"
