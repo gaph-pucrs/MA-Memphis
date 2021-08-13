@@ -158,3 +158,55 @@ Shows a scheduling graph of the selected PE.
 
 Check the [GraphicalDebugger](https://github.com/gaph-pucrs/GraphicalDebugger) repository for more information.
 A [video](https://youtu.be/nvgtvFcCc60) in portuguese is available showing all features of the Debugger.
+
+# Acknowledgements
+
+* MA-Memphis
+```
+Dalzotto, A. E., Ruaro, M., Erthal, L. V., and Moraes, F. G. (2021). Management Application - a New Approach to Control Many-Core Systems. In Proceedings of the Symposium on Integrated Circuits and Systems Design (SBCCI), pages 1-6.
+```
+
+* MA Paradigm
+```
+Ruaro, M., Santana, A., Jantsch, A., and Moraes, F. G. (2021). Modular and Distributed Management of Manycore SoCs. ACM Transactions on Computer Systems (TOCS), 38(1-2):1-16.
+```
+
+* Memphis
+```
+Ruaro, M., Caimi, L. L., Fochi, V., and Moraes, F. G. (2019). Memphis: a framework for heterogeneous many-core SoCs generation and validation. Design Automation for Embedded Systems, 23(3-4):103-122.
+```
+
+* Scheduler
+```
+Ruaro, M., and Moraes, F. G. (2016). Dynamic real-time scheduler for large-scale MPSoCs. In Proceedings of the Great Lakes Symposium on VLSI, pages 341-346.
+```
+
+* DMNI
+```
+Ruaro, M., Lazzarotto, F. B., Marcon, C. A., and Moraes, F. G. (2016). DMNI: A specialized network interface for NoC-based MPSoCs. In Proceedings of the IEEE International Symposium on Circuits and Systems (ISCAS), pages 1202-1205.
+```
+
+* Graphical Debugger
+```
+Ruaro, M., Carara, E. A., and Moraes, F. G. (2014). Tool-set for NoC-based MPSoC debugging—A protocol view perspective. In Proceedings of the IEEE International Symposium on Circuits and Systems (ISCAS), pages 2531-2534.
+```
+
+* Framework
+```
+Castilhos, G., Wachter, E., Madalozzo, G., Erichsen, A., Monteiro, T., and Moraes, F. (2014). A framework for mpsoc generation and distributed applications evaluation. In Proceedings of the International Symposium on Quality Electronic Design (ISQED), pages 408-411.
+```
+
+* HeMPS
+```
+Carara, E. A., De Oliveira, R. P., Calazans, N. L., and Moraes, F. G. (2009). HeMPS-a framework for NoC-based MPSoC generation. In Proceedings of the IEEE International Symposium on Circuits and Systems (ISCAS), pages 1345-1348.
+```
+
+* NoC
+```
+Moraes, F., Calazans, N., Mello, A., Möller, L., and Ost, L. (2004). HERMES: an infrastructure for low area overhead packet-switching networks on chip. Integration, 38(1):69-93.
+```
+
+* Plasma CPU
+```
+Rhoads, S. (2001). Plasma CPU. Source: http://plasmacpu.no-ip.org/author.htm.
+```
