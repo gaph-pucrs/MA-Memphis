@@ -37,7 +37,7 @@ void task_init(task_t *tasks)
 	}
 }
 
-void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt)
+void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx)
 {
 	while(*ordered < *order_idx){
 		task_t *predecessor = order[*ordered];

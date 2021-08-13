@@ -65,9 +65,8 @@ task_t *task_get_free(task_t *tasks);
  * @param order Array of task pointer containing the mapping order
  * @param ordered Pointer to the counter of ordered ctg predecessors
  * @param order_idx Pointer to the counter of tasks in the order array
- * @param task_cnt Total tasks of the app
  */
-void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx, int task_cnt);
+void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx);
 
 /**
  * @brief Verifies if a task is in the order array

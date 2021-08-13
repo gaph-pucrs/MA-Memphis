@@ -46,20 +46,19 @@ void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *comm
 		app->task[i] = task_get_free(tasks);
 
 		app->task[i]->id = id << 8 | i;
-		// Echo("Task ID: "); Echo(itoa(task_id)); Echo("\n");
+		// printf("Task ID: %d\n", app->task[i]->id);
 
 		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE];
-		// Echo("Processor address: "); Echo(itoa(proc_idx));
+		// printf("Processor address: %d\n", proc_idx);
 		if(proc_idx != -1)
 			proc_idx = (proc_idx >> 8) + (proc_idx & 0xFF)*PKG_N_PE_X;
-		// Echo("Processor index: "); Echo(itoa(proc_idx)); Echo("\n");
+		// printf("Processor index: %d\n", proc_idx);
 		app->task[i]->proc_idx = proc_idx;
-		// Echo("Processor index address: "); Echo(itoa(mapper->processors[proc_idx].addr)); Echo("\n");
 
 		app->task[i]->old_proc = -1;
 
 		app->task[i]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
-		// Echo("Task type tag: "); Echo(itoa(app->task[task_id]->type_tag)); Echo("\n");
+		// printf("Task type tag: %d\n", app->task[i]->type_tag);
 
 		app->task[i]->status = BLOCKED;
 	}
@@ -81,10 +80,11 @@ void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *comm
 	}
 
 	// for(int i = 0; i < app->task_cnt; i++){
-	// 	printf("Task %d consumers: ", i);
-	// 	for(int j = 0; j < PKG_MAX_TASKS_APP && app->task[i]->consumers[j] != NULL; j++){
-	// 		printf("%d ", app->task[i]->consumers[j]->id);
+	// 	printf("Task %d successors: ", id << 8 | i);
+	// 	for(int j = 0; j < app->task[i]->succ_cnt; j++){
+	// 		printf("%d ", app->task[i]->successors[j]->id);
 	// 	}
+	// 	puts("\n");
 	// }
 }
 
@@ -114,10 +114,6 @@ void app_get_order(app_t *app, task_t *order[])
 	// for(int i = 0; i < initial_idx; i++)
 	// 	printf("Initial %d: %d\n", i, initials[i]->id);
 
-	/* Solves cyclic dependences */
-	if(initial_idx == 0)
-		initials[initial_idx++] = app->task[0];
-
 	unsigned ordered = 0;
 	unsigned order_idx = 0;
 
@@ -126,6 +122,17 @@ void app_get_order(app_t *app, task_t *order[])
 		order[order_idx++] = initials[i];
 	
 		/* Map all immediate successors of the initial task and keep mapping its sucessors */
-		task_order_successors(order, &ordered, &order_idx, app->task_cnt);
+		task_order_successors(order, &ordered, &order_idx);
+	}
+
+	/* One or more cyclic dependencies */
+	if(order_idx < app->task_cnt){
+		for(int i = 0; i < app->task_cnt; i++){
+			if(!task_is_ordered(app->task[i], order, order_idx)){
+				/* Treat first non-mapped task as initial */
+				order[order_idx++] = app->task[i];
+				task_order_successors(order, &ordered, &order_idx);
+			}
+		}
 	}
 }
