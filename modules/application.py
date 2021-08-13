@@ -99,7 +99,7 @@ class Application:
 					successor = dep_list[t][c] + 1
 					if c == len(dep_list[t]) - 1:
 						successor *= -1	
-					repo.add(successor, "Task {} is predecessor of task {}".format(self.tasks[t], self.tasks[dep_list[t][c]]))
+					repo.add(successor, "Task {} is successor of task {}".format(self.tasks[dep_list[t][c]], self.tasks[t]))
 
 			if len(dep_list[t]) == 0:
 				repo.add(0, "Task {} has no successors".format(self.tasks[t]))
@@ -126,7 +126,7 @@ class Application:
 
 		dep_list_len = 0
 		for task in self.tasks:
-			sucessors_list = []
+			successors_list = []
 
 			successors = {}
 			try:
@@ -135,11 +135,13 @@ class Application:
 				pass
 			
 			for successor in successors:
-				sucessors_list.append(self.tasks.index(successor))
+				successors_list.append(self.tasks.index(successor))
 
-			dep_list.append(sucessors_list)
-			dep_list_len += len(sucessors_list)
-			if len(sucessors_list) == 0:
+			successors_list.sort()
+
+			dep_list.append(successors_list)
+			dep_list_len += len(successors_list)
+			if len(successors_list) == 0:
 				dep_list_len += 1
 
 		return dep_list, dep_list_len
