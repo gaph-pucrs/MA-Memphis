@@ -97,6 +97,18 @@ SC_MODULE(memphis) {
 				PE[j]->data_in[i](data_in[j][i]);
 				PE[j]->rx[i](rx[j][i]);
 				PE[j]->credit_o[i](credit_o[j][i]);
+
+				PE[j]->br_req_in[i](br_req_in[j][i]);
+				PE[j]->br_ack_in[i](br_req_in[j][i]);
+				PE[j]->br_payload_in[i](br_payload_in[j][i]);
+				PE[j]->br_address_in[i](br_address_in[j][i]);
+				PE[j]->br_id_svc_in[i](br_id_svc_in[j][i]);
+
+				PE[j]->br_req_out[i](br_req_out[j][i]);
+				PE[j]->br_ack_out[i](br_req_out[j][i]);
+				PE[j]->br_payload_out[i](br_payload_out[j][i]);
+				PE[j]->br_address_out[i](br_address_out[j][i]);
+				PE[j]->br_id_svc_out[i](br_id_svc_out[j][i]);
 			}
 		}
 
@@ -123,6 +135,35 @@ SC_MODULE(memphis) {
 				sensitive << credit_o[j][i];
 			}
 		}
-	}
-};
 
+		SC_METHOD(br_interconnection);
+		for(int j = 0; j < N_PE; j++){
+			sensitive << br_req_in[i][j];
+			sensitive << br_ack_in[i][j];
+			sensitive << br_payload_in[i][j];
+			sensitive << br_address_in[i][j];
+			sensitive << br_id_svc_in[i][j];
+
+			sensitive << br_req_out[i][j];
+			sensitive << br_ack_out[i][j];
+			sensitive << br_payload_out[i][j];
+			sensitive << br_address_out[i][j];
+			sensitive << br_id_svc_out[i][j];
+		}
+	}
+
+private:
+	sc_signal<bool>		br_req_in[N_PE][NPORT - 1];
+	sc_signal<bool>		br_ack_in[N_PE][NPORT - 1];
+	sc_signal<uint32_t>	br_payload_in[N_PE][NPORT - 1];
+	sc_signal<uint32_t>	br_address_in[N_PE][NPORT - 1];
+	sc_signal<uint8_t>	br_id_svc_in[N_PE][NPORT - 1];
+
+	sc_signal<bool>		br_req_out[N_PE][NPORT - 1];
+	sc_signal<bool>		br_ack_out[N_PE][NPORT - 1];
+	sc_signal<uint32_t>	br_payload_out[N_PE][NPORT - 1];
+	sc_signal<uint32_t>	br_address_out[N_PE][NPORT - 1];
+	sc_signal<uint8_t>	br_id_svc_out[N_PE][NPORT - 1];
+
+	void br_interconnection();
+};
