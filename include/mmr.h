@@ -12,6 +12,9 @@
 #define MMR_DMNI_READ  0
 #define MMR_DMNI_WRITE 1
 
+#define MMR_BR_SVC_TGT 1
+#define MMR_BR_SVC_ALL 2
+
 #define MMR_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
 #define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000001U)	//!< Read/Write data from/to UART
 #define MMR_IRQ_MASK 				(*(volatile unsigned int*)0x20000010U)	//!< NoC interrupt mask
@@ -34,3 +37,8 @@
 #define MMR_SLACK_TIME_MONITOR 		(*(volatile unsigned int*)0x20000370U)
 #define MMR_PENDING_SERVICE_INTR	(*(volatile unsigned int*)0x20000400U)	//!< Signals there is a service pending
 #define MMR_MEM_REG_PERIPHERALS     (*(volatile unsigned int*)0x20000500U)
+#define MMR_BR_LOCAL_BUSY     		(*(volatile unsigned int*)0x20000600U)
+#define MMR_BR_PAYLOAD     			(*(volatile unsigned int*)0x20000601U)
+#define MMR_BR_TARGET     			(*(volatile unsigned int*)0x20000602U)
+#define MMR_BR_SERVICE     			(*(volatile unsigned int*)0x20000604U)
+#define MMR_BR_START     			(*(volatile unsigned int*)0x20000608U)

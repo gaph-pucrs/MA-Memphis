@@ -9,6 +9,8 @@
 #include "router_cc.h"
 #include "ram.h"
 #include "BrLiteRouter.hpp"
+#include "BrLiteBuffer.hpp"
+#include "BrLiteControl.hpp"
 
 SC_MODULE(pe) {
 	
@@ -113,6 +115,8 @@ SC_MODULE(pe) {
 	dmni 		*	dm_ni;
 	router_cc 	*	router;
 	BrLiteRouter	br_router;
+	BrLiteBuffer	br_buffer;
+	BrLiteControl	br_control;
 
 	unsigned long int log_interaction;
 	unsigned long int instant_instructions;
@@ -149,9 +153,11 @@ SC_MODULE(pe) {
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00, std::string path_ = "") : 
 		sc_module(name_), 
-		br_router("brrouter", address_), 
+		br_router("brrouter", address_),
+		br_buffer("brbuffer"),
+		br_control("brcontrol", address_),
 		router_address(address_), 
-		path(path_) 
+		path(path_)
 	{
 		mem_peripheral.write(0);
 		end_sim_reg.write(0x00000001);
@@ -279,6 +285,30 @@ SC_MODULE(pe) {
 		br_router.id_svc_out[LOCAL](br_id_svc_out_local);
 
 		br_router.local_busy(br_local_busy);
+
+		br_buffer.clock(clock);
+		br_buffer.reset(reset);
+
+		br_buffer.req_in(br_req_out_local);
+		br_buffer.ack_out(br_ack_in_local);
+		br_buffer.payload_in(br_payload_out_local);
+		br_buffer.address_in(br_address_out_local);
+		br_buffer.id_svc_in(br_id_svc_out_local);
+
+		br_control.clock(clock);
+		br_control.reset(reset);
+
+		br_control.payload_cfg(br_payload_cfg);
+		br_control.address_cfg(br_address_cfg);
+		br_control.id_svc_cfg(br_id_svc_cfg);
+		br_control.start_cfg(br_start_cfg);
+		br_control.data_in(br_data_sig);
+
+		br_control.payload_out(br_cfg_payload_out);
+		br_control.address_out(br_cfg_address_out);
+		br_control.id_svc_out(br_cfg_id_svc_out);
+		br_control.req_out(br_cfg_req_out);
+		br_control.ack_in(br_cfg_ack_in);
 	
 		SC_METHOD(reset_n_attr);
 		sensitive << reset;
@@ -297,6 +327,7 @@ SC_MODULE(pe) {
 		sensitive << cpu_set_op << cpu_set_size << cpu_set_address << cpu_set_address_2 << cpu_set_size_2 << dmni_enable_internal_ram;
 		sensitive << mem_data_read << cpu_enable_ram << cpu_mem_write_byte_enable_reg << dmni_mem_write_byte_enable;
 		sensitive << dmni_mem_data_write << ni_intr << slack_update_timer;
+		sensitive << br_ack_out_local << br_cfg_payload_out << br_cfg_address_out << br_cfg_id_svc_out << br_cfg_req_out;
 		
 		SC_METHOD(mem_mapped_registers);
 		sensitive << cpu_mem_address_reg;
@@ -304,6 +335,8 @@ SC_MODULE(pe) {
 		sensitive << data_read_ram;
 		sensitive << time_slice;
 		sensitive << irq_status;
+		sensitive << mem_peripheral;
+		sensitive << br_local_busy;
 		
 		SC_METHOD(end_of_simulation);
 		sensitive << end_sim_reg;
@@ -339,6 +372,20 @@ private:
 	sc_signal<uint8_t>		br_id_svc_out_local;
 
 	sc_signal<bool>			br_local_busy;
+
+	sc_signal<bool>			br_payload_cfg;
+	sc_signal<bool>			br_address_cfg;
+	sc_signal<bool>			br_id_svc_cfg;
+	sc_signal<bool>			br_start_cfg;
+	sc_signal<uint32_t>		br_data_sig;
+
+	sc_signal<uint32_t>		br_cfg_payload_out;
+	sc_signal<uint32_t>		br_cfg_address_out;
+	sc_signal<uint8_t>		br_cfg_id_svc_out;
+	sc_signal<bool>			br_cfg_req_out;
+	sc_signal<bool>			br_cfg_ack_in;
+
+	void br_local_ack();
 };
 
 

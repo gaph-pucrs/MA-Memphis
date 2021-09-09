@@ -43,6 +43,9 @@ void pe::mem_mapped_registers(){
 		case MEM_REG_PERIPHERALS:
 			cpu_mem_data_read.write(mem_peripheral.read());
 			break;
+		case BR_LOCAL_BUSY:
+			cpu_mem_data_read.write(br_local_busy.read());
+			break;
 		default:
 			cpu_mem_data_read.write(data_read_ram.read());
 		break;
@@ -84,6 +87,17 @@ void pe::comb_assignments(){
 	cpu_enable_ram.write(((cpu_mem_address.read()(30,28 ) == 0)) ? 1  : 0 );
 	dmni_enable_internal_ram.write(1);
 	end_sim_reg.write((((cpu_mem_address_reg.read() == END_SIM) && (write_enable.read() == 1))) ? 0x00000000 : 0x00000001);	
+	br_payload_cfg = cpu_mem_address_reg.read() == BR_PAYLOAD && write_enable;
+	br_address_cfg = cpu_mem_address_reg.read() == BR_TARGET && write_enable;
+	br_id_svc_cfg = cpu_mem_address_reg.read() == BR_SERVICE && write_enable;
+	br_start_cfg = cpu_mem_address_reg.read() == BR_START && write_enable;
+	br_data_sig = cpu_mem_data_write_reg.read();
+
+	br_payload_in_local = br_cfg_payload_out;
+	br_address_in_local = br_cfg_address_out;
+	br_id_svc_in_local = br_cfg_id_svc_out;
+	br_req_in_local = br_cfg_req_out;
+	br_cfg_ack_in = br_ack_out_local;
 
 	l_irq_status[7] = 0; //unused
 	l_irq_status[6] = 0; //unused
