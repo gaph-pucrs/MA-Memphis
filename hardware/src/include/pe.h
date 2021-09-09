@@ -8,6 +8,7 @@
 #include "dmni.h"
 #include "router_cc.h"
 #include "ram.h"
+#include "BrLiteRouter.hpp"
 
 SC_MODULE(pe) {
 	
@@ -22,6 +23,18 @@ SC_MODULE(pe) {
 	sc_in<bool > 		rx[NPORT-1];
 	sc_in<regflit >		data_in[NPORT-1];
 	sc_out<bool >		credit_o[NPORT-1];
+
+	sc_in<bool>			br_req_in[NPORT - 1];
+	sc_in<bool>			br_ack_in[NPORT - 1];
+	sc_in<uint32_t>		br_payload_in[NPORT - 1];
+	sc_in<uint32_t>		br_address_in[NPORT - 1];
+	sc_in<uint8_t>		br_id_svc_in[NPORT - 1];
+
+	sc_out<bool>		br_req_out[NPORT - 1];
+	sc_out<bool>		br_ack_out[NPORT - 1];
+	sc_out<uint32_t>	br_payload_out[NPORT - 1];
+	sc_out<uint32_t>	br_address_out[NPORT - 1];
+	sc_out<uint8_t>		br_id_svc_out[NPORT - 1];
 	
 	sc_signal < bool > 	clock_hold;
   	sc_signal < bool >  credit_signal[NPORT - 1];
@@ -99,7 +112,7 @@ SC_MODULE(pe) {
 	ram			* 	mem;
 	dmni 		*	dm_ni;
 	router_cc 	*	router;
-
+	BrLiteRouter	br_router;
 
 	unsigned long int log_interaction;
 	unsigned long int instant_instructions;
@@ -134,7 +147,12 @@ SC_MODULE(pe) {
 	void update_credit();
 	
 	SC_HAS_PROCESS(pe);
-	pe(sc_module_name name_, regaddress address_ = 0x00, std::string path_ = "") : sc_module(name_), router_address(address_), path(path_) {
+	pe(sc_module_name name_, regaddress address_ = 0x00, std::string path_ = "") : 
+		sc_module(name_), 
+		br_router("brrouter", address_), 
+		router_address(address_), 
+		path(path_) 
+	{
 		mem_peripheral.write(0);
 		end_sim_reg.write(0x00000001);
 
@@ -230,7 +248,38 @@ SC_MODULE(pe) {
 		router->data_in[SOUTH](data_in[SOUTH]);
 		router->data_in[LOCAL](data_out_ni);
 		router->tick_counter(tick_counter);
+
+		br_router.clock(clock);
+		br_router.reset(reset);
 		
+		for(int i = 0; i < NPORT - 1; i++){
+			br_router.req_in[i](br_req_in[i]);
+			br_router.ack_in[i](br_ack_in[i]);
+			br_router.payload_in[i](br_payload_in[i]);
+			br_router.address_in[i](br_address_in[i]);
+			br_router.id_svc_in[i](br_id_svc_in[i]);
+
+			br_router.req_out[i](br_req_out[i]);
+			br_router.ack_out[i](br_ack_out[i]);
+			br_router.payload_out[i](br_payload_out[i]);
+			br_router.address_out[i](br_address_out[i]);
+			br_router.id_svc_out[i](br_id_svc_out[i]);
+		}
+
+		br_router.req_in[LOCAL](br_req_in_local);
+		br_router.ack_in[LOCAL](br_ack_in_local);
+		br_router.payload_in[LOCAL](br_payload_in_local);
+		br_router.address_in[LOCAL](br_address_in_local);
+		br_router.id_svc_in[LOCAL](br_id_svc_in_local);
+
+		br_router.req_out[LOCAL](br_req_out_local);
+		br_router.ack_out[LOCAL](br_ack_out_local);
+		br_router.payload_out[LOCAL](br_payload_out_local);
+		br_router.address_out[LOCAL](br_address_out_local);
+		br_router.id_svc_out[LOCAL](br_id_svc_out_local);
+
+		br_router.local_busy(br_local_busy);
+	
 		SC_METHOD(reset_n_attr);
 		sensitive << reset;
 		
@@ -276,6 +325,20 @@ private:
 
 	regaddress router_address;
 	std::string path;
+
+	sc_signal<bool>			br_req_in_local;
+	sc_signal<bool>			br_ack_in_local;
+	sc_signal<uint32_t>		br_payload_in_local;
+	sc_signal<uint32_t>		br_address_in_local;
+	sc_signal<uint8_t>		br_id_svc_in_local;
+
+	sc_signal<bool>			br_req_out_local;
+	sc_signal<bool>			br_ack_out_local;
+	sc_signal<uint32_t>		br_payload_out_local;
+	sc_signal<uint32_t>		br_address_out_local;
+	sc_signal<uint8_t>		br_id_svc_out_local;
+
+	sc_signal<bool>			br_local_busy;
 };
 
 
