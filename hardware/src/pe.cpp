@@ -44,7 +44,13 @@ void pe::mem_mapped_registers(){
 			cpu_mem_data_read.write(mem_peripheral.read());
 			break;
 		case BR_LOCAL_BUSY:
-			cpu_mem_data_read.write(br_local_busy.read());
+			cpu_mem_data_read.write(br_local_busy.read() || br_cfg_req_out.read());
+			break;
+		case BR_READ_PAYLOAD:
+			cpu_mem_data_read.write(br_buf_payload_out.read());
+			break;
+		case BR_HAS_MESSAGE:
+			cpu_mem_data_read.write(!br_buf_empty.read());
 			break;
 		default:
 			cpu_mem_data_read.write(data_read_ram.read());
@@ -92,6 +98,7 @@ void pe::comb_assignments(){
 	br_id_svc_cfg = cpu_mem_address_reg.read() == BR_SERVICE && write_enable;
 	br_start_cfg = cpu_mem_address_reg.read() == BR_START && write_enable;
 	br_data_sig = cpu_mem_data_write_reg.read();
+	br_buf_read_in = cpu_mem_address_reg.read() == BR_READ_PAYLOAD;
 
 	br_payload_in_local = br_cfg_payload_out;
 	br_address_in_local = br_cfg_address_out;

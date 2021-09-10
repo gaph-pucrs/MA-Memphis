@@ -247,22 +247,22 @@ void BrLiteRouter::output()
 		}
 		case OUT_SEND_LOCAL:
 		{
-			if(ack_in[LOCAL]){
-				uint16_t source = SOURCE(table[selected_line].address);
-				uint8_t src_x = source >> 8;
-				uint8_t src_y = source & 0xFF;
-				uint16_t target = TARGET(table[selected_line].address);
-				uint8_t tgt_x = target >> 8;
-				uint8_t tgt_y = target & 0xFF;
-				uint8_t svc = table[selected_line].id_svc & 0x3;
-				std::cout << ">>>>>>>>>>>>>>>>> SEND LOCAL: [[" << 
-					(int)src_x << " " << (int)src_y << " " <<
-					(int)tgt_x << " " << (int)tgt_y << "]] " << 
-					(int)svc << " " <<
-					table[selected_line].payload << " " <<
-					"Address: " << (int)router_address << 
-					std::endl;
-			}
+			// if(ack_in[LOCAL]){
+			// 	uint16_t source = SOURCE(table[selected_line].address);
+			// 	uint8_t src_x = source >> 8;
+			// 	uint8_t src_y = source & 0xFF;
+			// 	uint16_t target = TARGET(table[selected_line].address);
+			// 	uint8_t tgt_x = target >> 8;
+			// 	uint8_t tgt_y = target & 0xFF;
+			// 	uint8_t svc = table[selected_line].id_svc & 0x3;
+			// 	std::cout << ">>>>>>>>>>>>>>>>> SEND LOCAL: [[" << 
+			// 		(int)src_x << " " << (int)src_y << " " <<
+			// 		(int)tgt_x << " " << (int)tgt_y << "]] " << 
+			// 		(int)svc << " " <<
+			// 		table[selected_line].payload << " " <<
+			// 		"Address: " << (int)router_address << 
+			// 		std::endl;
+			// }
 
 			if(ack_in[LOCAL]){
 				// std::cout << "Out PE " << (int)(router_address >> 4) << "x" << (int)(router_address & 0xF) << ": local acked" << std::endl;
@@ -308,22 +308,22 @@ void BrLiteRouter::output()
 		}
 		case OUT_CLEAR_TABLE:
 		{
-			uint16_t target = TARGET(table[selected_line].address);
-			if(target == router_address){
-				uint16_t source = SOURCE(table[selected_line].address);
-				uint8_t src_x = source >> 8;
-				uint8_t src_y = source & 0xFF;
-				uint8_t tgt_x = target >> 8;
-				uint8_t tgt_y = target & 0xFF;
-				uint8_t svc = table[selected_line].id_svc & 0x3;
+			// uint16_t target = TARGET(table[selected_line].address);
+			// if(target == router_address){
+			// 	uint16_t source = SOURCE(table[selected_line].address);
+			// 	uint8_t src_x = source >> 8;
+			// 	uint8_t src_y = source & 0xFF;
+			// 	uint8_t tgt_x = target >> 8;
+			// 	uint8_t tgt_y = target & 0xFF;
+			// 	uint8_t svc = table[selected_line].id_svc & 0x3;
 
-				std::cout << ">>>>>>>>>>>>>>>>> end CLEAR:  [[" << 
-					(int)src_x << " " << (int)src_y << " " <<
-					(int)tgt_x << " " << (int)tgt_y << "]] " << 
-					(int)svc << " " <<
-					table[selected_line].payload <<
-					std::endl;
-			}
+			// 	std::cout << ">>>>>>>>>>>>>>>>> end CLEAR:  [[" << 
+			// 		(int)src_x << " " << (int)src_y << " " <<
+			// 		(int)tgt_x << " " << (int)tgt_y << "]] " << 
+			// 		(int)svc << " " <<
+			// 		table[selected_line].payload <<
+			// 		std::endl;
+			// }
 
 			// std::cout << "Out PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": cleared" << std::endl;
 

@@ -19,7 +19,6 @@ BrLiteControl::BrLiteControl(sc_module_name _name, uint16_t _address):
 	sensitive << ack_in;
 }
 
-
 void BrLiteControl::config()
 {
 	if(reset){

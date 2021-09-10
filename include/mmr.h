@@ -42,3 +42,5 @@
 #define MMR_BR_TARGET     			(*(volatile unsigned int*)0x20000602U)
 #define MMR_BR_SERVICE     			(*(volatile unsigned int*)0x20000604U)
 #define MMR_BR_START     			(*(volatile unsigned int*)0x20000608U)
+#define MMR_BR_HAS_MESSAGE			(*(volatile unsigned int*)0x20000610U)
+#define MMR_BR_READ_PAYLOAD			(*(volatile unsigned int*)0x20000620U)

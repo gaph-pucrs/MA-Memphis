@@ -295,6 +295,10 @@ SC_MODULE(pe) {
 		br_buffer.address_in(br_address_out_local);
 		br_buffer.id_svc_in(br_id_svc_out_local);
 
+		br_buffer.empty(br_buf_empty);
+		br_buffer.read_in(br_buf_read_in);
+		br_buffer.payload_out(br_buf_payload_out);
+
 		br_control.clock(clock);
 		br_control.reset(reset);
 
@@ -337,6 +341,9 @@ SC_MODULE(pe) {
 		sensitive << irq_status;
 		sensitive << mem_peripheral;
 		sensitive << br_local_busy;
+		sensitive << br_cfg_req_out;
+		sensitive << br_buf_payload_out;
+		sensitive << br_buf_empty;
 		
 		SC_METHOD(end_of_simulation);
 		sensitive << end_sim_reg;
@@ -384,6 +391,10 @@ private:
 	sc_signal<uint8_t>		br_cfg_id_svc_out;
 	sc_signal<bool>			br_cfg_req_out;
 	sc_signal<bool>			br_cfg_ack_in;
+
+	sc_signal<bool>			br_buf_empty;
+	sc_signal<bool>			br_buf_read_in;
+	sc_signal<uint32_t>		br_buf_payload_out;
 
 	void br_local_ack();
 };
