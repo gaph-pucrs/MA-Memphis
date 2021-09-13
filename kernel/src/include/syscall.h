@@ -14,6 +14,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
  * @brief Syscall function call. It choses a service and pass the right arguments
@@ -120,6 +121,40 @@ int os_get_location();
  */
 int os_get_id();
 
+/**
+ * @brief Put a char to debug 'UART'
+ * 
+ * @param c Character to put
+ * 
+ * @return 0
+ */
 int os_putc(char c);
 
+/**
+ * @brief Put a string to debug 'UART'
+ * 
+ * @param str Pointer to string
+ * 
+ * @return 0
+ */
 int os_puts(char *str);
+
+/**
+ * @brief Sends a message via broadcast
+ * 
+ * @param payload Message to send
+ * @param target PE address to send the message to
+ * @param service Broadcast service (ALL/TARGET)
+ * 
+ * @return 0 if BrNoC is busy. 1 if success.
+ */
+int os_br_send(uint32_t payload, uint16_t target, uint8_t service);
+
+/**
+ * @brief Receives a message from the BrNoC
+ * 
+ * @param payload Pointer to task variable to store the message
+ * 
+ * @return 0 if no message available. 1 if message received.
+ */
+int os_br_receive(uint32_t *payload);
