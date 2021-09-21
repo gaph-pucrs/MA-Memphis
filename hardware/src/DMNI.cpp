@@ -1,20 +1,54 @@
-//------------------------------------------------------------------------------------------------
-//
-//  MEMPHIS  - version 6.0
-//
-//  Research group: GAPH-PUCRS    -    contact   fernando.moraes@pucrs.br
-//
-//  Distribution:  September 2015
-//
-//  Source name:  dmni.cpp
-//
-//  Brief description:  Implements a DMA and NI module.
-//
-//------------------------------------------------------------------------------------------------
+/**
+ * MA-Memphis
+ * @file DMNI.hpp
+ * 
+ * @author Unknown
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date September 2013
+ * 
+ * @brief Implements a DMA and NI module.
+ */
 
-#include "dmni.h"
+#include "DMNI.hpp"
 
-void dmni::arbiter(){
+DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
+	sc_module(name_), 
+	address_router(address_router_)
+{
+
+	SC_METHOD(arbiter);
+	sensitive << clock.pos();
+	sensitive << reset;
+
+	SC_METHOD(config);
+	sensitive << clock.pos();
+
+	SC_METHOD(receive);
+	sensitive << clock.pos();
+	sensitive << reset;
+
+	SC_METHOD(send);
+	sensitive << clock.pos();
+	sensitive << reset;
+
+	SC_METHOD(buffer_control);
+	sensitive << add_buffer;
+	sensitive << first;
+	sensitive << last;
+
+	SC_METHOD(credit_o_update);
+	sensitive << slot_available;
+
+	SC_METHOD(mem_address_update);
+	sensitive << read_enable;
+	sensitive << write_enable;
+	sensitive << recv_address;
+	sensitive << send_address;
+}
+
+void DMNI::arbiter(){
 	if (reset.read() == 1){
 		write_enable.write(0);
 		read_enable.write(0);
@@ -74,7 +108,7 @@ void dmni::arbiter(){
 	}
 }
 
-void dmni::config(){
+void DMNI::config(){
 
 	if (set_address.read() == 1){
 		address.write(config_data.read());
@@ -92,7 +126,7 @@ void dmni::config(){
 
 }
 
-void dmni::mem_address_update(){
+void DMNI::mem_address_update(){
 	if (read_enable.read() == 1){
 		mem_address.write(send_address.read());
 	} else {
@@ -100,11 +134,11 @@ void dmni::mem_address_update(){
 	}
 }
 
-void dmni::credit_o_update() {
+void DMNI::credit_o_update() {
 	credit_o.write(slot_available.read());
 }
 
-void dmni::buffer_control(){
+void DMNI::buffer_control(){
 
 	//Buffer full
 	if ( ( first.read() == last.read() ) && add_buffer.read() == 1){
@@ -121,7 +155,7 @@ void dmni::buffer_control(){
 	}
 }
 
-void dmni::receive(){
+void DMNI::receive(){
 
 	sc_uint<4> intr_counter_temp;
 
@@ -235,7 +269,7 @@ void dmni::receive(){
 }
 
 
-void dmni::send(){
+void DMNI::send(){
 
 	if (reset.read() == 1){
 		DMNI_Send.write(WAIT);

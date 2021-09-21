@@ -5,7 +5,7 @@
 #include <systemc.h>
 #include "standards.h"
 #include "mlite_cpu.h"
-#include "dmni.h"
+#include "DMNI.hpp"
 #include "router_cc.h"
 #include "ram.h"
 #include "BrLiteRouter.hpp"
@@ -112,7 +112,7 @@ SC_MODULE(pe) {
 
 	mlite_cpu	*	cpu;
 	ram			* 	mem;
-	dmni 		*	dm_ni;
+	DMNI 			dmni;
 	router_cc 	*	router;
 	BrLiteRouter	br_router;
 	BrLiteBuffer	br_buffer;
@@ -153,6 +153,7 @@ SC_MODULE(pe) {
 	SC_HAS_PROCESS(pe);
 	pe(sc_module_name name_, regaddress address_ = 0x00, std::string path_ = "") : 
 		sc_module(name_), 
+		dmni("dmni", address_),
 		br_router("brrouter", address_),
 		br_buffer("brbuffer"),
 		br_control("brcontrol", address_),
@@ -188,33 +189,32 @@ SC_MODULE(pe) {
 		mem->data_write_b(dmni_mem_data_write);
 		mem->data_read_b(mem_data_read);
 
-		dm_ni = new dmni("dmni", router_address);
-		dm_ni->clock(clock);
-		dm_ni->reset(reset);
+		dmni.clock(clock);
+		dmni.reset(reset);
 
-		dm_ni->set_address(cpu_set_address);
-		dm_ni->set_address_2(cpu_set_address_2);
-		dm_ni->set_size(cpu_set_size);
-		dm_ni->set_size_2(cpu_set_size_2);
-		dm_ni->set_op(cpu_set_op);
-		dm_ni->start(cpu_start);
+		dmni.set_address(cpu_set_address);
+		dmni.set_address_2(cpu_set_address_2);
+		dmni.set_size(cpu_set_size);
+		dmni.set_size_2(cpu_set_size_2);
+		dmni.set_op(cpu_set_op);
+		dmni.start(cpu_start);
 
-		dm_ni->config_data(dmni_data_read);
-		dm_ni->intr(ni_intr);
-		dm_ni->send_active(dmni_send_active_sig);
-		dm_ni->receive_active(dmni_receive_active_sig);
+		dmni.config_data(dmni_data_read);
+		dmni.intr(ni_intr);
+		dmni.send_active(dmni_send_active_sig);
+		dmni.receive_active(dmni_receive_active_sig);
 
-		dm_ni->mem_address(dmni_mem_address);
-		dm_ni->mem_data_write(dmni_mem_data_write);
-		dm_ni->mem_data_read(dmni_mem_data_read);
-		dm_ni->mem_byte_we(dmni_mem_write_byte_enable);
+		dmni.mem_address(dmni_mem_address);
+		dmni.mem_data_write(dmni_mem_data_write);
+		dmni.mem_data_read(dmni_mem_data_read);
+		dmni.mem_byte_we(dmni_mem_write_byte_enable);
 
-		dm_ni->tx(tx_ni);
-		dm_ni->data_out(data_out_ni);
-		dm_ni->credit_i(credit_i_ni);
-		dm_ni->rx(rx_ni);
-		dm_ni->data_in(data_in_ni);
-		dm_ni->credit_o(credit_o_ni);
+		dmni.tx(tx_ni);
+		dmni.data_out(data_out_ni);
+		dmni.credit_i(credit_i_ni);
+		dmni.rx(rx_ni);
+		dmni.data_in(data_in_ni);
+		dmni.credit_o(credit_o_ni);
 
 		router = new router_cc("router",router_address, path);
 		router->clock(clock);
