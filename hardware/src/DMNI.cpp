@@ -49,60 +49,60 @@ DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
 }
 
 void DMNI::arbiter(){
-	if (reset.read() == 1){
-		write_enable.write(0);
-		read_enable.write(0);
-		timer.write(0);
-		prio.write(0);
-		ARB.write(ROUND);
+	if(reset.read() == 1){
+		write_enable = false;
+		read_enable = false;
+		prio = false;
+		timer = 0;
 
+		ARB = ROUND;
+		return;
+	}
 
-	} else {
-
-		switch (ARB.read()) {
-			case ROUND:
-
-				if (prio.read() == 0){
-					if (DMNI_Receive.read() == COPY_TO_MEM) {
-						ARB.write(RECEIVE);
-						write_enable.write(1);
-					} else if (send_active.read() == 1){
-						ARB.write(SEND);
-						read_enable.write(1);
-					}
-				} else {
-					if (send_active.read() == 1){
-						ARB.write(SEND);
-						read_enable.write(1);
-					} else if (DMNI_Receive.read() == COPY_TO_MEM) {
-						ARB.write(RECEIVE);
-						write_enable.write(1);
-					}
+	switch(ARB){
+		case ROUND:
+		{
+			if(!prio){
+				if (DMNI_Receive.read() == COPY_TO_MEM) {
+					ARB = RECEIVE;
+					write_enable.write(1);
+				} else if (send_active.read() == 1){
+					ARB = SEND;
+					read_enable.write(1);
 				}
+			} else {
+				if (send_active.read() == 1){
+					ARB = SEND;
+					read_enable.write(1);
+				} else if (DMNI_Receive.read() == COPY_TO_MEM) {
+					ARB = RECEIVE;
+					write_enable.write(1);
+				}
+			}
 			break;
-
-			case SEND:
-
-				if (DMNI_Send.read() == END || (timer.read() >= DMNI_TIMER && receive_active.read() == 1)){
-					timer.write(0);
-					ARB.write(ROUND);
-					read_enable.write(0);
-					prio.write(!prio.read());
-				} else {
-					timer.write(timer.read() + 1);
-				}
+		}
+		case SEND:
+		{
+			if (DMNI_Send.read() == END || (timer >= DMNI_TIMER && receive_active.read() == 1)){
+				timer = 0;
+				ARB = ROUND;
+				read_enable.write(0);
+				prio = !prio;
+			} else {
+				timer++;
+			}
 			break;
-
-			case RECEIVE:
-
-				if (DMNI_Receive.read() == END || (timer.read() >= DMNI_TIMER && send_active.read() == 1)){
-					timer.write(0);
-					ARB.write(ROUND);
-					write_enable.write(0);
-					prio.write(!prio.read());
-				} else {
-					timer.write(timer.read() + 1);
-				}
+		}
+		case RECEIVE:
+		{
+			if (DMNI_Receive.read() == END || (timer >= DMNI_TIMER && send_active.read() == 1)){
+				timer = 0;
+				ARB = ROUND;
+				write_enable.write(0);
+				prio = !prio;
+			} else {
+				timer++;
+			}
 			break;
 		}
 	}

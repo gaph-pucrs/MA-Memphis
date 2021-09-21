@@ -62,7 +62,7 @@ private:
 	static const uint8_t BUFFER_SIZE = 16; /* Changing size implies changing the number of bits of first and last */
 	static const uint8_t DMNI_TIMER = 16;
 	static const uint8_t WORD_SIZE = 4;
-	
+
 	enum dmni_state {
 		WAIT, 
 		LOAD, 
@@ -86,7 +86,7 @@ private:
 
 	sc_signal<dmni_state>		DMNI_Send, DMNI_Receive;
 	sc_signal<state_noc>		SR;
-	sc_signal<arbiter_state>	ARB;
+	arbiter_state				ARB;
 
 	sc_signal<sc_uint<32>>	buffer[BUFFER_SIZE];
 	sc_signal<bool >		is_header[BUFFER_SIZE];
@@ -97,7 +97,6 @@ private:
 
 	sc_signal<regflit> 		payload_size;
 
-	sc_signal<sc_uint<5>>	timer;
 	sc_signal<sc_uint<32>> 	address;
 	sc_signal<sc_uint<32>> 	address_2;
 	sc_signal<sc_uint<32>> 	size;
@@ -108,12 +107,14 @@ private:
 	sc_signal<sc_uint<32>>	send_size_2;
 	sc_signal<sc_uint<32>>	recv_address;
 	sc_signal<sc_uint<32>>	recv_size;
-	sc_signal<bool>			prio;
 	sc_signal<bool>			operation;
 	sc_signal<bool>			read_av;
 	sc_signal<bool>			slot_available;
 	sc_signal<bool>			write_enable;
 	sc_signal<bool>			read_enable;
+
+	bool			prio;
+	uint8_t			timer;
 
 	void config();
 	void receive();
