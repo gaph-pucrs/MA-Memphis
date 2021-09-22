@@ -120,33 +120,33 @@ SC_MODULE(test_bench) {
 			// Open a file called aux deferred on append mode
 			fp = fopen (aux, "a");
 			
-			sprintf(aux, "router %d port EAST flits %d ", j, MPSoC-> PE[j]->router->wire_EAST);
+			sprintf(aux, "router %d port EAST flits %d ", j, MPSoC-> pe[j]->router->wire_EAST);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "port WEST flits %d ",MPSoC-> PE[j] ->router->wire_WEST);
+			sprintf(aux, "port WEST flits %d ",MPSoC-> pe[j] ->router->wire_WEST);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "port NORTH flits %d ",MPSoC-> PE[j] ->router->wire_NORTH);
+			sprintf(aux, "port NORTH flits %d ",MPSoC-> pe[j] ->router->wire_NORTH);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "port SOUTH flits %d ",MPSoC-> PE[j] ->router->wire_SOUTH);
+			sprintf(aux, "port SOUTH flits %d ",MPSoC-> pe[j] ->router->wire_SOUTH);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "port LOCAL flits %d ",MPSoC-> PE[j] ->router->wire_LOCAL);
+			sprintf(aux, "port LOCAL flits %d ",MPSoC-> pe[j] ->router->wire_LOCAL);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "TOTAL flits %d ",MPSoC-> PE[j] ->router->total_flits);
+			sprintf(aux, "TOTAL flits %d ",MPSoC-> pe[j] ->router->total_flits);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "NUMBER pck %d ",MPSoC-> PE[j] ->router->mySwitchControl->number_pck);
+			sprintf(aux, "NUMBER pck %d ",MPSoC-> pe[j] ->router->mySwitchControl->number_pck);
 			fprintf(fp,"%s",aux);
 
 
-			sprintf(aux, "fluxo 0 = %d ", MPSoC-> PE[j]  ->router->fluxo_0);
+			sprintf(aux, "fluxo 0 = %d ", MPSoC-> pe[j]  ->router->fluxo_0);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 1 = %d ",MPSoC-> PE[j]->router->fluxo_1);
+			sprintf(aux, "fluxo 1 = %d ",MPSoC-> pe[j]->router->fluxo_1);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 2 =  %d ",MPSoC-> PE[j]->router->fluxo_2);
+			sprintf(aux, "fluxo 2 =  %d ",MPSoC-> pe[j]->router->fluxo_2);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 3 = %d ",MPSoC-> PE[j]->router->fluxo_3);
+			sprintf(aux, "fluxo 3 = %d ",MPSoC-> pe[j]->router->fluxo_3);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 4 = %d ",MPSoC-> PE[j]->router->fluxo_4);
+			sprintf(aux, "fluxo 4 = %d ",MPSoC-> pe[j]->router->fluxo_4);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 5 = %d\n",MPSoC-> PE[j]->router->fluxo_5);
+			sprintf(aux, "fluxo 5 = %d\n",MPSoC-> pe[j]->router->fluxo_5);
 			fprintf(fp,"%s",aux);
 			fclose (fp);
 					
@@ -160,53 +160,53 @@ SC_MODULE(test_bench) {
 			// Open a file called aux deferred on append mode
 			fp = fopen (aux, "a");
 
-			sprintf(aux, "PROC %d Arithmetic_tasks %lu ",j, MPSoC-> PE[j] ->cpu->arith_inst_tasks);
+			sprintf(aux, "PROC %d Arithmetic_tasks %lu ",j, MPSoC-> pe[j] ->cpu->arith_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Load-Store_tasks %lu ", MPSoC-> PE[j] ->cpu->load_inst_tasks);
+			sprintf(aux, "Load-Store_tasks %lu ", MPSoC-> pe[j] ->cpu->load_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Logical_tasks %lu ",MPSoC-> PE[j] ->cpu->logical_inst_tasks);
+			sprintf(aux, "Logical_tasks %lu ",MPSoC-> pe[j] ->cpu->logical_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Move_tasks %lu ",MPSoC-> PE[j] ->cpu->move_inst_tasks);
+			sprintf(aux, "Move_tasks %lu ",MPSoC-> pe[j] ->cpu->move_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Shift_tasks %lu ",MPSoC-> PE[j] ->cpu->shift_inst_tasks);
+			sprintf(aux, "Shift_tasks %lu ",MPSoC-> pe[j] ->cpu->shift_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Jump_tasks %lu ",MPSoC-> PE[j] ->cpu->jump_inst_tasks);
+			sprintf(aux, "Jump_tasks %lu ",MPSoC-> pe[j] ->cpu->jump_inst_tasks);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Branch_tasks %lu ",MPSoC-> PE[j] ->cpu->branch_inst_tasks);
+			sprintf(aux, "Branch_tasks %lu ",MPSoC-> pe[j] ->cpu->branch_inst_tasks);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Nop_tasks %lu ",MPSoC-> PE[j] ->cpu->nop_inst_tasks);
+			sprintf(aux, "Nop_tasks %lu ",MPSoC-> pe[j] ->cpu->nop_inst_tasks);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Mult-Div_tasks %lu ",MPSoC-> PE[j] ->cpu->mult_div_inst_tasks);
+			sprintf(aux, "Mult-Div_tasks %lu ",MPSoC-> pe[j] ->cpu->mult_div_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Other_tasks %lu ",MPSoC-> PE[j] ->cpu->other_inst_tasks);
+			sprintf(aux, "Other_tasks %lu ",MPSoC-> pe[j] ->cpu->other_inst_tasks);
 			fprintf(fp,"%s",aux);
 
-			sprintf(aux, "Arithmetic_kernel %lu ",MPSoC-> PE[j] ->cpu->arith_inst_kernel);
+			sprintf(aux, "Arithmetic_kernel %lu ",MPSoC-> pe[j] ->cpu->arith_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Load-Store_kernel %lu ", MPSoC-> PE[j] ->cpu->load_inst_kernel);
+			sprintf(aux, "Load-Store_kernel %lu ", MPSoC-> pe[j] ->cpu->load_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Logical_kernel %lu ",MPSoC-> PE[j] ->cpu->logical_inst_kernel);
+			sprintf(aux, "Logical_kernel %lu ",MPSoC-> pe[j] ->cpu->logical_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Move_kernel %lu ",MPSoC-> PE[j] ->cpu->move_inst_kernel);
+			sprintf(aux, "Move_kernel %lu ",MPSoC-> pe[j] ->cpu->move_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Shift_kernel %lu ",MPSoC-> PE[j] ->cpu->shift_inst_kernel);
+			sprintf(aux, "Shift_kernel %lu ",MPSoC-> pe[j] ->cpu->shift_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Jump_kernel %lu ",MPSoC-> PE[j] ->cpu->jump_inst_kernel);
+			sprintf(aux, "Jump_kernel %lu ",MPSoC-> pe[j] ->cpu->jump_inst_kernel);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Branch_kernel %lu ",MPSoC-> PE[j] ->cpu->branch_inst_kernel);
+			sprintf(aux, "Branch_kernel %lu ",MPSoC-> pe[j] ->cpu->branch_inst_kernel);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Nop_kernel %lu ",MPSoC-> PE[j] ->cpu->nop_inst_kernel);
+			sprintf(aux, "Nop_kernel %lu ",MPSoC-> pe[j] ->cpu->nop_inst_kernel);
 			fprintf(fp,"%s",aux);				
-			sprintf(aux, "Mult-Div_kernel %lu ",MPSoC-> PE[j] ->cpu->mult_div_inst_kernel);
+			sprintf(aux, "Mult-Div_kernel %lu ",MPSoC-> pe[j] ->cpu->mult_div_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Other_kernel %lu ",MPSoC-> PE[j] ->cpu->other_inst_kernel);
+			sprintf(aux, "Other_kernel %lu ",MPSoC-> pe[j] ->cpu->other_inst_kernel);
 			fprintf(fp,"%s",aux);
 
-			sprintf(aux, "Kernel %lu ",MPSoC-> PE[j] ->cpu->global_inst_kernel);
+			sprintf(aux, "Kernel %lu ",MPSoC-> pe[j] ->cpu->global_inst_kernel);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "Task %lu ",MPSoC-> PE[j] ->cpu->global_inst_tasks);
+			sprintf(aux, "Task %lu ",MPSoC-> pe[j] ->cpu->global_inst_tasks);
 			fprintf(fp,"%s",aux);
-			sprintf(aux, "TOTAL %lu\n",MPSoC-> PE[j] ->cpu->global_inst);
+			sprintf(aux, "TOTAL %lu\n",MPSoC-> pe[j] ->cpu->global_inst);
 			fprintf(fp,"%s",aux);
 			fclose (fp);
 

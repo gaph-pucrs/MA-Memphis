@@ -1,20 +1,227 @@
-//------------------------------------------------------------------------------------------------
-//
-//  DISTRIBUTED MEMPHIS  - version 5.0
-//
-//  Research group: GAPH-PUCRS    -    contact   fernando.moraes@pucrs.br
-//
-//  Distribution:  September 2013
-//
-//  Source name:  plasma_slave.cpp
-//
-//  Brief description:  This source manipulates the memory mapped registers.
-//
-//------------------------------------------------------------------------------------------------
+/**
+ * MA-Memphis
+ * @file PE.hpp
+ * 
+ * @author Unknown
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date September 2013
+ * 
+ * @brief Join all PE modules. Manipulate memory mapped registers.
+ */
 
-#include "pe.h"
+#include "PE.hpp"
 
-void pe::mem_mapped_registers(){
+PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
+	sc_module(name_), 
+	dmni("dmni", address_),
+	br_router("brrouter", address_),
+	br_buffer("brbuffer"),
+	br_control("brcontrol", address_),
+	router_address(address_), 
+	path(path_)
+{
+	mem_peripheral.write(0);
+	end_sim_reg.write(0x00000001);
+
+	shift_mem_page = (unsigned char) (log10(PAGE_SIZE_BYTES)/log10(2));
+
+	cpu = new mlite_cpu("cpu", router_address);
+	cpu->clk(clock_hold);
+	cpu->reset_in(reset);
+	cpu->intr_in(irq);
+	cpu->mem_address(cpu_mem_address);
+	cpu->mem_data_w(cpu_mem_data_write);
+	cpu->mem_data_r(cpu_mem_data_read);
+	cpu->mem_byte_we(cpu_mem_write_byte_enable);
+	cpu->mem_pause(cpu_mem_pause);
+	cpu->current_page(current_page);
+	
+	mem = new ram("ram", (unsigned int) router_address, path);
+	mem->clk(clock);
+	mem->enable_a(cpu_enable_ram);
+	mem->wbe_a(cpu_mem_write_byte_enable);
+	mem->address_a(addr_a);
+	mem->data_write_a(cpu_mem_data_write);
+	mem->data_read_a(data_read_ram);
+	mem->enable_b(dmni_enable_internal_ram);
+	mem->wbe_b(dmni_mem_write_byte_enable);
+	mem->address_b(addr_b);
+	mem->data_write_b(dmni_mem_data_write);
+	mem->data_read_b(mem_data_read);
+
+	dmni.clock(clock);
+	dmni.reset(reset);
+
+	dmni.set_address(cpu_set_address);
+	dmni.set_address_2(cpu_set_address_2);
+	dmni.set_size(cpu_set_size);
+	dmni.set_size_2(cpu_set_size_2);
+	dmni.set_op(cpu_set_op);
+	dmni.start(cpu_start);
+
+	dmni.config_data(dmni_data_read);
+	dmni.intr(ni_intr);
+	dmni.send_active(dmni_send_active_sig);
+	dmni.receive_active(dmni_receive_active_sig);
+
+	dmni.mem_address(dmni_mem_address);
+	dmni.mem_data_write(dmni_mem_data_write);
+	dmni.mem_data_read(dmni_mem_data_read);
+	dmni.mem_byte_we(dmni_mem_write_byte_enable);
+
+	dmni.tx(tx_ni);
+	dmni.data_out(data_out_ni);
+	dmni.credit_i(credit_i_ni);
+	dmni.rx(rx_ni);
+	dmni.data_in(data_in_ni);
+	dmni.credit_o(credit_o_ni);
+
+	router = new router_cc("router",router_address, path);
+	router->clock(clock);
+	router->reset_n(reset_n);
+	router->tx[EAST](tx[EAST]);
+	router->tx[WEST](tx[WEST]);
+	router->tx[NORTH](tx[NORTH]);
+	router->tx[SOUTH](tx[SOUTH]);
+	router->tx[LOCAL](rx_ni);
+	router->credit_o[EAST](credit_signal[EAST]);
+	router->credit_o[WEST](credit_signal[WEST]);
+	router->credit_o[NORTH](credit_signal[NORTH]);
+	router->credit_o[SOUTH](credit_signal[SOUTH]);
+
+	x_address = router_address >> 8;
+	y_address = router_address & 0xFF;
+
+	router->credit_o[LOCAL](credit_i_ni);
+	router->data_out[EAST](data_out[EAST]);
+	router->data_out[WEST](data_out[WEST]);
+	router->data_out[NORTH](data_out[NORTH]);
+	router->data_out[SOUTH](data_out[SOUTH]);
+	router->data_out[LOCAL](data_in_ni);
+	router->rx[EAST](rx[EAST]);
+	router->rx[WEST](rx[WEST]);
+	router->rx[NORTH](rx[NORTH]);
+	router->rx[SOUTH](rx[SOUTH]);
+	router->rx[LOCAL](tx_ni);
+	router->credit_i[EAST](credit_i[EAST]);
+	router->credit_i[WEST](credit_i[WEST]);
+	router->credit_i[NORTH](credit_i[NORTH]);
+	router->credit_i[SOUTH](credit_i[SOUTH]);
+	router->credit_i[LOCAL](credit_o_ni);
+	router->data_in[EAST](data_in[EAST]);
+	router->data_in[WEST](data_in[WEST]);
+	router->data_in[NORTH](data_in[NORTH]);
+	router->data_in[SOUTH](data_in[SOUTH]);
+	router->data_in[LOCAL](data_out_ni);
+	router->tick_counter(tick_counter);
+
+	br_router.clock(clock);
+	br_router.reset(reset);
+	
+	for(int i = 0; i < NPORT - 1; i++){
+		br_router.req_in[i](br_req_in[i]);
+		br_router.ack_in[i](br_ack_in[i]);
+		br_router.payload_in[i](br_payload_in[i]);
+		br_router.address_in[i](br_address_in[i]);
+		br_router.id_svc_in[i](br_id_svc_in[i]);
+
+		br_router.req_out[i](br_req_out[i]);
+		br_router.ack_out[i](br_ack_out[i]);
+		br_router.payload_out[i](br_payload_out[i]);
+		br_router.address_out[i](br_address_out[i]);
+		br_router.id_svc_out[i](br_id_svc_out[i]);
+	}
+
+	br_router.req_in[LOCAL](br_req_in_local);
+	br_router.ack_out[LOCAL](br_ack_out_local);
+	br_router.payload_in[LOCAL](br_payload_in_local);
+	br_router.address_in[LOCAL](br_address_in_local);
+	br_router.id_svc_in[LOCAL](br_id_svc_in_local);
+	br_router.local_busy(br_local_busy);
+
+	br_router.req_out[LOCAL](br_req_out_local);
+	br_router.ack_in[LOCAL](br_ack_in_local);
+	br_router.payload_out[LOCAL](br_payload_out_local);
+	br_router.address_out[LOCAL](br_address_out_local);
+	br_router.id_svc_out[LOCAL](br_id_svc_out_local);
+
+	br_buffer.clock(clock);
+	br_buffer.reset(reset);
+
+	br_buffer.req_in(br_req_out_local);
+	br_buffer.ack_out(br_ack_in_local);
+	br_buffer.payload_in(br_payload_out_local);
+	br_buffer.address_in(br_address_out_local);
+	br_buffer.id_svc_in(br_id_svc_out_local);
+
+	br_buffer.empty(br_buf_empty);
+	br_buffer.read_in(br_buf_read_in);
+	br_buffer.payload_out(br_buf_payload_out);
+
+	br_control.clock(clock);
+	br_control.reset(reset);
+
+	br_control.payload_cfg(br_payload_cfg);
+	br_control.address_cfg(br_address_cfg);
+	br_control.id_svc_cfg(br_id_svc_cfg);
+	br_control.start_cfg(br_start_cfg);
+	br_control.data_in(br_data_sig);
+
+	br_control.payload_out(br_cfg_payload_out);
+	br_control.address_out(br_cfg_address_out);
+	br_control.id_svc_out(br_cfg_id_svc_out);
+	br_control.req_out(br_cfg_req_out);
+	br_control.ack_in(br_cfg_ack_in);
+
+	SC_METHOD(reset_n_attr);
+	sensitive << reset;
+	
+	SC_METHOD(sequential_attr);
+	sensitive << clock.pos() << reset.pos();
+	
+	SC_METHOD(log_process);
+	sensitive << clock.pos() << reset.pos();
+	
+	SC_METHOD(comb_assignments);
+	sensitive << cpu_mem_address << dmni_mem_address << cpu_mem_address_reg << write_enable;
+	sensitive << cpu_mem_data_write_reg << irq_mask_reg << irq_status;
+	sensitive << time_slice << tick_counter_local;
+	sensitive << dmni_send_active_sig << dmni_receive_active_sig << data_read_ram;
+	sensitive << cpu_set_op << cpu_set_size << cpu_set_address << cpu_set_address_2 << cpu_set_size_2 << dmni_enable_internal_ram;
+	sensitive << mem_data_read << cpu_enable_ram << cpu_mem_write_byte_enable_reg << dmni_mem_write_byte_enable;
+	sensitive << dmni_mem_data_write << ni_intr << slack_update_timer;
+	sensitive << br_ack_out_local << br_cfg_payload_out << br_cfg_address_out << br_cfg_id_svc_out << br_cfg_req_out;
+	
+	SC_METHOD(mem_mapped_registers);
+	sensitive << cpu_mem_address_reg;
+	sensitive << tick_counter_local;
+	sensitive << data_read_ram;
+	sensitive << time_slice;
+	sensitive << irq_status;
+	sensitive << mem_peripheral;
+	sensitive << br_local_busy;
+	sensitive << br_cfg_req_out;
+	sensitive << br_buf_payload_out;
+	sensitive << br_buf_empty;
+	
+	SC_METHOD(end_of_simulation);
+	sensitive << end_sim_reg;
+
+	SC_METHOD(clock_stop);
+	sensitive << clock << reset.pos();
+
+	SC_METHOD(update_credit);
+	sensitive << credit_signal[EAST];
+	sensitive << credit_signal[WEST];	
+	sensitive << credit_signal[NORTH];	
+	sensitive << credit_signal[SOUTH];
+	sensitive << mem_peripheral;
+
+}
+
+void PE::mem_mapped_registers(){
 	
 	sc_uint <32 > l_cpu_mem_address_reg = cpu_mem_address_reg.read();
 	
@@ -59,7 +266,7 @@ void pe::mem_mapped_registers(){
 }
 
 
-void pe::comb_assignments(){
+void PE::comb_assignments(){
 	sc_uint<8 > l_irq_status;
 	sc_uint <32 > new_mem_address;
 
@@ -118,11 +325,11 @@ void pe::comb_assignments(){
 	irq_status.write(l_irq_status);
 }
 
-void pe::reset_n_attr(){
+void PE::reset_n_attr(){
 	reset_n.write(!reset.read());
 }
 
-void pe::sequential_attr(){
+void PE::sequential_attr(){
 
 	FILE *fp;
 
@@ -272,7 +479,7 @@ void pe::sequential_attr(){
 	}
 }
 
-void pe::end_of_simulation(){
+void PE::end_of_simulation(){
 	if (end_sim_reg.read() == 0x00000000){
 		cout << "END OF ALL APPLICATIONS!!!" << endl;
 		cout << "Simulation time: " << (float) ((tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
@@ -280,7 +487,7 @@ void pe::end_of_simulation(){
 	}
 }
 
-void pe::log_process(){
+void PE::log_process(){
 	if (reset.read() == 1) {
 		log_interaction=1;
 		instant_instructions = 0;		
@@ -397,7 +604,7 @@ void pe::log_process(){
 }
 
 
-void pe::clock_stop(){
+void PE::clock_stop(){
 
 	if (reset.read() == 1) {
 		tick_counter_local.write(0);
@@ -420,7 +627,7 @@ void pe::clock_stop(){
 
 }
 
-void pe::update_credit()
+void PE::update_credit()
 {
 	int seq_addr = (int)x_address * N_PE_X + (int)y_address;
 

@@ -14,7 +14,7 @@
 
 #include <systemc.h>
 #include "standards.h"
-#include "pe.h"
+#include "PE.hpp"
 
 #define BL 0
 #define BC 1
@@ -61,7 +61,7 @@ SC_MODULE(memphis) {
 	sc_signal<regflit >		data_in[N_PE][NPORT-1];
 	sc_signal<bool >		credit_o[N_PE][NPORT-1];
 		
-	pe  *	PE[N_PE];//store slaves PEs
+	PE  *	pe[N_PE];//store slaves PEs
 	
 	int i,j;
 	
@@ -86,29 +86,29 @@ SC_MODULE(memphis) {
 			sprintf(pe_name, "PE%dx%d", x_addr, y_addr);
 			printf("Creating PE %s\n", pe_name);
 
-			PE[j] = new pe(pe_name, r_addr, path);
-			PE[j]->clock(clock);
-			PE[j]->reset(reset);
+			pe[j] = new PE(pe_name, r_addr, path);
+			pe[j]->clock(clock);
+			pe[j]->reset(reset);
 
 			for (i = 0; i < NPORT - 1; i++) {
-				PE[j]->tx[i](tx[j][i]);
-				PE[j]->data_out[i](data_out[j][i]);
-				PE[j]->credit_i[i](credit_i[j][i]);
-				PE[j]->data_in[i](data_in[j][i]);
-				PE[j]->rx[i](rx[j][i]);
-				PE[j]->credit_o[i](credit_o[j][i]);
+				pe[j]->tx[i](tx[j][i]);
+				pe[j]->data_out[i](data_out[j][i]);
+				pe[j]->credit_i[i](credit_i[j][i]);
+				pe[j]->data_in[i](data_in[j][i]);
+				pe[j]->rx[i](rx[j][i]);
+				pe[j]->credit_o[i](credit_o[j][i]);
 
-				PE[j]->br_req_in[i](br_req_in[j][i]);
-				PE[j]->br_ack_in[i](br_ack_in[j][i]);
-				PE[j]->br_payload_in[i](br_payload_in[j][i]);
-				PE[j]->br_address_in[i](br_address_in[j][i]);
-				PE[j]->br_id_svc_in[i](br_id_svc_in[j][i]);
+				pe[j]->br_req_in[i](br_req_in[j][i]);
+				pe[j]->br_ack_in[i](br_ack_in[j][i]);
+				pe[j]->br_payload_in[i](br_payload_in[j][i]);
+				pe[j]->br_address_in[i](br_address_in[j][i]);
+				pe[j]->br_id_svc_in[i](br_id_svc_in[j][i]);
 
-				PE[j]->br_req_out[i](br_req_out[j][i]);
-				PE[j]->br_ack_out[i](br_ack_out[j][i]);
-				PE[j]->br_payload_out[i](br_payload_out[j][i]);
-				PE[j]->br_address_out[i](br_address_out[j][i]);
-				PE[j]->br_id_svc_out[i](br_id_svc_out[j][i]);
+				pe[j]->br_req_out[i](br_req_out[j][i]);
+				pe[j]->br_ack_out[i](br_ack_out[j][i]);
+				pe[j]->br_payload_out[i](br_payload_out[j][i]);
+				pe[j]->br_address_out[i](br_address_out[j][i]);
+				pe[j]->br_id_svc_out[i](br_id_svc_out[j][i]);
 			}
 		}
 
