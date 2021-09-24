@@ -31,6 +31,7 @@ private:
 
 	buffer_t buffer[BR_BUFFER_SIZE];
 	uint8_t tail;
+	bool full;
 
 	void buffer_in();
 	void data_out();

@@ -23,6 +23,7 @@ void BrLiteBuffer::buffer_in()
 	if(reset){
 		ack_out = false;
 		empty = true;
+		full = false;
 		head = 0;
 		tail = 0;
 		return;
@@ -32,21 +33,21 @@ void BrLiteBuffer::buffer_in()
 	if(read_in && !empty){
 		// cout << "Received READ_IN to head " << (int)head << " with payload " << buffer[head].payload << endl;
 		uint8_t next_head = (head + 1) % BR_BUFFER_SIZE;
-		head = next_head;
-		if(next_head == tail){
+		if(next_head == tail)
 			empty = true;
-		}
-	} else if(req_in && !ack_out){
+		head = next_head;
+		full = false;
+	} else if(req_in && !full && !ack_out){
 		buffer[tail].payload = payload_in;
-		uint8_t next_head = head;
-		if(tail == head && !empty){	/* Allow overwriting */
-			next_head = (head + 1) % BR_BUFFER_SIZE;
-			head = next_head;
-		}
-		tail = (tail + 1) % BR_BUFFER_SIZE;
+
+		uint8_t next_tail = (tail + 1) % BR_BUFFER_SIZE;
+		if(next_tail == head)	
+			full = true;	/* Disallow overwriting */
+		tail = next_tail;
 		empty = false;
+
 		ack_out = true;
-		// cout << "Received payload " << hex << payload_in << " from " << (address_in >> 16) << ". HEAD: " << (int)next_head << " TAIL: " << (int)tail << endl;
+		// cout << "Received payload " << hex << payload_in << " from " << (address_in >> 16) << ". HEAD: " << (int)head << " TAIL: " << (int)tail << endl;
 	} 
 	
 	if(!req_in){
