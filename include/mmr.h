@@ -12,8 +12,13 @@
 #define MMR_DMNI_READ  0
 #define MMR_DMNI_WRITE 1
 
-#define MMR_BR_SVC_TGT 1
-#define MMR_BR_SVC_ALL 2
+#define MMR_BR_SVC_MON_QOS 0
+#define MMR_BR_SVC_MON_PWR 1
+#define MMR_BR_SVC_MON_2 2
+#define MMR_BR_SVC_MON_3 3
+#define MMR_BR_SVC_MON_4 4
+#define MMR_BR_SVC_TGT 5
+#define MMR_BR_SVC_ALL 6
 
 #define MMR_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
 #define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000001U)	//!< Read/Write data from/to UART

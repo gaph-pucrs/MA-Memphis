@@ -154,8 +154,8 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_buffer.clock(clock);
 	br_buffer.reset(reset);
 
-	br_buffer.req_in(br_req_out_local);
-	br_buffer.ack_out(br_ack_in_local);
+	br_buffer.req_in(br_buf_req);
+	br_buffer.ack_out(br_buf_ack);
 	br_buffer.payload_in(br_payload_out_local);
 	br_buffer.address_in(br_address_out_local);
 	br_buffer.id_svc_in(br_id_svc_out_local);
@@ -167,11 +167,11 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_control.clock(clock);
 	br_control.reset(reset);
 
-	br_control.payload_cfg(br_payload_cfg);
-	br_control.address_cfg(br_address_cfg);
-	br_control.id_svc_cfg(br_id_svc_cfg);
-	br_control.start_cfg(br_start_cfg);
-	br_control.data_in(br_data_sig);
+	br_control.payload_cfg(br_cfg_payload);
+	br_control.address_cfg(br_cfg_address);
+	br_control.id_svc_cfg(br_cfg_id_svc);
+	br_control.start_cfg(br_cfg_start);
+	br_control.data_in(br_cfg_data);
 
 	br_control.payload_out(br_cfg_payload_out);
 	br_control.address_out(br_cfg_address_out);
@@ -197,6 +197,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << mem_data_read << cpu_enable_ram << cpu_mem_write_byte_enable_reg << dmni_mem_write_byte_enable;
 	sensitive << dmni_mem_data_write << ni_intr << slack_update_timer;
 	sensitive << br_ack_out_local << br_cfg_payload_out << br_cfg_address_out << br_cfg_id_svc_out << br_cfg_req_out;
+	sensitive << br_req_out_local << br_id_svc_out_local << br_buf_ack;
 	
 	SC_METHOD(mem_mapped_registers);
 	sensitive << cpu_mem_address_reg;
@@ -304,12 +305,16 @@ void PE::comb_assignments(){
 	cpu_enable_ram.write(((cpu_mem_address.read()(30,28 ) == 0)) ? 1  : 0 );
 	dmni_enable_internal_ram.write(1);
 	end_sim_reg.write((((cpu_mem_address_reg.read() == END_SIM) && (write_enable.read() == 1))) ? 0x00000000 : 0x00000001);	
-	br_payload_cfg = cpu_mem_address_reg.read() == BR_PAYLOAD && write_enable;
-	br_address_cfg = cpu_mem_address_reg.read() == BR_TARGET && write_enable;
-	br_id_svc_cfg = cpu_mem_address_reg.read() == BR_SERVICE && write_enable;
-	br_start_cfg = cpu_mem_address_reg.read() == BR_START && write_enable;
-	br_data_sig = cpu_mem_data_write_reg.read();
+	
+	br_cfg_payload = cpu_mem_address_reg.read() == BR_PAYLOAD && write_enable;
+	br_cfg_address = cpu_mem_address_reg.read() == BR_TARGET && write_enable;
+	br_cfg_id_svc = cpu_mem_address_reg.read() == BR_SERVICE && write_enable;
+	br_cfg_start = cpu_mem_address_reg.read() == BR_START && write_enable;
+	br_cfg_data = cpu_mem_data_write_reg.read();
 	br_buf_read_in = cpu_mem_address_reg.read() == BR_READ_PAYLOAD;
+
+	br_buf_req = br_req_out_local && BrLiteRouter::SERVICE(br_id_svc_out_local) >= BrLiteRouter::Service::TARGET;
+	br_ack_in_local = br_buf_ack;
 
 	br_payload_in_local = br_cfg_payload_out;
 	br_address_in_local = br_cfg_address_out;

@@ -162,17 +162,19 @@ private:
 	sc_signal<uint8_t>		br_id_svc_out_local;
 
 	/* BrNoC Output buffer for kernel messages (TGT and ALL) */
-	sc_signal<bool>			br_payload_cfg;
-	sc_signal<bool>			br_address_cfg;
-	sc_signal<bool>			br_id_svc_cfg;
-	sc_signal<bool>			br_start_cfg;
-	sc_signal<uint32_t>		br_data_sig;
-
+	sc_signal<bool>			br_buf_req;
+	sc_signal<bool>			br_buf_ack;
 	sc_signal<bool>			br_buf_empty;
 	sc_signal<bool>			br_buf_read_in;
 	sc_signal<uint32_t>		br_buf_payload_out;
 
 	/* BrNoC Control for sending messages through it */
+	sc_signal<bool>			br_cfg_payload;
+	sc_signal<bool>			br_cfg_address;
+	sc_signal<bool>			br_cfg_id_svc;
+	sc_signal<bool>			br_cfg_start;
+	sc_signal<uint32_t>		br_cfg_data;
+
 	sc_signal<uint32_t>		br_cfg_payload_out;
 	sc_signal<uint32_t>		br_cfg_address_out;
 	sc_signal<uint8_t>		br_cfg_id_svc_out;
