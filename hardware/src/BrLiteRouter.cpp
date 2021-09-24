@@ -94,7 +94,7 @@ void BrLiteRouter::input()
 			}
 
 			Service svc = SERVICE(id_svc_in[selected_port]);
-			if(!is_in_table && (svc == Service::TARGET || svc == Service::ALL)){
+			if(!is_in_table && svc != Service::CLEAR){
 				/* Message not in CAM */
 				bool table_full = true;
 				for(int i = 0; i < CAM_SIZE; i++){
@@ -206,7 +206,7 @@ void BrLiteRouter::output()
 			uint16_t target = TARGET(table[selected_line].address);
 			// std::cout << "Out PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": target is " << (int)target << std::endl;
 
-			if(svc == Service::CLEAR || svc == Service::ALL || (svc == Service::TARGET && target != router_address)){
+			if(svc >= Service::ALL || target != router_address){
 				/* Propagate */
 				for(int i = 0; i < NPORT - 1; i++){
 					if(i != table[selected_line].origin){
@@ -220,7 +220,7 @@ void BrLiteRouter::output()
 				}
 
 				uint16_t source = SOURCE(table[selected_line].address);
-				if((svc == Service::ALL && source != router_address) || (svc == Service::TARGET && target == router_address)){
+				if(svc == Service::ALL && source != router_address){
 					req_out[LOCAL] = true;
 					id_svc_out[LOCAL] = table[selected_line].id_svc;
 					address_out[LOCAL] = table[selected_line].address;
@@ -231,7 +231,7 @@ void BrLiteRouter::output()
 
 				// std::cout << "Out PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": propagated" << std::endl;
 				out_state = OUT_WAIT_ACK_PORTS;
-			} else if(svc == Service::TARGET && target == router_address){
+			} else if(svc <= Service::TARGET && target == router_address){
 				req_out[LOCAL] = true;
 				id_svc_out[LOCAL] = table[selected_line].id_svc;
 				address_out[LOCAL] = table[selected_line].address;
@@ -254,7 +254,7 @@ void BrLiteRouter::output()
 			// 	uint16_t target = TARGET(table[selected_line].address);
 			// 	uint8_t tgt_x = target >> 8;
 			// 	uint8_t tgt_y = target & 0xFF;
-			// 	uint8_t svc = table[selected_line].id_svc & 0x3;
+			// 	uint8_t svc = table[selected_line].id_svc & 0x7;
 			// 	std::cout << ">>>>>>>>>>>>>>>>> SEND LOCAL: [[" << 
 			// 		(int)src_x << " " << (int)src_y << " " <<
 			// 		(int)tgt_x << " " << (int)tgt_y << "]] " << 
@@ -315,7 +315,7 @@ void BrLiteRouter::output()
 			// 	uint8_t src_y = source & 0xFF;
 			// 	uint8_t tgt_x = target >> 8;
 			// 	uint8_t tgt_y = target & 0xFF;
-			// 	uint8_t svc = table[selected_line].id_svc & 0x3;
+			// 	uint8_t svc = table[selected_line].id_svc & 0x7;
 
 			// 	std::cout << ">>>>>>>>>>>>>>>>> end CLEAR:  [[" << 
 			// 		(int)src_x << " " << (int)src_y << " " <<
@@ -357,7 +357,7 @@ void BrLiteRouter::input_output()
 	if(clear_local && in_state == IN_INIT && out_state == OUT_INIT){
 		clear_local = false;
 		local_busy = false;
-		table[wrote_idx].id_svc = (table[wrote_idx].id_svc & 0xFC) | static_cast<uint8_t>(Service::CLEAR);
+		table[wrote_idx].id_svc = (table[wrote_idx].id_svc & 0xF8) | static_cast<uint8_t>(Service::CLEAR);
 		table[wrote_idx].pending = true;
 		// std::cout << "PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": triggering a clear" << std::endl;
 	}
@@ -387,7 +387,7 @@ void BrLiteRouter::input_output()
 		{
 			Service svc = SERVICE(table[source_idx].id_svc);
 			if(svc != Service::CLEAR && !table[source_idx].pending){
-				table[source_idx].id_svc = (table[source_idx].id_svc & 0xFC) | static_cast<uint8_t>(Service::CLEAR);
+				table[source_idx].id_svc = (table[source_idx].id_svc & 0xF8) | static_cast<uint8_t>(Service::CLEAR);
 				table[source_idx].pending = true;
 			}
 			break;

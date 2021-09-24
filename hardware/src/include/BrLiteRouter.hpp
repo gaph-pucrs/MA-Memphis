@@ -21,7 +21,11 @@
 SC_MODULE(BrLiteRouter){
 public:
 	enum class Service : uint8_t {
-		INVALID,
+		MON_QOS,
+		MON_PWR,
+		MON_2,
+		MON_3,
+		MON_4,
 		TARGET,
 		ALL,
 		CLEAR
@@ -39,12 +43,12 @@ public:
 
 	static constexpr uint8_t ID(uint8_t id_svc)
 	{
-		return id_svc >> 2;
+		return id_svc >> 3;
 	}
 
 	static constexpr Service SERVICE(uint8_t id_svc)
 	{
-		return static_cast<Service>(id_svc & 0x3);
+		return static_cast<Service>(id_svc & 0x7);
 	}
 
 	/* Router signals */

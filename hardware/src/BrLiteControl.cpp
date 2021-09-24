@@ -38,8 +38,8 @@ void BrLiteControl::config()
 		// cout << "Address is set to " << hex << address_reg << endl;
 	} else if(id_svc_cfg){
 		uint8_t id_svc = 0;
-		id_svc |= id << 2;
-		id_svc |= (data_in & 0x3);
+		id_svc |= id << 3;
+		id_svc |= (data_in & 0x7);
 		id_svc_out = id_svc;
 		// cout << "ID/Service is set to " << hex << (int)id_svc << endl;
 	} else if(start_cfg){
