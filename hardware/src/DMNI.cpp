@@ -76,7 +76,7 @@ void DMNI::arbiter()
 				case SEND:
 				{
 					if(DMNI_Receive == COPY_TO_MEM){
-					ARB = RECEIVE;
+						ARB = RECEIVE;
 						last_arb = ARB;
 						write_enable = true;
 					} else if(br_req_mon && monitor_ptrs[br_mon_svc] != 0){
@@ -84,10 +84,10 @@ void DMNI::arbiter()
 						last_arb = ARB;
 						br_rcv_enable = true;
 					} else if(send_active){
-					ARB = SEND;
+						ARB = SEND;
 						last_arb = ARB;
 						read_enable = true;
-				}
+					}
 					break;
 				}
 				case RECEIVE:
@@ -97,31 +97,31 @@ void DMNI::arbiter()
 						last_arb = ARB;
 						br_rcv_enable = true;
 					} else if(send_active){
-					ARB = SEND;
+						ARB = SEND;
 						last_arb = ARB;
 						read_enable = true;
 					} else if(DMNI_Receive == COPY_TO_MEM){
-					ARB = RECEIVE;
+						ARB = RECEIVE;
 						last_arb = ARB;
 						write_enable = true;
-				}
+					}
 					break;
 				}
 				case BR_RECEIVE:
 				{
 					if(send_active){
-					ARB = SEND;
+						ARB = SEND;
 						last_arb = ARB;
 						read_enable = true;
 					} else if(DMNI_Receive == COPY_TO_MEM){
-					ARB = RECEIVE;
+						ARB = RECEIVE;
 						last_arb = ARB;
 						write_enable = true;
 					} else if(br_req_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
 						last_arb = ARB;
 						br_rcv_enable = true;
-				}
+					}
 					break;
 				}
 				default:
@@ -189,8 +189,17 @@ void DMNI::config()
 void DMNI::mem_address_update(){
 	if (read_enable.read() == 1){
 		mem_address.write(send_address.read());
-	} else {
+	} else if(write_enable){
 		mem_address.write(recv_address.read());
+		mem_data_write.write(noc_data_write.read());
+		mem_byte_we.write(noc_byte_we.read());
+	} else if(br_rcv_enable){
+		mem_address.write(br_mem_addr.read());
+		mem_data_write.write(0 /* What is coming from BrNoC */);
+		mem_byte_we.write(br_byte_we.read());
+	} else {
+		/* Avoid writing when no operation is occurring */
+		mem_byte_we.write(0);
 	}
 }
 
@@ -288,9 +297,9 @@ void DMNI::receive()
 			case COPY_TO_MEM:
 
 				if (write_enable.read() == 1 && read_av.read() == 1){
-					mem_byte_we.write(0xF);
+					noc_byte_we.write(0xF);
 
-					mem_data_write.write(buffer[first.read()].read());
+					noc_data_write.write(buffer[first.read()].read());
 					first.write(first.read() + 1);
 					add_buffer.write(0);
 					recv_address.write(recv_address.read() + WORD_SIZE);
@@ -300,13 +309,13 @@ void DMNI::receive()
 						DMNI_Receive.write(END);
 					}
 				} else {
-					mem_byte_we.write(0);
+					noc_byte_we.write(0);
 				}
 
 			break;
 			case END:
 				receive_active.write(0);
-				mem_byte_we.write(0);
+				noc_byte_we.write(0);
 				recv_address.write(0);
 				recv_size.write(0);
 				DMNI_Receive.write(WAIT);
