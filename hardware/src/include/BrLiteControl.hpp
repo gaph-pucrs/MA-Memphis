@@ -25,6 +25,7 @@ public:
 private:
 	uint16_t address;
 	uint8_t id;
+	bool start;
 
 	void config();
 

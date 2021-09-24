@@ -24,6 +24,7 @@ void BrLiteControl::config()
 	if(reset){
 		id = 0;
 		req_out = false;
+		start = false;
 		return;
 	}
 
@@ -39,15 +40,21 @@ void BrLiteControl::config()
 	} else if(id_svc_cfg){
 		uint8_t id_svc = 0;
 		id_svc |= id << 3;
+		id = (id + 1) % 0x1F;
 		id_svc |= (data_in & 0x7);
 		id_svc_out = id_svc;
 		// cout << "ID/Service is set to " << hex << (int)id_svc << endl;
 	} else if(start_cfg){
 		// cout << "Starting send BrNoC" << endl;
-		req_out = true;
+		start = true;
 	}
 
-	if(ack_in && ack_in.event()){
+	if(start && !ack_in){
+		req_out = true;
+		start = false;
+	}
+
+	if(ack_in){
 		// cout << "Ending send BrNoC" << endl;
 		req_out = false;
 	}
