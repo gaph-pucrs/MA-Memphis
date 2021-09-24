@@ -11,6 +11,15 @@
 #include <systemc.h>
 #include <math.h>
 
+enum MONITOR_TABLES {
+	MON_TABLE_QOS,
+	MON_TABLE_PWR,
+	MON_TABLE_2,
+	MON_TABLE_3,
+	MON_TABLE_4,
+	MON_TABLE_MAX
+};
+
 #define EAST 	0
 #define WEST 	1
 #define NORTH 	2
@@ -59,12 +68,12 @@
 #define MEM_REG_PERIPHERALS 	0x20000500
 
 #define BR_LOCAL_BUSY			0x20000600
-#define BR_PAYLOAD				0x20000601
-#define BR_TARGET				0x20000602
-#define BR_SERVICE				0x20000604
-#define BR_START				0x20000608
-#define BR_HAS_MESSAGE			0x20000610
-#define BR_READ_PAYLOAD			0x20000620
+#define BR_PAYLOAD				0x20000604
+#define BR_TARGET				0x20000608
+#define BR_SERVICE				0x2000060C
+#define BR_START				0x20000610
+#define BR_HAS_MESSAGE			0x20000614
+#define BR_READ_PAYLOAD			0x20000618
 
 #define SLACK_MONITOR_WINDOW 	50000
 

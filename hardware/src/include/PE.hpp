@@ -179,6 +179,11 @@ private:
 	sc_signal<bool>			br_cfg_req_out;
 	sc_signal<bool>			br_cfg_ack_in;
 
+	/* BrNoC Monitoring via DMNI */
+	sc_signal<bool>			br_dmni_ack;
+	sc_signal<bool>			br_dmni_req;
+	sc_signal<uint8_t>		br_dmni_svc;
+
 	unsigned char shift_mem_page;
 
 	unsigned long int log_interaction;

@@ -78,6 +78,10 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.data_in(data_in_ni);
 	dmni.credit_o(credit_o_ni);
 
+	dmni.br_ack_mon(br_dmni_ack);
+	dmni.br_req_mon(br_dmni_req);
+	dmni.br_mon_svc(br_dmni_svc);
+
 	router = new router_cc("router",router_address, path);
 	router->clock(clock);
 	router->reset_n(reset_n);

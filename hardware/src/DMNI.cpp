@@ -46,13 +46,23 @@ DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
 	sensitive << write_enable;
 	sensitive << recv_address;
 	sensitive << send_address;
+	sensitive << br_rcv_enable;
+	sensitive << br_mem_addr;
+	sensitive << br_byte_we;
+	sensitive << noc_byte_we;
+	sensitive << noc_data_write;
+
+	SC_METHOD(br_receive);
+	sensitive << clock.pos();
+	sensitive << reset;
 }
 
-void DMNI::arbiter(){
+void DMNI::arbiter()
+{
 	if(reset.read() == 1){
 		write_enable = false;
 		read_enable = false;
-		prio = false;
+		last_arb = SEND;
 		timer = 0;
 
 		ARB = ROUND;
@@ -62,32 +72,69 @@ void DMNI::arbiter(){
 	switch(ARB){
 		case ROUND:
 		{
-			if(!prio){
-				if (DMNI_Receive.read() == COPY_TO_MEM) {
+			switch(last_arb){
+				case SEND:
+				{
+					if(DMNI_Receive == COPY_TO_MEM){
 					ARB = RECEIVE;
-					write_enable.write(1);
-				} else if (send_active.read() == 1){
+						last_arb = ARB;
+						write_enable = true;
+					} else if(br_req_mon && monitor_ptrs[br_mon_svc] != 0){
+						ARB = BR_RECEIVE;
+						last_arb = ARB;
+						br_rcv_enable = true;
+					} else if(send_active){
 					ARB = SEND;
-					read_enable.write(1);
+						last_arb = ARB;
+						read_enable = true;
 				}
-			} else {
-				if (send_active.read() == 1){
+					break;
+				}
+				case RECEIVE:
+				{
+					if(br_req_mon && monitor_ptrs[br_mon_svc] != 0){
+						ARB = BR_RECEIVE;
+						last_arb = ARB;
+						br_rcv_enable = true;
+					} else if(send_active){
 					ARB = SEND;
-					read_enable.write(1);
-				} else if (DMNI_Receive.read() == COPY_TO_MEM) {
+						last_arb = ARB;
+						read_enable = true;
+					} else if(DMNI_Receive == COPY_TO_MEM){
 					ARB = RECEIVE;
-					write_enable.write(1);
+						last_arb = ARB;
+						write_enable = true;
 				}
+					break;
+				}
+				case BR_RECEIVE:
+				{
+					if(send_active){
+					ARB = SEND;
+						last_arb = ARB;
+						read_enable = true;
+					} else if(DMNI_Receive == COPY_TO_MEM){
+					ARB = RECEIVE;
+						last_arb = ARB;
+						write_enable = true;
+					} else if(br_req_mon && monitor_ptrs[br_mon_svc] != 0){
+						ARB = BR_RECEIVE;
+						last_arb = ARB;
+						br_rcv_enable = true;
+				}
+					break;
+				}
+				default:
+					break;
 			}
 			break;
 		}
 		case SEND:
 		{
-			if (DMNI_Send.read() == END || (timer >= DMNI_TIMER && receive_active.read() == 1)){
+			if(DMNI_Send == END || (timer >= DMNI_TIMER && receive_active)){
 				timer = 0;
 				ARB = ROUND;
-				read_enable.write(0);
-				prio = !prio;
+				read_enable = false;
 			} else {
 				timer++;
 			}
@@ -95,20 +142,33 @@ void DMNI::arbiter(){
 		}
 		case RECEIVE:
 		{
-			if (DMNI_Receive.read() == END || (timer >= DMNI_TIMER && send_active.read() == 1)){
+			if(DMNI_Receive == END || (timer >= DMNI_TIMER && send_active)){
 				timer = 0;
 				ARB = ROUND;
-				write_enable.write(0);
-				prio = !prio;
+				write_enable = false;
 			} else {
 				timer++;
 			}
 			break;
 		}
+		case BR_RECEIVE:
+		{
+			/* Guaranteed delivery (1 flit write) */
+			ARB = ROUND;
+			br_rcv_enable = false;
+			break;
+		}
 	}
 }
 
-void DMNI::config(){
+void DMNI::config()
+{
+	if(reset){
+		for(int i = 0; i < MON_TABLE_MAX; i++)
+			monitor_ptrs[i] = 0;
+
+		return;
+	}
 
 	if (set_address.read() == 1){
 		address.write(config_data.read());
@@ -155,12 +215,9 @@ void DMNI::buffer_control(){
 	}
 }
 
-void DMNI::receive(){
-
-	sc_uint<4> intr_counter_temp;
-
-	if (reset.read() == 1){
-
+void DMNI::receive()
+{
+	if(reset){
 		first.write(0);
 		last.write(0);
 		payload_size.write(0);
@@ -172,9 +229,10 @@ void DMNI::receive(){
 		for(int i=0; i<BUFFER_SIZE; i++){ //in vhdl replace by OTHERS=>'0'
 			is_header[i] = 0;
 		}
-	} else {
+		return;
+	}
 
-		intr_counter_temp = intr_count.read();
+	sc_uint<4> intr_counter_temp = intr_count.read();
 
 		//Read from NoC
 		if (rx.read() == 1 && slot_available.read() == 1){
@@ -265,17 +323,16 @@ void DMNI::receive(){
 			intr.write(0);
 		}
 		intr_count.write(intr_counter_temp);
-	}
 }
 
-
-void DMNI::send(){
-
-	if (reset.read() == 1){
+void DMNI::send()
+{
+	if(reset){
 		DMNI_Send.write(WAIT);
 		send_active.write(0);
 		tx.write(0);
-	} else {
+		return;
+	}
 
 		switch (DMNI_Send.read()) {
 			case WAIT:
@@ -353,6 +410,29 @@ void DMNI::send(){
 			default:
 				break;
 		}
+}
+
+void DMNI::br_receive()
+{
+	if(reset){
+		br_ack_mon = false;
+		return;
 	}
 
+	if(!br_req_mon)
+		br_ack_mon = false;
+	else if(monitor_ptrs[br_mon_svc] == 0)
+		br_ack_mon = true;
+	
+	if(br_rcv_enable){
+		/* Write to table! */
+		uint32_t ptr = monitor_ptrs[br_mon_svc];
+		// ptr += ;
+		// ptr += ;
+		// ptr += ;
+		br_mem_addr = ptr;
+		br_byte_we = 0xF;
+		// br_mem_data = 
+		// br_ack_mon = true;
+	}
 }
