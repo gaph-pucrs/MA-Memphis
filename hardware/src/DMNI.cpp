@@ -186,7 +186,8 @@ void DMNI::config()
 
 }
 
-void DMNI::mem_address_update(){
+void DMNI::mem_address_update()
+{
 	if (read_enable.read() == 1){
 		mem_address.write(send_address.read());
 	} else if(write_enable){
@@ -430,8 +431,6 @@ void DMNI::br_receive()
 
 	if(!br_req_mon)
 		br_ack_mon = false;
-	else if(monitor_ptrs[br_mon_svc] == 0)
-		br_ack_mon = true;
 	
 	if(br_rcv_enable){
 		/* Write to table! */
@@ -442,6 +441,6 @@ void DMNI::br_receive()
 		br_mem_addr = ptr;
 		br_byte_we = 0xF;
 		// br_mem_data = 
-		// br_ack_mon = true;
+		br_ack_mon = true;
 	}
 }
