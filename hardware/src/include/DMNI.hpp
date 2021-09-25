@@ -59,6 +59,8 @@ public:
 	sc_in<bool> 			br_req_mon;
 	sc_out<bool>			br_ack_mon;
 	sc_in<uint8_t>			br_mon_svc;
+	sc_in<uint32_t>			br_address;
+	sc_in<uint32_t>			br_payload;
 
 	SC_HAS_PROCESS(DMNI);
 	DMNI(sc_module_name name_, regmetadeflit address_router_ = 0);
@@ -67,6 +69,7 @@ private:
 	static const uint8_t BUFFER_SIZE = 16; /* Changing size implies changing the number of bits of first and last */
 	static const uint8_t DMNI_TIMER = 16;
 	static const uint8_t WORD_SIZE = 4;
+	static const uint8_t TASK_PER_PE = (MEMORY_SIZE_BYTES-PAGE_SIZE_BYTES)/PAGE_SIZE_BYTES;
 
 	enum dmni_state {
 		WAIT, 
@@ -129,6 +132,7 @@ private:
 
 	arbiter_state			last_arb;
 	uint8_t					timer;
+	uint16_t				mon_table[N_PE][TASK_PER_PE];
 
 	void config();
 	void receive();

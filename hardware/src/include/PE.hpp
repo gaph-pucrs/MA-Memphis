@@ -185,6 +185,7 @@ private:
 	sc_signal<bool>			br_dmni_ack;
 	sc_signal<bool>			br_dmni_req;
 	sc_signal<uint8_t>		br_dmni_svc;
+	sc_signal<uint32_t>		br_dmni_addr;
 
 	unsigned char shift_mem_page;
 

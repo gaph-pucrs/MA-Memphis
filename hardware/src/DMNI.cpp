@@ -51,6 +51,7 @@ DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
 	sensitive << br_byte_we;
 	sensitive << noc_byte_we;
 	sensitive << noc_data_write;
+	sensitive << br_payload;
 
 	SC_METHOD(br_receive);
 	sensitive << clock.pos();
@@ -196,7 +197,7 @@ void DMNI::mem_address_update()
 		mem_byte_we.write(noc_byte_we.read());
 	} else if(br_rcv_enable){
 		mem_address.write(br_mem_addr.read());
-		mem_data_write.write(0 /* What is coming from BrNoC */);
+		mem_data_write.write(br_payload.read());
 		mem_byte_we.write(br_byte_we.read());
 	} else {
 		/* Avoid writing when no operation is occurring */
@@ -425,6 +426,7 @@ void DMNI::send()
 void DMNI::br_receive()
 {
 	if(reset){
+		br_byte_we = 0;
 		br_ack_mon = false;
 		return;
 	}
@@ -434,13 +436,42 @@ void DMNI::br_receive()
 	
 	if(br_rcv_enable){
 		/* Write to table! */
-		uint32_t ptr = monitor_ptrs[br_mon_svc];
-		// ptr += ;
-		// ptr += ;
-		// ptr += ;
-		br_mem_addr = ptr;
-		br_byte_we = 0xF;
-		// br_mem_data = 
 		br_ack_mon = true;
+
+		uint32_t ptr = monitor_ptrs[br_mon_svc];
+
+		uint16_t src = br_address >> 16;
+		uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
+		ptr += (seq_addr * 6);
+
+		uint16_t task = 0; /* ADD REAL SOURCE TASK ID */
+		uint8_t idx = -1;
+		for(int i = 0; i < TASK_PER_PE; i++){
+			if(mon_table[seq_addr][i] == task){
+				idx = i;
+				break;
+			}
+		}
+
+		if(idx == -1){
+			for(int i = 0; i < TASK_PER_PE; i++){
+				if(mon_table[seq_addr][i] == -1){
+					idx = i;
+					break;
+				}
+			}
+		}
+
+		if(idx == -1){
+			cout << "ERROR: NO AVAILABLE SPACE IN MONITOR LUT -- NEED CLEANUP" << endl;
+			return;
+		}
+
+		ptr += (idx * 6);
+		br_mem_addr = ptr;
+
+		br_byte_we = 0xF;
+	} else {
+		br_byte_we = 0;
 	}
 }

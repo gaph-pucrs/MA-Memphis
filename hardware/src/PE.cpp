@@ -81,6 +81,8 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_ack_mon(br_dmni_ack);
 	dmni.br_req_mon(br_dmni_req);
 	dmni.br_mon_svc(br_dmni_svc);
+	dmni.br_address(br_dmni_addr);
+	dmni.br_payload(br_payload_out_local);
 
 	router = new router_cc("router",router_address, path);
 	router->clock(clock);
@@ -198,6 +200,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << dmni_mem_data_write << ni_intr << slack_update_timer;
 	sensitive << br_ack_out_local << br_cfg_payload_out << br_cfg_address_out << br_cfg_id_svc_out << br_cfg_req_out;
 	sensitive << br_req_out_local << br_id_svc_out_local << br_buf_ack;
+	sensitive << br_address_out_local;
 	
 	SC_METHOD(mem_mapped_registers);
 	sensitive << cpu_mem_address_reg;
@@ -321,6 +324,9 @@ void PE::comb_assignments(){
 	br_id_svc_in_local = br_cfg_id_svc_out;
 	br_req_in_local = br_cfg_req_out;
 	br_cfg_ack_in = br_ack_out_local;
+
+	br_dmni_svc = br_id_svc_out_local;
+	br_dmni_addr = br_address_out_local;
 
 	l_irq_status[7] = 0; //unused
 	l_irq_status[6] = 0; //unused
