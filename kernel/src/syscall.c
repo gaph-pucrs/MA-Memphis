@@ -22,6 +22,7 @@
 #include "task_migration.h"
 #include "pending_service.h"
 #include "interrupts.h"
+#include "tag.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -52,6 +53,8 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			return os_br_send(a1, a2, a3);
 		case SCALL_BR_RECEIVE:
 			return os_br_receive((uint32_t*)a1);
+		case SCALL_MON_PTR:
+			return os_mon_ptr((monitor_t*)a1, a2);
 		default:
 			printf("ERROR: Unknown service %x\n", service);
 			return 0;
@@ -479,4 +482,34 @@ int os_br_receive(uint32_t *payload)
 
 	*payload_ptr = MMR_BR_READ_PAYLOAD;
 	return 1;
+}
+
+int os_mon_ptr(monitor_t* table, enum MON_TYPE type)
+{
+	tcb_t *current = sched_get_current();
+	
+	if(current->id >> 8 != 0)	/* AppID should be 0 */
+		return 1;
+
+	switch(type){
+		case MON_QOS:
+			MMR_MON_PTR_QOS = (unsigned)table;
+			break;
+		case MON_PWR:
+			MMR_MON_PTR_PWR = (unsigned)table;
+			break;
+		case MON_2:
+			MMR_MON_PTR_2 = (unsigned)table;
+			break;
+		case MON_3:
+			MMR_MON_PTR_3 = (unsigned)table;
+			break;
+		case MON_4:
+			MMR_MON_PTR_4 = (unsigned)table;
+			break;
+		default:
+			return 2;
+	}
+
+	return 0;
 }

@@ -16,6 +16,7 @@
 #include "oda.h"
 #include "services.h"
 #include "tag.h"
+#include "calls.h"
 
 void oda_init(oda_t *oda)
 {
@@ -49,4 +50,9 @@ bool oda_service_provider(oda_t *oda, int type_tag, int id)
 	
 	oda->id = id;
 	return true;
+}
+
+bool oda_set_monitor(monitor_t *monitor, enum MON_TYPE type)
+{
+	return !system_call(SCALL_MON_PTR, type, 0, 0);
 }

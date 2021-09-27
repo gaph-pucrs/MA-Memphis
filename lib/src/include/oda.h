@@ -15,6 +15,8 @@
 
 #include <stdbool.h>
 
+#include "tag.h"
+
 typedef struct _oda {
 	int id;
 	int tag;
@@ -56,3 +58,13 @@ bool oda_is_enabled(oda_t *oda);
  * @return True if the tag is correct and the actuator ID is set
  */
 bool oda_service_provider(oda_t *oda, int type_tag, int id);
+
+/**
+ * @brief Sets the pointer to the monitor table in the monitoring infrastructure
+ * 
+ * @param monitor Table to save the data
+ * @param type Monitor class type
+ * 
+ * @return True if table is set
+ */
+bool oda_set_monitor(monitor_t *monitor, enum MON_TYPE type);

@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "tag.h"
+
 /**
  * @brief Syscall function call. It choses a service and pass the right arguments
  * 
@@ -158,3 +160,13 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t service);
  * @return 0 if no message available. 1 if message received.
  */
 int os_br_receive(uint32_t *payload);
+
+/**
+ * @brief Sets the monitoring table pointer to a observer task
+ * 
+ * @param table Pointer to table.
+ * @param type Monitoring type
+ * 
+ * @return 0 if success. 1 if unauthorized. 2 if wrong type.
+ */
+int os_mon_ptr(monitor_t* table, enum MON_TYPE type);

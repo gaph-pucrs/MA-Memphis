@@ -10,3 +10,16 @@
 #define D_QOS		0x010000
 
 #define A_MIGRATION	0x01000000
+
+enum MON_TYPE {
+	MON_QOS,
+	MON_PWR,
+	MON_2,
+	MON_3,
+	MON_4
+};
+
+typedef struct _monitor {
+	uint16_t task;
+	uint32_t value;
+} monitor_t;
