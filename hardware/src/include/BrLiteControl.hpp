@@ -9,12 +9,14 @@ public:
 
 	sc_core::sc_in<bool>		payload_cfg;
 	sc_core::sc_in<bool>		address_cfg;
+	sc_core::sc_in<bool>		producer_cfg;
 	sc_core::sc_in<bool>		id_svc_cfg;
 	sc_core::sc_in<bool>		start_cfg;
 	sc_core::sc_in<uint32_t>	data_in;
 
 	sc_core::sc_out<uint32_t>	payload_out;
 	sc_core::sc_out<uint32_t>	address_out;
+	sc_core::sc_out<uint16_t>	producer_out;
 	sc_core::sc_out<uint8_t>	id_svc_out;
 	sc_core::sc_out<bool>		req_out;
 	sc_core::sc_in<bool>		ack_in;

@@ -59,6 +59,7 @@ public:
 	sc_in<bool> 			br_req_mon;
 	sc_out<bool>			br_ack_mon;
 	sc_in<uint8_t>			br_mon_svc;
+	sc_in<uint16_t>			br_producer;
 	sc_in<uint32_t>			br_address;
 	sc_in<uint32_t>			br_payload;
 

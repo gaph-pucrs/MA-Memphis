@@ -444,7 +444,7 @@ void DMNI::br_receive()
 		uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
 		ptr += (seq_addr * 6);
 
-		uint16_t task = 0; /* ADD REAL SOURCE TASK ID */
+		uint16_t task = br_producer;
 		uint8_t idx = -1;
 		for(int i = 0; i < TASK_PER_PE; i++){
 			if(mon_table[seq_addr][i] == task){

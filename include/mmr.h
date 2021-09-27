@@ -49,3 +49,4 @@
 #define MMR_BR_START     			(*(volatile unsigned int*)0x20000610U)
 #define MMR_BR_HAS_MESSAGE			(*(volatile unsigned int*)0x20000614U)
 #define MMR_BR_READ_PAYLOAD			(*(volatile unsigned int*)0x20000618U)
+#define MMR_BR_PRODUCER				(*(volatile unsigned int*)0x2000061CU)

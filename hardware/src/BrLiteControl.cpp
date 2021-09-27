@@ -14,6 +14,7 @@ BrLiteControl::BrLiteControl(sc_module_name _name, uint16_t _address):
 	sensitive << reset;
 	sensitive << payload_cfg;
 	sensitive << address_cfg;
+	sensitive << producer_cfg;
 	sensitive << id_svc_cfg;
 	sensitive << start_cfg;
 	sensitive << ack_in;
@@ -37,6 +38,10 @@ void BrLiteControl::config()
 		address_reg |= (data_in & 0xFFFF);
 		address_out = address_reg;
 		// cout << "Address is set to " << hex << address_reg << endl;
+	} else if(producer_cfg){
+		uint16_t prod_id = data_in;
+		producer_out = prod_id;
+		// cout << "Producer is set to " << hex << prod_id << endl;
 	} else if(id_svc_cfg){
 		uint8_t id_svc = 0;
 		id_svc |= id << 3;

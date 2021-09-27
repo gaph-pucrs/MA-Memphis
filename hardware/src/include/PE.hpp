@@ -175,12 +175,14 @@ private:
 	/* BrNoC Control for sending messages through it */
 	sc_signal<bool>			br_cfg_payload;
 	sc_signal<bool>			br_cfg_address;
+	sc_signal<bool>			br_cfg_producer;
 	sc_signal<bool>			br_cfg_id_svc;
 	sc_signal<bool>			br_cfg_start;
 	sc_signal<uint32_t>		br_cfg_data;
 
 	sc_signal<uint32_t>		br_cfg_payload_out;
 	sc_signal<uint32_t>		br_cfg_address_out;
+	sc_signal<uint16_t>		br_cfg_producer_out;
 	sc_signal<uint8_t>		br_cfg_id_svc_out;
 	sc_signal<bool>			br_cfg_req_out;
 	sc_signal<bool>			br_cfg_ack_in;
@@ -189,6 +191,7 @@ private:
 	sc_signal<bool>			br_dmni_ack;
 	sc_signal<bool>			br_dmni_req;
 	sc_signal<uint8_t>		br_dmni_svc;
+	sc_signal<uint16_t>		br_dmni_prod;
 	sc_signal<uint32_t>		br_dmni_addr;
 
 	unsigned char shift_mem_page;

@@ -81,6 +81,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_ack_mon(br_dmni_ack);
 	dmni.br_req_mon(br_dmni_req);
 	dmni.br_mon_svc(br_dmni_svc);
+	dmni.br_producer(br_dmni_prod);
 	dmni.br_address(br_dmni_addr);
 	dmni.br_payload(br_payload_out_local);
 
@@ -175,12 +176,14 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	br_control.payload_cfg(br_cfg_payload);
 	br_control.address_cfg(br_cfg_address);
+	br_control.producer_cfg(br_cfg_producer);
 	br_control.id_svc_cfg(br_cfg_id_svc);
 	br_control.start_cfg(br_cfg_start);
 	br_control.data_in(br_cfg_data);
 
 	br_control.payload_out(br_cfg_payload_out);
 	br_control.address_out(br_cfg_address_out);
+	br_control.producer_out(br_cfg_producer_out);
 	br_control.id_svc_out(br_cfg_id_svc_out);
 	br_control.req_out(br_cfg_req_out);
 	br_control.ack_in(br_cfg_ack_in);
@@ -315,6 +318,7 @@ void PE::comb_assignments(){
 	
 	br_cfg_payload = cpu_mem_address_reg.read() == BR_PAYLOAD && write_enable;
 	br_cfg_address = cpu_mem_address_reg.read() == BR_TARGET && write_enable;
+	br_cfg_producer = cpu_mem_address_reg.read() == BR_PRODUCER && write_enable;
 	br_cfg_id_svc = cpu_mem_address_reg.read() == BR_SERVICE && write_enable;
 	br_cfg_start = cpu_mem_address_reg.read() == BR_START && write_enable;
 	br_cfg_data = cpu_mem_data_write_reg.read();
@@ -325,12 +329,14 @@ void PE::comb_assignments(){
 
 	br_payload_in_local = br_cfg_payload_out;
 	br_address_in_local = br_cfg_address_out;
+	br_producer_in_local = br_cfg_producer_out;
 	br_id_svc_in_local = br_cfg_id_svc_out;
 	br_req_in_local = br_cfg_req_out;
 	br_cfg_ack_in = br_ack_out_local;
 
 	br_dmni_svc = br_id_svc_out_local;
 	br_dmni_addr = br_address_out_local;
+	br_dmni_prod = br_producer_out_local;
 
 	l_irq_status[7] = 0; //unused
 	l_irq_status[6] = 0; //unused
