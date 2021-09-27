@@ -1,20 +1,104 @@
-//------------------------------------------------------------------------------------------------
-//
-//  DISTRIBUTED MEMPHIS -  5.0
-//
-//  Research group: GAPH-PUCRS    -    contact   fernando.moraes@pucrs.br
-//
-//  Distribution:  September 2013
-//
-//  Source name:  memphis.cpp
-//
-//  Brief description: Control of router position.
-//
-//------------------------------------------------------------------------------------------------
+/**
+ * MA-Memphis
+ * @file Memphis.cpp
+ * 
+ * @author Unknown
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date September 2013
+ * 
+ * @brief Control of router position
+ */
 
-#include "memphis.h"
+#include "Memphis.hpp"
 
-int memphis::RouterPosition(int router){
+Memphis::Memphis(sc_module_name name_, std::string path) :
+	sc_module(name_)
+{
+	for(int j = 0; j < N_PE; j++){
+		regaddress r_addr = RouterAddress(j);
+		int x_addr = ((int) r_addr) >> 8;
+		int y_addr = ((int) r_addr) & 0xFF;
+
+		char pe_name[20];
+		sprintf(pe_name, "PE%dx%d", x_addr, y_addr);
+		printf("Creating PE %s\n", pe_name);
+
+		pe[j] = new PE(pe_name, r_addr, path);
+		pe[j]->clock(clock);
+		pe[j]->reset(reset);
+
+		for(int i = 0; i < NPORT - 1; i++){
+			pe[j]->tx[i](tx[j][i]);
+			pe[j]->data_out[i](data_out[j][i]);
+			pe[j]->credit_i[i](credit_i[j][i]);
+			pe[j]->data_in[i](data_in[j][i]);
+			pe[j]->rx[i](rx[j][i]);
+			pe[j]->credit_o[i](credit_o[j][i]);
+
+			pe[j]->br_req_in[i](br_req_in[j][i]);
+			pe[j]->br_ack_in[i](br_ack_in[j][i]);
+			pe[j]->br_payload_in[i](br_payload_in[j][i]);
+			pe[j]->br_address_in[i](br_address_in[j][i]);
+			pe[j]->br_producer_in[i](br_producer_in[j][i]);
+			pe[j]->br_id_svc_in[i](br_id_svc_in[j][i]);
+
+			pe[j]->br_req_out[i](br_req_out[j][i]);
+			pe[j]->br_ack_out[i](br_ack_out[j][i]);
+			pe[j]->br_payload_out[i](br_payload_out[j][i]);
+			pe[j]->br_address_out[i](br_address_out[j][i]);
+			pe[j]->br_producer_out[i](br_producer_out[j][i]);
+			pe[j]->br_id_svc_out[i](br_id_svc_out[j][i]);
+		}
+	}
+
+	SC_METHOD(pes_interconnection);
+	sensitive << memphis_app_injector_tx;
+	sensitive << memphis_app_injector_credit_i;
+	sensitive << memphis_app_injector_data_out;
+	sensitive << memphis_app_injector_rx;
+	sensitive << memphis_app_injector_credit_o;
+	sensitive << memphis_app_injector_data_in;
+	sensitive << memphis_ma_injector_tx;
+	sensitive << memphis_ma_injector_credit_i;
+	sensitive << memphis_ma_injector_data_out;
+	sensitive << memphis_ma_injector_rx;
+	sensitive << memphis_ma_injector_credit_o;
+	sensitive << memphis_ma_injector_data_in;
+	for(int j = 0; j < N_PE; j++){
+		for(int i = 0; i < NPORT - 1; i++){
+			sensitive << tx[j][i];
+			sensitive << data_out[j][i];
+			sensitive << credit_i[j][i];
+			sensitive << data_in[j][i];
+			sensitive << rx[j][i];
+			sensitive << credit_o[j][i];
+		}
+	}
+
+	SC_METHOD(br_interconnection);
+	for(int j = 0; j < N_PE; j++){
+		for(int i = 0; i < NPORT - 1; i++){
+			sensitive << br_req_in[j][i];
+			sensitive << br_ack_in[j][i];
+			sensitive << br_payload_in[j][i];
+			sensitive << br_address_in[j][i];
+			sensitive << br_producer_in[j][i];
+			sensitive << br_id_svc_in[j][i];
+
+			sensitive << br_req_out[j][i];
+			sensitive << br_ack_out[j][i];
+			sensitive << br_payload_out[j][i];
+			sensitive << br_address_out[j][i];
+			sensitive << br_producer_out[j][i];
+			sensitive << br_id_svc_out[j][i];
+		}
+	}
+}
+
+int Memphis::RouterPosition(int router)
+{
 	int pos;
 	
 	int column = router%N_PE_X;
@@ -64,7 +148,8 @@ int memphis::RouterPosition(int router){
 	return pos;
 }
 
-regaddress memphis::RouterAddress(int router){
+regaddress Memphis::RouterAddress(int router)
+{
 	regaddress r_address;
 	
 	sc_uint<8> pos_y = (unsigned int) router/N_PE_X;
@@ -91,11 +176,9 @@ regaddress memphis::RouterAddress(int router){
 }
 
 
-void memphis::pes_interconnection(){
- 	int i, p;
- 	 	
- 	for(i=0;i<N_PE;i++){
-		
+void Memphis::pes_interconnection()
+{ 	 	
+ 	for(int i = 0; i < N_PE; i++){
 		//EAST GROUNDING
  		if(RouterPosition(i) == BR || RouterPosition(i) == CRX || RouterPosition(i) == TR){
  			if (io_port[i] != EAST){//If the port in not connected to an IO then:
@@ -103,8 +186,7 @@ void memphis::pes_interconnection(){
 				data_in [i][EAST].write(0);
 				rx      [i][EAST].write(0);
  			}
-		}
- 		else{//EAST CONNECTION
+		} else {//EAST CONNECTION
  			credit_i[i][EAST].write(credit_o[i+1][WEST].read());
  			data_in [i][EAST].write(data_out[i+1][WEST].read());
  			rx      [i][EAST].write(tx      [i+1][WEST].read());
@@ -117,8 +199,7 @@ void memphis::pes_interconnection(){
 				data_in [i][WEST].write(0);
 				rx      [i][WEST].write(0);
  			}
- 		}
- 		else{//WEST CONNECTION
+ 		} else {//WEST CONNECTION
 			credit_i[i][WEST].write(credit_o[i-1][EAST].read());
  			data_in [i][WEST].write(data_out[i-1][EAST].read());
  			rx      [i][WEST].write(tx      [i-1][EAST].read());
@@ -131,8 +212,7 @@ void memphis::pes_interconnection(){
 				data_in [i][NORTH].write(0);
 				rx      [i][NORTH].write(0);
  			}
- 		}
- 		else{//NORTH CONNECTION
+ 		} else {//NORTH CONNECTION
 			credit_i[i][NORTH].write(credit_o[i+N_PE_X][SOUTH].read());
  			data_in [i][NORTH].write(data_out[i+N_PE_X][SOUTH].read());
  			rx      [i][NORTH].write(tx      [i+N_PE_X][SOUTH].read());
@@ -145,17 +225,15 @@ void memphis::pes_interconnection(){
 				data_in [i][SOUTH].write(0);
 				rx      [i][SOUTH].write(0);
  			}
- 		}
- 		else{//SOUTH CONNECTION
+ 		} else{//SOUTH CONNECTION
 			credit_i[i][SOUTH].write(credit_o[i-N_PE_X][NORTH].read());
  			data_in [i][SOUTH].write(data_out[i-N_PE_X][NORTH].read());
  			rx      [i][SOUTH].write(tx      [i-N_PE_X][NORTH].read());
  		}
 
-
- 		//--IO Wiring (Memphis <-> IO) ----------------------
+ 		//--IO Wiring (Memphis <-> AppInjector) ----------------------
  		if (i == APP_INJECTOR && io_port[i] != NPORT) {
- 			p = io_port[i];
+ 			int p = io_port[i];
 			memphis_app_injector_tx.write(tx[APP_INJECTOR][p].read());
 			memphis_app_injector_data_out.write(data_out[APP_INJECTOR][p].read());
 			credit_i[APP_INJECTOR][p].write(memphis_app_injector_credit_i.read());
@@ -164,9 +242,9 @@ void memphis::pes_interconnection(){
 			memphis_app_injector_credit_o.write(credit_o[APP_INJECTOR][p].read());
 			data_in[APP_INJECTOR][p].write(memphis_app_injector_data_in.read());
  		}
- 		//Insert the IO wiring for your component here if it connected to a port:
+ 		//--IO Wiring (Memphis <-> MAInjector) ----------------------
 		if (i == MAINJECTOR && io_port[i] != NPORT) {
- 			p = io_port[i];
+ 			int p = io_port[i];
 			memphis_ma_injector_tx.write(tx[MAINJECTOR][p].read());
 			memphis_ma_injector_data_out.write(data_out[MAINJECTOR][p].read());
 			credit_i[MAINJECTOR][p].write(memphis_ma_injector_credit_i.read());
@@ -175,10 +253,11 @@ void memphis::pes_interconnection(){
 			memphis_ma_injector_credit_o.write(credit_o[MAINJECTOR][p].read());
 			data_in[MAINJECTOR][p].write(memphis_ma_injector_data_in.read());
  		}
+		//Insert the IO wiring for your component here if it connected to a port:
  	}
 }
 
-void memphis::br_interconnection()
+void Memphis::br_interconnection()
 {
 	for(int y = 0; y < N_PE_Y; y++){
 		for(int x = 0; x < N_PE_X; x++){

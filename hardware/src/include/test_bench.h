@@ -19,7 +19,7 @@
 
 using namespace std;
 
-#include "memphis.h"
+#include "Memphis.hpp"
 #include "AppInjector.hpp"
 #include "MAInjector.hpp"
 
@@ -49,7 +49,7 @@ SC_MODULE(test_bench) {
 	void ClockGenerator();
 	void resetGenerator();
 	
-	memphis * MPSoC;
+	Memphis * MPSoC;
 	AppInjector * io_app;
 	MAInjector * ma_app;
 
@@ -65,7 +65,7 @@ SC_MODULE(test_bench) {
 		path = program_path.substr(0, program_path.find_last_of("/"));
 		fp = 0;
 
-		MPSoC = new memphis("Memphis", path);
+		MPSoC = new Memphis("Memphis", path);
 		MPSoC->clock(clock);
 		MPSoC->reset(reset);
 		MPSoC->memphis_app_injector_tx(memphis_injector_tx);
