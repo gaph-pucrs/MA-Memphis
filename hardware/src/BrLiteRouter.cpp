@@ -134,6 +134,7 @@ void BrLiteRouter::input()
 		case IN_WRITE:
 		{
 			table[free_idx].payload = payload_in[selected_port];
+			table[free_idx].producer = producer_in[selected_port];
 			table[free_idx].address = address_in[selected_port];
 			table[free_idx].origin = selected_port;
 
@@ -212,6 +213,7 @@ void BrLiteRouter::output()
 					if(i != table[selected_line].origin){
 						req_out[i] = true;
 						id_svc_out[i] = table[selected_line].id_svc;
+						producer_out[i] = table[selected_line].producer;
 						address_out[i] = table[selected_line].address;
 						payload_out[i] = table[selected_line].payload;
 					} else {
@@ -223,6 +225,7 @@ void BrLiteRouter::output()
 				if(svc == Service::ALL && source != router_address){
 					req_out[LOCAL] = true;
 					id_svc_out[LOCAL] = table[selected_line].id_svc;
+					producer_out[LOCAL] = table[selected_line].producer;
 					address_out[LOCAL] = table[selected_line].address;
 					payload_out[LOCAL] = table[selected_line].payload;
 				} else {
@@ -234,6 +237,7 @@ void BrLiteRouter::output()
 			} else if(svc <= Service::TARGET && target == router_address){
 				req_out[LOCAL] = true;
 				id_svc_out[LOCAL] = table[selected_line].id_svc;
+				producer_out[LOCAL] = table[selected_line].producer;
 				address_out[LOCAL] = table[selected_line].address;
 				payload_out[LOCAL] = table[selected_line].payload;
 				

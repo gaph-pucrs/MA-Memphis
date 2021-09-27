@@ -58,6 +58,7 @@ public:
 	/* Data Inputs */
 	sc_in<uint32_t>		payload_in[NPORT];
 	sc_in<uint32_t>		address_in[NPORT];
+	sc_in<uint16_t>		producer_in[NPORT];
 	sc_in<uint8_t>		id_svc_in[NPORT];
 	sc_in<bool>			req_in[NPORT];
 	sc_out<bool>		ack_out[NPORT];
@@ -65,6 +66,7 @@ public:
 	/* Data Outputs */
 	sc_out<uint32_t>	payload_out[NPORT];
 	sc_out<uint32_t>	address_out[NPORT];
+	sc_out<uint16_t>	producer_out[NPORT];
 	sc_out<uint8_t>		id_svc_out[NPORT];
 	sc_out<bool>		req_out[NPORT];
 	sc_in<bool>			ack_in[NPORT];
@@ -83,6 +85,7 @@ private:
 		sc_signal<bool>		pending;
 		sc_signal<uint8_t>	origin;
 		sc_signal<uint8_t>	id_svc;
+		sc_signal<uint16_t>	producer;
 		sc_signal<uint32_t>	address;
 		sc_signal<uint32_t>	payload;
 	} table_t;
