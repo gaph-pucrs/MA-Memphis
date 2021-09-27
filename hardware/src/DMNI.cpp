@@ -442,7 +442,7 @@ void DMNI::br_receive()
 
 		uint16_t src = br_address >> 16;
 		uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
-		ptr += (seq_addr * 6);
+		ptr += (seq_addr * TASK_PER_PE * 6);
 
 		uint16_t task = br_producer;
 		uint8_t idx = -1;

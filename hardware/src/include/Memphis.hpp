@@ -11,6 +11,8 @@
  * @brief Connect all PEs
  */
 
+#pragma once
+
 #include <systemc>
 
 #include "PE.hpp"
