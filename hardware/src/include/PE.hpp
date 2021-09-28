@@ -97,6 +97,11 @@ private:
 	sc_signal<bool> 		cpu_set_op;
 	sc_signal<bool> 		cpu_start;
 	sc_signal<bool> 		cpu_ack;
+	sc_signal<bool> 		cpu_set_mon_qos;
+	sc_signal<bool> 		cpu_set_mon_pwr;
+	sc_signal<bool> 		cpu_set_mon_2;
+	sc_signal<bool> 		cpu_set_mon_3;
+	sc_signal<bool> 		cpu_set_mon_4;
 
 	/* RAM */
 	sc_signal<sc_uint<32>> 	data_read_ram;

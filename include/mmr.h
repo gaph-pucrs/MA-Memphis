@@ -54,3 +54,4 @@
 #define MMR_MON_PTR_2				(*(volatile unsigned int*)0x20000624U)
 #define MMR_MON_PTR_3				(*(volatile unsigned int*)0x20000628U)
 #define MMR_MON_PTR_4				(*(volatile unsigned int*)0x2000062CU)
+#define MMR_BR_PRODUCER				(*(volatile unsigned int*)0x20000630U)

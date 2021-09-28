@@ -59,6 +59,11 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.set_size(cpu_set_size);
 	dmni.set_size_2(cpu_set_size_2);
 	dmni.set_op(cpu_set_op);
+	dmni.set_mon_qos(cpu_set_mon_qos);
+	dmni.set_mon_pwr(cpu_set_mon_pwr);
+	dmni.set_mon_2(cpu_set_mon_2);
+	dmni.set_mon_3(cpu_set_mon_3);
+	dmni.set_mon_4(cpu_set_mon_4);
 	dmni.start(cpu_start);
 
 	dmni.config_data(dmni_data_read);
@@ -324,8 +329,14 @@ void PE::comb_assignments(){
 	br_cfg_data = cpu_mem_data_write_reg.read();
 	br_buf_read_in = cpu_mem_address_reg.read() == BR_READ_PAYLOAD;
 
+	cpu_set_mon_qos = cpu_mem_address_reg.read() == MON_PTR_QOS && write_enable;
+	cpu_set_mon_pwr = cpu_mem_address_reg.read() == MON_PTR_PWR && write_enable;
+	cpu_set_mon_2 = cpu_mem_address_reg.read() == MON_PTR_2 && write_enable;
+	cpu_set_mon_3 = cpu_mem_address_reg.read() == MON_PTR_3 && write_enable;
+	cpu_set_mon_4 = cpu_mem_address_reg.read() == MON_PTR_4 && write_enable;
+
 	br_buf_req = br_req_out_local && BrLiteRouter::SERVICE(br_id_svc_out_local) >= BrLiteRouter::Service::TARGET;
-	br_ack_in_local = br_buf_ack;
+	br_ack_in_local = br_buf_ack || br_dmni_ack;
 
 	br_payload_in_local = br_cfg_payload_out;
 	br_address_in_local = br_cfg_address_out;
@@ -334,6 +345,7 @@ void PE::comb_assignments(){
 	br_req_in_local = br_cfg_req_out;
 	br_cfg_ack_in = br_ack_out_local;
 
+	br_dmni_req = br_req_out_local && BrLiteRouter::SERVICE(br_id_svc_out_local) < BrLiteRouter::Service::TARGET;
 	br_dmni_svc = br_id_svc_out_local;
 	br_dmni_addr = br_address_out_local;
 	br_dmni_prod = br_producer_out_local;

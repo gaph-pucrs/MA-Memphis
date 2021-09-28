@@ -491,6 +491,9 @@ int os_mon_ptr(monitor_t* table, enum MON_TYPE type)
 	if(current->id >> 8 != 0)	/* AppID should be 0 */
 		return 1;
 
+	uint32_t offset = tcb_get_offset(current);
+	table += offset;
+
 	switch(type){
 		case MON_QOS:
 			MMR_MON_PTR_QOS = (unsigned)table;

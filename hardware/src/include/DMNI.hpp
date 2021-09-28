@@ -33,6 +33,11 @@ public:
 	sc_in<bool>				set_size;
 	sc_in<bool>				set_size_2;
 	sc_in<bool>				set_op;
+	sc_in<bool>				set_mon_qos;
+	sc_in<bool>				set_mon_pwr;
+	sc_in<bool>				set_mon_2;
+	sc_in<bool>				set_mon_3;
+	sc_in<bool>				set_mon_4;
 	sc_in<bool>				start;
 	sc_in<sc_uint<32>>		config_data;
 
