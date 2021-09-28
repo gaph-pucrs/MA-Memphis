@@ -148,7 +148,7 @@ int os_puts(char *str);
  * @param target PE address to send the message to
  * @param service Broadcast service (ALL/TARGET)
  * 
- * @return 0 if BrNoC is busy. 1 if success.
+ * @return 0 if success. 1 if BrNoC is busy. 2 unauthorized.
  */
 int os_br_send(uint32_t payload, uint16_t target, uint8_t service);
 

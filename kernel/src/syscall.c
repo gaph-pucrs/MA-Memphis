@@ -22,7 +22,7 @@
 #include "task_migration.h"
 #include "pending_service.h"
 #include "interrupts.h"
-#include "tag.h"
+#include "broadcast.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -462,14 +462,13 @@ int os_puts(char *str)
 
 int os_br_send(uint32_t payload, uint16_t target, uint8_t service)
 {
-	if(MMR_BR_LOCAL_BUSY)
-		return 0;
+	tcb_t *current = sched_get_current();
+	uint16_t producer = tcb_get_id(current);
+	
+	if(producer >> 8 != 0)	/* AppID should be 0 */
+		return 2;
 
-	MMR_BR_PAYLOAD = payload;
-	MMR_BR_TARGET = target & 0xFFFF;
-	MMR_BR_SERVICE = service & 0x3;
-	MMR_BR_START = 1;
-	return 1;
+	return !br_send(payload, producer, target, service);
 }
 
 int os_br_receive(uint32_t *payload)
@@ -488,7 +487,7 @@ int os_mon_ptr(monitor_t* table, enum MON_TYPE type)
 {
 	tcb_t *current = sched_get_current();
 	
-	if(current->id >> 8 != 0)	/* AppID should be 0 */
+	if(tcb_get_appid(current) != 0)	/* AppID should be 0 */
 		return 1;
 
 	uint32_t offset = tcb_get_offset(current);

@@ -14,6 +14,8 @@
 #include "llm.h"
 
 #include "syscall.h"
+#include "broadcast.h"
+
 #include "services.h"
 
 void llm_task(tcb_t *task)
@@ -23,15 +25,10 @@ void llm_task(tcb_t *task)
 	/* Deadline, execution time, etc. LLM should not process too much info */
 
 	/* Build a message */
-	if(task->id != -1 && task->observer_task != -1 && task->scheduler.deadline != -1){
-		int message[5] = {
-			MONITOR, 
-			task->id,
-			task->scheduler.waiting_msg,
-			task->scheduler.slack_time, 
-			task->scheduler.remaining_exec_time
-		};
-		os_kernel_writepipe(task->observer_task, task->observer_address, 5, message);
+	if(task->id != -1 && task->observer_task != -1 && task->scheduler.deadline != -1 && !task->scheduler.waiting_msg){
+		int payload = task->scheduler.slack_time - task->scheduler.remaining_exec_time;
+		
+		while(!br_send(payload, task->id, task->observer_address, MON_QOS));
 	}
 }
 
