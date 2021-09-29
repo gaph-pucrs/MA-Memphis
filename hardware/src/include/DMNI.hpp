@@ -90,6 +90,7 @@ private:
 		PAYLOAD, 
 		DATA
 	};
+
 	enum arbiter_state {
 		ROUND, 
 		SEND, 
@@ -97,10 +98,17 @@ private:
 		BR_RECEIVE
 	};
 
+	enum BR_RCV_STATE {
+		BR_RCV_IDLE, 
+		BR_RCV_TASKID, 
+		BR_RCV_END
+	};
+
 	regmetadeflit address_router;
 
 	sc_signal<dmni_state>	DMNI_Send, DMNI_Receive;
 	sc_signal<state_noc>	SR;
+	sc_signal<BR_RCV_STATE>	br_rcv_state;
 	arbiter_state			ARB;
 
 	sc_signal<sc_uint<32>>	buffer[BUFFER_SIZE];
@@ -131,6 +139,7 @@ private:
 	sc_signal<uint32_t>		monitor_ptrs[MON_TABLE_MAX];
 	sc_signal<bool>			br_rcv_enable;
 	sc_signal<uint32_t>		br_mem_addr;
+	sc_signal<uint16_t>		br_mem_data;
 	sc_signal<uint8_t>		br_byte_we;
 
 	sc_signal<uint8_t>		noc_byte_we;

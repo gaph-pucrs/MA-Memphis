@@ -48,6 +48,7 @@ DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
 	sensitive << send_address;
 	sensitive << br_rcv_enable;
 	sensitive << br_mem_addr;
+	sensitive << br_mem_data;
 	sensitive << br_byte_we;
 	sensitive << noc_byte_we;
 	sensitive << noc_data_write;
@@ -154,9 +155,10 @@ void DMNI::arbiter()
 		}
 		case BR_RECEIVE:
 		{
-			/* Guaranteed delivery (1 flit write) */
-			ARB = ROUND;
-			br_rcv_enable = false;
+			if(br_rcv_state == BR_RCV_END){
+				ARB = ROUND;
+				br_rcv_enable = false;
+			}
 			break;
 		}
 	}
@@ -206,7 +208,7 @@ void DMNI::mem_address_update()
 		mem_byte_we.write(noc_byte_we.read());
 	} else if(br_rcv_enable){
 		mem_address.write(br_mem_addr.read());
-		mem_data_write.write(br_payload.read());
+		mem_data_write.write(br_mem_data.read());
 		mem_byte_we.write(br_byte_we.read());
 	} else {
 		/* Avoid writing when no operation is occurring */
@@ -437,6 +439,7 @@ void DMNI::br_receive()
 	if(reset){
 		br_byte_we = 0;
 		br_ack_mon = false;
+		br_rcv_state = BR_RCV_IDLE;
 		return;
 	}
 
@@ -444,45 +447,76 @@ void DMNI::br_receive()
 		br_ack_mon = false;
 	else if(monitor_ptrs[br_mon_svc] == 0)	/* Ignore invalid requests */
 		br_ack_mon = true;
-	
-	if(br_rcv_enable){
-		/* Write to table! */
-		br_ack_mon = true;
 
-		uint32_t ptr = monitor_ptrs[br_mon_svc];
+	switch(br_rcv_state){
+		case BR_RCV_IDLE:
+		{
+			if(br_rcv_enable){
+				br_mem_data = br_payload;
 
-		uint16_t src = br_address >> 16;
-		uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
-		ptr += (seq_addr * TASK_PER_PE * 6);
+				uint32_t ptr = monitor_ptrs[br_mon_svc];
+				uint16_t src = br_address >> 16;
+				uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
+				ptr += (seq_addr * TASK_PER_PE * 6);
 
-		uint16_t task = br_producer;
-		uint8_t idx = -1;
-		for(int i = 0; i < TASK_PER_PE; i++){
-			if(mon_table[seq_addr][i] == task){
-				idx = i;
-				break;
-			}
-		}
+				uint16_t task = br_producer;
 
-		if(idx == -1){
-			for(int i = 0; i < TASK_PER_PE; i++){
-				if(mon_table[seq_addr][i] == -1){
-					idx = i;
-					break;
+				uint8_t idx = -1;
+				for(int i = 0; i < TASK_PER_PE; i++){
+					if(mon_table[seq_addr][i] == task){
+						idx = i;
+						break;
+					}
+				}
+
+				if(idx != -1){
+					ptr += (idx * 6 + 2);
+					br_mem_addr = ptr;
+
+					br_byte_we = 0xF;
+					br_rcv_state = BR_RCV_END;
+					br_ack_mon = true;
+				} else {
+					for(int i = 0; i < TASK_PER_PE; i++){
+						if(mon_table[seq_addr][i] == -1){
+							idx = i;
+							break;
+						}
+					}
+
+					if(idx != -1){
+						ptr += (idx * 6 + 2);
+						br_mem_addr = ptr;
+
+						br_byte_we = 0xF;
+						br_rcv_state = BR_RCV_TASKID;
+					} else {
+						cout << "ERROR: NO AVAILABLE SPACE IN MONITOR LUT -- NEED CLEANUP" << endl;
+						br_rcv_state = BR_RCV_END;
+						br_ack_mon = true;
+					}
 				}
 			}
+			break;
 		}
+		case BR_RCV_TASKID:
+		{
+			br_mem_data = br_producer;
 
-		if(idx == -1){
-			cout << "ERROR: NO AVAILABLE SPACE IN MONITOR LUT -- NEED CLEANUP" << endl;
-			return;
+			uint32_t ptr = br_mem_addr - 2;
+			if(ptr & 2)
+				br_byte_we = 0x3;
+			else
+				br_byte_we = 0xC;
+
+			br_mem_addr = ptr;
+			br_ack_mon = true;
+			break;
 		}
-
-		ptr += (idx * 6);
-		br_mem_addr = ptr;
-
-		br_byte_we = 0xF;
-	} else {
-		br_byte_we = 0;
+		case BR_RCV_END:
+		{
+			br_byte_we = 0;
+			break;
+		}
 	}
 }
