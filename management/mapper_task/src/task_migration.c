@@ -52,12 +52,20 @@ void tm_migrate(mapper_t *mapper, int task_id)
 		app->center_x += mapper->processors[app->task[i]->proc_idx].addr >> 8;
 		app->center_y += mapper->processors[app->task[i]->proc_idx].addr & 0xFF;
 	}
-	app->center_x /= (app->task_cnt - 1);
-	app->center_y /= (app->task_cnt - 1);
+	int new_task_cnt = app->task_cnt - 1;
+	new_task_cnt = new_task_cnt ? new_task_cnt : 1;	 /* Avoid division by 0 */
+	app->center_x /= new_task_cnt;
+	app->center_y /= new_task_cnt;
+
+	/* Temporarily release current processor */
+	mapper->processors[task->proc_idx].free_page_cnt++;
 
 	/* Get window from this center (able to grow) */
 	window_t window;
 	window_set_from_center(&window, mapper->processors, app, 1, MAP_MIN_WX, MAP_MIN_WY);
+
+	/* Reallocate resource */
+	mapper->processors[task->proc_idx].free_page_cnt--;
 
 	/* Map to the specific window */
 	task->proc_idx = sw_map_task(task, app, mapper->processors, &window);
