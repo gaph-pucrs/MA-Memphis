@@ -481,7 +481,6 @@ void DMNI::br_receive()
 
 					br_byte_we = 0xF;
 					br_rcv_state = BR_RCV_TASKID;
-					br_ack_mon = true;
 				} else {
 					for(int i = 0; i < TASK_PER_PE; i++){
 						if(mon_table[seq_addr][i] == -1){

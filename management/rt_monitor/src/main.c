@@ -13,11 +13,15 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+
 #include <memphis.h>
+#include <monitor.h>
 
 #include "rt.h"
 #include "services.h"
 #include "tag.h"
+
+MONITOR_TABLE(qos_table);
 
 int main()
 {
@@ -28,16 +32,26 @@ int main()
 	oda_request_service(&decider, ODA_DECIDE | D_QOS);
 
 	while(true){
-		static message_t msg;
+		message_t msg;
 		memphis_receive_any(&msg);
-		switch(msg.payload[0]){
-		case MONITOR:
-			// Echo("Received from LLM: "); Echo(itoa(msg.payload[1])); Echo(itoa(msg.payload[2])); Echo(itoa(msg.payload[3])); Echo(itoa(msg.payload[4])); Echo(itoa(msg.payload[5])); Echo("\n");
-			rt_check(&decider, msg.payload[1], msg.payload[2], msg.payload[3], msg.payload[4]);
+		if(msg.payload[0] == SERVICE_PROVIDER && oda_service_provider(&decider, msg.payload[1], msg.payload[2]))
 			break;
-		case SERVICE_PROVIDER:
-			oda_service_provider(&decider, msg.payload[1], msg.payload[2]);
-			break;
+	}
+
+	monitor_init(qos_table);
+
+	while(!monitor_set_dmni(qos_table, MON_QOS));
+
+	memphis_real_time(100000, 100000, 0);	/* Repeat this loop each 1 ms */
+	while(true){
+		for(int n = 0; n < PKG_N_PE; n++){
+			for(int t = 0; t < PKG_MAX_LOCAL_TASKS; t++){
+				if(qos_table[n][t].task != -1){
+					// printf("Task %X has timing of %X\n", qos_table[n][t].task, (int)qos_table[n][t].value);
+					rt_check(&decider, qos_table[n][t].task, qos_table[n][t].value);
+					qos_table[n][t].task = -1;
+				}
+			}
 		}
 	}
 
