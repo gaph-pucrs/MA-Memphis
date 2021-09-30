@@ -139,7 +139,7 @@ private:
 	sc_signal<uint32_t>		monitor_ptrs[MON_TABLE_MAX];
 	sc_signal<bool>			br_rcv_enable;
 	sc_signal<uint32_t>		br_mem_addr;
-	sc_signal<uint16_t>		br_mem_data;
+	sc_signal<uint32_t>		br_mem_data;
 	sc_signal<uint8_t>		br_byte_we;
 
 	sc_signal<uint8_t>		noc_byte_we;

@@ -15,4 +15,4 @@
 
 #include <oda.h>
 
-void rt_check(oda_t *decider, int id, int waiting_msg, int slack_time, int remaining_time);
+void rt_check(oda_t *decider, int id, int rt_diff);
