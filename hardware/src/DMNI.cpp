@@ -440,6 +440,12 @@ void DMNI::br_receive()
 		br_byte_we = 0;
 		br_ack_mon = false;
 		br_rcv_state = BR_RCV_IDLE;
+		for(int n = 0; n < N_PE; n++){
+			for(int t = 0; t < TASK_PER_PE; t++){
+				mon_table[n][t] = -1;
+			}
+		}
+
 		return;
 	}
 
@@ -457,11 +463,11 @@ void DMNI::br_receive()
 				uint32_t ptr = monitor_ptrs[br_mon_svc];
 				uint16_t src = br_address >> 16;
 				uint16_t seq_addr = (src >> 8) + (src & 0xFF)*N_PE_X;
-				ptr += (seq_addr * TASK_PER_PE * 6);
+				ptr += (seq_addr * TASK_PER_PE * 8);
 
 				uint16_t task = br_producer;
 
-				uint8_t idx = -1;
+				int idx = -1;
 				for(int i = 0; i < TASK_PER_PE; i++){
 					if(mon_table[seq_addr][i] == task){
 						idx = i;
@@ -470,7 +476,7 @@ void DMNI::br_receive()
 				}
 
 				if(idx != -1){
-					ptr += (idx * 6 + 2);
+					ptr += (idx * 8 + 4);
 					br_mem_addr = ptr;
 
 					br_byte_we = 0xF;
@@ -485,7 +491,8 @@ void DMNI::br_receive()
 					}
 
 					if(idx != -1){
-						ptr += (idx * 6 + 2);
+						mon_table[seq_addr][idx] = task;
+						ptr += (idx * 8 + 4);
 						br_mem_addr = ptr;
 
 						br_byte_we = 0xF;
@@ -503,19 +510,18 @@ void DMNI::br_receive()
 		{
 			br_mem_data = br_producer;
 
-			uint32_t ptr = br_mem_addr - 2;
-			if(ptr & 2)
-				br_byte_we = 0x3;
-			else
-				br_byte_we = 0xC;
+			uint32_t ptr = br_mem_addr - 4;
+			br_byte_we = 0xF;
 
 			br_mem_addr = ptr;
 			br_ack_mon = true;
+			br_rcv_state = BR_RCV_END;
 			break;
 		}
 		case BR_RCV_END:
 		{
 			br_byte_we = 0;
+			br_rcv_state = BR_RCV_IDLE;
 			break;
 		}
 	}

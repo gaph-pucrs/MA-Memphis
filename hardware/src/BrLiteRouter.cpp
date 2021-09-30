@@ -106,7 +106,7 @@ void BrLiteRouter::input()
 				}
 
 				if(table_full){
-					std::cout << "++++++++++++++++++++++++++++++++++  CAM CHEIA  SEND LOCAL:  Address: " << router_address << std::endl;
+					std::cout << "++++++++++++++++++++++++++++++++++ PE" << router_address << ": CAM IS FULL" << std::endl;
 					in_state = IN_INIT;
 				} else {
 					// std::cout << "In PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": will write in cam" << std::endl;

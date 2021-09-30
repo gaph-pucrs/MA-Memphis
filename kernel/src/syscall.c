@@ -491,7 +491,7 @@ int os_mon_ptr(monitor_t* table, enum MON_TYPE type)
 		return 1;
 
 	uint32_t offset = tcb_get_offset(current);
-	table += offset;
+	table = (uint32_t)table | offset;
 
 	switch(type){
 		case MON_QOS:

@@ -147,7 +147,7 @@ private:
 
 	arbiter_state			last_arb;
 	uint8_t					timer;
-	uint16_t				mon_table[N_PE][TASK_PER_PE];
+	int16_t					mon_table[N_PE][TASK_PER_PE];
 
 	void config();
 	void receive();

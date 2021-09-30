@@ -20,6 +20,6 @@ enum MON_TYPE {
 };
 
 typedef struct _monitor {
-	uint16_t task;
+	int32_t task;	/* In reality 2 bytes, but lets avoid padding problems */
 	uint32_t value;
 } monitor_t;

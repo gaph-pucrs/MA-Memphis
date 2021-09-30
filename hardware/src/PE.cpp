@@ -346,7 +346,7 @@ void PE::comb_assignments(){
 	br_cfg_ack_in = br_ack_out_local;
 
 	br_dmni_req = br_req_out_local && BrLiteRouter::SERVICE(br_id_svc_out_local) < BrLiteRouter::Service::TARGET;
-	br_dmni_svc = br_id_svc_out_local;
+	br_dmni_svc = br_id_svc_out_local & 0x7;
 	br_dmni_addr = br_address_out_local;
 	br_dmni_prod = br_producer_out_local;
 
