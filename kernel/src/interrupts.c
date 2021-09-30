@@ -395,7 +395,7 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	/* Obtain the program code */
 	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz/4);
 
-	// putsvsv("Received MIGRATION_CODE from task id ", id, " with size ", code_sz);
+	// printf("Received MIGRATION_CODE from task id %d with size %d\n", id, code_sz);
 
 	return false;
 }
@@ -412,7 +412,15 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 	if(period)
 		sched_real_time_task(tcb, period, deadline, exec_time);
 
-	// putsv("Received MIGRATION_TCB from task id ", id);
+	/**
+	 * @todo
+	 * Hermes/Memphis/MA-Memphis have some timing problems.
+	 * DO NOT REMOVE THIS LINE. Migration errors can occur.
+	 * Try to remove when RISC-V is implemented.
+	 */
+	for(volatile int i = 0; i < 1; i++);
+	
+	// printf("Received MIGRATION_TCB from task id %d\n", id);
 
 	return false;
 }
@@ -423,7 +431,7 @@ bool os_migration_tl(int id, unsigned int tl_len)
 
 	dmni_read((unsigned int*)tcb->task_location, tl_len);
 
-	// putsvsv("Received MIGRATION_TASK_LOCATION from task id ", id, " with size ", tl_len);
+	// printf("Received MIGRATION_TASK_LOCATION from task id %d with size %d\n", id, tl_len);
 
 	return false;
 }
@@ -434,7 +442,7 @@ bool os_migration_mr(int id, unsigned int mr_len)
 
 	dmni_read((unsigned int*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(unsigned int));
 
-	// putsvsv("Received MIGRATION_MESSAGE_REQUEST from task id ", id, " with size ", mr_len);
+	// printf("Received MIGRATION_MESSAGE_REQUEST from task id %d with size %d\n", id, mr_len);
 
 	return false;
 }
@@ -448,7 +456,7 @@ bool os_migration_data_av(int id , unsigned int data_av_len)
 
 	data_av_add_tail(tcb, data_av_len);
 
-	// putsvsv("Received MIGRATION_DATA_AV from task id ", id, " with size ", data_av_len);
+	// printf("Received MIGRATION_DATA_AV from task id %d with size %d\n", id, data_av_len);
 
 	return false;
 }
@@ -461,7 +469,7 @@ bool os_migration_pipe(int id, int cons_task, unsigned int msg_len)
 	pipe_set_message_len(tcb, msg_len);
 	dmni_read(tcb->pipe.message.payload, msg_len);
 
-	// putsvsv("Received MIGRATION_PIPE from task id ", id, " with size ", msg_len);
+	// printf("Received MIGRATION_PIPE from task id %d with size %d\n", id, msg_len);
 
 	return false;
 }
@@ -473,7 +481,7 @@ bool os_migration_stack(int id, unsigned int stack_len)
 
 	dmni_read((unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
 
-	// putsvsv("Received MIGRATION_STACK from task id ", id, " with size ", stack_len);
+	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
 
 	return false;
 }

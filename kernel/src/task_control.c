@@ -97,12 +97,17 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
 {
-	tcb->scheduler.status = SCHED_MIGRATING;
 	tcb->id = id;
 	tcb->text_lenght = code_sz;
-	tcb->proc_to_migrate = -1;
+
 	tcb->mapper_task = mapper_task;
 	tcb->mapper_address = mapper_addr;
+	tcb->observer_address = -1;
+	tcb->observer_task = -1;
+
+	tcb->proc_to_migrate = -1;
+
+	tcb->scheduler.status = SCHED_MIGRATING;
 }
 
 message_t *tcb_get_message(tcb_t *tcb)
