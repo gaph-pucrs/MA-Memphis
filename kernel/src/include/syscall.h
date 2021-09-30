@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "monitor.h"
 #include "tag.h"
 
 /**
@@ -169,4 +170,4 @@ int os_br_receive(uint32_t *payload);
  * 
  * @return 0 if success. 1 if unauthorized. 2 if wrong type.
  */
-int os_mon_ptr(monitor_t* table, enum MON_TYPE type);
+int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type);

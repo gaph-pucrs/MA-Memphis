@@ -54,7 +54,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 		case SCALL_BR_RECEIVE:
 			return os_br_receive((uint32_t*)a1);
 		case SCALL_MON_PTR:
-			return os_mon_ptr((monitor_t*)a1, a2);
+			return os_mon_ptr((unsigned*)a1, a2);
 		default:
 			printf("ERROR: Unknown service %x\n", service);
 			return 0;
@@ -483,15 +483,15 @@ int os_br_receive(uint32_t *payload)
 	return 1;
 }
 
-int os_mon_ptr(monitor_t* table, enum MON_TYPE type)
+int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 {
 	tcb_t *current = sched_get_current();
 	
 	if(tcb_get_appid(current) != 0)	/* AppID should be 0 */
 		return 1;
 
-	uint32_t offset = tcb_get_offset(current);
-	table = (uint32_t)table | offset;
+	unsigned offset = tcb_get_offset(current);
+	table = (unsigned*)((unsigned)table | offset);
 
 	switch(type){
 		case MON_QOS:
