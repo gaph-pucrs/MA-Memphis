@@ -42,8 +42,8 @@ int main()
 
 	while(!monitor_set_dmni(qos_table, MON_QOS));
 
-	memphis_real_time(100000, 100000, 0);	/* Repeat this loop each 1 ms */
 	while(true){
+		memphis_real_time(PKG_SLACK_TIME_WINDOW, PKG_SLACK_TIME_WINDOW, 0);	/* Repeat this task every ms */
 		for(int n = 0; n < PKG_N_PE; n++){
 			for(int t = 0; t < PKG_MAX_LOCAL_TASKS; t++){
 				if(qos_table[n][t].task != -1){
