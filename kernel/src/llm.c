@@ -15,31 +15,22 @@
 
 #include "syscall.h"
 #include "broadcast.h"
+#include "monitor.h"
 
 #include "services.h"
 
-void llm_task(tcb_t *task)
-{
-	/* What parameters? Deadline? */
-	/* Maybe send a full-featured status */
-	/* Deadline, execution time, etc. LLM should not process too much info */
-
-	/* Build a message */
-	if(task->id != -1 && task->observer_task != -1 && task->scheduler.deadline != -1 && !task->scheduler.waiting_msg){
-		int payload = task->scheduler.slack_time - task->scheduler.remaining_exec_time;
-		
-		while(!br_send(payload, task->id, task->observer_address, MON_QOS));
-	}
-}
-
 void llm_rt(tcb_t *tasks)
 {
-	static unsigned last_rt = 0;
+	static unsigned last_rt[PKG_MAX_LOCAL_TASKS];
 	unsigned now = MMR_TICK_COUNTER;
-	if(now - last_rt > PKG_SLACK_TIME_WINDOW){
-		last_rt = now;
-		for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-			llm_task(&tasks[i]);
+
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+		if(now - last_rt[i] >= PKG_SLACK_TIME_WINDOW){
+			if(tasks[i].id != -1 && tasks[i].observer_task != -1 && tasks[i].scheduler.deadline != -1 && !tasks[i].scheduler.waiting_msg){
+				int payload = tasks[i].scheduler.slack_time - tasks[i].scheduler.remaining_exec_time;
+				if(br_send(payload, tasks[i].id, tasks[i].observer_address, MON_QOS))
+					last_rt[i] = now;
+			}
 		}
 	}
 }

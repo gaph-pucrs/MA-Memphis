@@ -480,7 +480,7 @@ void DMNI::br_receive()
 					br_mem_addr = ptr;
 
 					br_byte_we = 0xF;
-					br_rcv_state = BR_RCV_END;
+					br_rcv_state = BR_RCV_TASKID;
 					br_ack_mon = true;
 				} else {
 					for(int i = 0; i < TASK_PER_PE; i++){
