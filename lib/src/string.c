@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file string.c
+ *
+ * @author Angelo Elias Dalzotto (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date May 2021
+ *
+ * @brief string library for MA-Memphis
+ */
+
 #include <stdint.h>
 
 #include "string.h"

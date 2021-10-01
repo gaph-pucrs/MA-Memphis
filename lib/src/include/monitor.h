@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file monitor.h
+ * 
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date September 2021
+ * 
+ * @brief Monitoring API using the BrNoC
+ */
+
 #pragma once
 
 #include <stdbool.h>

@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file stdio.c
+ *
+ * @author Angelo Elias Dalzotto (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date May 2021
+ *
+ * @brief stdio library for MA-Memphis
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

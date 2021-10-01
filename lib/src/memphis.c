@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file memphis.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date May 2021
+ * 
+ * @brief Memphis API
+ */
+
 #include "memphis.h"
 #include "services.h"
 #include "mmr.h"
