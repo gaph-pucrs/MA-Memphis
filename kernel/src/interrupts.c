@@ -123,6 +123,8 @@ bool os_handle_pkt(volatile packet_t *packet)
 
 bool os_message_request(int cons_task, int cons_addr, int prod_task)
 {
+	bool force_sched = false;
+
 	if(prod_task & 0x10000000){
 		/* Message directed to kernel */
 		/* ATTENTION: Never request directly to kernel. Always use SReceive! */
@@ -142,7 +144,8 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			data_av_send(cons_task, 0x10000000 | MMR_NI_CONFIG, cons_addr, MMR_NI_CONFIG);
 		}
 	} else {
-		// putsvsv("Received message request from task ", cons_task, " to task ", prod_task);
+		// printf("Received message request from task %d to task %d\n", cons_task, prod_task);
+
 		/* Get the producer task */
 		tcb_t *prod_tcb = tcb_search(prod_task);
 
@@ -150,7 +153,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			// puts("Producer NOT found. Will resend the request and update location\n");
 			/* Task is not here. Probably migrated. */
 			int migrated_addr = tm_get_migrated_addr(prod_task);
-			// putsv("Migrated address is ", migrated_addr);
+			// printf("Migrated address is %d\n", migrated_addr);
 
 			/* Update the task location in the consumer */
 			tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
@@ -168,20 +171,37 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 				// puts("Message not found. Inserting message request.\n");
 				mr_insert(prod_tcb, cons_task, cons_addr);
 			} else {	/* Message found */
-				/* Send through NoC */
-				// puts("Message found. Sending through NoC.\n");
-				pipe_send(prod_task, cons_task, cons_addr, message);
+				if(cons_addr == MMR_NI_CONFIG){
+					/* Message Request came from NoC but the producer migrated to this address */
+					/* Writes to the consumer page address */
+					tcb_t *cons_tcb = tcb_search(cons_task);
+					message_t *msg_dst = tcb_get_message(cons_tcb);
+
+					pipe_transfer(&(message->message), msg_dst);
+
+					/* Release consumer task */
+					sched_release_wait(cons_tcb);
+
+					if(tcb_need_migration(cons_tcb)){
+						tm_migrate(cons_tcb);
+						force_sched = true;
+					}
+				} else {
+					/* Send through NoC */
+					// puts("Message found. Sending through NoC.\n");
+					pipe_send(prod_task, cons_task, cons_addr, message);
+				}
 
 				/* Release task for execution if it was blocking another send */
 				if(sched_is_waiting_request(prod_tcb)){
 					sched_release_wait(prod_tcb);
-					return sched_is_idle();
+					force_sched |= sched_is_idle();
 				}
 			}
 		}
 	}
 	
-	return false;
+	return force_sched;
 }
 
 bool os_message_delivery(int cons_task, unsigned int length)
@@ -412,14 +432,6 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 	if(period)
 		sched_real_time_task(tcb, period, deadline, exec_time);
 
-	/**
-	 * @todo
-	 * Hermes/Memphis/MA-Memphis have some timing problems.
-	 * DO NOT REMOVE THIS LINE. Migration errors can occur.
-	 * Try to remove when RISC-V is implemented.
-	 */
-	for(volatile int i = 0; i < 1; i++);
-	
 	// printf("Received MIGRATION_TCB from task id %d\n", id);
 
 	return false;
