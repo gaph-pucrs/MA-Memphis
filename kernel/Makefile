@@ -15,7 +15,6 @@ OBJCOPY = mips-elf-objcopy
 
 SRCDIR = src
 INCDIR = $(SRCDIR)/include
-DEFDIR = ../include
 HALDIR = hal/$(ARCH)
 
 LIBDIR = ../lib/src
@@ -24,7 +23,7 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -G 0 -std=c99 -I$(INCDIR) -I$(DEFDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -G 0 -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
 
 CCSRC = $(wildcard $(SRCDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))

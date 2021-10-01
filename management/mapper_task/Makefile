@@ -6,10 +6,9 @@ TARGET = mapper_task
 SRCDIR = src
 INCDIR = src/include
 INCLIB = ../../lib/src/include
-INCDEF = ../../include
 INCMAN = ../
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCDEF) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
+CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
 CC		= mips-elf-gcc
 AS		= mips-elf-as
 LD		= mips-elf-ld
