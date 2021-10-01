@@ -102,6 +102,8 @@ bool os_handle_broadcast(unsigned message)
 		case ANNOUNCE_3:
 		case ANNOUNCE_4:
 			return os_announce_mon((service - 0x530) / 16, message & 0xFFFF);
+		case RELEASE_PERIPHERAL:
+			return os_release_peripheral();
 		default:
 			printf("ERROR: unknown broadcast at time %d\n", MMR_TICK_COUNTER);
 			return false;

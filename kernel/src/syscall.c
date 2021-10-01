@@ -428,7 +428,7 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 bool os_release_peripheral()
 {
 	MMR_MEM_REG_PERIPHERALS = 1;
-	puts("Peripherals released\n");
+	// puts("Peripherals released\n");
 	return false;
 }
 

@@ -171,9 +171,7 @@ void map_app_mapping_complete(app_t *app)
 	if(app->id == 0){
 		memphis_send_any(&msg, MAINJECTOR);
 
-		msg.payload[0] = RELEASE_PERIPHERAL;
-		msg.length = 1;
-		memphis_send_any(&msg, (APP_INJECTOR & ~0xE0000000) | MEMPHIS_KERNEL_MSG);
+		memphis_br_send(RELEASE_PERIPHERAL << 16, -1, BR_SVC_ALL);
 	} else {
 		memphis_send_any(&msg, APP_INJECTOR);
 	}
