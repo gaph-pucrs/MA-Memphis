@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file pipe.h
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)

@@ -1,25 +1,17 @@
+/**
+ * MA-Memphis
+ * @file mmr.h
+ * 
+ * @author Unknown
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date Unknown
+ * 
+ * @brief Define memory mapped registers adressing.
+ */
+
 #pragma once
-
-#define MMR_IRQ_PENDING_SERVICE	0x01
-#define MMR_IRQ_SLACK_TIME		0x02
-#define MMR_IRQ_SCHEDULER		0x08
-#define MMR_IRQ_NOC				0x20
-#define MMR_IRQ_BRNOC			0x40
-
-#define MMR_INTERRUPTION	0x10000
-#define MMR_SCHEDULER	 	0x40000
-#define MMR_IDLE 			0x80000
-
-#define MMR_DMNI_READ  0
-#define MMR_DMNI_WRITE 1
-
-#define MMR_BR_SVC_MON_QOS 0
-#define MMR_BR_SVC_MON_PWR 1
-#define MMR_BR_SVC_MON_2 2
-#define MMR_BR_SVC_MON_3 3
-#define MMR_BR_SVC_MON_4 4
-#define MMR_BR_SVC_TGT 5
-#define MMR_BR_SVC_ALL 6
 
 #define MMR_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
 #define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000001U)	//!< Read/Write data from/to UART

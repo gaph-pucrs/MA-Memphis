@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "services.h"
-#include "calls.h"
 #include "memphis.h"
 
 static unsigned int holdrand;

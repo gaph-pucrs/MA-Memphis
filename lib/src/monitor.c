@@ -1,7 +1,6 @@
 #include "monitor.h"
 
 #include "memphis.h"
-#include "calls.h"
 #include "services.h"
 
 void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS])

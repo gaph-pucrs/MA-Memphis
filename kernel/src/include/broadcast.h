@@ -16,8 +16,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "tag.h"
-
 /**
  * @brief Sends a message via BrNoC
  * 

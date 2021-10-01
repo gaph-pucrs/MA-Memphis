@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_scheduler.c
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -10,7 +10,8 @@
  * 
  * @brief Defines the scheduling structures.
  * 
- * @details The main function of this module is the LST algorithm, which is 
+ * @details 
+ * The main function of this module is the LST algorithm, which is 
  * called by kernel. It returns the pointer for the selected task to execute 
  * by the processor.
  */
@@ -23,6 +24,7 @@
 #include "task_migration.h"
 #include "llm.h"
 #include "stdio.h"
+#include "interrupts.h"
 
 const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
 
@@ -180,7 +182,7 @@ void sched_run()
 	// puts("Scheduler called!\n");
 	unsigned int scheduler_call_time = MMR_TICK_COUNTER;
 
-	MMR_SCHEDULING_REPORT = MMR_SCHEDULER;
+	MMR_SCHEDULING_REPORT = REPORT_SCHEDULER;
 
 	if(tcb_need_migration(current) && current->scheduler.status == SCHED_RUNNING && current->scheduler.waiting_msg == 0)
 		tm_migrate(current);
@@ -196,13 +198,13 @@ void sched_run()
 		/* Schedules the idle task */
 		current = tcb_get_idle();
 		last_idle_time = MMR_TICK_COUNTER;
-        MMR_SCHEDULING_REPORT = MMR_IDLE;
+        MMR_SCHEDULING_REPORT = REPORT_IDLE;
 	}
 
 	MMR_TIME_SLICE = time_slice;
 
 	/* Set the scheduler interrupt mask */
-	MMR_IRQ_MASK |= MMR_IRQ_SCHEDULER;
+	MMR_IRQ_MASK |= IRQ_SCHEDULER;
 }
 
 tcb_t *sched_lst(unsigned int current_time)

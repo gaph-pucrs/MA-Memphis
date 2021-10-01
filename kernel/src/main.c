@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file main.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -17,6 +17,7 @@
 #include "task_migration.h"
 #include "stdio.h"
 #include "llm.h"
+#include "interrupts.h"
 
 int main()
 {
@@ -38,11 +39,11 @@ int main()
 	llm_init();
 
 	MMR_IRQ_MASK = (
-		MMR_IRQ_BRNOC |
-		MMR_IRQ_SCHEDULER | 
-		MMR_IRQ_NOC | 
-		MMR_IRQ_PENDING_SERVICE | 
-		MMR_IRQ_SLACK_TIME
+		IRQ_BRNOC |
+		IRQ_SCHEDULER | 
+		IRQ_NOC | 
+		IRQ_PENDING_SERVICE | 
+		IRQ_SLACK_TIME
 	);
 	
 	hal_run_task((void*)sched_get_current());

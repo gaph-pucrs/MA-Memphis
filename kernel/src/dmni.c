@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file dmni.c
  * 
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -17,7 +17,7 @@
 void dmni_read(unsigned int *payload_address, int payload_size)
 {
 	MMR_DMNI_SIZE = (unsigned int)payload_size;
-	MMR_DMNI_OP = MMR_DMNI_WRITE;
+	MMR_DMNI_OP = DMNI_WRITE;
 	MMR_DMNI_ADDRESS = (unsigned int)payload_address;
 	MMR_DMNI_START = 1;
 	while(MMR_DMNI_RECEIVE_ACTIVE);

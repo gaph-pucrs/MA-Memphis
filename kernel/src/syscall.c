@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file syscall.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -17,7 +17,7 @@
 
 #include "syscall.h"
 #include "services.h"
-#include "calls.h"
+#include "memphis.h"
 #include "task_location.h"
 #include "task_migration.h"
 #include "pending_service.h"

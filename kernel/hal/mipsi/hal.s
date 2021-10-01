@@ -1,10 +1,12 @@
 ##
-# 
+# MA-Memphis
 # @file hal.s
 #
 # @author Fernando Gehm Moraes (fernando.moraes@pucrs.br)
 # GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
 # PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+#
+# @date Unknown
 #
 # @brief Hardware abstraction layer for OS bootloader, syscalls, interrupts and
 # context switching

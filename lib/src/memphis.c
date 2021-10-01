@@ -1,6 +1,5 @@
 #include "memphis.h"
 #include "services.h"
-#include "calls.h"
 #include "mmr.h"
 
 int memphis_get_id()

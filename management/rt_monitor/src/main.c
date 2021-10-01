@@ -19,7 +19,6 @@
 
 #include "rt.h"
 #include "services.h"
-#include "tag.h"
 
 MONITOR_TABLE(qos_table);
 

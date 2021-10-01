@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "memphis.h"
-#include "calls.h"
 
 #include "mmr.h"
 #include "printf.h"

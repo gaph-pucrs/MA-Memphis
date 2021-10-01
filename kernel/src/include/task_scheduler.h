@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_scheduler.h
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -10,11 +10,12 @@
  * 
  * @brief Declares the scheduling structures.
  * 
- * @details A given task can be BE (Best-Effort) or RT (Real-Time).
- * BE task have not timing constraints.
- * RT have the timing constraints defined according the next diagram
+ * @details 
+ * A given task can be BE (Best-Effort) or RT (Real-Time).
+ * BE task has no timing constraints.
+ * RT has the timing constraints defined according the diagram below
  * Periodic task real-time parameters
- * |<------------ period -----------------> |
+ * |<------------ period ------------------>|
  * |										|
  * |<------------deadline------------>|	    |
  * |							      | 	|
@@ -35,6 +36,9 @@
 typedef struct _tcb tcb_t;
 
 #define SCHED_MAX_TIME_SLICE 16318	//!< Standard time slice value for task execution
+#define REPORT_SCHEDULER	0x40000
+#define REPORT_IDLE			0x80000
+
 
 /**
  * @brief Reasons the task can be blocked for a message synchronization.

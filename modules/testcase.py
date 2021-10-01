@@ -40,17 +40,16 @@ class Testcase:
 
 		makedirs(self.base_dir+"/applications", exist_ok=True)
 		makedirs(self.base_dir+"/management", exist_ok=True)
-		copy_tree(self.platform_path+"/include", self.base_dir+"/include", update=True)
 		copyfile(self.base, self.file)
-
-		self.__create_platform()
-		self.__create_services()
-		self.__create_cpu()
 
 		self.libs.copy()
 		self.kernel.copy()
 		self.bootloader.copy()
 		self.hardware.copy()
+
+		self.__create_platform()
+		self.__create_services()
+		self.__create_cpu()
 
 	def build(self):
 		self.libs.build()
@@ -88,7 +87,7 @@ class Testcase:
 		cfg.close()
 		
 	def __create_services(self):
-		services = open("{}/include/services.h".format(self.base_dir), "r")
+		services = open("{}/lib/src/include/services.h".format(self.base_dir), "r")
 		cfg = open("{}/services.cfg".format(self.base_dir), "w")
 
 		for line in services:

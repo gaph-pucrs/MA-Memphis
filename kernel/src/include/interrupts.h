@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file interrupts.h
  * 
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -15,6 +15,16 @@
 
 #include "packet.h"
 #include "monitor.h"
+
+#define REPORT_INTERRUPTION 0x10000
+
+enum IRQ_FLAGS {
+	IRQ_PENDING_SERVICE = 0x01,
+	IRQ_SLACK_TIME = 0x02,
+	IRQ_SCHEDULER = 0x08,
+	IRQ_NOC = 0x20,
+	IRQ_BRNOC = 0x40
+};
 
 /**
  * @brief Function called by the HAL interruption handler.

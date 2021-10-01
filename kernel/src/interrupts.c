@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file interrupts.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -27,20 +27,20 @@
 
 void os_isr(unsigned int status)
 {
-	MMR_SCHEDULING_REPORT = MMR_INTERRUPTION;
+	MMR_SCHEDULING_REPORT = REPORT_INTERRUPTION;
 
 	if(sched_is_idle())
 		sched_update_slack_time();	
 
 	bool call_scheduler = false;
 	/* Check interrupt source */
-	if(status & MMR_IRQ_BRNOC){
+	if(status & IRQ_BRNOC){
 		do {
 			uint32_t message = MMR_BR_READ_PAYLOAD;
 			
 			call_scheduler |= os_handle_broadcast(message);
 		} while(MMR_BR_HAS_MESSAGE);
-	} else if(status & MMR_IRQ_NOC){
+	} else if(status & IRQ_NOC){
 		volatile packet_t packet; 
 		pkt_read(&packet);
 
@@ -56,14 +56,14 @@ void os_isr(unsigned int status)
 			call_scheduler = os_handle_pkt(&packet);
 		}
 
-	} else if(status & MMR_IRQ_PENDING_SERVICE){
+	} else if(status & IRQ_PENDING_SERVICE){
 		/* Pending packet. Handle it */
 
 		packet_t *packet = pending_svc_pop();
 		if(packet)
 			call_scheduler = os_handle_pkt(packet);
 		
-	} else if(status & MMR_IRQ_SLACK_TIME){
+	} else if(status & IRQ_SLACK_TIME){
 		/* Send a monitoring packet */
 
 		/** @todo Send to whom? */
@@ -71,14 +71,14 @@ void os_isr(unsigned int status)
 		MMR_SLACK_TIME_MONITOR = 0;
 	}
 
-	call_scheduler |= status & MMR_IRQ_SCHEDULER;
+	call_scheduler |= status & IRQ_SCHEDULER;
 
 	if(call_scheduler){
 		sched_run();
 	} else if(sched_is_idle()){
 		sched_update_idle_time();
 
-		MMR_SCHEDULING_REPORT = MMR_IDLE;
+		MMR_SCHEDULING_REPORT = REPORT_IDLE;
 
 	} else {
 		MMR_SCHEDULING_REPORT = sched_get_current_id();

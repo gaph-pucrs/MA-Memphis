@@ -1,5 +1,5 @@
 /**
- *
+ * MA-Memphis
  * @file packet.c
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -16,6 +16,7 @@
 
 #include "packet.h"
 #include "mmr.h"
+#include "dmni.h"
 
 #define PKT_SLOTS 2
 
@@ -39,7 +40,7 @@ void pkt_init()
 void pkt_read(volatile packet_t *packet)
 {	
 	MMR_DMNI_SIZE = PKT_SIZE;
-	MMR_DMNI_OP = MMR_DMNI_WRITE;
+	MMR_DMNI_OP = DMNI_WRITE;
 	MMR_DMNI_ADDRESS = (unsigned int)packet;
 	MMR_DMNI_START = 1;
 	
@@ -79,6 +80,6 @@ void pkt_send(packet_t *packet, unsigned int *buffer, unsigned int size){
 		MMR_DMNI_ADDRESS_2 = (unsigned int)buffer;
 	}
 
-	MMR_DMNI_OP = MMR_DMNI_READ;
+	MMR_DMNI_OP = DMNI_READ;
 	MMR_DMNI_START = 1;
 }

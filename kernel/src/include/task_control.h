@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_control.h
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)

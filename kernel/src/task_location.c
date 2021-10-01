@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_location.c
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)

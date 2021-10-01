@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file syscall.h
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -17,7 +17,6 @@
 #include <stdint.h>
 
 #include "monitor.h"
-#include "tag.h"
 
 /**
  * @brief Syscall function call. It choses a service and pass the right arguments

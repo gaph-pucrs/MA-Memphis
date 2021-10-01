@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file dmni.h
  * 
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -12,6 +12,9 @@
  */
 
 #pragma once
+
+#define DMNI_READ  0
+#define DMNI_WRITE 1
 
 /**
  * @brief Abstracts the DMNI programming for read data from NoC and copy to memory.

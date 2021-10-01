@@ -1,10 +1,12 @@
 /**
- * 
+ * MA-Memphis
  * @file hal.h
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date October 2019
  * 
  * @brief Hardware abstraction layer for MIPS I processors.
  */
