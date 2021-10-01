@@ -23,6 +23,7 @@
 #include "llm.h"
 #include "stdio.h"
 #include "monitor.h"
+#include "string.h"
 
 void os_isr(unsigned int status)
 {
@@ -371,11 +372,7 @@ bool os_task_release(
 	// tcb_update_sections(task, data_sz, bss_sz);
 
 	/* Write task location */
-	/** @todo Use memcpy */
-	for(int i = 0; i < task_number; i++){
-		// putsv("TL ", task_location[i]);
-		task->task_location[i] = task_location[i];
-	}
+	memcpy(task->task_location, task_location, task_number*sizeof(int));
 
 	/* If the task is blocked, release it */
 	if(sched_is_blocked(task))
