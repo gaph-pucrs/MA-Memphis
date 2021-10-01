@@ -132,7 +132,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 		/* Search for the kernel-produced message */
 		pending_msg_t *msg = pending_msg_search(cons_task);
 		if(!msg){
-			puts("ERROR: Kernel received request but message not found. Use SReceive!\n");
+			puts("ERROR: Kernel received request but message not found. Use memphis_receive_any!\n");
 			while(1);
 		}
 		/* Send it like a MESSAGE_DELIVERY */
