@@ -12,6 +12,25 @@
  */
 
 #include "task_control.h"
+#include "monitor.h"
+
+typedef struct _observer {
+	int16_t addr;
+	uint16_t dist;
+} observer_t;
+
+/**
+ * @brief Initializes the monitoring structures
+ */
+void llm_init();
+
+/**
+ * @brief Sets an observer if is nearer than the already set
+ * 
+ * @param type Monitoring type
+ * @param addr Address received
+ */
+void llm_set_observer(enum MONITOR_TYPE type, int addr);
 
 /**
  * @brief Clears the monitoring table of terminated/migrated task

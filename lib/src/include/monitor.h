@@ -8,7 +8,8 @@ enum MONITOR_TYPE {
 	MON_PWR,
 	MON_2,
 	MON_3,
-	MON_4
+	MON_4,
+	MON_MAX
 };
 
 typedef struct _monitor {
@@ -34,3 +35,10 @@ void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS]);
  * @return True if table is set
  */
 bool monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type);
+
+/**
+ * @brief Broadcast this task as a monitor
+ * 
+ * @param type Type of monitoring offered by this task
+ */
+void monitor_announce(enum MONITOR_TYPE type);

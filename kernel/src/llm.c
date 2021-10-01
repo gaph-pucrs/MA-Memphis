@@ -20,6 +20,31 @@
 
 #include "services.h"
 
+#include "stdlib.h"
+
+observer_t observers[MON_MAX];
+
+void llm_init()
+{
+	for(int i = 0; i < MON_MAX; i++)
+		observers[i].addr = -1;
+}
+
+void llm_set_observer(enum MONITOR_TYPE type, int addr)
+{
+	int pe_addr = MMR_NI_CONFIG;
+	uint8_t pe_x = pe_addr >> 8;
+	uint8_t pe_y = pe_addr & 0xFF;
+	uint8_t obs_x = addr >> 8;
+	uint8_t obs_y = addr & 0xFF;
+	uint16_t dist = abs(pe_x - obs_x) + abs(pe_y - obs_y);
+
+	if(observers[type].addr == -1 || observers[type].dist > dist){
+		observers[type].addr = addr;
+		observers[type].dist = dist;
+	}
+}
+
 void llm_clear_table(tcb_t *task)
 {
 	int id = task->id & 0xFFFF;
@@ -36,9 +61,9 @@ void llm_rt(tcb_t *tasks)
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		if(now - last_rt[i] >= PKG_SLACK_TIME_WINDOW/10){ /* Update 10 times faster than the real time observer */
-			if(tasks[i].id != -1 && tasks[i].observer_task != -1 && tasks[i].scheduler.deadline != -1 && !tasks[i].scheduler.waiting_msg && tasks[i].proc_to_migrate == -1){
+			if(observers[MON_QOS].addr != -1 && tasks[i].id != -1 && (tasks[i].id >> 8) != 0 && tasks[i].scheduler.deadline != -1 && !tasks[i].scheduler.waiting_msg && tasks[i].proc_to_migrate == -1){
 				int payload = tasks[i].scheduler.slack_time - tasks[i].scheduler.remaining_exec_time;
-				if(br_send(payload, tasks[i].id, tasks[i].observer_address, MON_QOS))
+				if(br_send(payload, tasks[i].id, observers[MON_QOS].addr, MON_QOS))
 					last_rt[i] = now;
 			}
 		}

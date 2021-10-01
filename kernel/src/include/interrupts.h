@@ -14,6 +14,7 @@
 #pragma once
 
 #include "packet.h"
+#include "monitor.h"
 
 /**
  * @brief Function called by the HAL interruption handler.
@@ -95,8 +96,6 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
  * @brief Handles a task release packet
  * 
  * @param id ID of the task to release
- * @param observer_task ID of the observer MA task
- * @param observer_address Address of the observer MA task
  * @param task_number Number of the app's tasks
  * @param task_location Pointer to task location array
  * 
@@ -104,8 +103,6 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
  */
 bool os_task_release(
 	int id, 
-	int observer_task,
-	int observer_address,
 	int task_number, 
 	int *task_location
 );
@@ -228,3 +225,13 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
  * @return False
  */
 bool os_clear_mon_table(int task);
+
+/**
+ * @brief Registers an announced observer
+ * 
+ * @param type Monitoring type
+ * @param addr Address of the observer
+ * 
+ * @return False
+ */
+bool os_announce_mon(enum MONITOR_TYPE type, int addr);

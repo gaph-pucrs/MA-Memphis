@@ -22,6 +22,7 @@
 #include "syscall.h"
 #include "llm.h"
 #include "stdio.h"
+#include "monitor.h"
 
 void os_isr(unsigned int status)
 {
@@ -92,10 +93,14 @@ bool os_handle_broadcast(unsigned message)
 	uint16_t service = message >> 16;
 	switch(service){
 		case CLEAR_MON_TABLE:
-		{
 			/* Write to DMNI register the ID value */
 			return os_clear_mon_table(message & 0xFFFF);
-		}
+		case ANNOUNCE_QOS:
+		case ANNOUNCE_PWR:
+		case ANNOUNCE_2:
+		case ANNOUNCE_3:
+		case ANNOUNCE_4:
+			return os_announce_mon((service - 0x530) / 16, message & 0xFFFF);
 		default:
 			printf("ERROR: unknown broadcast at time %d\n", MMR_TICK_COUNTER);
 			return false;
@@ -353,8 +358,6 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
 
 bool os_task_release(
 	int id, 
-	int observer_task, 
-	int observer_address, 
 	int task_number, 
 	int *task_location
 ){
@@ -366,9 +369,6 @@ bool os_task_release(
 
 	/* Update TCB with received info */
 	// tcb_update_sections(task, data_sz, bss_sz);
-
-	task->observer_task = observer_task;
-	task->observer_address = observer_address;
 
 	/* Write task location */
 	/** @todo Use memcpy */
@@ -548,5 +548,11 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 bool os_clear_mon_table(int task)
 {
 	MMR_DMNI_CLEAR_MONITOR = task;
+	return false;
+}
+
+bool os_announce_mon(enum MONITOR_TYPE type, int addr)
+{
+	llm_set_observer(type, addr);
 	return false;
 }

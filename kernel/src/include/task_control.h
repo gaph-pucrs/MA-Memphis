@@ -36,8 +36,6 @@ typedef struct _tcb {
 
 	int mapper_address;
 	int mapper_task;
-	int observer_address;
-	int observer_task;
 
 	int proc_to_migrate;	//!< Processor to migrate the task
 

@@ -376,9 +376,7 @@ bool os_kernel_syscall(unsigned int *message, int length)
 			return os_task_release(
 				message[1], 
 				message[2], 
-				message[3], 
-				message[4], 
-				(int*)&message[5]
+				(int*)&message[3]
 			);
 		case TASK_MIGRATION:
 			return os_task_migration(message[1], message[2]);
@@ -472,9 +470,19 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t service)
 	uint16_t producer = tcb_get_id(current);
 	
 	if(producer >> 8 != 0)	/* AppID should be 0 */
-		return 2;
+		return 0;
 
-	return !br_send(payload, producer, target, service);
+	bool ret = true;
+	
+	if(service == BR_SVC_ALL || target != MMR_NI_CONFIG)
+		ret = br_send(payload, producer, target, service);
+
+	if(ret && (service == BR_SVC_ALL || target == MMR_NI_CONFIG)){
+		/* Message is directed to this PE */
+		schedule_after_syscall = os_handle_broadcast(payload);
+	}
+
+	return ret;
 }
 
 int os_br_receive(uint32_t *payload)

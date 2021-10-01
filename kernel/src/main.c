@@ -16,6 +16,7 @@
 #include "pending_service.h"
 #include "task_migration.h"
 #include "stdio.h"
+#include "llm.h"
 
 int main()
 {
@@ -33,6 +34,8 @@ int main()
 	sched_init();
 
 	tm_init();
+
+	llm_init();
 
 	MMR_IRQ_MASK = (
 		MMR_IRQ_BRNOC |

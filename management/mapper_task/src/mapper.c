@@ -143,34 +143,20 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	message_t msg;
 	msg.payload[0] = TASK_RELEASE;
 	// msg.payload[1] = appid_shift | i;
-	// msg.payload[2] = observer_task;
-	// msg.payload[3] = observer_address;
-	msg.payload[4] = app->task_cnt;
+	msg.payload[2] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.payload[i + 3] = mapper->processors[app->task[i]->proc_idx].addr;
 	
-	msg.length = app->task_cnt + 5;
+	msg.length = app->task_cnt + 3;
 
 	int appid_shift = app->id << 8;
 	for(int i = 0; i < app->task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
 		msg.payload[1] = appid_shift | i;
 
-		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 5], (ODA_OBSERVE | O_QOS));
-
-		if(observer == NULL || app->id == 0){
-			msg.payload[2] = -1;
-			msg.payload[3] = -1;
-		} else {
-			msg.payload[2] = observer->id;
-			msg.payload[3] = mapper->processors[observer->proc_idx].addr;
-
-			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(mapper->processors[observer->proc_idx].addr));
-		}
-
 		/* Send message directed to kernel at task address */
-		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 5]);
+		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 3]);
 
 		/* Mark task as running */
 		app->task[i]->status = RUNNING;
