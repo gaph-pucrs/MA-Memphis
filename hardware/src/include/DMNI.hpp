@@ -39,6 +39,7 @@ public:
 	sc_in<bool>				set_mon_3;
 	sc_in<bool>				set_mon_4;
 	sc_in<bool>				start;
+	sc_in<bool>				clear_task;
 	sc_in<sc_uint<32>>		config_data;
 
 	/* Output Status */

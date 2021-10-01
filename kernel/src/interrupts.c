@@ -11,6 +11,8 @@
  * @brief Defines the interrupts procedures of the kernel.
  */
 
+#include <stdint.h>
+
 #include "interrupts.h"
 #include "services.h"
 #include "task_migration.h"
@@ -30,12 +32,19 @@ void os_isr(unsigned int status)
 
 	bool call_scheduler = false;
 	/* Check interrupt source */
-	if(status & MMR_IRQ_NOC){
+	if(status & MMR_IRQ_BRNOC){
+		do {
+			uint32_t message = MMR_BR_READ_PAYLOAD;
+			
+			call_scheduler |= os_handle_broadcast(message);
+		} while(MMR_BR_HAS_MESSAGE);
+	} else if(status & MMR_IRQ_NOC){
 		volatile packet_t packet; 
 		pkt_read(&packet);
 
 		if(
 			MMR_DMNI_SEND_ACTIVE && (
+				packet.service == DATA_AV ||
 				packet.service == MESSAGE_REQUEST || 
 				packet.service == TASK_MIGRATION
 			)
@@ -76,6 +85,21 @@ void os_isr(unsigned int status)
 
     /* Runs the scheduled task */
     hal_run_task((void*)sched_get_current());
+}
+
+bool os_handle_broadcast(unsigned message)
+{
+	uint16_t service = message >> 16;
+	switch(service){
+		case CLEAR_MON_TABLE:
+		{
+			/* Write to DMNI register the ID value */
+			return os_clear_mon_table(message & 0xFFFF);
+		}
+		default:
+			printf("ERROR: unknown broadcast at time %d\n", MMR_TICK_COUNTER);
+			return false;
+	}
 }
 
 bool os_handle_pkt(volatile packet_t *packet)
@@ -381,6 +405,8 @@ bool os_task_migration(int id, int addr)
 
 		tm_send_code(task);
 
+		llm_clear_table(task);
+
 		if(!sched_is_waiting_delivery(task)){
 			tm_migrate(task);
 			return true;
@@ -517,4 +543,10 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);
 
 	return true;
+}
+
+bool os_clear_mon_table(int task)
+{
+	MMR_DMNI_CLEAR_MONITOR = task;
+	return false;
 }

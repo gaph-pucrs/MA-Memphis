@@ -524,4 +524,25 @@ void DMNI::br_receive()
 			break;
 		}
 	}
+
+	/**
+	 * @todo
+	 * Optimize this with 64 bit payload (add source PE to addressing)
+	 */
+	if(clear_task){
+		int16_t task_to_clear = config_data.read();
+		bool found = false;
+		for(int n = 0; n < N_PE; n++){
+			for(int t = 0; t < TASK_PER_PE; t++){
+				if(mon_table[n][t] == task_to_clear){
+					mon_table[n][t] = -1;
+					found = true;
+					// cout << "Cleared task " << task_to_clear << " from table PE " << n << " id " << t << endl;
+					break;
+				}
+			}
+			if(found)
+				break;
+		}
+	}
 }

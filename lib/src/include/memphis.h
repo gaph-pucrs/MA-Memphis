@@ -5,8 +5,8 @@
 #define MEMPHIS_KERNEL_MSG 0x10000000
 #define PKG_MAX_MSG_SIZE 128
 
-#define BR_SVC_TGT	0x1
-#define BR_SVC_ALL	0x2
+#define BR_SVC_TGT	5
+#define BR_SVC_ALL	6
 
 typedef struct _message {
 	unsigned short length;

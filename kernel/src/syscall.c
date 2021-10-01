@@ -23,6 +23,7 @@
 #include "pending_service.h"
 #include "interrupts.h"
 #include "broadcast.h"
+#include "llm.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -74,6 +75,9 @@ bool os_exit(int status)
 
 	/* Send TASK_TERMINATED */
 	tl_send_terminated(current);
+
+	/* Clear task from monitor tables */
+	llm_clear_table(current);
 
 	printf("Task id %d terminated with status %d\n", current->id, status);
 	MMR_TASK_TERMINATED = current->id;

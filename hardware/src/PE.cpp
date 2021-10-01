@@ -89,6 +89,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_producer(br_dmni_prod);
 	dmni.br_address(br_dmni_addr);
 	dmni.br_payload(br_payload_out_local);
+	dmni.clear_task(br_dmni_clear);
 
 	router = new router_cc("router",router_address, path);
 	router->clock(clock);
@@ -213,6 +214,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << br_ack_out_local << br_cfg_payload_out << br_cfg_address_out << br_cfg_id_svc_out << br_cfg_req_out;
 	sensitive << br_req_out_local << br_id_svc_out_local << br_buf_ack;
 	sensitive << br_address_out_local;
+	sensitive << br_buf_empty;
 	
 	SC_METHOD(mem_mapped_registers);
 	sensitive << cpu_mem_address_reg;
@@ -349,9 +351,10 @@ void PE::comb_assignments(){
 	br_dmni_svc = br_id_svc_out_local & 0x7;
 	br_dmni_addr = br_address_out_local;
 	br_dmni_prod = br_producer_out_local;
+	br_dmni_clear = cpu_mem_address_reg.read() == DMNI_CLEAR_MONITOR && write_enable;
 
 	l_irq_status[7] = 0; //unused
-	l_irq_status[6] = 0; //unused
+	l_irq_status[6] = !br_buf_empty;
 	l_irq_status[5] = ni_intr.read();
 	l_irq_status[4] = 0; //unused
 	l_irq_status[3] = (time_slice.read() == 1) ? 1  : 0;
@@ -652,7 +655,7 @@ void PE::clock_stop(){
 		clock_aux = false;
 
 	//} else if((rx_ni.read() == 1 || ni_intr.read() == 1) || time_slice.read() == 1 || irq_status.read().range(1,1)){
-	} else if(ni_intr.read() == 1 || time_slice.read() == 1 || irq_status.read().range(1,1)){
+	} else if(!br_buf_empty || ni_intr.read() == 1 || time_slice.read() == 1 || irq_status.read().range(1,1)){
 		clock_aux = true;
 	}
 

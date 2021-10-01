@@ -175,6 +175,7 @@ private:
 	sc_signal<bool>			br_buf_ack;
 	sc_signal<bool>			br_buf_empty;
 	sc_signal<bool>			br_buf_read_in;
+	sc_signal<bool>			br_dmni_clear;
 	sc_signal<uint32_t>		br_buf_payload_out;
 
 	/* BrNoC Control for sending messages through it */

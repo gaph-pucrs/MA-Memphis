@@ -35,6 +35,7 @@ int main()
 	tm_init();
 
 	MMR_IRQ_MASK = (
+		MMR_IRQ_BRNOC |
 		MMR_IRQ_SCHEDULER | 
 		MMR_IRQ_NOC | 
 		MMR_IRQ_PENDING_SERVICE | 

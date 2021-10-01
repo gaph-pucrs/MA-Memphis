@@ -25,6 +25,15 @@
  */
 void os_isr(unsigned int status);
 
+/**
+ * @brief Handles an interruption coming from a broadcast message
+ * 
+ * @param message The message payload
+ * 
+ * @return True if the scheduler should be called
+ */
+bool os_handle_broadcast(unsigned message);
+
 /** 
  * @brief Handles the packet coming from the NoC.
  * 
@@ -210,3 +219,12 @@ bool os_migration_stack(int id, unsigned int stack_len);
  * @return True
  */
 bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, int source);
+
+/**
+ * @brief Clears a task from the monitoring DMNI LUT
+ * 
+ * @param task ID of the task to clear
+ * 
+ * @return False
+ */
+bool os_clear_mon_table(int task);

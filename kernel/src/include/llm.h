@@ -14,6 +14,13 @@
 #include "task_control.h"
 
 /**
+ * @brief Clears the monitoring table of terminated/migrated task
+ * 
+ * @param task Pointer to the task to clear
+ */
+void llm_clear_table(tcb_t *task);
+
+/**
  * @brief Run the LLM procedure for RT tasks.
  * 
  * @details

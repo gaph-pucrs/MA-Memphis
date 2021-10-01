@@ -4,6 +4,7 @@
 #define MMR_IRQ_SLACK_TIME		0x02
 #define MMR_IRQ_SCHEDULER		0x08
 #define MMR_IRQ_NOC				0x20
+#define MMR_IRQ_BRNOC			0x40
 
 #define MMR_INTERRUPTION	0x10000
 #define MMR_SCHEDULER	 	0x40000
@@ -55,3 +56,4 @@
 #define MMR_MON_PTR_3				(*(volatile unsigned int*)0x20000628U)
 #define MMR_MON_PTR_4				(*(volatile unsigned int*)0x2000062CU)
 #define MMR_BR_PRODUCER				(*(volatile unsigned int*)0x20000630U)
+#define MMR_DMNI_CLEAR_MONITOR		(*(volatile unsigned int*)0x20000634U)
