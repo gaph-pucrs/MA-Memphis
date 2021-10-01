@@ -45,7 +45,7 @@ int main()
 	monitor_announce(MON_QOS);
 
 	while(true){
-		memphis_real_time(PKG_SLACK_TIME_WINDOW, PKG_SLACK_TIME_WINDOW, 0);	/* Repeat this task every ms */
+		memphis_real_time(PKG_MONITOR_INTERVAL_QOS, PKG_MONITOR_INTERVAL_QOS, 0);	/* Repeat this task every ms */
 		for(int n = 0; n < PKG_N_PE; n++){
 			for(int t = 0; t < PKG_MAX_LOCAL_TASKS; t++){
 				if(qos_table[n][t].task != -1){

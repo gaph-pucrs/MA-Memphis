@@ -7,6 +7,7 @@ from multiprocessing import cpu_count
 class Kernel:
 	def __init__(self, sw, hw, platform_path, testcase_path):
 		self.PKG_MAX_TASKS_APP		= sw["max_tasks_app"]
+		self.qos_interval			= sw["mon_interval_us_qos"]
 
 		self.PKG_PAGE_SIZE 			= hw["page_size_KB"]
 		self.PKG_MAX_LOCAL_TASKS 	= hw["tasks_per_PE"]
@@ -39,6 +40,7 @@ class Kernel:
 		definitions.define("PKG_PENDING_SVC_MAX", str(10))
 		definitions.define("PKG_PENDING_MSG_MAX", str(self.PKG_MAX_LOCAL_TASKS))
 		definitions.define("PKG_SLACK_TIME_WINDOW", str(50000))
+		definitions.define("PKG_MONITOR_INTERVAL_QOS", str(self.qos_interval*100))
 		definitions.define("PKG_MAX_KERNEL_MSG_LEN", str(2))
 		definitions.define("PKG_N_PE", str(self.PKG_N_PE))
 		definitions.define("PKG_N_PE_X", str(self.PKG_N_PE_X))
