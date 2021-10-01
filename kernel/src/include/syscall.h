@@ -153,15 +153,6 @@ int os_puts(char *str);
 int os_br_send(uint32_t payload, uint16_t target, uint8_t service);
 
 /**
- * @brief Receives a message from the BrNoC
- * 
- * @param payload Pointer to task variable to store the message
- * 
- * @return 0 if no message available. 1 if message received.
- */
-int os_br_receive(uint32_t *payload);
-
-/**
  * @brief Sets the monitoring table pointer to a observer task
  * 
  * @param table Pointer to table.

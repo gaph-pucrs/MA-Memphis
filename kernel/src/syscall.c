@@ -52,8 +52,6 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			return os_puts((char*)a1);
 		case SCALL_BR_SEND:
 			return os_br_send(a1, a2, a3);
-		case SCALL_BR_RECEIVE:
-			return os_br_receive((uint32_t*)a1);
 		case SCALL_MON_PTR:
 			return os_mon_ptr((unsigned*)a1, a2);
 		default:
@@ -483,18 +481,6 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t service)
 	}
 
 	return ret;
-}
-
-int os_br_receive(uint32_t *payload)
-{
-	if(!MMR_BR_HAS_MESSAGE)
-		return 0;
-
-	tcb_t *current = sched_get_current();
-	uint32_t *payload_ptr = (uint32_t*)(tcb_get_offset(current) | (unsigned int)payload);
-
-	*payload_ptr = MMR_BR_READ_PAYLOAD;
-	return 1;
 }
 
 int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)

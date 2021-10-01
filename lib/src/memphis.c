@@ -51,9 +51,3 @@ int memphis_br_send(uint32_t payload, uint16_t target, uint8_t service)
 	while(!system_call(SCALL_BR_SEND, payload, target, service));
 	return 0;
 }
-
-int memphis_br_receive(uint32_t *payload)
-{
-	while(!system_call(SCALL_BR_RECEIVE, payload, 0, 0));
-	return 0;
-}
