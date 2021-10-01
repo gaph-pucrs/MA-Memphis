@@ -94,10 +94,9 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	} else {
 		/* Send to task of the same app */
 		cons_task &= 0x000000FF;
-		// putsvsv("Trying to write pipe from ", current->id, " to ", cons_task);
 		cons_addr = tl_search(current, cons_task);
 		cons_task |= (current->id & 0x0000FF00);
-		// putsv("Trying to write pipe to addr ", cons_addr);
+		// printf("Trying to write pipe from %d to %d at %d\n", current->id, cons_task, cons_addr);
 
 		/* Check if consumer task is allocated */
 		if(cons_addr == -1){
@@ -245,7 +244,9 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			return false;
 		}
-		// putsvsv("Readpipe: trying to read from task ", prod_task, " with address ", prod_addr);
+
+		// printf("Readpipe: trying to read from task %d with address %d\n", prod_task, prod_addr);
+		
 	} else {
 		/* Synced READ, must see what applications have data available for it */
 		data_av_t *data_av = data_av_peek(current);
@@ -293,6 +294,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			return true;
 		} else {
+			// puts("Local producer\n");
 			/* Get the producer TCB */
 			tcb_t *prod_tcb = tcb_search(prod_task);
 
