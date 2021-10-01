@@ -17,7 +17,7 @@
 #include "stdio.h"
 
 pending_svc_t pending_svcs;
-pending_msg_t pending_msgs[PKG_PENDING_SVC_MAX];
+pending_msg_t pending_msgs[PKG_PENDING_MSG_MAX];
 
 void pending_svc_init()
 {
@@ -29,7 +29,7 @@ void pending_svc_init()
 
 void pending_msg_init()
 {
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++)
+	for(int i = 0; i < PKG_PENDING_MSG_MAX; i++)
 		pending_msgs[i].task = -1;
 }
 
@@ -42,20 +42,7 @@ bool pending_svc_push(const volatile packet_t *packet)
 	}
 
 	/* Push packet to buffer */
-	/* Do it manually to avoid generating a memcpy */
-	pending_svcs.buffer[pending_svcs.tail].header = packet->header;
-	pending_svcs.buffer[pending_svcs.tail].payload_size = packet->payload_size;
-	pending_svcs.buffer[pending_svcs.tail].service = packet->service;
-	pending_svcs.buffer[pending_svcs.tail].producer_task = packet->producer_task;
-	pending_svcs.buffer[pending_svcs.tail].consumer_task = packet->consumer_task;
-	pending_svcs.buffer[pending_svcs.tail].source_PE = packet->source_PE;
-	pending_svcs.buffer[pending_svcs.tail].timestamp = packet->timestamp;
-	pending_svcs.buffer[pending_svcs.tail].transaction = packet->transaction;
-	pending_svcs.buffer[pending_svcs.tail].mapper_task = packet->mapper_task;
-	pending_svcs.buffer[pending_svcs.tail].pkt_size = packet->pkt_size;
-	pending_svcs.buffer[pending_svcs.tail].code_size = packet->code_size;
-	pending_svcs.buffer[pending_svcs.tail].bss_size = packet->bss_size;
-	pending_svcs.buffer[pending_svcs.tail].initial_address = packet->initial_address;
+	pending_svcs.buffer[pending_svcs.tail] = *packet;
 
 	pending_svcs.tail++;
 	pending_svcs.tail %= PKG_PENDING_SVC_MAX;
@@ -80,14 +67,9 @@ bool pending_msg_push(int task, int size, int *msg)
 	pending_msg_t *pending = pending_msg_search(-1);
 
 	if(!pending){
-		pending = pending_msg_search_svc(MONITOR);
-		if(!pending){
-			puts("FATAL: No available slots in kernel 'pipe' to replace\n");
-			while(1);
-			return false;
-		} else {
-			puts("WARNING: Dropping MONITOR packet\n");
-		}
+		puts("FATAL: No available slots in kernel 'pipe' to replace\n");
+		while(1);
+		return false;
 	}
 
 	/* Push message to buffer */
@@ -121,7 +103,7 @@ packet_t *pending_svc_pop()
 
 pending_msg_t *pending_msg_search(int id)
 {
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
+	for(int i = 0; i < PKG_PENDING_MSG_MAX; i++){
 		if(pending_msgs[i].task == id)
 			return &pending_msgs[i];
 	}
@@ -142,13 +124,4 @@ void pending_msg_send(pending_msg_t *msg, int addr)
 	msg->task = -1;
 
 	pkt_send(packet, (unsigned*)msg->message, msg->size);
-}
-
-pending_msg_t *pending_msg_search_svc(int svc)
-{
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		if(pending_msgs[i].task != -1 && pending_msgs[i].message[0] == svc)
-			return &pending_msgs[i];
-	}
-	return NULL;
 }
