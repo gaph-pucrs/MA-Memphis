@@ -37,7 +37,7 @@ private:
 
 ## Connecting the peripheral to the many-core
 
-In [memphis.h](/hardware/src/include/memphis.h), create signals and add to the `pes_interconnection` sensitive list:
+In [Memphis.hpp](/hardware/src/include/Memphis.hpp), create signals.
 ```cpp
 ...
 
@@ -52,30 +52,30 @@ SC_MODULE(memphis) {
 	sc_in< bool >			memphis_your_peripheral_rx;
 	sc_out< bool >			memphis_your_peripheral_credit_o;
 	sc_in< regflit >		memphis_your_peripheral_data_in;
-
-	...
-
-	SC_CTOR(memphis){
-		...
-
-		SC_METHOD(pes_interconnection);
-		sensitive << memphis_your_peripheral_tx;
-		sensitive << memphis_your_peripheral_credit_i;
-		sensitive << memphis_your_peripheral_data_out;
-		sensitive << memphis_your_peripheral_rx;
-		sensitive << memphis_your_peripheral_credit_o;
-		sensitive << memphis_your_peripheral_data_in;
-		...
-	}
-	...
 };
 ```
 
-In [memphis.cpp](/hardware/src/memphis.cpp), update the signals:
+In [memphis.cpp](/hardware/src/memphis.cpp), update the signals and add the signals to the sensitive list of `pes_interconnection`:
 ```cpp
 ...
 
-void memphis::pes_interconnection(){
+...
+
+SC_CTOR(memphis){
+	...
+
+	SC_METHOD(pes_interconnection);
+	sensitive << memphis_your_peripheral_tx;
+	sensitive << memphis_your_peripheral_credit_i;
+	sensitive << memphis_your_peripheral_data_out;
+	sensitive << memphis_your_peripheral_rx;
+	sensitive << memphis_your_peripheral_credit_o;
+	sensitive << memphis_your_peripheral_data_in;
+	...
+}
+...
+
+void Memphis::pes_interconnection(){
 	...
 	for(i=0;i<N_PE;i++){
 		...

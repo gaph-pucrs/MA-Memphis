@@ -58,6 +58,7 @@ Create a new yaml file (here the example name will be example_testcase.yaml) in 
 ```yaml
 sw:                         # Operating System properties
   max_tasks_app: 10         # Maximum number of tasks per application allowed
+  mon_interval_us_qos: 500  # Monitoring interval (in us) for QoS
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
   stack_size: 1024          # Size reserved for the stack (in bytes)
@@ -174,6 +175,11 @@ Ruaro, M., Santana, A., Jantsch, A., and Moraes, F. G. (2021). Modular and Distr
 * Memphis
 ```
 Ruaro, M., Caimi, L. L., Fochi, V., and Moraes, F. G. (2019). Memphis: a framework for heterogeneous many-core SoCs generation and validation. Design Automation for Embedded Systems, 23(3-4):103-122.
+```
+
+* BrNoC
+```
+Wachter, E., Caimi, L. L., Fochi, V., Munhoz, D., & Moraes, F. G. (2017). BrNoC: A broadcast NoC for control messages in many-core systems. Microelectronics Journal, 68:69-77.
 ```
 
 * Scheduler

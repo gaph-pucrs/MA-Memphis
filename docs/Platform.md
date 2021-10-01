@@ -20,6 +20,7 @@ The many-core is composed of:
 	If some application requires a larger memory space than the one available in the local memory, it is possible to have shared memories connected to the system as peripherals;
 	* **NoC Router:** Memphis adopts the Hermes Network-on-Chip comprising the the PS (Packet Switching) router of the figure above.
   	The main features of the wormhole PS router are: XY routing, round-robin arbitration, input buffering, credit-based flow control.
+	* **BrLite Router:** A lighter version of the BrNoC (with removed unicast). This broadcast-based NoC sends message to TARGET or ALL PEs. It also has a set of 5 monitoring message classes dinamically configured by the platform to provide real-time monitoring without interfering in running user tasks. 
 * **Peripherals:** Peripherals provide I/O interface or hardware acceleration for tasks running on the GPPC region. 
 Examples of peripherals include shared memories, accelerators for image processing, communication protocols (e.g., Ethernet, USB), and Application Injectors (AppInj).
 The system requires at least one peripheral, the AppInj.
