@@ -101,6 +101,8 @@ bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsi
 			return os_announce_mon(message >> 16, message & 0xFFFF);
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
+		case UPDATE_TASK_LOCATION:
+			return os_update_task_location(message & 0xFFFF, message >> 16);
 		default:
 			printf("ERROR: unknown broadcast %x at time %d\n", service, MMR_TICK_COUNTER);
 			return false;
@@ -124,7 +126,8 @@ bool os_handle_pkt(volatile packet_t *packet)
 			puts("DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY\n");
 			return false;
 		case UPDATE_TASK_LOCATION:
-			return os_update_task_location(packet->consumer_task, packet->task_ID, packet->allocated_processor);
+			puts("DEPRECATED: UPDATE_TASK_LOCATION should be sent by BrNoC\n");
+			return false;
 		case TASK_MIGRATION:
 			puts("DEPRECATED: TASK_MIGRATION should be inside MESSAGE_DELIVERY\n");
 			return false;
@@ -185,7 +188,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			// printf("Migrated address is %d\n", migrated_addr);
 
 			/* Update the task location in the consumer */
-			tl_send_update(cons_task, cons_addr, prod_task, migrated_addr);
+			tl_send_update(cons_addr, prod_task, migrated_addr, false);
 
 			/* Forward the message request to the migrated processor */
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
@@ -307,7 +310,7 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 			int migrated_addr = tm_get_migrated_addr(cons_task);
 
 			/* Update the task location in the consumer */
-			tl_send_update(prod_task, prod_addr, cons_task, migrated_addr);
+			tl_send_update(prod_addr, cons_task, migrated_addr, false);
 
 			/* Forward the message request to the migrated processor */
 			data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
@@ -380,12 +383,15 @@ bool os_task_release(
 	return sched_is_idle();
 }
 
-bool os_update_task_location(int dest_task, int updt_task, int updt_addr)
+bool os_update_task_location(int updt_task, int updt_addr)
 {
 	/* Get target task */
-	tcb_t *task = tcb_search(dest_task);
-
-	tl_insert_update(task, updt_task, updt_addr);
+	tcb_t *tcbs = tcb_get();
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+		if(tcbs[i].id >> 8 == updt_task >> 8){
+			tl_insert_update(&tcbs[i], updt_task, updt_addr);
+		}
+	}
 
 	return false;
 }

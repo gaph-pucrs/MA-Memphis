@@ -17,6 +17,7 @@
 #include "services.h"
 #include "packet.h"
 #include "syscall.h"
+#include "broadcast.h"
 
 void tl_init(tcb_t *tcb)
 {
@@ -24,17 +25,15 @@ void tl_init(tcb_t *tcb)
 		tcb->task_location[i] = -1;
 }
 
-void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr)
+void tl_send_update(int dest_addr, int updt_task, int updt_addr, bool broadcast)
 {
-	packet_t *packet = pkt_slot_get();
+	uint8_t svc = broadcast ? BR_SVC_ALL : BR_SVC_TGT;
+	
+	uint32_t payload = 0;
+	payload |= updt_addr << 16;
+	payload |= updt_task & 0xFFFF;
 
-	packet->header = dest_addr;
-	packet->service = UPDATE_TASK_LOCATION;
-	packet->consumer_task = dest_task;
-	packet->task_ID = updt_task;
-	packet->allocated_processor = updt_addr;
-
-	pkt_send(packet, NULL, 0);
+	while(!br_send(payload, -1, dest_addr, UPDATE_TASK_LOCATION, svc));
 }
 
 bool tl_send_allocated(tcb_t *allocated_task)

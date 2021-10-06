@@ -123,13 +123,12 @@ bool os_task_release(
 /**
  * @brief Handles a update task location packet
  * 
- * @param dest_task ID of the task to be informed of the update
  * @param updt_task	ID of the task that has updated
  * @param updt_addr Address of the task that has updated
  * 
  * @return False
  */
-bool os_update_task_location(int dest_task, int updt_task, int updt_addr);
+bool os_update_task_location(int updt_task, int updt_addr);
 
 /**
  * @brief Handles a task migration order

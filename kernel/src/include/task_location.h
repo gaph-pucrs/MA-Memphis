@@ -27,12 +27,12 @@ void tl_init(tcb_t *tcb);
  * 
  * @details Assembles and send an UPDATE_TASK_LOCATION.
  * 
- * @param dest_task	ID of the task that needs to know about the update.
  * @param dest_addr Address of the target that needs to know about the update.
  * @param updt_task ID of the task that was migrated.
  * @param updt_addr Address of the task that was migrated.
+ * @param broadcast If the update should be broadcasted
  */
-void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr);
+void tl_send_update(int dest_addr, int updt_task, int updt_addr, bool broadcast);
 
 /** 
  * @brief Sends a TASK_ALLOCATED to the mapper
