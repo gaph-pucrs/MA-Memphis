@@ -426,7 +426,9 @@ void BrLiteRouter::input_output()
 
 void BrLiteRouter::log(uint8_t port)
 {
-	std::ofstream ofs(path+"/debug/traffic_router.txt", std::ofstream::app);
-	ofs << tick_counter << '\t' << router_address << '\t' << std::hex << (int)ksvc_in[port] << '\t' << std::dec << 1 << '\t' << 0 << '\t' << (int)port*2 + 1 << '\t' << TARGET(address_in[port]) << '\n';
-	ofs.close();
+	if(SERVICE(id_svc_in[port]) != Service::CLEAR){
+		std::ofstream ofs(path+"/debug/traffic_router.txt", std::ofstream::app);
+		ofs << tick_counter << '\t' << router_address << '\t' << std::hex << (int)ksvc_in[port] << '\t' << std::dec << 1 << '\t' << 0 << '\t' << (int)port*2 + 1 << '\t' << TARGET(address_in[port]) << '\n';
+		ofs.close();
+	}
 }
