@@ -62,7 +62,7 @@ void router_cc::traffic_monitor(){
 					case 2: //Service
 						service[i] = data_in[i].read();
 
-						if(service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x19 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31)
+						if(service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x23 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31)
 							SM_traffic_monitor[i] = 5;
 						else
 							SM_traffic_monitor[i] = 3;
@@ -101,7 +101,7 @@ void router_cc::traffic_monitor(){
 							// Open a file called "aux" deferred on append mode
 							fp = fopen (aux, "a");
 
-							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x19 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31){
+							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x23 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31){
 								sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter);
 							} else {
 								if (service[i] == 0x00 || service[i] == 0x01 || service[i] == 0x31)
