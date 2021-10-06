@@ -16,6 +16,7 @@ BrLiteBuffer::BrLiteBuffer(sc_module_name _name) :
 	for(int i = 0; i < BR_BUFFER_SIZE; i++){
 		sensitive << buffer[i].payload;
 		sensitive << buffer[i].producer;
+		sensitive << buffer[i].ksvc;
 	}
 }
 
@@ -40,6 +41,7 @@ void BrLiteBuffer::buffer_in()
 		full = false;
 	} else if(req_in && !full && !ack_out){
 		buffer[tail].payload = payload_in;
+		buffer[tail].ksvc = ksvc_in;
 
 		uint32_t producer = 0;
 		producer |= address_in & 0xFFFF0000;
@@ -65,4 +67,5 @@ void BrLiteBuffer::data_out()
 {
 	payload_out = buffer[head].payload;
 	producer_out = buffer[head].producer;
+	ksvc_out = buffer[head].ksvc;
 }

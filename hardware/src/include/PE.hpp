@@ -182,6 +182,7 @@ private:
 	sc_signal<bool>			br_dmni_clear;
 	sc_signal<uint32_t>		br_buf_payload_out;
 	sc_signal<uint32_t>		br_buf_producer_out;
+	sc_signal<uint8_t>		br_buf_ksvc_out;
 
 	/* BrNoC Control for sending messages through it */
 	sc_signal<bool>			br_cfg_payload;

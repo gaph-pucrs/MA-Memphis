@@ -12,11 +12,13 @@ public:
 	sc_core::sc_in<uint32_t>	payload_in;
 	sc_core::sc_in<uint32_t>	address_in;
 	sc_core::sc_in<uint16_t>	producer_in;
+	sc_core::sc_in<uint8_t>		ksvc_in;
 
 	sc_core::sc_out<bool>		empty;
 	sc_core::sc_in<bool>		read_in;
 	sc_core::sc_out<uint32_t>	payload_out;
 	sc_core::sc_out<uint32_t>	producer_out;
+	sc_core::sc_out<uint8_t>	ksvc_out;
 	
 	SC_HAS_PROCESS(BrLiteBuffer);
 	BrLiteBuffer(sc_core::sc_module_name _name);
@@ -27,6 +29,7 @@ private:
 	typedef struct _buffer {
 		sc_core::sc_signal<uint32_t> payload;
 		sc_core::sc_signal<uint32_t> producer;
+		sc_core::sc_signal<uint8_t> ksvc;
 	} buffer_t;
 
 	sc_core::sc_signal<uint8_t> head;
