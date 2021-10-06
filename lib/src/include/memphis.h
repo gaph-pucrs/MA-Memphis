@@ -126,8 +126,9 @@ int memphis_real_time(int period, int deadline, int exec_time);
  * 
  * @param payload Message to send (1 word)
  * @param target Target address to send
+ * @param ksvc Message Kernel Service, used for TGT and ALL (check services.h)
  * @param service BrNoC Service to send (monitors/TGT/ALL)
  * 
  * @return 1
  */
-int memphis_br_send(uint32_t payload, uint16_t target, uint8_t service);
+int memphis_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service);

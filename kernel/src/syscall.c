@@ -51,7 +51,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 		case SCALL_PUTS:
 			return os_puts((char*)a1);
 		case SCALL_BR_SEND:
-			return os_br_send(a1, a2, a3);
+			return os_br_send(a1, a2, a3 >> 8, a3 & 0xFF);
 		case SCALL_MON_PTR:
 			return os_mon_ptr((unsigned*)a1, a2);
 		default:
@@ -462,7 +462,7 @@ int os_puts(char *str)
 	return 0;
 }
 
-int os_br_send(uint32_t payload, uint16_t target, uint8_t service)
+int os_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service)
 {
 	tcb_t *current = sched_get_current();
 	uint16_t producer = tcb_get_id(current);
@@ -471,13 +471,13 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t service)
 		return 0;
 
 	bool ret = true;
-	
+
 	if(service == BR_SVC_ALL || target != MMR_NI_CONFIG)
-		ret = br_send(payload, producer, target, service);
+		ret = br_send(payload, producer, target, ksvc, service);
 
 	if(ret && (service == BR_SVC_ALL || target == MMR_NI_CONFIG)){
 		/* Message is directed to this PE */
-		schedule_after_syscall = os_handle_broadcast(payload);
+		schedule_after_syscall = os_handle_broadcast(ksvc, MMR_NI_CONFIG, producer, payload);
 	}
 
 	return ret;

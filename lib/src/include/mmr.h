@@ -50,3 +50,5 @@
 #define MMR_BR_PRODUCER				(*(volatile unsigned int*)0x20000630U)
 #define MMR_DMNI_CLEAR_MONITOR		(*(volatile unsigned int*)0x20000634U)
 #define MMR_BR_READ_PRODUCER		(*(volatile unsigned int*)0x20000638U)
+#define MMR_BR_KSVC					(*(volatile unsigned int*)0x2000063CU)
+#define MMR_BR_READ_KSVC			(*(volatile unsigned int*)0x20000640U)

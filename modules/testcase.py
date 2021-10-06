@@ -101,8 +101,8 @@ class Testcase:
 		services.close()
 
 		cfg.write("\n")
-		cfg.write("$TASK_ALLOCATION_SERVICE 40 221\n")
-		cfg.write("$TASK_TERMINATED_SERVICE 70 221\n")
+		cfg.write("$TASK_ALLOCATION_SERVICE 40 19\n")
+		cfg.write("$TASK_TERMINATED_SERVICE 70 19\n")
 
 		cfg.close()
 

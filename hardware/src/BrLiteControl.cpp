@@ -18,6 +18,7 @@ BrLiteControl::BrLiteControl(sc_module_name _name, uint16_t _address):
 	sensitive << id_svc_cfg;
 	sensitive << start_cfg;
 	sensitive << ack_in;
+	sensitive << ksvc_cfg;
 }
 
 void BrLiteControl::config()

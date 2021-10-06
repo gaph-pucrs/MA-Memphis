@@ -39,11 +39,14 @@ void os_isr(unsigned int status);
 /**
  * @brief Handles an interruption coming from a broadcast message
  * 
+ * @param service Kernel service
+ * @param src_addr Message source address
+ * @param src_id Message source task ID (-1 if originated in kernel)
  * @param message The message payload
  * 
  * @return True if the scheduler should be called
  */
-bool os_handle_broadcast(unsigned message);
+bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsigned message);
 
 /** 
  * @brief Handles the packet coming from the NoC.

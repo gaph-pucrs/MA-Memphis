@@ -146,11 +146,12 @@ int os_puts(char *str);
  * 
  * @param payload Message to send
  * @param target PE address to send the message to
+ * @param ksvc Kernel service used in ALL and TARGET (see services.h)
  * @param service Broadcast service (ALL/TARGET)
  * 
  * @return 0 if success. 1 if BrNoC is busy. 2 unauthorized.
  */
-int os_br_send(uint32_t payload, uint16_t target, uint8_t service);
+int os_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service);
 
 /**
  * @brief Sets the monitoring table pointer to a observer task

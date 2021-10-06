@@ -36,9 +36,11 @@ void os_isr(unsigned int status)
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
 		do {
+			uint8_t svc = MMR_BR_READ_KSVC;
+			uint32_t producer = MMR_BR_READ_PRODUCER;
 			uint32_t message = MMR_BR_READ_PAYLOAD;
 			
-			call_scheduler |= os_handle_broadcast(message);
+			call_scheduler |= os_handle_broadcast(svc, producer >> 16, producer & 0xFFFF, message);
 		} while(MMR_BR_HAS_MESSAGE);
 	} else if(status & IRQ_NOC){
 		volatile packet_t packet; 
@@ -89,23 +91,18 @@ void os_isr(unsigned int status)
     hal_run_task((void*)sched_get_current());
 }
 
-bool os_handle_broadcast(unsigned message)
+bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsigned message)
 {
-	uint16_t service = message >> 16;
 	switch(service){
 		case CLEAR_MON_TABLE:
 			/* Write to DMNI register the ID value */
 			return os_clear_mon_table(message & 0xFFFF);
-		case ANNOUNCE_QOS:
-		case ANNOUNCE_PWR:
-		case ANNOUNCE_2:
-		case ANNOUNCE_3:
-		case ANNOUNCE_4:
-			return os_announce_mon((service - 0x530) / 16, message & 0xFFFF);
+		case ANNOUNCE_MONITOR:
+			return os_announce_mon(message >> 16, message & 0xFFFF);
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		default:
-			printf("ERROR: unknown broadcast at time %d\n", MMR_TICK_COUNTER);
+			printf("ERROR: unknown broadcast %x at time %d\n", service, MMR_TICK_COUNTER);
 			return false;
 	}
 }

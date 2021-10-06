@@ -22,13 +22,13 @@
 // #define TASK_NUMBER_INDEX		8 	//Index where is the app task number information within packet APP_REQ_ACK
 
 /* Platform kernel/management services */
-#define MESSAGE_REQUEST			0x00000010
-#define MESSAGE_DELIVERY		0x00000020
-#define DATA_AV					0x00000310
+#define MESSAGE_REQUEST			0x00000000
+#define MESSAGE_DELIVERY		0x00000001
+#define NEW_APP					0x00000010
+#define APP_ALLOCATION_REQUEST	0x00000026
+#define DATA_AV					0x00000031
+#define APP_MAPPING_COMPLETE	0x00000034
 #define TASK_ALLOCATION			0x00000040
-#define NEW_APP					0x00000150
-#define APP_ALLOCATION_REQUEST	0x00000240
-#define APP_MAPPING_COMPLETE	0x00000440
 
 #define APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR / N_PE_X) << 8) | (APP_INJECTOR % N_PE_X))
 

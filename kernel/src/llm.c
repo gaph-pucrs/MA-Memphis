@@ -50,8 +50,7 @@ void llm_clear_table(tcb_t *task)
 	int id = task->id & 0xFFFF;
 	os_clear_mon_table(id);
 
-	uint32_t message = (CLEAR_MON_TABLE << 16) | (id);
-	while(!br_send(message, MMR_NI_CONFIG, MMR_NI_CONFIG, BR_SVC_ALL));
+	while(!br_send(id, MMR_NI_CONFIG, MMR_NI_CONFIG, CLEAR_MON_TABLE, BR_SVC_ALL));
 }
 
 void llm_rt(tcb_t *tasks)
@@ -63,7 +62,7 @@ void llm_rt(tcb_t *tasks)
 		if(now - last_rt[i] >= PKG_MONITOR_INTERVAL_QOS/10){ /* Update 10 times faster than the real time observer */
 			if(observers[MON_QOS].addr != -1 && tasks[i].id != -1 && (tasks[i].id >> 8) != 0 && tasks[i].scheduler.deadline != -1 && !tasks[i].scheduler.waiting_msg && tasks[i].proc_to_migrate == -1){
 				int payload = tasks[i].scheduler.slack_time - tasks[i].scheduler.remaining_exec_time;
-				if(br_send(payload, tasks[i].id, observers[MON_QOS].addr, MON_QOS))
+				if(br_send(payload, tasks[i].id, observers[MON_QOS].addr, MONITOR, MON_QOS))
 					last_rt[i] = now;
 			}
 		}

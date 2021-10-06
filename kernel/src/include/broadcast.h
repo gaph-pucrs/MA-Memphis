@@ -22,8 +22,9 @@
  * @param payload Message to send
  * @param producer ID of the producer task
  * @param target PE address to send the message to
+ * @param ksvc Kernel service used in ALL and TARGET messages (see services.h)
  * @param service Broadcast service (ALL/TARGET/MONITORS)
  * 
  * @return True if success. False if BrNoC is busy.
  */
-bool br_send(uint32_t payload, uint16_t producer, uint16_t target, uint8_t service);
+bool br_send(uint32_t payload, uint16_t producer, uint16_t target, uint8_t ksvc, uint8_t service);

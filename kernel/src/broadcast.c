@@ -15,15 +15,16 @@
 
 #include "mmr.h"
 
-bool br_send(uint32_t payload, uint16_t producer, uint16_t target, uint8_t service)
+bool br_send(uint32_t payload, uint16_t producer, uint16_t target, uint8_t ksvc, uint8_t service)
 {
 	if(MMR_BR_LOCAL_BUSY)
 		return false;
 
 	MMR_BR_PAYLOAD = payload;
-	MMR_BR_TARGET = target & 0xFFFF;
+	MMR_BR_TARGET = target;
 	MMR_BR_SERVICE = service & 0x7;
 	MMR_BR_PRODUCER = producer;
+	MMR_BR_KSVC = ksvc;
 	MMR_BR_START = 1;
 	return true;
 }
