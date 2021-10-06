@@ -380,7 +380,8 @@ bool os_kernel_syscall(unsigned int *message, int length)
 			puts("DEPRECATED: TASK_MIGRATION should be sent by BrNoC\n");
 			return false;
 		case RELEASE_PERIPHERAL:
-			return os_release_peripheral();
+			puts("DEPRECATED: RELEASE_PERIPHERAL should be sent by BrNoC\n");
+			return false;
 		default:
 			printf("ERROR: Unknown service %x inside MESSAGE_DELIVERY", message[0]);
 			return false;
