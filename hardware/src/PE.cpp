@@ -171,11 +171,12 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_buffer.ack_out(br_buf_ack);
 	br_buffer.payload_in(br_payload_out_local);
 	br_buffer.address_in(br_address_out_local);
-	br_buffer.id_svc_in(br_id_svc_out_local);
+	br_buffer.producer_in(br_producer_out_local);
 
 	br_buffer.empty(br_buf_empty);
 	br_buffer.read_in(br_buf_read_in);
 	br_buffer.payload_out(br_buf_payload_out);
+	br_buffer.producer_out(br_buf_producer_out);
 
 	br_control.clock(clock);
 	br_control.reset(reset);
@@ -227,6 +228,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << br_cfg_req_out;
 	sensitive << br_buf_payload_out;
 	sensitive << br_buf_empty;
+	sensitive << br_buf_producer_out;
 	
 	SC_METHOD(end_of_simulation);
 	sensitive << end_sim_reg;
@@ -277,6 +279,9 @@ void PE::mem_mapped_registers(){
 			break;
 		case BR_READ_PAYLOAD:
 			cpu_mem_data_read.write(br_buf_payload_out.read());
+			break;
+		case BR_READ_PRODUCER:
+			cpu_mem_data_read.write(br_buf_producer_out.read());
 			break;
 		case BR_HAS_MESSAGE:
 			cpu_mem_data_read.write(!br_buf_empty.read());

@@ -49,3 +49,4 @@
 #define MMR_MON_PTR_4				(*(volatile unsigned int*)0x2000062CU)
 #define MMR_BR_PRODUCER				(*(volatile unsigned int*)0x20000630U)
 #define MMR_DMNI_CLEAR_MONITOR		(*(volatile unsigned int*)0x20000634U)
+#define MMR_BR_READ_PRODUCER		(*(volatile unsigned int*)0x20000638U)

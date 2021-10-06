@@ -15,6 +15,7 @@ BrLiteBuffer::BrLiteBuffer(sc_module_name _name) :
 	sensitive << head;
 	for(int i = 0; i < BR_BUFFER_SIZE; i++){
 		sensitive << buffer[i].payload;
+		sensitive << buffer[i].producer;
 	}
 }
 
@@ -40,6 +41,11 @@ void BrLiteBuffer::buffer_in()
 	} else if(req_in && !full && !ack_out){
 		buffer[tail].payload = payload_in;
 
+		uint32_t producer = 0;
+		producer |= address_in & 0xFFFF0000;
+		producer |= producer_in;
+		buffer[tail].producer = producer;
+
 		uint8_t next_tail = (tail + 1) % BR_BUFFER_SIZE;
 		if(next_tail == head)	
 			full = true;	/* Disallow overwriting */
@@ -58,4 +64,5 @@ void BrLiteBuffer::buffer_in()
 void BrLiteBuffer::data_out()
 {
 	payload_out = buffer[head].payload;
+	producer_out = buffer[head].producer;
 }
