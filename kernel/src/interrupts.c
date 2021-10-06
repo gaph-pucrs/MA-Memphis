@@ -103,6 +103,8 @@ bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsi
 			return os_release_peripheral();
 		case UPDATE_TASK_LOCATION:
 			return os_update_task_location(message & 0xFFFF, message >> 16);
+		case TASK_MIGRATION:
+			return os_task_migration(message & 0xFFFF, message >> 16);
 		default:
 			printf("ERROR: unknown broadcast %x at time %d\n", service, MMR_TICK_COUNTER);
 			return false;

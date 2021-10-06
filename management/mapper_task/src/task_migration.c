@@ -88,12 +88,10 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	task->status = MIGRATING;
 
 	/* Send migration order to Kernel at old processor address */
-	message_t msg;
-	msg.payload[0] = TASK_MIGRATION;
-	msg.payload[1] = task->id;
-	msg.payload[2] = mapper->processors[task->proc_idx].addr;
-	msg.length = 3;
-	memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | mapper->processors[task->old_proc].addr);
+	uint32_t payload = 0;
+	payload |= mapper->processors[task->proc_idx].addr << 16;
+	payload |= task->id & 0xFFFF;
+	memphis_br_send(payload, mapper->processors[task->old_proc].addr, TASK_MIGRATION, BR_SVC_TGT);
 }
 
 void tm_migration_complete(mapper_t *mapper, int task_id)

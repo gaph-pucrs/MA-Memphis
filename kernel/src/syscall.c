@@ -377,7 +377,8 @@ bool os_kernel_syscall(unsigned int *message, int length)
 				(int*)&message[3]
 			);
 		case TASK_MIGRATION:
-			return os_task_migration(message[1], message[2]);
+			puts("DEPRECATED: TASK_MIGRATION should be sent by BrNoC\n");
+			return false;
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		default:
