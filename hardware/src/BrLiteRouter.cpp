@@ -14,10 +14,12 @@
 #include "BrLiteRouter.hpp"
 
 #include <iostream>
+#include <fstream>
 
-BrLiteRouter::BrLiteRouter(sc_module_name _name, uint16_t _address) :
+BrLiteRouter::BrLiteRouter(sc_module_name _name, uint16_t _address, std::string _path) :
 	sc_module(_name),
-	router_address(_address)
+	router_address(_address),
+	path(_path)
 {
 	SC_METHOD(input);
 	sensitive << clock.pos();
@@ -67,8 +69,9 @@ void BrLiteRouter::input()
 				port++;
 				port %= NPORT;
 			}
-			// std::cout << "In PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": arbitred port " << (int)port << std::endl;
 
+			log(port);
+			
 			in_state = IN_TEST_SPACE;
 			break;
 		}
@@ -419,4 +422,11 @@ void BrLiteRouter::input_output()
 			break;
 	}
 
+}
+
+void BrLiteRouter::log(uint8_t port)
+{
+	std::ofstream ofs(path+"/debug/traffic_router.txt", std::ofstream::app);
+	ofs << tick_counter << '\t' << router_address << '\t' << std::hex << (int)ksvc_in[port] << '\t' << std::dec << 1 << '\t' << 0 << '\t' << (int)port*2 + 1 << '\t' << TARGET(address_in[port]) << '\n';
+	ofs.close();
 }

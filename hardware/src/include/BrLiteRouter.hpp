@@ -55,6 +55,8 @@ public:
 	sc_in<bool>	clock;
 	sc_in<bool>	reset;
 
+	sc_in<sc_uint<32 >> tick_counter;
+
 	/* Data Inputs */
 	sc_in<uint32_t>		payload_in[NPORT];
 	sc_in<uint32_t>		address_in[NPORT];
@@ -76,7 +78,7 @@ public:
 	sc_out<bool> local_busy;
 
 	SC_HAS_PROCESS(BrLiteRouter);
-	BrLiteRouter(sc_module_name _name, uint16_t _address);
+	BrLiteRouter(sc_module_name _name, uint16_t _address, std::string _path);
 
 private:
 	static const uint8_t CAM_SIZE = 8;
@@ -131,7 +133,11 @@ private:
 	uint32_t wrote_tick;
 	uint32_t current_tick;
 
+	std::string path;
+
 	void input();
 	void output();
 	void input_output();
+
+	void log(uint8_t port);
 };

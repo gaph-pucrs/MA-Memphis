@@ -16,7 +16,7 @@
 PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
 	sc_module(name_), 
 	dmni("dmni", address_),
-	br_router("brrouter", address_),
+	br_router("brrouter", address_, path_),
 	br_buffer("brbuffer"),
 	br_control("brcontrol", address_),
 	router_address(address_), 
@@ -132,6 +132,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	br_router.clock(clock);
 	br_router.reset(reset);
+	br_router.tick_counter(tick_counter);
 	
 	for(int i = 0; i < NPORT - 1; i++){
 		br_router.req_in[i](br_req_in[i]);
@@ -484,7 +485,7 @@ void PE::sequential_attr(){
 			if(cpu_mem_address_reg.read() == TASK_TERMINATED){
 				sprintf(aux, "%s/debug/traffic_router.txt", path.c_str());
 				fp = fopen(aux, "a");
-				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 4, 0, 4*2, -1, (unsigned int)cpu_mem_data_write_reg.read());
+				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 0, 0, 4*2, -1, (unsigned int)cpu_mem_data_write_reg.read());
 				fclose(fp);
 			}
 
