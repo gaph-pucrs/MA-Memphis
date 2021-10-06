@@ -45,6 +45,7 @@ SC_MODULE(PE) {
 	sc_in<uint32_t>		br_address_in[NPORT - 1];
 	sc_in<uint16_t>		br_producer_in[NPORT - 1];
 	sc_in<uint8_t>		br_id_svc_in[NPORT - 1];
+	sc_in<uint8_t>		br_ksvc_in[NPORT - 1];
 
 	sc_out<bool>		br_req_out[NPORT - 1];
 	sc_out<bool>		br_ack_out[NPORT - 1];
@@ -52,6 +53,7 @@ SC_MODULE(PE) {
 	sc_out<uint32_t>	br_address_out[NPORT - 1];
 	sc_out<uint16_t>	br_producer_out[NPORT - 1];
 	sc_out<uint8_t>		br_id_svc_out[NPORT - 1];
+	sc_out<uint8_t>		br_ksvc_out[NPORT - 1];
 
 	mlite_cpu	*	cpu;
 	ram			* 	mem;
@@ -160,6 +162,7 @@ private:
 	sc_signal<uint32_t>		br_address_in_local;
 	sc_signal<uint16_t>		br_producer_in_local;
 	sc_signal<uint8_t>		br_id_svc_in_local;
+	sc_signal<uint8_t>		br_ksvc_in_local;
 	sc_signal<bool>			br_local_busy;
 
 	/* Network -> Local */
@@ -169,6 +172,7 @@ private:
 	sc_signal<uint32_t>		br_address_out_local;
 	sc_signal<uint16_t>		br_producer_out_local;
 	sc_signal<uint8_t>		br_id_svc_out_local;
+	sc_signal<uint8_t>		br_ksvc_out_local;
 
 	/* BrNoC Output buffer for kernel messages (TGT and ALL) */
 	sc_signal<bool>			br_buf_req;

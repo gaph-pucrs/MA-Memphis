@@ -43,6 +43,7 @@ Memphis::Memphis(sc_module_name name_, std::string path) :
 			pe[j]->br_address_in[i](br_address_in[j][i]);
 			pe[j]->br_producer_in[i](br_producer_in[j][i]);
 			pe[j]->br_id_svc_in[i](br_id_svc_in[j][i]);
+			pe[j]->br_ksvc_in[i](br_ksvc_in[j][i]);
 
 			pe[j]->br_req_out[i](br_req_out[j][i]);
 			pe[j]->br_ack_out[i](br_ack_out[j][i]);
@@ -50,6 +51,7 @@ Memphis::Memphis(sc_module_name name_, std::string path) :
 			pe[j]->br_address_out[i](br_address_out[j][i]);
 			pe[j]->br_producer_out[i](br_producer_out[j][i]);
 			pe[j]->br_id_svc_out[i](br_id_svc_out[j][i]);
+			pe[j]->br_ksvc_out[i](br_ksvc_out[j][i]);
 		}
 	}
 
@@ -86,6 +88,7 @@ Memphis::Memphis(sc_module_name name_, std::string path) :
 			sensitive << br_address_in[j][i];
 			sensitive << br_producer_in[j][i];
 			sensitive << br_id_svc_in[j][i];
+			sensitive << br_ksvc_in[j][i];
 
 			sensitive << br_req_out[j][i];
 			sensitive << br_ack_out[j][i];
@@ -93,6 +96,7 @@ Memphis::Memphis(sc_module_name name_, std::string path) :
 			sensitive << br_address_out[j][i];
 			sensitive << br_producer_out[j][i];
 			sensitive << br_id_svc_out[j][i];
+			sensitive << br_ksvc_out[j][i];
 		}
 	}
 }
@@ -268,6 +272,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][NORTH] = br_payload_out[y*N_PE_X + x + N_PE_X][SOUTH];
 				br_producer_in[y*N_PE_X + x][NORTH] = br_producer_out[y*N_PE_X + x + N_PE_X][SOUTH];
 				br_id_svc_in[y*N_PE_X + x][NORTH] = br_id_svc_out[y*N_PE_X + x + N_PE_X][SOUTH];
+				br_ksvc_in[y*N_PE_X + x][NORTH] = br_ksvc_out[y*N_PE_X + x + N_PE_X][SOUTH];
 			} else {
 				/* Ground signals */
 				br_req_in[y*N_PE_X + x][NORTH] = 0;
@@ -276,6 +281,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][NORTH] = 0;
 				br_producer_in[y*N_PE_X + x][NORTH] = 0;
 				br_id_svc_in[y*N_PE_X + x][NORTH] = 0;
+				br_ksvc_in[y*N_PE_X + x][NORTH] = 0;
 			}
 
 			if(y != 0){
@@ -285,6 +291,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][SOUTH] = br_payload_out[y*N_PE_X + x - N_PE_X][NORTH];
 				br_producer_in[y*N_PE_X + x][SOUTH] = br_producer_out[y*N_PE_X + x - N_PE_X][NORTH];
 				br_id_svc_in[y*N_PE_X + x][SOUTH] = br_id_svc_out[y*N_PE_X + x - N_PE_X][NORTH];
+				br_ksvc_in[y*N_PE_X + x][SOUTH] = br_ksvc_out[y*N_PE_X + x - N_PE_X][NORTH];
 			} else {
 				/* Ground signals */
 				br_req_in[y*N_PE_X + x][SOUTH] = 0;
@@ -293,6 +300,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][SOUTH] = 0;
 				br_producer_in[y*N_PE_X + x][SOUTH] = 0;
 				br_id_svc_in[y*N_PE_X + x][SOUTH] = 0;
+				br_ksvc_in[y*N_PE_X + x][SOUTH] = 0;
 			}
 
 			if(x != N_PE_X - 1){
@@ -302,6 +310,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][EAST] = br_payload_out[y*N_PE_X + x + 1][WEST];
 				br_producer_in[y*N_PE_X + x][EAST] = br_producer_out[y*N_PE_X + x + 1][WEST];
 				br_id_svc_in[y*N_PE_X + x][EAST] = br_id_svc_out[y*N_PE_X + x + 1][WEST];
+				br_ksvc_in[y*N_PE_X + x][EAST] = br_ksvc_out[y*N_PE_X + x + 1][WEST];
 			} else {
 				/* Ground signals */
 				br_req_in[y*N_PE_X + x][EAST] = 0;
@@ -310,6 +319,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][EAST] = 0;
 				br_producer_in[y*N_PE_X + x][EAST] = 0;
 				br_id_svc_in[y*N_PE_X + x][EAST] = 0;
+				br_ksvc_in[y*N_PE_X + x][EAST] = 0;
 			}
 
 			if(x != 0){
@@ -319,6 +329,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][WEST] = br_payload_out[y*N_PE_X + x - 1][EAST];
 				br_producer_in[y*N_PE_X + x][WEST] = br_producer_out[y*N_PE_X + x - 1][EAST];
 				br_id_svc_in[y*N_PE_X + x][WEST] = br_id_svc_out[y*N_PE_X + x - 1][EAST];
+				br_ksvc_in[y*N_PE_X + x][WEST] = br_ksvc_out[y*N_PE_X + x - 1][EAST];
 			} else {
 				/* Ground signals */
 				br_req_in[y*N_PE_X + x][WEST] = 0;
@@ -327,6 +338,7 @@ void Memphis::br_interconnection()
 				br_payload_in[y*N_PE_X + x][WEST] = 0;
 				br_producer_in[y*N_PE_X + x][WEST] = 0;
 				br_id_svc_in[y*N_PE_X + x][WEST] = 0;
+				br_ksvc_in[y*N_PE_X + x][WEST] = 0;
 			}
 		}
 	}

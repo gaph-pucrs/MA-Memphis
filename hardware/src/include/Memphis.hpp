@@ -74,6 +74,7 @@ private:
 	sc_signal<uint32_t>	br_address_in[N_PE][NPORT - 1];
 	sc_signal<uint16_t>	br_producer_in[N_PE][NPORT - 1];
 	sc_signal<uint8_t>	br_id_svc_in[N_PE][NPORT - 1];
+	sc_signal<uint8_t>	br_ksvc_in[N_PE][NPORT - 1];
 
 	sc_signal<bool>		br_req_out[N_PE][NPORT - 1];
 	sc_signal<bool>		br_ack_out[N_PE][NPORT - 1];
@@ -81,6 +82,7 @@ private:
 	sc_signal<uint32_t>	br_address_out[N_PE][NPORT - 1];
 	sc_signal<uint16_t>	br_producer_out[N_PE][NPORT - 1];
 	sc_signal<uint8_t>	br_id_svc_out[N_PE][NPORT - 1];
+	sc_signal<uint8_t>	br_ksvc_out[N_PE][NPORT - 1];
 
 	static int RouterPosition(int router);
 	static regaddress RouterAddress(int router);

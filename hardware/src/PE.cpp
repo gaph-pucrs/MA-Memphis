@@ -140,6 +140,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 		br_router.address_in[i](br_address_in[i]);
 		br_router.producer_in[i](br_producer_in[i]);
 		br_router.id_svc_in[i](br_id_svc_in[i]);
+		br_router.ksvc_in[i](br_ksvc_in[i]);
 
 		br_router.req_out[i](br_req_out[i]);
 		br_router.ack_out[i](br_ack_out[i]);
@@ -147,6 +148,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 		br_router.address_out[i](br_address_out[i]);
 		br_router.producer_out[i](br_producer_out[i]);
 		br_router.id_svc_out[i](br_id_svc_out[i]);
+		br_router.ksvc_out[i](br_ksvc_out[i]);
 	}
 
 	br_router.req_in[LOCAL](br_req_in_local);
@@ -155,6 +157,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_router.address_in[LOCAL](br_address_in_local);
 	br_router.producer_in[LOCAL](br_producer_in_local);
 	br_router.id_svc_in[LOCAL](br_id_svc_in_local);
+	br_router.ksvc_in[LOCAL](br_ksvc_in_local);
 	br_router.local_busy(br_local_busy);
 
 	br_router.req_out[LOCAL](br_req_out_local);
@@ -163,6 +166,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_router.address_out[LOCAL](br_address_out_local);
 	br_router.producer_out[LOCAL](br_producer_out_local);
 	br_router.id_svc_out[LOCAL](br_id_svc_out_local);
+	br_router.ksvc_out[LOCAL](br_ksvc_out_local);
 
 	br_buffer.clock(clock);
 	br_buffer.reset(reset);

@@ -136,6 +136,7 @@ void BrLiteRouter::input()
 			table[free_idx].payload = payload_in[selected_port];
 			table[free_idx].producer = producer_in[selected_port];
 			table[free_idx].address = address_in[selected_port];
+			table[free_idx].ksvc = ksvc_in[selected_port];
 			table[free_idx].origin = selected_port;
 
 			ack_out[selected_port] = true;
@@ -215,6 +216,7 @@ void BrLiteRouter::output()
 						id_svc_out[i] = table[selected_line].id_svc;
 						producer_out[i] = table[selected_line].producer;
 						address_out[i] = table[selected_line].address;
+						ksvc_out[i] = table[selected_line].ksvc;
 						payload_out[i] = table[selected_line].payload;
 					} else {
 						ack_ports[i] = true;	/* Ack on the port the packet has entered */
@@ -227,6 +229,7 @@ void BrLiteRouter::output()
 					id_svc_out[LOCAL] = table[selected_line].id_svc;
 					producer_out[LOCAL] = table[selected_line].producer;
 					address_out[LOCAL] = table[selected_line].address;
+					ksvc_out[LOCAL] = table[selected_line].ksvc;
 					payload_out[LOCAL] = table[selected_line].payload;
 				} else {
 					ack_ports[LOCAL] = true;
@@ -239,6 +242,7 @@ void BrLiteRouter::output()
 				id_svc_out[LOCAL] = table[selected_line].id_svc;
 				producer_out[LOCAL] = table[selected_line].producer;
 				address_out[LOCAL] = table[selected_line].address;
+				ksvc_out[LOCAL] = table[selected_line].ksvc;
 				payload_out[LOCAL] = table[selected_line].payload;
 				
 				// std::cout << "Out PE " << (int)(router_address >> 8) << "x" << (int)(router_address & 0xFF) << ": sent local" << std::endl;
