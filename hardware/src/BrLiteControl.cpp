@@ -49,6 +49,10 @@ void BrLiteControl::config()
 		id_svc |= (data_in & 0x7);
 		id_svc_out = id_svc;
 		// cout << "ID/Service is set to " << hex << (int)id_svc << endl;
+	} else if(ksvc_cfg){
+		uint16_t ksvc = data_in;
+		ksvc_out = ksvc;
+		// cout << "Kernel service is set to " << hex << ksvc << endl;
 	} else if(start_cfg){
 		// cout << "Starting send BrNoC" << endl;
 		start = true;

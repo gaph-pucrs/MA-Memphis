@@ -189,6 +189,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_control.address_cfg(br_cfg_address);
 	br_control.producer_cfg(br_cfg_producer);
 	br_control.id_svc_cfg(br_cfg_id_svc);
+	br_control.ksvc_cfg(br_cfg_ksvc);
 	br_control.start_cfg(br_cfg_start);
 	br_control.data_in(br_cfg_data);
 
@@ -196,6 +197,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	br_control.address_out(br_cfg_address_out);
 	br_control.producer_out(br_cfg_producer_out);
 	br_control.id_svc_out(br_cfg_id_svc_out);
+	br_control.ksvc_out(br_cfg_ksvc_out);
 	br_control.req_out(br_cfg_req_out);
 	br_control.ack_in(br_cfg_ack_in);
 
@@ -220,6 +222,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << br_req_out_local << br_id_svc_out_local << br_buf_ack;
 	sensitive << br_address_out_local;
 	sensitive << br_buf_empty;
+	sensitive << br_cfg_ksvc_out;
 	
 	SC_METHOD(mem_mapped_registers);
 	sensitive << cpu_mem_address_reg;
@@ -339,6 +342,7 @@ void PE::comb_assignments(){
 	br_cfg_start = cpu_mem_address_reg.read() == BR_START && write_enable;
 	br_cfg_data = cpu_mem_data_write_reg.read();
 	br_buf_read_in = cpu_mem_address_reg.read() == BR_READ_PAYLOAD;
+	br_cfg_ksvc = cpu_mem_address_reg.read() == BR_KSVC && write_enable;
 
 	cpu_set_mon_qos = cpu_mem_address_reg.read() == MON_PTR_QOS && write_enable;
 	cpu_set_mon_pwr = cpu_mem_address_reg.read() == MON_PTR_PWR && write_enable;
@@ -353,6 +357,7 @@ void PE::comb_assignments(){
 	br_address_in_local = br_cfg_address_out;
 	br_producer_in_local = br_cfg_producer_out;
 	br_id_svc_in_local = br_cfg_id_svc_out;
+	br_ksvc_in_local = br_cfg_ksvc_out;
 	br_req_in_local = br_cfg_req_out;
 	br_cfg_ack_in = br_ack_out_local;
 

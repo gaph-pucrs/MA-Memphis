@@ -188,6 +188,7 @@ private:
 	sc_signal<bool>			br_cfg_address;
 	sc_signal<bool>			br_cfg_producer;
 	sc_signal<bool>			br_cfg_id_svc;
+	sc_signal<bool>			br_cfg_ksvc;
 	sc_signal<bool>			br_cfg_start;
 	sc_signal<uint32_t>		br_cfg_data;
 
@@ -195,6 +196,7 @@ private:
 	sc_signal<uint32_t>		br_cfg_address_out;
 	sc_signal<uint16_t>		br_cfg_producer_out;
 	sc_signal<uint8_t>		br_cfg_id_svc_out;
+	sc_signal<uint8_t>		br_cfg_ksvc_out;
 	sc_signal<bool>			br_cfg_req_out;
 	sc_signal<bool>			br_cfg_ack_in;
 
