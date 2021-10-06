@@ -102,12 +102,12 @@ void router_cc::traffic_monitor(){
 							fp = fopen (aux, "a");
 
 							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x23 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31){
-								sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter);
+								sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i*2, targetRouter);
 							} else {
 								if (service[i] == 0x00 || service[i] == 0x01 || service[i] == 0x31)
-									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i], consumer_id[i]);
+									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i*2, targetRouter, task_id[i], consumer_id[i]);
 								else
-									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i]);
+									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i*2, targetRouter, task_id[i]);
 
 							}
 

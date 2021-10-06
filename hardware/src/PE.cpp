@@ -484,7 +484,7 @@ void PE::sequential_attr(){
 			if(cpu_mem_address_reg.read() == TASK_TERMINATED){
 				sprintf(aux, "%s/debug/traffic_router.txt", path.c_str());
 				fp = fopen(aux, "a");
-				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 4, 0, 4, -1, (unsigned int)cpu_mem_data_write_reg.read());
+				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 4, 0, 4*2, -1, (unsigned int)cpu_mem_data_write_reg.read());
 				fclose(fp);
 			}
 

@@ -72,7 +72,7 @@ class Testcase:
 		cfg = open(self.base_dir+"/platform.cfg", "w")
 
 		cfg.write("router_addressing XY\n")
-		cfg.write("channel_number {}\n".format(1))
+		cfg.write("channel_number {}\n".format(2))
 		cfg.write("mpsoc_x {}\n".format(self.PKG_N_PE_X))
 		cfg.write("mpsoc_y {}\n".format(self.PKG_N_PE_Y))
 		cfg.write("flit_size {}\n".format(32))
