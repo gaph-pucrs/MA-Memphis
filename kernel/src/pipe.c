@@ -48,6 +48,7 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 	packet->producer_task = producer_task;
 	packet->consumer_task = consumer_task;
 	packet->msg_lenght = message->message.length;
+	packet->insert_request = MMR_NI_CONFIG;
 
 	/* Release pipe availability. Must check if DMNI is busy before populating again */
 	message->consumer_task = -1;
