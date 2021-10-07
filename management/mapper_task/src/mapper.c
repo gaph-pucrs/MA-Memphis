@@ -146,7 +146,7 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	msg.payload[2] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 3] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.payload[i + 3] = app->task[i]->processor->addr;
 	
 	msg.length = app->task_cnt + 3;
 
