@@ -35,13 +35,11 @@ void os_isr(unsigned int status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
-		do {
-			uint8_t svc = MMR_BR_READ_KSVC;
-			uint32_t producer = MMR_BR_READ_PRODUCER;
-			uint32_t message = MMR_BR_READ_PAYLOAD;
-			
-			call_scheduler |= os_handle_broadcast(svc, producer >> 16, producer & 0xFFFF, message);
-		} while(MMR_BR_HAS_MESSAGE);
+		uint8_t svc = MMR_BR_READ_KSVC;
+		uint32_t producer = MMR_BR_READ_PRODUCER;
+		uint32_t message = MMR_BR_READ_PAYLOAD;
+		
+		call_scheduler |= os_handle_broadcast(svc, producer >> 16, producer & 0xFFFF, message);
 	} else if(status & IRQ_NOC){
 		volatile packet_t packet; 
 		pkt_read(&packet);
