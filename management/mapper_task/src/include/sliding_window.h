@@ -41,6 +41,6 @@ void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window
  * @param processors List of processors
  * @param window Pointer to the mapping window
  * 
- * @return Sequential address of the PE to map the task
+ * @return Pointer to mapped processor
  */
-int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *window);
+processor_t *sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *window);

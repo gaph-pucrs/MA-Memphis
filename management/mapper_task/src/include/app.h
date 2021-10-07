@@ -14,6 +14,7 @@
 #pragma once
 
 #include "task.h"
+#include "processor.h"
 
 /* Forward declaration */
 typedef struct _task task_t;
@@ -54,8 +55,9 @@ app_t *app_get_free(app_t *apps);
  * @param descriptor Pointer to the application descriptor
  * @param communication Pointer to the application communication list
  * @param tasks Pointer to the tasks array
+ * @param processors Pointer to the processors array
  */
-void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *communication, task_t *tasks);
+void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *communication, task_t *tasks, processor_t *processors);
 
 /**
  * @brief Searches for a specific app

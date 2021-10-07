@@ -74,14 +74,14 @@ unsigned map_try_static(app_t *app, processor_t *processors)
 
 	/* First check for static mapping availability */
 	for(int i = 0; i < app->task_cnt; i++){
-		int proc_idx = app->task[i]->proc_idx;
-		if(proc_idx != -1){
+		processor_t *processor = app->task[i]->processor;
+		if(processor){
 			/* Statically mapped task found */
 			app->has_static_tasks = true;
 
 			/* This is needed because more than 1 task can be statically mapped to the same processor */
-			processors[proc_idx].pending_map_cnt++;
-			if(processors[proc_idx].pending_map_cnt > processors[proc_idx].free_page_cnt){
+			processor->pending_map_cnt++;
+			if(processor->pending_map_cnt > processor->free_page_cnt){
 				printf("No available pages for statically mapped task %d\n", app->task[i]->id);
 				if(!processors[i].failed_map){
 					fail_cnt++;
@@ -102,13 +102,13 @@ void map_static_tasks(app_t *app, processor_t *processors)
 
 	/* First map statically mapped tasks */
 	for(int i = 0; i < app->task_cnt; i++){
-		int proc_idx = app->task[i]->proc_idx;
-		if(proc_idx != -1){
-			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processors[proc_idx].addr);
-			// processors[proc_idx].pending_map_cnt = 0;
-			processors[proc_idx].free_page_cnt--;
-			app->center_x += processors[proc_idx].addr >> 8;
-			app->center_y += processors[proc_idx].addr & 0xFF;
+		processor_t *processor = app->task[i]->processor;
+		if(processor){
+			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processor->addr);
+			// processor->pending_map_cnt = 0;
+			processor->free_page_cnt--;
+			app->center_x += processor->addr >> 8;
+			app->center_y += processor->addr & 0xFF;
 			static_cnt++;
 		}
 	}
@@ -148,7 +148,7 @@ void map_task_release(mapper_t *mapper, app_t *app)
 	msg.payload[4] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 5] = mapper->processors[app->task[i]->proc_idx].addr;
+		msg.payload[i + 5] = app->task[i]->processor->addr;
 	
 	msg.length = app->task_cnt + 5;
 
@@ -164,9 +164,9 @@ void map_task_release(mapper_t *mapper, app_t *app)
 			msg.payload[3] = -1;
 		} else {
 			msg.payload[2] = observer->id;
-			msg.payload[3] = mapper->processors[observer->proc_idx].addr;
+			msg.payload[3] = observer->processor->addr;
 
-			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(mapper->processors[observer->proc_idx].addr));
+			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(observer->processor->addr));
 		}
 
 		/* Send message directed to kernel at task address */
@@ -201,14 +201,14 @@ void map_task_terminated(mapper_t *mapper, int id)
 	int taskid = id & 0xFF;
 
 	app_t *app = app_search(mapper->apps, appid);
-	int proc_idx = app->task[taskid]->proc_idx;
+	processor_t *processor = app->task[taskid]->processor;
 
 	/* Terminate task */
-	int old_proc = task_terminate(app->task[taskid]);
-	if(old_proc != -1){
+	processor_t *old_proc = task_terminate(app->task[taskid]);
+	if(old_proc){
 		/* The task finished with a migration request on the fly */
 		mapper->available_slots++;
-		mapper->processors[old_proc].free_page_cnt++;
+		old_proc->free_page_cnt++;
 	}
 	
 	/* Deallocate task from app */
@@ -217,7 +217,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	/* Deallocate task from mapper */
 	mapper->available_slots++;
-	mapper->processors[proc_idx].free_page_cnt++;
+	processor->free_page_cnt++;
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
@@ -230,10 +230,10 @@ void map_task_terminated(mapper_t *mapper, int id)
 		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
 		mapper->pending_task_cnt = 0;
 	} else if(
-		mapper->processors[proc_idx].failed_map &&													/* Pending static map at desired PE */
-		mapper->processors[proc_idx].free_page_cnt >= mapper->processors[proc_idx].pending_map_cnt	/* All slots needed in this processor are freed! */
+		processor->failed_map &&													/* Pending static map at desired PE */
+		processor->free_page_cnt >= processor->pending_map_cnt	/* All slots needed in this processor are freed! */
 	){
-		mapper->processors[proc_idx].failed_map = false;
+		processor->failed_map = false;
 		mapper->fail_map_cnt--;
 		if(mapper->fail_map_cnt == 0){
 			/* All needed processor slots are freed. Map and allocate now */
@@ -259,10 +259,10 @@ void map_set_score(app_t *app, processor_t *processors)
 	unsigned cost = 0;
 	for(int i = 0; i < app->task_cnt; i++){
 		task_t *predecessor = app->task[i];
-		processors[predecessor->proc_idx].pending_map_cnt = 0;
+		predecessor->processor->pending_map_cnt = 0;
 		for(int j = 0; j < predecessor->succ_cnt; j++){
 			task_t *successor = predecessor->successors[j];
-			cost += map_manhattan_distance(processors[predecessor->proc_idx].addr, processors[successor->proc_idx].addr);
+			cost += map_manhattan_distance(predecessor->processor->addr, successor->processor->addr);
 			edges++;
 		}
 	}
@@ -283,7 +283,7 @@ void map_task_allocation(app_t *app, processor_t *processors)
 
 	for(int i = 0; i < app->task_cnt; i++){
 		payload[i*2] = app->task[i]->id;
-		payload[i*2 + 1] = processors[app->task[i]->proc_idx].addr;
+		payload[i*2 + 1] = app->task[i]->processor->addr;
 	}
 
 	msg.length = app->task_cnt * 2 + 1;
@@ -299,7 +299,7 @@ void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int 
 	// puts("Mapping application...\n");
 		
 	app_t *app = app_get_free(mapper->apps);
-	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks);
+	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks, processors);
 
 	/* 1st phase: static mapping */
 	mapper->fail_map_cnt = map_try_static(app, processors);
@@ -347,7 +347,7 @@ task_t *map_nearest_tag(mapper_t *mapper, app_t *ma, int address, unsigned tag)
 
 			if((ma->task[i]->type_tag & tag) == tag){
 				/* Tag found! Check distance */
-				unsigned new_dist = map_manhattan_distance(address, mapper->processors[ma->task[i]->proc_idx].addr);
+				unsigned new_dist = map_manhattan_distance(address, ma->task[i]->processor->addr);
 				if(new_dist < distance){
 					distance = new_dist;
 					oda = ma->task[i];

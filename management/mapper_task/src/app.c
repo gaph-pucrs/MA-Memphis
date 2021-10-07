@@ -36,7 +36,7 @@ app_t *app_get_free(app_t *apps)
 	return NULL;
 }
 
-void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *communication, task_t *tasks)
+void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *communication, task_t *tasks, processor_t *processors)
 {
 	app->id = id;
 	app->task_cnt = task_cnt;
@@ -50,12 +50,11 @@ void app_build(app_t *app, int id, unsigned task_cnt, int *descriptor, int *comm
 
 		int proc_idx = descriptor[i*TASK_DESCRIPTOR_SIZE];
 		// printf("Processor address: %d\n", proc_idx);
-		if(proc_idx != -1)
+		if(proc_idx != -1){
 			proc_idx = (proc_idx >> 8) + (proc_idx & 0xFF)*PKG_N_PE_X;
-		// printf("Processor index: %d\n", proc_idx);
-		app->task[i]->proc_idx = proc_idx;
-
-		app->task[i]->old_proc = -1;
+			// printf("Processor index: %d\n", proc_idx);
+			app->task[i]->processor = &(processors[proc_idx]);
+		}
 
 		app->task[i]->type_tag = descriptor[i*TASK_DESCRIPTOR_SIZE + 1];
 		// printf("Task type tag: %d\n", app->task[i]->type_tag);
