@@ -24,19 +24,6 @@ void tl_init(tcb_t *tcb)
 		tcb->task_location[i] = -1;
 }
 
-void tl_send_update(int dest_task, int dest_addr, int updt_task, int updt_addr)
-{
-	packet_t *packet = pkt_slot_get();
-
-	packet->header = dest_addr;
-	packet->service = UPDATE_TASK_LOCATION;
-	packet->consumer_task = dest_task;
-	packet->task_ID = updt_task;
-	packet->allocated_processor = updt_addr;
-
-	pkt_send(packet, NULL, 0);
-}
-
 bool tl_send_allocated(tcb_t *allocated_task)
 {
 	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};
