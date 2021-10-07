@@ -56,6 +56,9 @@ void tm_migrate(tcb_t *tcb)
 
 	tm_add(tcb_get_id(tcb), migrate_addr);
 
+	/* Update task location of tasks of the same app running locally */
+	tl_update_local(tcb_get_id(tcb), migrate_addr);
+
 	/* Send base TCB info */
 	// puts("Sending migration TCB\n");
 	tm_send_tcb(tcb, migrate_addr);
@@ -80,9 +83,6 @@ void tm_migrate(tcb_t *tcb)
 	
 	/* Code (.text) is in another function */
 	printf("Task id %d migrated at time %d to processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, migrate_addr);
-
-	/* Update task location of tasks of the same app running locally */
-	tl_update_local(tcb_get_id(tcb), migrate_addr);
 
 	sched_clear(tcb);
 	tcb_clear(tcb);

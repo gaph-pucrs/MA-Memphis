@@ -117,7 +117,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
 			// putsv("Packet length is ", packet->msg_lenght);
-			return os_message_delivery(packet->consumer_task, packet->msg_lenght);
+			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_lenght);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
 		case TASK_ALLOCATION:
@@ -193,12 +193,13 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 
 		} else {
 			// puts("Producer found!\n");
-			/* Update task location in case of migration */
-			if(cons_task >> 8 == prod_task >> 8){
-				/* Same app */
+			
+			/* Update task location in case of migration */			
+			if(!(cons_task & 0xFFFF0000) && ((cons_task >> 8) == (prod_task >> 8))){
+				/* Only update if message came from another task of the same app */
 				tl_insert_update(prod_tcb, cons_task, cons_addr);
 			}
-
+			
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
@@ -240,7 +241,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 	return force_sched;
 }
 
-bool os_message_delivery(int cons_task, unsigned int length)
+bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned int length)
 {
 	if(cons_task & 0x10000000){
 		/* This message was directed to kernel */
@@ -258,6 +259,14 @@ bool os_message_delivery(int cons_task, unsigned int length)
 		/* Get consumer task */
 		// putsv("Received delivery to task ", cons_task);
 		tcb_t *cons_tcb = tcb_search(cons_task);
+
+		/* Update task location in case of migration */			
+		if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
+			/* Only update if message came from another task of the same app */
+			tl_insert_update(cons_tcb, prod_task, prod_addr);
+		}
+		/* No need to check if task migrated here. Once REQUEST is emitted a task cannot migrate */
+
 		// if(cons_tcb)
 		// 	puts("Found TCB\n");
 		// else
@@ -300,9 +309,9 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 		tcb_t *cons_tcb = tcb_search(cons_task);
 
 		if(cons_tcb){	/* Ensure task is allocated here */
-			/* Update task location in case of migration */
-			if(prod_task >> 8 == cons_task >> 8){
-				/* Same app */
+			/* Update task location in case of migration */			
+			if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
+				/* Only update if message came from another task of the same app */
 				tl_insert_update(cons_tcb, prod_task, prod_addr);
 			}
 
@@ -388,25 +397,28 @@ bool os_task_release(
 }
 
 bool os_task_migration(int id, int addr)
-{
-	printf("Trying to migrate task %d to address %d\n", id, addr);
-	
+{	
 	tcb_t *task = tcb_search(id);
 
-	if(task && !tcb_need_migration(task)){
-		tcb_set_migrate_addr(task, addr);
+	if(task){
+		if(!tcb_need_migration(task)){
+			printf("Trying to migrate task %d to address %d\n", id, addr);
+			tcb_set_migrate_addr(task, addr);
 
-		tm_send_code(task);
+			tm_send_code(task);
 
-		llm_clear_table(task);
+			llm_clear_table(task);
 
-		if(!sched_is_waiting_delivery(task)){
-			tm_migrate(task);
-			return true;
+			if(!sched_is_waiting_delivery(task)){
+				tm_migrate(task);
+				return true;
+			}
+		} else {
+			printf("ERROR: task %x proc_to_migrate already assigned to %x when tried to assign %x\n", id, task->proc_to_migrate, addr);
+			while(1);
 		}
 	} else {
-		puts("ERROR: task not found or proc_to_migrate already assigned\n");
-		while(1);
+		printf("Tried to migrate task %x but it already terminated\n", id);
 	}
 
 	return false;
@@ -531,6 +543,8 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
 
 	printf("Task id %d allocated by task migration at time %d from processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, source);
+
+	tl_update_local(id, MMR_NI_CONFIG);
 
 	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
 	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);

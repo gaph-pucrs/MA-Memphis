@@ -74,11 +74,13 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task);
  * @brief Receives a message from the NoC
  * 
  * @param cons_task ID of the consumer task
+ * @param prod_task ID of the producer task
+ * @param prod_addr Address of the producer task
  * @param length Length of the message received
  * 
  * @return True if the scheduler should be called
  */
-bool os_message_delivery(int cons_task, unsigned int length);
+bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned int length);
 
 /**
  * @brief Handles a data available packet

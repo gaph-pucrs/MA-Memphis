@@ -18,6 +18,7 @@
 #include "packet.h"
 #include "syscall.h"
 #include "broadcast.h"
+#include "stdio.h"
 
 void tl_init(tcb_t *tcb)
 {
@@ -68,7 +69,7 @@ void tl_update_local(int id, int addr)
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		if((tcbs[i].id & 0xFF00) == (id & 0xFF00)){
 			/* Task of the same app. Update. */
-			tcbs[i].task_location[id & 0x00FF] = addr;
+			tl_insert_update(&(tcbs[i]), id, addr);
 		}
 	}
 }
