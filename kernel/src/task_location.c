@@ -25,17 +25,6 @@ void tl_init(tcb_t *tcb)
 		tcb->task_location[i] = -1;
 }
 
-void tl_send_update(int dest_addr, int updt_task, int updt_addr, bool broadcast)
-{
-	uint8_t svc = broadcast ? BR_SVC_ALL : BR_SVC_TGT;
-	
-	uint32_t payload = 0;
-	payload |= updt_addr << 16;
-	payload |= updt_task & 0xFFFF;
-
-	while(!br_send(payload, -1, dest_addr, UPDATE_TASK_LOCATION, svc));
-}
-
 bool tl_send_allocated(tcb_t *allocated_task)
 {
 	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};

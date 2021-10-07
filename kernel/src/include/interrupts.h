@@ -121,16 +121,6 @@ bool os_task_release(
 );
 
 /**
- * @brief Handles a update task location packet
- * 
- * @param updt_task	ID of the task that has updated
- * @param updt_addr Address of the task that has updated
- * 
- * @return False
- */
-bool os_update_task_location(int updt_task, int updt_addr);
-
-/**
  * @brief Handles a task migration order
  * @details This function is called by the source processor (the old processor)
  * 

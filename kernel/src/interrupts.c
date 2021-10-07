@@ -102,7 +102,8 @@ bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsi
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		case UPDATE_TASK_LOCATION:
-			return os_update_task_location(message & 0xFFFF, message >> 16);
+			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
+			return false;
 		case TASK_MIGRATION:
 			return os_task_migration(message & 0xFFFF, message >> 16);
 		default:
@@ -128,7 +129,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 			puts("DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY\n");
 			return false;
 		case UPDATE_TASK_LOCATION:
-			puts("DEPRECATED: UPDATE_TASK_LOCATION should be sent by BrNoC\n");
+			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
 			return false;
 		case TASK_MIGRATION:
 			puts("DEPRECATED: TASK_MIGRATION should be inside MESSAGE_DELIVERY\n");
@@ -189,14 +190,17 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			int migrated_addr = tm_get_migrated_addr(prod_task);
 			// printf("Migrated address is %d\n", migrated_addr);
 
-			/* Update the task location in the consumer */
-			tl_send_update(cons_addr, prod_task, migrated_addr, false);
-
 			/* Forward the message request to the migrated processor */
 			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
 
 		} else {
 			// puts("Producer found!\n");
+			/* Update task location in case of migration */
+			if(cons_task >> 8 == prod_task >> 8){
+				/* Same app */
+				tl_insert_update(prod_tcb, cons_task, cons_addr);
+			}
+
 			/* Task found. Now search for message. */
 			pipe_t *message = pipe_pop(prod_tcb, cons_task);
 		
@@ -298,6 +302,12 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 		tcb_t *cons_tcb = tcb_search(cons_task);
 
 		if(cons_tcb){	/* Ensure task is allocated here */
+			/* Update task location in case of migration */
+			if(prod_task >> 8 == cons_task >> 8){
+				/* Same app */
+				tl_insert_update(cons_tcb, prod_task, prod_addr);
+			}
+
 			/* Insert the packet to TCB */
 			data_av_insert(cons_tcb, prod_task, prod_addr);
 
@@ -310,9 +320,6 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 		} else {
 			/* Task migrated? Forward. */
 			int migrated_addr = tm_get_migrated_addr(cons_task);
-
-			/* Update the task location in the consumer */
-			tl_send_update(prod_addr, cons_task, migrated_addr, false);
 
 			/* Forward the message request to the migrated processor */
 			data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
@@ -372,9 +379,6 @@ bool os_task_release(
 	printf("-> TASK RELEASE received to task %d\n", task->id);
 	// putsv("-> Task count: ", task_number);
 
-	/* Update TCB with received info */
-	// tcb_update_sections(task, data_sz, bss_sz);
-
 	/* Write task location */
 	memcpy(task->task_location, task_location, task_number*sizeof(int));
 
@@ -383,19 +387,6 @@ bool os_task_release(
 		sched_release(task);
 
 	return sched_is_idle();
-}
-
-bool os_update_task_location(int updt_task, int updt_addr)
-{
-	/* Get target task */
-	tcb_t *tcbs = tcb_get();
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(tcbs[i].id >> 8 == updt_task >> 8){
-			tl_insert_update(&tcbs[i], updt_task, updt_addr);
-		}
-	}
-
-	return false;
 }
 
 bool os_task_migration(int id, int addr)

@@ -84,9 +84,6 @@ void tm_migrate(tcb_t *tcb)
 	/* Update task location of tasks of the same app running locally */
 	tl_update_local(tcb_get_id(tcb), migrate_addr);
 
-	/* Broadcast this migration */
-	tl_send_update(-1, tcb_get_id(tcb), migrate_addr, true);
-
 	sched_clear(tcb);
 	tcb_clear(tcb);
 }
