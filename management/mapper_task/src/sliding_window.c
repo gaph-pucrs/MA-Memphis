@@ -46,8 +46,7 @@ void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window
 		processor_t *processor = sw_map_task(task, app, processors, window);
 
 		task->processor = processor;
-		processor->free_page_cnt--;
-		processor->pending_map_cnt++;
+		processor_add_task(processor, task);
 		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
@@ -56,21 +55,33 @@ processor_t *sw_map_task(task_t *task, app_t *app, processor_t *processors, wind
 {
 	unsigned cost = -1; /* Start at infinite cost */
 	processor_t *sel = NULL;
+	processor_t *old = task->old_proc;
 
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
 			processor_t *pe = processors_get(processors, x, y);
+
+			int is_old_pe = pe == old;
+			int free_page_cnt = pe->free_page_cnt + is_old_pe;
 			
-			if(pe->free_page_cnt == 0)	/* Skip full PEs */
+			if(free_page_cnt == 0)	/* Skip full PEs */
 				continue;
 
 			unsigned c = 0;
 
+			int same_app_allocated = 0;
+			for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+				task_t *mapped = pe->mapped[i];
+				if(mapped && mapped->id >> 8 == app->id)
+					same_app_allocated++;
+			}
+			same_app_allocated -= is_old_pe;
+
 			/* 1st: Keep tasks from different apps apart from each other */
-			c += (PKG_MAX_LOCAL_TASKS - (pe->free_page_cnt + pe->pending_map_cnt)) << 2;
+			c += (PKG_MAX_LOCAL_TASKS - (free_page_cnt + same_app_allocated)) << 2;
 
 			/* 2nd: Keep tasks from the same app apart */
-			c += pe->pending_map_cnt << 1;
+			c += same_app_allocated << 1;
 
 			/* 3rd: Add a cost for each hop in successor tasks */
 			for(int t = 0; t < task->succ_cnt; t++){

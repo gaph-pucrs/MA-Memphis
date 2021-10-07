@@ -80,6 +80,8 @@ processor_t *task_terminate(task_t *task)
 
 	task->pred_cnt = 0;
 
+	processor_remove_task(task->processor, task);
+
 	task->processor = NULL;
 
 	if(task->status == MIGRATING){

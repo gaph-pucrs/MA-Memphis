@@ -105,8 +105,8 @@ void map_static_tasks(app_t *app, processor_t *processors)
 		processor_t *processor = app->task[i]->processor;
 		if(processor){
 			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processor->addr);
-			// processor->pending_map_cnt = 0;
-			processor->free_page_cnt--;
+			processor->pending_map_cnt = 0;
+			processor_add_task(processor, app->task[i]);
 			app->center_x += processor->addr >> 8;
 			app->center_y += processor->addr & 0xFF;
 			static_cnt++;
@@ -208,7 +208,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 	if(old_proc){
 		/* The task finished with a migration request on the fly */
 		mapper->available_slots++;
-		old_proc->free_page_cnt++;
+		processor_remove_task(old_proc, app->task[taskid]);
 	}
 	
 	/* Deallocate task from app */
@@ -217,7 +217,6 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	/* Deallocate task from mapper */
 	mapper->available_slots++;
-	processor->free_page_cnt++;
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
@@ -259,7 +258,6 @@ void map_set_score(app_t *app, processor_t *processors)
 	unsigned cost = 0;
 	for(int i = 0; i < app->task_cnt; i++){
 		task_t *predecessor = app->task[i];
-		predecessor->processor->pending_map_cnt = 0;
 		for(int j = 0; j < predecessor->succ_cnt; j++){
 			task_t *successor = predecessor->successors[j];
 			cost += map_manhattan_distance(predecessor->processor->addr, successor->processor->addr);

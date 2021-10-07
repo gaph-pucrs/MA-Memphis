@@ -18,6 +18,7 @@
 
 /* Forward declaration */
 typedef struct _task task_t;
+typedef struct _processor processor_t;
 
 typedef struct _app {
 	int id;

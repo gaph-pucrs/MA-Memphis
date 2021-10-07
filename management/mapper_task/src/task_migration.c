@@ -82,7 +82,7 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	printf("Migrating task to address %d\n", task->processor->addr);
 
 	/* Allocate the page on target address */
-	task->processor->free_page_cnt--;
+	processor_add_task(task->processor, task);
 	mapper->available_slots--;
 
 	/* Mark the task as migrating */
@@ -122,6 +122,7 @@ void tm_migration_complete(mapper_t *mapper, int task_id)
 	task->status = RUNNING;
 
 	/* Free old processor resources */
-	task->old_proc->free_page_cnt++;
+	processor_remove_task(task->old_proc, task);
+	task->old_proc = NULL;
 	mapper->available_slots++;
 }

@@ -26,8 +26,8 @@ typedef enum _task_status {
 
 /* Forward declaration */
 typedef struct _app app_t;
-
 typedef struct _task task_t;
+typedef struct _processor processor_t;
 
 struct _task {
 	int id;
