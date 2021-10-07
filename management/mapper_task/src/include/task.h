@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include "app.h"
+#include "processor.h"
 
 typedef enum _task_status {
 	BLOCKED,
@@ -25,13 +26,13 @@ typedef enum _task_status {
 
 /* Forward declaration */
 typedef struct _app app_t;
-
 typedef struct _task task_t;
+typedef struct _processor processor_t;
 
 struct _task {
 	int id;
-	int proc_idx;
-	int old_proc;
+	processor_t *processor;
+	processor_t *old_proc;
 	unsigned type_tag;
 	task_status_t status;
 
@@ -84,6 +85,6 @@ bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt);
  * 
  * @param task Pointer to task to terminate
  * 
- * @return Address of old processor if migration was on the fly. -1 if task wasn't migrating.
+ * @return Pointer to old processor if migration was on the fly. NULL if task wasn't migrating.
  */
-int task_terminate(task_t *task);
+processor_t *task_terminate(task_t *task);

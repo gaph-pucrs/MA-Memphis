@@ -30,6 +30,8 @@ void task_init(task_t *tasks)
 		tasks[i].id = -1;
 		tasks[i].pred_cnt = 0;
 		tasks[i].succ_cnt = 0;
+		tasks[i].processor = NULL;
+		tasks[i].old_proc = NULL;
 		for(int j = 0; j < PKG_MAX_TASKS_APP - 1; j++){
 			tasks[i].predecessors[j] = NULL;
 			tasks[i].successors[j] = NULL;
@@ -63,7 +65,7 @@ bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt)
 	return task_ordered;
 }
 
-int task_terminate(task_t *task)
+processor_t *task_terminate(task_t *task)
 {
 	task->id = -1;
 
@@ -78,10 +80,14 @@ int task_terminate(task_t *task)
 
 	task->pred_cnt = 0;
 
+	processor_remove_task(task->processor, task);
+
+	task->processor = NULL;
+
 	if(task->status == MIGRATING){
 		/* The task finished with a migration request on the fly */
 		return task->old_proc;
 	}
 	
-	return -1;
+	return NULL;
 }

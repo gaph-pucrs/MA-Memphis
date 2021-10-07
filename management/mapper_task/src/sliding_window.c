@@ -40,61 +40,70 @@ void sw_map_dynamic(app_t *app, task_t *order[], processor_t *processors, window
 	for(int i = 0; i < app->task_cnt; i++){
 		task_t *task = order[i];
 
-		if(task->proc_idx != -1)	/* Skip tasks already mapped */
+		if(task->processor)	/* Skip tasks already mapped */
 			continue;
 
-		int seq = sw_map_task(task, app, processors, window);
+		processor_t *processor = sw_map_task(task, app, processors, window);
 
-		task->proc_idx = seq;
-		processors[seq].free_page_cnt--;
-		processors[seq].pending_map_cnt++;
+		task->processor = processor;
+		processor_add_task(processor, task);
 		// printf("Dinamically mapped task %d at address %x\n", task->id, processors[seq].addr);
 	}
 }
 
-int sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *window)
+processor_t *sw_map_task(task_t *task, app_t *app, processor_t *processors, window_t *window)
 {
 	unsigned cost = -1; /* Start at infinite cost */
-	int sel_x = -1;
-	int sel_y = -1;
+	processor_t *sel = NULL;
+	processor_t *old = task->old_proc;
 
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
 			processor_t *pe = processors_get(processors, x, y);
+
+			int is_old_pe = pe == old;
+			int free_page_cnt = pe->free_page_cnt + is_old_pe;
 			
-			if(pe->free_page_cnt == 0)	/* Skip full PEs */
+			if(free_page_cnt == 0)	/* Skip full PEs */
 				continue;
 
 			unsigned c = 0;
 
+			int same_app_allocated = 0;
+			for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+				task_t *mapped = pe->mapped[i];
+				if(mapped && mapped->id >> 8 == app->id)
+					same_app_allocated++;
+			}
+			same_app_allocated -= is_old_pe;
+
 			/* 1st: Keep tasks from different apps apart from each other */
-			c += (PKG_MAX_LOCAL_TASKS - (pe->free_page_cnt + pe->pending_map_cnt)) << 2;
+			c += (PKG_MAX_LOCAL_TASKS - (free_page_cnt + same_app_allocated)) << 2;
 
 			/* 2nd: Keep tasks from the same app apart */
-			c += pe->pending_map_cnt << 1;
+			c += same_app_allocated << 1;
 
 			/* 3rd: Add a cost for each hop in successor tasks */
 			for(int t = 0; t < task->succ_cnt; t++){
 				task_t *successor = task->successors[t];
-				if(successor->proc_idx != -1)	/* Manhattan distance from mapped successors */
-					c += map_manhattan_distance(x << 8 | y, processors[successor->proc_idx].addr);
+				if(successor->processor)	/* Manhattan distance from mapped successors */
+					c += map_manhattan_distance(x << 8 | y, successor->processor->addr);
 			}
 
 			/* 4th: Add a cost for each hop in predecessor tasks */
 			for(int t = 0; t < task->pred_cnt; t++){
 				task_t *predecessor = task->predecessors[t];
-				if(predecessor->proc_idx != -1)
-					c += map_manhattan_distance(x << 8 | y, processors[predecessor->proc_idx].addr);
+				if(predecessor->processor)
+					c += map_manhattan_distance(x << 8 | y, predecessor->processor->addr);
 			}
 
 			if(c == 0){
-				return x + y*PKG_N_PE_X;
+				return pe;
 			} else if(c < cost){
 				cost = c;
-				sel_x = x;
-				sel_y = y;
+				sel = pe;
 			}
 		}
 	}
-	return sel_x + sel_y*PKG_N_PE_X;
+	return sel;
 }

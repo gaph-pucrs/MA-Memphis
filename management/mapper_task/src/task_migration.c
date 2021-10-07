@@ -39,7 +39,7 @@ void tm_migrate(mapper_t *mapper, int task_id)
 		return;
 	}
 
-	task->old_proc = task->proc_idx;
+	task->old_proc = task->processor;
 	// unsigned then = GetTick();
 
 	/* Check the window center disregarding the task to migrate */
@@ -49,8 +49,8 @@ void tm_migrate(mapper_t *mapper, int task_id)
 		if(i == (task_id & 0xFF))
 			continue;
 
-		app->center_x += mapper->processors[app->task[i]->proc_idx].addr >> 8;
-		app->center_y += mapper->processors[app->task[i]->proc_idx].addr & 0xFF;
+		app->center_x += app->task[i]->processor->addr >> 8;
+		app->center_y += app->task[i]->processor->addr & 0xFF;
 	}
 	int new_task_cnt = app->task_cnt - 1;
 	new_task_cnt = new_task_cnt ? new_task_cnt : 1;	 /* Avoid division by 0 */
@@ -58,30 +58,31 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	app->center_y /= new_task_cnt;
 
 	/* Temporarily release current processor */
-	mapper->processors[task->proc_idx].free_page_cnt++;
+	task->processor->free_page_cnt++;
 
 	/* Get window from this center (able to grow) */
 	window_t window;
 	window_set_from_center(&window, mapper->processors, app, 1, MAP_MIN_WX, MAP_MIN_WY);
 
 	/* Reallocate resource */
-	mapper->processors[task->proc_idx].free_page_cnt--;
+	task->processor->free_page_cnt--;
 
 	/* Map to the specific window */
-	task->proc_idx = sw_map_task(task, app, mapper->processors, &window);
+	task->processor = sw_map_task(task, app, mapper->processors, &window);
 
-	// unsigned now = GetTick();
+	// unsigned now = GetTick(); 
 	// Echo("Ticks of mapping task for migration = "); Echo(itoa(now - then)); Echo("\n");
 
-	if(task->old_proc == task->proc_idx){
+	if(task->old_proc == task->processor){
+		task->old_proc = NULL;
 		puts("Will not migrate. Task is in the same PE as the target address\n");
 		return;
 	}
 
-	printf("Migrating task to address %d\n", mapper->processors[task->proc_idx].addr);
+	printf("Migrating task to address %d\n", task->processor->addr);
 
 	/* Allocate the page on target address */
-	mapper->processors[task->proc_idx].free_page_cnt--;
+	processor_add_task(task->processor, task);
 	mapper->available_slots--;
 
 	/* Mark the task as migrating */
@@ -89,9 +90,9 @@ void tm_migrate(mapper_t *mapper, int task_id)
 
 	/* Send migration order to Kernel at old processor address */
 	uint32_t payload = 0;
-	payload |= mapper->processors[task->proc_idx].addr << 16;
+	payload |= task->processor->addr << 16;
 	payload |= task->id & 0xFFFF;
-	memphis_br_send(payload, mapper->processors[task->old_proc].addr, TASK_MIGRATION, BR_SVC_TGT);
+	memphis_br_send(payload, task->old_proc->addr, TASK_MIGRATION, BR_SVC_TGT);
 }
 
 void tm_migration_complete(mapper_t *mapper, int task_id)
@@ -119,6 +120,7 @@ void tm_migration_complete(mapper_t *mapper, int task_id)
 	task->status = RUNNING;
 
 	/* Free old processor resources */
-	mapper->processors[task->old_proc].free_page_cnt++;
+	processor_remove_task(task->old_proc, task);
+	task->old_proc = NULL;
 	mapper->available_slots++;
 }
