@@ -115,7 +115,12 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	/* RT constraints */
 	packet->period = sched_get_period(tcb);
 	packet->deadline = sched_get_deadline(tcb);
+
+	packet->insert_request = tcb->observer_task;
+
 	packet->execution_time = sched_get_exec_time(tcb);
+
+	packet->request_size = tcb->observer_address;
 
 	/* Registers */
 	packet->program_counter = tcb_get_pc(tcb);

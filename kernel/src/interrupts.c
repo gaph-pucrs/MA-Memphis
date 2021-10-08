@@ -103,7 +103,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_CODE:
 			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
 		case MIGRATION_TCB:
-			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time);
+			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time, packet->insert_request, packet->request_size);
 		case MIGRATION_TASK_LOCATION:
 			return os_migration_tl(packet->task_ID, packet->request_size);
 		case MIGRATION_MSG_REQUEST:
@@ -387,8 +387,6 @@ bool os_task_migration(int id, int addr)
 
 			tm_send_code(task);
 
-			llm_clear_table(task);
-
 			if(!sched_is_waiting_delivery(task)){
 				tm_migrate(task);
 				return true;
@@ -431,11 +429,14 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	return false;
 }
 
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time)
+bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, int observer_task, int observer_address)
 {
 	tcb_t *tcb = tcb_search(id);
 
 	tcb_set_pc(tcb, pc);
+
+	tcb->observer_task = observer_task;
+	tcb->observer_address = observer_address;
 
 	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
 
