@@ -137,7 +137,7 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
  *
  * @return False
  */
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time);
+bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, int observer_task, int observer_address);
 
 /**
  * @brief Handles the task location received from migration
