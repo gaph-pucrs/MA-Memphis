@@ -35,27 +35,30 @@ void os_isr(unsigned int status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
-		uint8_t svc = MMR_BR_READ_KSVC;
-		uint32_t producer = MMR_BR_READ_PRODUCER;
-		uint32_t message = MMR_BR_READ_PAYLOAD;
-		
-		call_scheduler |= os_handle_broadcast(svc, producer >> 16, producer & 0xFFFF, message);
+		br_packet_t br_packet;
+		br_read(&br_packet);
+
+		if(
+			(MMR_DMNI_SEND_ACTIVE && (br_packet.service == MESSAGE_REQUEST || br_packet.service == TASK_MIGRATION)) || 
+			(MMR_BR_LOCAL_BUSY && (br_packet.service == DATA_AV))
+		){
+			/* Fake a packet as a pending service */
+			packet_t packet;
+			br_fake_packet(&br_packet, &packet);
+
+			pending_svc_push(&packet);
+		} else {
+			call_scheduler |= os_handle_broadcast(&br_packet);
+		}
 	} else if(status & IRQ_NOC){
 		volatile packet_t packet; 
 		pkt_read(&packet);
 
-		if(
-			MMR_DMNI_SEND_ACTIVE && (
-				packet.service == DATA_AV ||
-				packet.service == MESSAGE_REQUEST || 
-				packet.service == TASK_MIGRATION
-			)
-		){
+		if(MMR_DMNI_SEND_ACTIVE && (packet.service == DATA_AV || packet.service == MESSAGE_REQUEST)){
 			pending_svc_push(&packet);
 		} else {
 			call_scheduler = os_handle_pkt(&packet);
 		}
-
 	} else if(status & IRQ_PENDING_SERVICE){
 		/* Pending packet. Handle it */
 
@@ -89,23 +92,27 @@ void os_isr(unsigned int status)
     hal_run_task((void*)sched_get_current());
 }
 
-bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsigned message)
+bool os_handle_broadcast(br_packet_t *packet)
 {
-	switch(service){
+	switch(packet->service){
 		case CLEAR_MON_TABLE:
 			/* Write to DMNI register the ID value */
-			return os_clear_mon_table(message & 0xFFFF);
+			return os_clear_mon_table(packet->task_id);
 		case ANNOUNCE_MONITOR:
-			return os_announce_mon(message >> 16, message & 0xFFFF);
+			return os_announce_mon(packet->task_id, packet->target_pe);
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		case UPDATE_TASK_LOCATION:
 			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
 			return false;
 		case TASK_MIGRATION:
-			return os_task_migration(message & 0xFFFF, message >> 16);
+			return os_task_migration(packet->task_id, packet->target_pe);
+		case DATA_AV:
+			return os_data_available(br_convert_id(packet->cons_task, MMR_NI_CONFIG), br_convert_id(packet->prod_task, packet->prod_addr), packet->prod_addr);
+		case MESSAGE_REQUEST:
+			return os_message_request(br_convert_id(packet->cons_task, packet->cons_addr), packet->cons_addr, br_convert_id(packet->prod_task, MMR_NI_CONFIG));
 		default:
-			printf("ERROR: unknown broadcast %x at time %d\n", service, MMR_TICK_COUNTER);
+			printf("ERROR: unknown broadcast %x at time %d\n", packet->service, MMR_TICK_COUNTER);
 			return false;
 	}
 }

@@ -15,6 +15,7 @@
 
 #include "packet.h"
 #include "monitor.h"
+#include "broadcast.h"
 
 #define REPORT_INTERRUPTION 0x10000
 
@@ -39,14 +40,11 @@ void os_isr(unsigned int status);
 /**
  * @brief Handles an interruption coming from a broadcast message
  * 
- * @param service Kernel service
- * @param src_addr Message source address
- * @param src_id Message source task ID (-1 if originated in kernel)
- * @param message The message payload
+ * @param packet Pointer to BrNoC packet
  * 
  * @return True if the scheduler should be called
  */
-bool os_handle_broadcast(uint8_t service, int16_t src_addr, int16_t src_id, unsigned message);
+bool os_handle_broadcast(br_packet_t *packet);
 
 /** 
  * @brief Handles the packet coming from the NoC.

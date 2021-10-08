@@ -16,15 +16,66 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "packet.h"
+
+typedef struct _br_packet {
+	uint8_t service;
+
+	int16_t src_addr;
+	int16_t src_id;
+
+	union {
+		uint32_t payload;
+
+		struct {
+			union {
+				int16_t target_pe;
+				int16_t prod_addr;
+				int16_t cons_addr;
+			};
+			union {
+				int16_t task_id;
+				int16_t cons_task;
+				int16_t prod_task;
+			};
+		};
+	};
+	
+
+} br_packet_t;
+
 /**
  * @brief Sends a message via BrNoC
  * 
- * @param payload Message to send
- * @param producer ID of the producer task
- * @param target PE address to send the message to
- * @param ksvc Kernel service used in ALL and TARGET messages (see services.h)
+ * @param packet Pointer to packet to send -- will be copied, no need to be static
+ * @param tgt_addr PE address to send the message to
  * @param service Broadcast service (ALL/TARGET/MONITORS)
  * 
  * @return True if success. False if BrNoC is busy.
  */
-bool br_send(uint32_t payload, uint16_t producer, uint16_t target, uint8_t ksvc, uint8_t service);
+bool br_send(br_packet_t *packet, int16_t tgt_addr, uint8_t service);
+
+/**
+ * @brief Reads a packet via BrNoC
+ * 
+ * @param packet Pointer to packet to save
+ */
+void br_read(br_packet_t *packet);
+
+/**
+ * @brief Fakes a broadcast packet into a Hermes packet
+ * 
+ * @param br_packet Pointer to the BrNoC packet (source)
+ * @param packet Pointer to the Hermes packet (target)
+ */
+void br_fake_packet(br_packet_t *br_packet, packet_t *packet);
+
+/**
+ * @brief Convert an ID into a 32 bit field with KERNEL flag
+ * 
+ * @param id Received ID from BrNoC
+ * @param addr Received address from BrNoC
+ * 
+ * @return 32-bit ID
+ */
+int br_convert_id(int16_t id, int16_t addr);

@@ -472,14 +472,20 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service)
 	if(producer >> 8 != 0)	/* AppID should be 0 */
 		return 0;
 
+	br_packet_t packet;
+	packet.service = ksvc;
+	packet.src_id = producer;
+	packet.payload = payload;
+
 	bool ret = true;
 
 	if(service == BR_SVC_ALL || target != MMR_NI_CONFIG)
-		ret = br_send(payload, producer, target, ksvc, service);
+		ret = br_send(&packet, target, service);
 
 	if(ret && (service == BR_SVC_ALL || target == MMR_NI_CONFIG)){
 		/* Message is directed to this PE */
-		schedule_after_syscall = os_handle_broadcast(ksvc, MMR_NI_CONFIG, producer, payload);
+		packet.src_addr = MMR_NI_CONFIG;
+		schedule_after_syscall = os_handle_broadcast(&packet);
 	}
 
 	return ret;
