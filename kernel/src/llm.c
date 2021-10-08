@@ -39,7 +39,7 @@ void llm_rt(tcb_t *tasks)
 {
 	static unsigned last_rt = 0;
 	unsigned now = MMR_TICK_COUNTER;
-	if(now - last_rt > PKG_SLACK_TIME_WINDOW){
+	if(now - last_rt > PKG_MONITOR_INTERVAL_QOS){
 		last_rt = now;
 		for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 			llm_task(&tasks[i]);
