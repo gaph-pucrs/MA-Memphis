@@ -45,7 +45,7 @@ void os_isr(unsigned int status)
 			/* Fake a packet as a pending service */
 			packet_t packet;
 			br_fake_packet(&br_packet, &packet);
-
+			// puts("Faking packet as pending service\n");
 			pending_svc_push(&packet);
 		} else {
 			call_scheduler |= os_handle_broadcast(&br_packet);
@@ -108,9 +108,10 @@ bool os_handle_broadcast(br_packet_t *packet)
 		case TASK_MIGRATION:
 			return os_task_migration(packet->task_id, packet->target_pe);
 		case DATA_AV:
-			return os_data_available(br_convert_id(packet->cons_task, MMR_NI_CONFIG), br_convert_id(packet->prod_task, packet->prod_addr), packet->prod_addr);
+			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", packet->cons_task, packet->src_id);
+			return os_data_available(br_convert_id(packet->cons_task, MMR_NI_CONFIG), br_convert_id(packet->src_id, packet->prod_addr), packet->prod_addr);
 		case MESSAGE_REQUEST:
-			return os_message_request(br_convert_id(packet->cons_task, packet->cons_addr), packet->cons_addr, br_convert_id(packet->prod_task, MMR_NI_CONFIG));
+			return os_message_request(br_convert_id(packet->src_id, packet->cons_addr), packet->cons_addr, br_convert_id(packet->prod_task, MMR_NI_CONFIG));
 		default:
 			printf("ERROR: unknown broadcast %x at time %d\n", packet->service, MMR_TICK_COUNTER);
 			return false;
@@ -307,6 +308,7 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 bool os_data_available(int cons_task, int prod_task, int prod_addr)
 {
+	// printf("DATA_AV from id %x addr %x to id %x\n", prod_task, prod_addr, cons_task);
 	if(cons_task & 0x10000000){
 		/* This message was directed to kernel */
 		/* Kernel is always ready to receive. Send message request */

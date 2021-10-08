@@ -24,6 +24,7 @@
 #include "interrupts.h"
 #include "broadcast.h"
 #include "llm.h"
+#include "memphis.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
@@ -91,14 +92,19 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 {
 	tcb_t *current = sched_get_current();
 
+	if((cons_task & 0xFFFF0000) && current->id >> 8 != 0){
+		puts("ERROR: Unauthorized message to kernel/peripheral from task with app id > 0\n");
+		while(1);
+	}
+
 	int cons_addr;
-	if(cons_task & 0x80000000){
+	if((cons_task & MEMPHIS_FORCE_PORT)){
 		/* Message directed to peripheral */
-		cons_task &= 0xE000FFFF;
+		cons_task &= (MEMPHIS_FORCE_PORT | 0x60000000 | 0x0000FFFF);
 		cons_addr = cons_task;
-	} else if(cons_task & 0x10000000){
+	} else if((cons_task & MEMPHIS_KERNEL_MSG)){
 		/* Message directed to kernel */
-		cons_task &= 0x1000FFFF;
+		cons_task &= (MEMPHIS_KERNEL_MSG | 0x0000FFFF);
 		cons_addr = cons_task & 0x0000FFFF;
 	} else {
 		/* Send to task of the same app */

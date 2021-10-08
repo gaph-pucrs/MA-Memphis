@@ -17,6 +17,7 @@
 #include "task_control.h"
 #include "services.h"
 #include "packet.h"
+#include "broadcast.h"
 #include "stdio.h"
 
 void data_av_init(tcb_t *tcb)
@@ -51,15 +52,27 @@ bool data_av_insert(tcb_t *tcb, int producer_task, int producer_addr)
 
 void data_av_send(int consumer_task, int producer_task, int consumer_addr, int producer_addr)
 {
-	packet_t *packet = pkt_slot_get();
+	if(consumer_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
 
-	packet->header = consumer_addr;
-	packet->service = DATA_AV;
-	packet->producer_task = producer_task;
-	packet->consumer_task = consumer_task;
-	packet->requesting_processor = producer_addr;
+		packet->header = consumer_addr;
+		packet->service = DATA_AV;
+		packet->producer_task = producer_task;
+		packet->consumer_task = consumer_task;
+		packet->requesting_processor = producer_addr;
 
-	pkt_send(packet, NULL, 0);
+		pkt_send(packet, NULL, 0);
+	} else {
+		br_packet_t packet;
+
+		packet.service = DATA_AV;
+		packet.src_id = (producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task;
+		packet.prod_addr = producer_addr;
+		packet.cons_task = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
+		// puts("Sending DATA_AV via BrNoC\n");
+		br_send(&packet, consumer_addr, BR_SVC_TGT);
+	}
 }
 
 data_av_t *data_av_pop(tcb_t *tcb)

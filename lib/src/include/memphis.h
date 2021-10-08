@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 #define MEMPHIS_KERNEL_MSG 0x10000000
+#define MEMPHIS_FORCE_PORT 0x80000000
 #define PKG_MAX_MSG_SIZE 128
 
 #define BR_SVC_TGT	5
