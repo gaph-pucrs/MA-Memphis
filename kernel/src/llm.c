@@ -59,7 +59,7 @@ void llm_rt(tcb_t *tasks)
 	unsigned now = MMR_TICK_COUNTER;
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(now - last_rt[i] >= PKG_MONITOR_INTERVAL_QOS/10){ /* Update 10 times faster than the real time observer */
+		if(now - last_rt[i] >= PKG_MONITOR_INTERVAL_QOS/5){ /* Update 10 times faster than the real time observer */
 			if(observers[MON_QOS].addr != -1 && tasks[i].id != -1 && (tasks[i].id >> 8) != 0 && tasks[i].scheduler.deadline != -1 && !tasks[i].scheduler.waiting_msg && tasks[i].proc_to_migrate == -1){
 				int payload = tasks[i].scheduler.slack_time - tasks[i].scheduler.remaining_exec_time;
 				if(br_send(payload, tasks[i].id, observers[MON_QOS].addr, MONITOR, MON_QOS))
