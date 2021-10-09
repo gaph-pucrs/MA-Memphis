@@ -51,8 +51,10 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			return os_putc(a1);
 		case SCALL_PUTS:
 			return os_puts((char*)a1);
-		case SCALL_BR_SEND:
-			return os_br_send(a1, a2, a3 >> 8, a3 & 0xFF);
+		case SCALL_BR_SEND_ALL:
+			return os_br_send_all(a1, a2);
+		case SCALL_BR_SEND_TGT:
+			return os_br_send_tgt(a1, a2, a3);
 		case SCALL_MON_PTR:
 			return os_mon_ptr((unsigned*)a1, a2);
 		default:
@@ -470,10 +472,9 @@ int os_puts(char *str)
 	return 0;
 }
 
-int os_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service)
+int os_br_send_all(uint32_t payload, uint8_t ksvc)
 {
-	tcb_t *current = sched_get_current();
-	uint16_t producer = tcb_get_id(current);
+	int producer = sched_get_current_id();
 	
 	if(producer >> 8 != 0)	/* AppID should be 0 */
 		return 0;
@@ -483,18 +484,33 @@ int os_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service)
 	packet.src_id = producer;
 	packet.payload = payload;
 
-	bool ret = true;
+	if(!br_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL))
+		return false;
+		
+	packet.src_addr = MMR_NI_CONFIG;
+	schedule_after_syscall = os_handle_broadcast(&packet);
+	return true;
+}
 
-	if(service == BR_SVC_ALL || target != MMR_NI_CONFIG)
-		ret = br_send(&packet, target, service);
+int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
+{
+	int producer = sched_get_current_id();
+	
+	if(producer >> 8 != 0)	/* AppID should be 0 */
+		return 0;
 
-	if(ret && (service == BR_SVC_ALL || target == MMR_NI_CONFIG)){
-		/* Message is directed to this PE */
+	br_packet_t packet;
+	packet.service = ksvc;
+	packet.src_id = producer;
+	packet.payload = payload;
+
+	if(target == MMR_NI_CONFIG){
 		packet.src_addr = MMR_NI_CONFIG;
 		schedule_after_syscall = os_handle_broadcast(&packet);
+		return true;
 	}
 
-	return ret;
+	return br_send(&packet, target, BR_SVC_TGT);
 }
 
 int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)

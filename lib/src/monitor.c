@@ -35,5 +35,5 @@ void monitor_announce(enum MONITOR_TYPE type)
 	int16_t addr = memphis_get_addr();
 	uint32_t payload = (addr << 16) | type;
 	
-	memphis_br_send(payload, -1, ANNOUNCE_MONITOR, BR_SVC_ALL);
+	memphis_br_send_all(payload, ANNOUNCE_MONITOR);
 }

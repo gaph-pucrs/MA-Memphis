@@ -33,8 +33,9 @@ enum SYSCALL {
 	SCALL_PUTC,
 	GETID,
 	GETLOCATION,
-	SCALL_BR_SEND,
+	SCALL_BR_SEND_ALL,
 	SCALL_MON_PTR,
+	SCALL_BR_SEND_TGT
 };
 
 typedef struct _message {
@@ -123,13 +124,22 @@ int memphis_receive_any(message_t *msg);
 int memphis_real_time(int period, int deadline, int exec_time);
 
 /**
- * @brief Sends message via broadcast
+ * @brief Sends message via broadcast ALL
+ * 
+ * @param payload Message to send (1 word)
+ * @param ksvc Message Kernel Service, used for TGT and ALL (check services.h)
+ * 
+ * @return 1
+ */
+int memphis_br_send_all(uint32_t payload, uint8_t ksvc);
+
+/**
+ * @brief Sends message via broadcast TARGET
  * 
  * @param payload Message to send (1 word)
  * @param target Target address to send
  * @param ksvc Message Kernel Service, used for TGT and ALL (check services.h)
- * @param service BrNoC Service to send (monitors/TGT/ALL)
  * 
  * @return 1
  */
-int memphis_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service);
+int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);

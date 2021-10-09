@@ -59,9 +59,14 @@ int memphis_real_time(int period, int deadline, int exec_time)
 	return system_call(REALTIME, period, deadline, exec_time);
 }
 
-int memphis_br_send(uint32_t payload, uint16_t target, uint8_t ksvc, uint8_t service)
+int memphis_br_send_all(uint32_t payload, uint8_t ksvc)
 {
-	uint16_t svc = ((uint16_t)ksvc << 8) | service;
-	while(!system_call(SCALL_BR_SEND, payload, target, svc));
+	while(!system_call(SCALL_BR_SEND_ALL, payload, ksvc, 0));
+	return 0;
+}
+
+int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
+{
+	while(!system_call(SCALL_BR_SEND_TGT, payload, target, ksvc));
 	return 0;
 }

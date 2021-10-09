@@ -92,7 +92,7 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	uint32_t payload = 0;
 	payload |= task->processor->addr << 16;
 	payload |= task->id & 0xFFFF;
-	memphis_br_send(payload, task->old_proc->addr, TASK_MIGRATION, BR_SVC_TGT);
+	memphis_br_send_tgt(payload, task->old_proc->addr, TASK_MIGRATION);
 }
 
 void tm_migration_complete(mapper_t *mapper, int task_id)
