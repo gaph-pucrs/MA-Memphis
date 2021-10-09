@@ -71,7 +71,7 @@ void data_av_send(int consumer_task, int producer_task, int consumer_addr, int p
 		packet.prod_addr = producer_addr;
 		packet.cons_task = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
 		// puts("Sending DATA_AV via BrNoC\n");
-		br_send(&packet, consumer_addr, BR_SVC_TGT);
+		while(!br_send(&packet, consumer_addr, BR_SVC_TGT));
 	}
 }
 

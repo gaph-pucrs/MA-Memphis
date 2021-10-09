@@ -19,6 +19,7 @@
 #include "services.h"
 #include "packet.h"
 #include "stdio.h"
+#include "broadcast.h"
 
 void mr_init(tcb_t *tcb)
 {
@@ -28,15 +29,27 @@ void mr_init(tcb_t *tcb)
 
 void mr_send(int producer_task, int consumer_task, int producer_addr, int consumer_addr)
 {
-	packet_t *packet = pkt_slot_get();
+	if(producer_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
 
-	packet->header = producer_addr;
-	packet->service = MESSAGE_REQUEST;
-	packet->requesting_processor = consumer_addr;
-	packet->producer_task = producer_task;
-	packet->consumer_task = consumer_task;
+		packet->header = producer_addr;
+		packet->service = MESSAGE_REQUEST;
+		packet->requesting_processor = consumer_addr;
+		packet->producer_task = producer_task;
+		packet->consumer_task = consumer_task;
 
-	pkt_send(packet, NULL, 0);
+		pkt_send(packet, NULL, 0);
+	} else {
+		br_packet_t packet;
+
+		packet.service = MESSAGE_REQUEST;
+		packet.src_id = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
+		packet.cons_addr = consumer_addr;
+		packet.prod_task = (producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task;
+		// puts("Sending MESSAGE_REQUEST via BrNoC\n");
+		while(!br_send(&packet, producer_addr, BR_SVC_TGT));
+	}
 }
 
 bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)

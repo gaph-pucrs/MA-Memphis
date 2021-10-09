@@ -38,10 +38,7 @@ void os_isr(unsigned int status)
 		br_packet_t br_packet;
 		br_read(&br_packet);
 
-		if(
-			(MMR_DMNI_SEND_ACTIVE && (br_packet.service == MESSAGE_REQUEST || br_packet.service == TASK_MIGRATION)) || 
-			(MMR_BR_LOCAL_BUSY && (br_packet.service == DATA_AV))
-		){
+		if((MMR_DMNI_SEND_ACTIVE && (br_packet.service == MESSAGE_REQUEST || br_packet.service == TASK_MIGRATION))){
 			/* Fake a packet as a pending service */
 			packet_t packet;
 			br_fake_packet(&br_packet, &packet);
