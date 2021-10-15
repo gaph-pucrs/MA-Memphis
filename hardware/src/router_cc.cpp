@@ -85,6 +85,10 @@ void router_cc::traffic_monitor(){
 
 					case 5:
 
+						if(payload[i] - payload_counter[i] == 12 && service[i] == 0x20){
+							fakesvc[i] = data_in[i].read();
+						}
+
 						if (payload_counter[i] == 0 ){
 							
 							//Store in aux the C's string way
@@ -104,8 +108,10 @@ void router_cc::traffic_monitor(){
 							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x221 && service[i] != 0x10 && service[i] != 0x20 && service[i] != 0x310){
 								sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter);
 							} else {
-								if (service[i] == 0x10 || service[i] == 0x20 || service[i] == 0x310)
+								if (service[i] == 0x10 || service[i] == 0x310)
 									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i], consumer_id[i]);
+								else if(service[i] == 0x20)
+									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\t%d\t%x\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i], consumer_id[i], fakesvc[i]);
 								else
 									sprintf(aux, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", header_time[i], newAdress, service[i], payload[i], bandwidth_allocation[i], i, targetRouter, task_id[i]);
 
