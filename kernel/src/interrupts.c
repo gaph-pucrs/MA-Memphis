@@ -135,8 +135,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
 			return false;
 		case TASK_MIGRATION:
-			puts("DEPRECATED: TASK_MIGRATION should be inside MESSAGE_DELIVERY\n");
-			return false;
+			return os_task_migration(packet->task_ID, packet->allocated_processor);
 		case MIGRATION_CODE:
 			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
 		case MIGRATION_TCB:

@@ -62,7 +62,7 @@ void br_fake_packet(br_packet_t *br_packet, packet_t *packet)
 			packet->requesting_processor = br_packet->cons_addr;
 			break;
 		case TASK_MIGRATION:
-			packet->task_ID = packet->task_ID;
+			packet->task_ID = br_packet->task_id;
 			packet->allocated_processor = br_packet->target_pe;
 			break;
 		default:
