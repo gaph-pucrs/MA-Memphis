@@ -7,8 +7,8 @@ from multiprocessing import cpu_count
 class Kernel:
 	def __init__(self, sw, hw, platform_path, testcase_path):
 		self.PKG_MAX_TASKS_APP		= sw["max_tasks_app"]
-		self.qos_interval			= sw["mon_interval_us_qos"]
-		self.qos_rate				= sw["mon_rate_qos"]
+		self.qos_interval			= 500
+		self.qos_rate				= 1
 
 		self.PKG_PAGE_SIZE 			= hw["page_size_KB"]
 		self.PKG_MAX_LOCAL_TASKS 	= hw["tasks_per_PE"]

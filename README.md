@@ -58,7 +58,6 @@ Create a new yaml file (here the example name will be example_testcase.yaml) in 
 ```yaml
 sw:                         # Operating System properties
   max_tasks_app: 10         # Maximum number of tasks per application allowed
-  mon_interval_us_qos: 500  # Monitoring interval (in us) for QoS
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
   stack_size: 1024          # Size reserved for the stack (in bytes)
