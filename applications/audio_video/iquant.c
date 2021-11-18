@@ -83,10 +83,10 @@ int main() {
 
 	puts("Task IQUANT start:\n");
 
-	//RealTime(AUDIO_VIDEO_PERIOD, IQUANT_deadline, IQUANT_exe_time);
+	memphis_real_time(AUDIO_VIDEO_PERIOD, IQUANT_deadline, IQUANT_exe_time);
 
 	for (j = 0; j < FRAMES; j++) {
-
+		
 		memphis_receive(&msg1, ivlc);
 
 		for (i = 0; i < msg1.length; i++)
@@ -99,7 +99,7 @@ int main() {
 			msg1.payload[i] = block[i];
 
 		memphis_send(&msg1, idct);
-
+		
 	}
 
 	puts("End Task IQUANT\n");

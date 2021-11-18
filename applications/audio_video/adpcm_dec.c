@@ -585,7 +585,7 @@ int main() {
 
     reset();
 
-    //RealTime(AUDIO_VIDEO_PERIOD, ADPCM_DEC_deadline, ADPCM_DEC_exe_time);
+    memphis_real_time(AUDIO_VIDEO_PERIOD, ADPCM_DEC_deadline, ADPCM_DEC_exe_time);
 
 	for(k=0; k<FRAMES; k++ ) {
 
@@ -604,7 +604,7 @@ int main() {
 
 		/* Sends the adpcm uncompressed stream */
 		memphis_send(&send_msg, FIR);
-
+        
 	}
 
     puts("ADPCM Decoder - end\n");
