@@ -105,7 +105,7 @@ int main () {
 
 	puts("FIR - start\n");
 
-	//RealTime(AUDIO_VIDEO_PERIOD, FIR_deadline, FIR_exe_time);
+	memphis_real_time(AUDIO_VIDEO_PERIOD, FIR_deadline, FIR_exe_time);
 
 	for(k=0; k<FRAMES; k++ ) {
 
@@ -119,7 +119,7 @@ int main () {
 
 		/* Sends the adpcm uncompressed stream */
 		memphis_send(&received_msg, join);
-
+		
 	}
 
 	puts("FIR - end\n");

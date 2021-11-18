@@ -471,11 +471,11 @@ int main()
 
 	puts("Task IVLC start\n");
 
-	//RealTime(AUDIO_VIDEO_PERIOD, IVLC_deadline, IVLC_exe_time);
+	memphis_real_time(AUDIO_VIDEO_PERIOD, IVLC_deadline, IVLC_exe_time);
 
 	for(j=0;j<FRAMES;j++)
 	{
-
+    
 		memphis_receive(&msg1,split);
 
 		for(i=0; i<msg1.length; i++)
@@ -492,7 +492,7 @@ int main()
 		   msg1.payload[i] = block[i];
 
 		memphis_send(&msg1,iquant);
-
+    
 	}
 
 	puts("End Task IVLC\n");
