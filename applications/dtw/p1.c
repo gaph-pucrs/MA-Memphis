@@ -22,8 +22,6 @@ int main(){
 
 	for(j=0; j<PATTERN_PER_TASK; j++){
 
-		puts("Task P1 FOR\n");
-
 		memset(msg.payload,0, sizeof(int)*msg.length);
 
 		memphis_receive(&msg, bank);
@@ -33,6 +31,7 @@ int main(){
 		__builtin_memcpy(pattern, msg.payload, sizeof(pattern));
 
 		result = dynamicTimeWarping(test, pattern);
+		printf("R = %d\n", result);
 
 		msg.length = 1;
 
