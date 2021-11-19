@@ -32,12 +32,14 @@ void tcb_init()
 	idle_tcb.id = 0;
 	idle_tcb.offset = 0;
 	idle_tcb.proc_to_migrate = -1;
+	idle_tcb.called_exit = false;
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;
 		tcbs[i].pc = 0;
 		tcbs[i].offset = PKG_PAGE_SIZE * (i + 1);
 		tcbs[i].proc_to_migrate = -1;
+		tcbs[i].called_exit = false;
 	}
 }
 
@@ -89,6 +91,8 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 
 	tcb->scheduler.status = SCHED_BLOCKED;
 	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
+
+	tcb->called_exit = false;
 }
 
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
@@ -102,6 +106,7 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->proc_to_migrate = -1;
 
 	tcb->scheduler.status = SCHED_MIGRATING;
+	tcb->called_exit = false;
 }
 
 message_t *tcb_get_message(tcb_t *tcb)

@@ -405,7 +405,7 @@ bool os_task_migration(int id, int addr)
 {	
 	tcb_t *task = tcb_search(id);
 
-	if(task){
+	if(task && !(task->called_exit)){
 		if(!tcb_need_migration(task)){
 			printf("Trying to migrate task %d to address %d\n", id, addr);
 			tcb_set_migrate_addr(task, addr);

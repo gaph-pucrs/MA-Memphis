@@ -69,6 +69,8 @@ bool os_exit(int status)
 
 	tcb_t *current = sched_get_current();
 
+	current->called_exit = true;
+
 	/* Avoid sending a packet while DMNI is busy */
 	/* Don't erase task with message in pipe */
 	if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))

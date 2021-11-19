@@ -46,6 +46,8 @@ typedef struct _tcb {
 	data_av_fifo_t data_av;									//!< Data available fifo
 
 	scheduler_t scheduler;	//!< Scheduling control structure
+
+	bool called_exit;
 } tcb_t;
 
 /**
