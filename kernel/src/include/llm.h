@@ -14,16 +14,6 @@
 #include "task_control.h"
 
 /**
- * @brief Runs the LLM procedure for a task.
- * 
- * @details
- * Grep the task status and sends to the configured observer task.
- * 
- * @param task Pointer to the desired tcb to be monitored.
- */
-void llm_task(tcb_t *task);
-
-/**
  * @brief Run the LLM procedure for RT tasks.
  * 
  * @param tasks TCB array
