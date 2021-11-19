@@ -5,6 +5,8 @@
 #define TOTAL_TASKS	4	//deve ser PAR para dividir igualmente o numero de padroes por task
 #define PATTERN_PER_TASK	NUM_PATTERNS/TOTAL_TASKS
 
+#define EXEC_TIME 28000
+#define DEADLINE 89000
 
 #define NUM_PATTERNS			80//40
 
