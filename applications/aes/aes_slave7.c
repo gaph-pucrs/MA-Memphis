@@ -31,6 +31,8 @@ int main()
 	printf("task AES SLAVE %d started at %d\n", memphis_get_id(), memphis_get_tick());
 	aes_key_setup(&key[0][0], key_schedule, 256);    
     
+	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
+
     while(flag){
 		memphis_receive(&msg, aes_master);
 		__builtin_memcpy(input_text, msg.payload, 12);
@@ -50,15 +52,13 @@ int main()
 				id = x;
 				printf("%d ", id);
 		}	
-		printf("Operation: %d\n", op_mode);
-		printf("Blocks: %d\n", qtd_messages);
 
 		if (op_mode == END_TASK){
 			flag = 0;
 			qtd_messages = 0;
 		}
 		for(x = 0; x < qtd_messages; x++){
-			memphis_receive(&msg, aes_master);		
+			memphis_receive(&msg, aes_master);
 			__builtin_memcpy(input_text, msg.payload, 4*AES_BLOCK_SIZE);
 			
 #ifdef debug_comunication_on
@@ -78,7 +78,7 @@ int main()
 			}			
 			msg.length = AES_BLOCK_SIZE;
 			__builtin_memcpy(msg.payload, enc_buf,4*AES_BLOCK_SIZE);
-			memphis_send(&msg, aes_master);	
+			memphis_send(&msg, aes_master);
 		}
 	}
     printf("task AES SLAVE %d finished at %d\n", memphis_get_id(), memphis_get_tick());
