@@ -1,6 +1,7 @@
 #include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "dijkstra.h"
 
 #define NONE                       9999		//Maximum
 #define MAXPROCESSORS			   64		//The amount of processor
@@ -40,8 +41,6 @@ int main(int argc, char *argv[])
 	int i, j;
 	message_t msg;
 	int rank = 4;
-
-	memphis_real_time(200000, 200000, 90000); //RealTime(200000, 200000, 90000, 0); - 45% nos primeiros 2s
 
 	qtdEnvios = 0;
 
@@ -139,7 +138,7 @@ void dijkstra(int myID) {
 	//Echo(itoa(tasks[myID][1]));
 	puts("fim \n");
 
-	memphis_real_time(43200, 43200, 11822);
+	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
 
 
 	for(x=tasks[myID][0]; x<tasks[myID][1]; x++){

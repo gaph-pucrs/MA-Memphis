@@ -23,8 +23,6 @@ int main(int argc, char *argv[])
 	// char *m_argv[3];
 	ended = 0;
 
-	memphis_real_time(103349, 103349, 87835);
-
 	pthread_n_workers = NPROC;
 
 	PROCESSORS = pthread_n_workers;
