@@ -2,8 +2,7 @@
 
 ## Overview
 
-The image below pictures an overview of the Memphis base platform.
-Note that the MA-Memphis does NOT have the Manager PE (M<sub>PE</sub>), thus all cores run the same simplified Kernel as the Memphis Slave PE (S<sub>PE</sub>).
+The image below pictures an overview of the MA-Memphis platform.
 
 ![Memphis](fig/MA-Memphis.png)
 
