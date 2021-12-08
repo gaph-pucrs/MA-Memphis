@@ -8,12 +8,12 @@ INCDIR = src/include
 INCLIB = ../../lib/src/include
 INCMAN = ../
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
-CC		= mips-elf-gcc
-AS		= mips-elf-as
-LD		= mips-elf-ld
-OBJDUMP	= mips-elf-objdump
-OBJCOPY	= mips-elf-objcopy -I elf32-bigmips -O binary
+CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
+CC = riscv64-elf-gcc -march=rv32im -mabi=ilp32
+AS = riscv64-elf-as -march=rv32im -mabi=ilp32
+LD = riscv64-elf-ld -melf32lriscv
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
 LIBDIR = ../../lib/src
 INCLIB = $(LIBDIR)/include
@@ -32,7 +32,7 @@ all: $(TARGET).txt $(TARGET).lst
 
 $(TARGET).txt: $(TARGET).bin
 	@printf "${BLUE}Dumping task: %s ...${NC}\n" "$(TARGET)"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
