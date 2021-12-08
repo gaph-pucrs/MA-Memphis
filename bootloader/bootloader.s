@@ -5,6 +5,8 @@
 # GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
 # PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
 #
+# @date September 2019
+#
 # @brief Initializes the stack pointer and jumps to main(). Handles the syscall.
 ##
 
