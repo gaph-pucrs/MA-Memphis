@@ -83,7 +83,7 @@ class Management:
 		for task in self.unique_tasks:
 			path = "{}/management/{}/{}.elf".format(self.testcase_path, task, task)
 
-			out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+			out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
 
 			self.data_sizes[task] = int(out[1])
 			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]

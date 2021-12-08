@@ -78,7 +78,7 @@ class Kernel:
 	def check_size(self):
 		path = "{}/kernel/kernel.elf".format(self.testcase_path)
 
-		out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+		out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
 
 		size = self.__get_txt_size()*4 + self.stack_size + int(out[2])
 					
