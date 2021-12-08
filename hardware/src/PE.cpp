@@ -15,6 +15,7 @@
 
 PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
 	sc_module(name_), 
+	cpu("cpu", router_address),
 	dmni("dmni", address_),
 	br_router("brrouter", address_, path_),
 	br_buffer("brbuffer"),
@@ -27,16 +28,15 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	shift_mem_page = (unsigned char) (log10(PAGE_SIZE_BYTES)/log10(2));
 
-	cpu = new mlite_cpu("cpu", router_address);
-	cpu->clk(clock_hold);
-	cpu->reset_in(reset);
-	cpu->intr_in(irq);
-	cpu->mem_address(cpu_mem_address);
-	cpu->mem_data_w(cpu_mem_data_write);
-	cpu->mem_data_r(cpu_mem_data_read);
-	cpu->mem_byte_we(cpu_mem_write_byte_enable);
-	cpu->mem_pause(cpu_mem_pause);
-	cpu->current_page(current_page);
+	cpu.clk(clock_hold);
+	cpu.reset_in(reset);
+	cpu.intr_in(irq);
+	cpu.mem_address(cpu_mem_address);
+	cpu.mem_data_w(cpu_mem_data_write);
+	cpu.mem_data_r(cpu_mem_data_read);
+	cpu.mem_byte_we(cpu_mem_write_byte_enable);
+	cpu.mem_pause(cpu_mem_pause);
+	cpu.current_page(current_page);
 	
 	mem = new ram("ram", (unsigned int) router_address, path);
 	mem->clk(clock);
@@ -448,21 +448,7 @@ void PE::sequential_attr(){
 
 			bool end = false;
 			uint32_t address = cpu_mem_data_write_reg.read()/4;
-			while(!end){
-				unsigned long word = mem->ram_data[address++];
-				word = __builtin_bswap32(word);
-				char str[5] = {};
-				memcpy(str, &word, 4);
-
-				fprintf(fp, "%s", str);
-
-				for(int i = 0; i < 4; i++){
-					if(str[i] == 0){
-						end = true;
-						break;
-					}
-				}
-			}
+			fprintf(fp, "%s", &(mem->ram_data[address]));
 
 			fclose (fp);
 		}
@@ -573,11 +559,11 @@ void PE::log_process(){
 			sprintf(aux_file, "%s/log_tasks.txt", path.c_str());
 			fp = fopen (aux_file, "a+");
 			
-			aux_instant_instructions = cpu->global_inst - instant_instructions;
+			aux_instant_instructions = cpu.global_inst - instant_instructions;
 
-			sprintf(aux, "%d,%lu,%lu,%lu\n",  (int)router_address,cpu->global_inst,aux_instant_instructions,100000*log_interaction);
+			sprintf(aux, "%d,%lu,%lu,%lu\n",  (int)router_address,cpu.global_inst,aux_instant_instructions,100000*log_interaction);
 
-			instant_instructions = cpu->global_inst;
+			instant_instructions = cpu.global_inst;
 
 		
 			fprintf(fp,"%s",aux);
@@ -591,65 +577,65 @@ void PE::log_process(){
 
 			fprintf(fp,"%d ",(int)router_address);
 
-			aux_instant_instructions = cpu->logical_inst - logical_instant_instructions;
+			aux_instant_instructions = cpu.logical_inst - logical_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 			
-			logical_instant_instructions = cpu->logical_inst;
+			logical_instant_instructions = cpu.logical_inst;
 
-			aux_instant_instructions = cpu->jump_inst - jump_instant_instructions;
-
-			fprintf(fp,"%lu ",aux_instant_instructions);
-
-			jump_instant_instructions = cpu->jump_inst;
-
-			aux_instant_instructions = cpu->branch_inst - branch_instant_instructions;
+			aux_instant_instructions = cpu.jump_inst - jump_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 
-			branch_instant_instructions = cpu->branch_inst;
+			jump_instant_instructions = cpu.jump_inst;
 
-			aux_instant_instructions = cpu->move_inst - move_instant_instructions;
-
-			fprintf(fp,"%lu ",aux_instant_instructions);
-
-			move_instant_instructions = cpu->move_inst;
-
-			aux_instant_instructions = cpu->other_inst - other_instant_instructions;
+			aux_instant_instructions = cpu.branch_inst - branch_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 
-			other_instant_instructions = cpu->other_inst;
+			branch_instant_instructions = cpu.branch_inst;
 
-			aux_instant_instructions = cpu->arith_inst - arith_instant_instructions;
-
-			fprintf(fp,"%lu ",aux_instant_instructions);
-
-			arith_instant_instructions = cpu->arith_inst;
-
-			aux_instant_instructions = cpu->load_inst - load_instant_instructions;
+			aux_instant_instructions = cpu.move_inst - move_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 
-			load_instant_instructions = cpu->load_inst;
+			move_instant_instructions = cpu.move_inst;
 
-			aux_instant_instructions = cpu->shift_inst - shift_instant_instructions;
-
-			fprintf(fp,"%lu ",aux_instant_instructions);
-
-			shift_instant_instructions = cpu->shift_inst;
-
-			aux_instant_instructions = cpu->nop_inst - nop_instant_instructions;
+			aux_instant_instructions = cpu.other_inst - other_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 
-			nop_instant_instructions = cpu->nop_inst;
+			other_instant_instructions = cpu.other_inst;
 
-			aux_instant_instructions = cpu->mult_div_inst - mult_div_instant_instructions;
+			aux_instant_instructions = cpu.arith_inst - arith_instant_instructions;
+
+			fprintf(fp,"%lu ",aux_instant_instructions);
+
+			arith_instant_instructions = cpu.arith_inst;
+
+			aux_instant_instructions = cpu.load_inst - load_instant_instructions;
+
+			fprintf(fp,"%lu ",aux_instant_instructions);
+
+			load_instant_instructions = cpu.load_inst;
+
+			aux_instant_instructions = cpu.shift_inst - shift_instant_instructions;
+
+			fprintf(fp,"%lu ",aux_instant_instructions);
+
+			shift_instant_instructions = cpu.shift_inst;
+
+			aux_instant_instructions = cpu.nop_inst - nop_instant_instructions;
+
+			fprintf(fp,"%lu ",aux_instant_instructions);
+
+			nop_instant_instructions = cpu.nop_inst;
+
+			aux_instant_instructions = cpu.mult_div_inst - mult_div_instant_instructions;
 
 			fprintf(fp,"%lu ",aux_instant_instructions);
 			
-			mult_div_instant_instructions = cpu->mult_div_inst;
+			mult_div_instant_instructions = cpu.mult_div_inst;
 
 			fprintf(fp,"%lu",100000*log_interaction);
 			fprintf(fp,"\n");

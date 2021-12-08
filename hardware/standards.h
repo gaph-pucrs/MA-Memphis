@@ -45,8 +45,8 @@ enum MONITOR_TABLES {
 
 #define DMA_SIZE 				0x20000200
 #define DMA_ADDR 				0x20000210
-#define DMA_SIZE_2 				0x20000205
-#define DMA_ADDR_2 				0x20000215
+#define DMA_SIZE_2 				0x20000204
+#define DMA_ADDR_2 				0x20000214
 #define DMA_OP 					0x20000220
 #define START_DMA 				0x20000230
 #define DMA_ACK 				0x20000240

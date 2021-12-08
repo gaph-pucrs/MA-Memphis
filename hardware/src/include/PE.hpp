@@ -15,7 +15,7 @@
 
 #include <systemc>
 
-#include "mlite_cpu.h"
+#include "RiscV.hpp"
 #include "DMNI.hpp"
 #include "router_cc.h"
 #include "ram.h"
@@ -55,7 +55,7 @@ SC_MODULE(PE) {
 	sc_out<uint8_t>		br_id_svc_out[NPORT - 1];
 	sc_out<uint8_t>		br_ksvc_out[NPORT - 1];
 
-	mlite_cpu	*	cpu;
+	RiscV			cpu;
 	ram			* 	mem;
 	DMNI 			dmni;
 	router_cc 	*	router;
