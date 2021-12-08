@@ -9,11 +9,11 @@ ELFS = $(patsubst %.c, %.elf, $(SRC))
 
 INCLIB = ../../lib/src/include
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99 -I$(INCLIB) --include id_tasks.h
-CC		= mips-elf-gcc
-AS		= mips-elf-as
-LD		= mips-elf-ld
-OBJCOPY	= mips-elf-objcopy
+CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -std=c99 -I$(INCLIB) --include id_tasks.h
+CC		= riscv64-elf-gcc -march=rv32im -mabi=ilp32
+AS		= riscv64-elf-as -march=rv32im -mabi=ilp32
+LD		= riscv64-elf-ld -melf32lriscv
+OBJCOPY	= riscv64-elf-objcopy
 
 LIBDIR = ../../lib/src
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
@@ -27,7 +27,7 @@ all: $(TARGET) $(ELFS)
 
 $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 	@printf "${GREEN}Dumping task: %s ...${NC}\n" "$<"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 	@printf "${GREEN}Generating binary for task: %s ...${NC}\n" "$<"
