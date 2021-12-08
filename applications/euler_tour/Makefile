@@ -19,7 +19,7 @@ LIBDIR = ../../lib/src
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-BOOTDIR = ../../bootloader/mipsi
+BOOTDIR = ../../bootloader
 BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
 BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
 

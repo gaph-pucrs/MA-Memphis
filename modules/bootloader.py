@@ -12,16 +12,16 @@ class Bootloader:
 
 	def copy(self):
 		copy_tree(self.platform_path+"/bootloader", self.testcase_path+"/bootloader", update=1)
-		copyfile(self.platform_path+"/bootloader/mipsi/Makefile", self.testcase_path+"/bootloader/mipsi/Makefile")
+		copyfile(self.platform_path+"/bootloader/Makefile", self.testcase_path+"/bootloader/Makefile")
 		self.update_stack()
 
 	def update_stack(self):
-		file = open(self.testcase_path+"/bootloader/mipsi/Makefile", "a")
+		file = open(self.testcase_path+"/bootloader/Makefile", "a")
 		file.write("PAGE_SP_INIT = "+str(self.PKG_PAGE_SIZE*1024)+"\n")
 		file.close()
 
 	def build(self):
 		NCPU = cpu_count()
-		make = run(["make", "-C", self.testcase_path+"/bootloader/mipsi", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/bootloader", "-j", str(NCPU)])
 		if make.returncode != 0:
 			raise Exception("Error assemblying bootloader.")

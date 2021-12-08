@@ -3,10 +3,6 @@ NC   =\033[0m # No Color
 
 TARGET = kernel
 
-ifeq ($(ARCH),)
-	ARCH = mipsi
-endif
-
 CC = mips-elf-gcc
 AS = mips-elf-as
 LD = mips-elf-ld
@@ -15,7 +11,7 @@ OBJCOPY = mips-elf-objcopy
 
 SRCDIR = src
 INCDIR = $(SRCDIR)/include
-HALDIR = hal/$(ARCH)
+HALDIR = hal
 
 LIBDIR = ../lib/src
 INCLIB = $(LIBDIR)/include
