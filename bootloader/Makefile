@@ -3,7 +3,7 @@ NC   	= \033[0m # No Color
 
 SRCDIR = .
 
-AS	= mips-elf-as
+AS	= riscv64-elf-as -march=rv32im -mabi=ilp32
 
 SRC = $(wildcard $(SRCDIR)/*.s)
 OBJ = $(patsubst %.s, %.o, $(SRC))

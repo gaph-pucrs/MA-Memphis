@@ -1,51 +1,48 @@
 ##
-# 
-# @file boot.s
+# @file bootloader.s
 #
-# @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+# @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
 # GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
 # PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
 #
 # @brief Initializes the stack pointer and jumps to main(). Handles the syscall.
 ##
 
-.section .init
-.set noreorder
-.align 2
+.section .init	# Start of ".init" section (means bootloader)
 
-.globl _start
-.ent _start
+.globl _start  	# Exports entry symbol
 _start:
-   li    $sp, sp_addr   # Initializes stack pointer
-   # SEND TASK ALLOCATED
-   jal   main
-   nop
+	.option push
+    .option norelax
+    la gp, __global_pointer$
+    .option pop
+	
+	li sp, sp_addr	# Stack pointer address passed on makefile. Loads the page size to the sp.
+
+	# JAL: Jump and Link
+   	# Copies the address of the next instruction into the register ra
+	jal main		# Execute main
    
-   move 	$s0, $v0 # Save the program return status
+	# Execute exit() until success
+	mv s1, a0			# Save return value to s1
 try_exit:
-   move  $a1, $s0 # Move to a1 the return status
-   move  $a0, $0  # Move exit syscall request to a0 
-   syscall        # Calls exit()
-   nop
-   beq	$v0, $0, try_exit # If not exited, retry
-   nop
-.end _start
+	mv a0, zero			# First argument is "0" exit
+	mv a1, s1			# Second argument is the return value of main()
+	ecall				# Calls the syscall(exit, return value)
+	beqz a0, try_exit	# If exit() returned non-zero, retry
 
 .section .text
-.set noreorder
-.align   2
 
-.globl system_call
-.ent system_call
-system_call:
-   syscall
-   nop
-   jr	$ra
-   nop
-.end system_call
+.globl SystemCall	# "registers that a global SystemCall function exists to C code"
+SystemCall:
+	ecall			# Syscall address = set by kernel
+	ret 			# Returns from syscall. $ra has the return address of the callee.
 
-.section .rodata              # switch to read-only data section
-.align 4
-.globl _has_priv     # _num is a global symbol, when it is defined
-_has_priv:           # declare the label 
-   .long  0          # 4 bytes of initialized storage after the label
+.section .rodata	# switch to read-only data section
+
+# Temporary workaround for privilege check
+# This is just a check, if this value is modify the security is not compromised,
+# but the functionality may fail
+.globl _has_priv	# Set the variable as global
+_has_priv:			# Declare the variable
+   .long  0			# 4 bytes of initialized storage after the label
