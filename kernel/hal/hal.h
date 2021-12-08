@@ -8,15 +8,14 @@
  * 
  * @date October 2019
  * 
- * @brief Hardware abstraction layer for MIPS I processors.
+ * @brief Hardware abstraction layer for RISC-V processors.
  */
 
 #pragma once
 
-#define HAL_MAX_REGISTERS	30	//!< Number of registers the context switching procedure must save 
-#define HAL_REG_A1			3	//!< Second argument register (is register 5)
-#define HAL_REG_V0			0	//!< First return value register (is register 2)
-#define HAL_REG_SP			25	//!< Stack Pointer (is register 29)
+#define HAL_MAX_REGISTERS	32	//!< Number of registers the context switching procedure must save 
+#define HAL_REG_A1			11	//!< Second argument register (is register 11)
+#define HAL_REG_SP			2	//!< Stack Pointer (is register 2)
 
 /**
  * @brief Changes context and runs a task

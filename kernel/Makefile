@@ -3,11 +3,11 @@ NC   =\033[0m # No Color
 
 TARGET = kernel
 
-CC = mips-elf-gcc
-AS = mips-elf-as
-LD = mips-elf-ld
-OBJDUMP = mips-elf-objdump
-OBJCOPY = mips-elf-objcopy
+CC = riscv64-elf-gcc -march=rv32im -mabi=ilp32
+AS = riscv64-elf-as -march=rv32im -mabi=ilp32
+LD = riscv64-elf-ld -melf32lriscv --no-relax
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
 SRCDIR = src
 INCDIR = $(SRCDIR)/include
@@ -19,7 +19,7 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -G 0 -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
 
 CCSRC = $(wildcard $(SRCDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
@@ -31,7 +31,7 @@ all: $(TARGET).txt $(TARGET).lst
 
 $(TARGET).txt: $(TARGET).bin
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"

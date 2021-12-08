@@ -2,254 +2,215 @@
 # MA-Memphis
 # @file hal.s
 #
-# @author Fernando Gehm Moraes (fernando.moraes@pucrs.br)
+# @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
 # GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
 # PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
 #
-# @date Unknown
+# @date September 2019
 #
 # @brief Hardware abstraction layer for OS bootloader, syscalls, interrupts and
 # context switching
 ##
 
 .section .init
-.align 2
-.set noat
-.set noreorder
 
 .globl _start
-.ent _start
 _start:
-	li		$sp, sp_addr
-	jal		main
-	nop
+	# .option push
+    # .option norelax
+    # la gp, __global_pointer$
+    # .option pop
 
+	li		sp,sp_addr	# Stack to top
+
+	# Configure system status MPP=0, MPIE=0, MIE=0
+	csrw	mstatus, zero
+
+	# Enable MEI when unmasked (if MIE=1)
+	li		t0, 0x800
+	csrw	mie, t0
+
+	# Clear pending interrupts
+	csrw	mip, zero
+
+	# Disable S-Mode int/exc handling
+	# Handle them in M-Mode
+	csrw	mideleg, zero
+	csrw	medeleg, zero
+
+	# Configure Syscall
+	la		t0,vector_entry		# Load the vector_entry address to t0
+	csrw	mtvec,t0			# Write vector_entry address to mtvec
+								# Last bit is 0, means DIRECT mode
+
+	# Configure addressing
+	csrw	0x7C0,zero			# Clear offset addressing
+
+	jal		main
 $L1:
 	j		$L1
-	nop
-.end _start
 
-.org 0x3c
-hal_isr_entry:
-	j		hal_isr
-	nop
-
-# Address 0x44
-hal_syscall_entry:
-	j		hal_syscall
-	nop
 
 .section .text
-.align 2
-.set noat
-.set noreorder
-hal_isr:
-	# $k0 and k1 are kernel registers (reserved for OS)
-	
-	#sw		$0, needTaskScheduling
 
-	# Load pointer to the current scheduled task. First variables are registers
-	lw		$k1, current
-	#nop
+vector_entry:				# Set to mtvec.BASE and DIRECT
+	j		save_ctx
+
+interrupt_handler:
+	# All interrupts are handled by this function
+
+	#JUMP TO INTERRUPT SERVICE ROUTINE WITH ARG
+	li		t0,0x20000000	# HW Address base
+	lw		t1,0x20(t0)     # IRQ_STATUS
+	lw		t2,0x10(t0)     # IRQ_MASK
+	and		a0,t1,t2		# Function arg
+	jal		os_isr
+	# The C function calls hal_run_task
+
+exception_handler:
+	# ALL synchronous exceptions are heandled by this function, not only ecall.
+	# WARNING: ALL exceptions will be handled as ecall for now.
+
+	# # Save t0 to mscratch to let kernel use it
+	# csrw	mscratch,t0
+
+	# csrr	t0,mcause			# Load exception cause to t0
+	# andi	t0,t0,0xFFFFFFF7	# Clear bit 3 (ecall)
+	# beqz	t0,is_ecall			# If cause is ecall, jump to routine
+
+	# csrr	t0,mscratch			# Else load back t0 and return to program
+	# mret						# IMPORTANT: it does not handles exceptions
+# is_call:
+	# jumps to system calls handler
+	jal		Syscall
+	
+	# Save Syscall return to task TCB
+	lw		t0,current		# Load "current" to t0
+	sw		a0,40(t0)		# Save a0 (syscall return)
+
+	# verifies if scheduling is needed
+	lw		t0,schedule_after_syscall
+	beqz	t0,system_service_restore	# If not, restore the program ctx
+
+	# Else, schedules the next ready task
+	jal		Scheduler
+system_service_restore:
+	# Restores the context of the scheduled task and runs it
+	lw		a0,current		# Load TCB pointer to function argument
+	jal		hal_run_task
+
+save_ctx:
+	# mscratch CSR is reserved to OS
+	# Save t0 to mscratch to let kernel use it
+	csrw	mscratch,t0
+	lw		t0,current		# Load "current" to t0
 
 	# Save registers
-	sw		$v0, 0($k1)
-	sw		$v1, 4($k1)
-	sw		$a0, 8($k1)
-	sw		$a1, 12($k1)
-	sw		$a2, 16($k1)
-	sw		$a3, 20($k1)
-	sw		$t0, 24($k1)
-	sw		$t1, 28($k1)
-	sw		$t2, 32($k1)
-	sw		$t3, 36($k1)
-	sw		$t4, 40($k1)
-	sw		$t5, 44($k1)
-	sw		$t6, 48($k1)
-	sw		$t7, 52($k1)
-	sw		$s0, 56($k1)
-	sw		$s1, 60($k1)
-	sw		$s2, 64($k1)
-	sw		$s3, 68($k1)
-	sw		$s4, 72($k1)
-	sw		$s5, 76($k1)
-	sw		$s6, 80($k1)
-	sw		$s7, 84($k1)
-	sw		$t8, 88($k1)
-	sw		$t9, 92($k1)
-	#sw		$gp, 96($k1)	# We are not using Global Pointer
-	sw		$sp, 100($k1)
-	sw		$fp, 104($k1)
-	sw		$ra, 108($k1)
+	#sw		zero,0(t0)
+	sw		ra,4(t0)
+	sw		sp,8(t0)
+	sw		gp,12(t0)
+	sw		tp,16(t0)
+	#sw		t0,20(t0)
+	sw		t1,24(t0)
+	sw		t2,28(t0)
+	sw		s0,32(t0)
+	sw		s1,36(t0)
+	sw		a0,40(t0)
+	sw		a1,44(t0)
+	sw		a2,48(t0)
+	sw		a3,52(t0)
+	sw		a4,56(t0)
+	sw		a5,60(t0)
+	sw		a6,64(t0)
+	sw		a7,68(t0)
+	sw		s2,72(t0)
+	sw		s3,76(t0)
+	sw		s4,80(t0)
+	sw		s5,84(t0)
+	sw		s6,88(t0)
+	sw		s7,92(t0)
+	sw		s8,96(t0)
+    sw		s9,100(t0)
+	sw		s10,104(t0)
+	sw		s11,108(t0)
+	sw		t3,112(t0)
+	sw		t4,116(t0)
+	sw		t5,120(t0)
+	sw		t6,124(t0)
 
-	mfhi	$k0				# Load hi to k0
-	sw		$k0, 112($k1)	# Save hi
-	mflo	$k0				# Load lo to k0
-	sw		$k0, 116($k1)	# Save lo
-	mfc0	$k0, $14		# Load epc ($14) to k0
-	sw		$k0, 120($k1)	# Save pc
+	csrr	t1,mepc		# Load mepc
+	sw		t1,128(t0)	# Save mepc
 
-	lui		$a1, 0x2000		# Loads value 0x20000000 (memory mapped registers address) to a1
-	li		$sp, sp_addr	# Loads the kernel stack pointer base
-	lw		$a0, 0x20($a1)	# Load IRQ_STATUS to a0
-	lw		$a2, 0x10($a1)	# Load IRQ_MASK to a2
-	#nop
+	csrr	t2,0x7C0	# MRAR
+	sw		t2,132(t0)	# Save mrar
+
+	csrr	t3,mscratch	# Load t0 to t3 now that t3 has been saved
+	sw		t3,20(t0)	# Save t0 that is loaded into t3 to its reg address
 	
-	and		$a0, $a0, $a2	# a0 = a0 & a2
-	jal		os_isr
-	nop
+	li		sp,sp_addr	# Restore stack pointer to top
 
-hal_syscall:
-	# $k0 and k1 are kernel registers (reserved for OS)
-	lw		$k1, current
-	#nop
-
-	# Save minimum context
-	sw		$a0, 8($k1)
-	sw		$a1, 12($k1)
-	sw		$a2, 16($k1)
-	sw		$a3, 20($k1)
-
-	#sw		$gp, 96($k1)
-	sw		$sp, 100($k1)
-	sw		$ra, 108($k1)
-
-	mfc0	$k0, $14		# Load epc to k0
-	sw		$k0, 120($k1)	# Save epc
-
-	li		$sp, sp_addr	# Loads the kernel stack pointer base
-	jal		os_syscall
-	nop
-
-	# Verifies if should schedule
-	lb		$k0, schedule_after_syscall
-	#nop
-	beqz	$k0, hal_restore_minimum	# If should not schedule, restore the minimum context saved
-	nop
-
-	#lw		$k1, current	# I guess the k1 cannot be modified by C
-	#nop
-	sw		$v0, 0($k1)        #  $v0  
-	sw		$v1, 4($k1)        #  $v1
-	# No need to save temporary registers. The syscall has been CALLED.
-	#sw		$t0, 24($k1)
-	#sw		$t1, 28($k1)
-	#sw		$t2, 32($k1)
-	#sw		$t3, 36($k1)
-	#sw		$t4, 40($k1)
-	#sw		$t5, 44($k1)
-	#sw		$t6, 48($k1)
-	#sw		$t7, 52($k1)
-	sw		$s0, 56($k1)
-	sw		$s1, 60($k1)
-	sw		$s2, 64($k1)
-	sw		$s3, 68($k1)
-	sw		$s4, 72($k1)
-	sw		$s5, 76($k1)
-	sw		$s6, 80($k1)
-	sw		$s7, 84($k1)
-	# More temporary registers.
-	#sw		$t8, 88($k1)
-	#sw		$t9, 92($k1)
-	sw		$fp, 104($k1)
-	# Hi and lo. No need to save. Syscall has benn CALLED.
-	#mfhi	$k0
-	#sw		$k0, 112($k1)
-	#mflo	$k0
-	#sw		$k0, 116($k1)
-
-	# Run the task scheduler
-	jal		sched_run
-	nop
-
-	# Runs the scheduled task
-	lw		$a0, current
-	#nop
-	jal hal_run_task
-	nop
-
-hal_restore_minimum:
-	# Current is in k1... I guess
-	#lw		$k1, current
-	#nop
-
-	#lw		$gp, 96($k1)
-	lw		$sp, 100($k1)
-	lw		$ra, 108($k1)
-
-	lw		$k0, 120($k1)	# Load PC to k0
-    lw		$k1, 124($k1)	# Load offset for paging setup
-
-	li		$at, 0x1
-	mtc0	$k1, $10
-	jr		$k0				# Jumps to pc
-	mtc0	$at, $12		# Enable interrupt
-
-.globl hal_disable_interrupts
-.ent hal_disable_interrupts
-hal_disable_interrupts:
-	jr      $ra			# Return to caller
-	mtc0    $zero, $12	# Store coprocessor 0, register 12 the value of 0
-.end hal_disable_interrupts
+	csrr	t4,mcause			# Load mcause to t4
+	li 		t5,0x80000000		# Bit 31 (interrupt)
+	bltu	t4, t5, exception_handler	# If 0 (exception) continue to ecall
+	j 		interrupt_handler		# Else (interrupt) continue to isr
 
 .globl hal_run_task
-.ent hal_run_task
 hal_run_task:
-	move    $k1, $a0
-	lw      $v0, 0($k1)
-	lw      $v1, 4($k1)
-	lw      $a0, 8($k1)
-	lw      $a1, 12($k1)
-	lw      $a2, 16($k1)
-	lw      $a3, 20($k1)
-	lw      $t0, 24($k1)
-	lw      $t1, 28($k1)
-	lw      $t2, 32($k1)
-	lw      $t3, 36($k1)
-	lw      $t4, 40($k1)
-	lw      $t5, 44($k1)
-	lw      $t6, 48($k1)
-	lw      $t7, 52($k1)
-	lw      $s0, 56($k1)
-	lw      $s1, 60($k1)
-	lw      $s2, 64($k1)
-	lw      $s3, 68($k1)
-	lw      $s4, 72($k1)
-	lw      $s5, 76($k1)
-	lw      $s6, 80($k1)
-	lw      $s7, 84($k1)
-	lw      $t8, 88($k1)
-	lw      $t9, 92($k1)
-	#lw		$gp, 96($k1)
-	lw      $sp, 100($k1)
-	lw      $fp, 104($k1)
-	lw      $ra, 108($k1)
+	# a0 has the TCB pointer
 
-	lw      $k0, 112($k1)    # $hi
-	mthi    $k0
-	lw      $k0, 116($k1)    # $lo
-	mtlo    $k0
+	lw		t0,128(a0)	# mepc
+	csrw	mepc,t0		# Restore mepc
 
-	lw      $k0, 120($k1)    # loads pc of the task that will run
-	lw      $k1, 124($k1)    # loads offset of the task (for paging setup)
-	li      $at, 0x1
+	lw		t1,132(a0)	# offset
+	csrw	0x7C0,t1	# Restore mrar
 
-	mtc0    $k1, $10
-	jr      $k0             # jumps to pc
-	mtc0    $at, $12        # enables interrupts
-.end hal_run_task
+	# Load registers
+	#lw		zero,0(a0)
+	lw		ra,4(a0)
+	lw		sp,8(a0)
+	lw		gp,12(a0)
+	lw		tp,16(a0)
+	lw		t0,20(a0)
+	lw		t1,24(a0)
+	lw		t2,28(a0)
+	lw		s0,32(a0)
+	lw		s1,36(a0)
+	#lw		a0,40(a0)
+	lw		a1,44(a0)
+	lw		a2,48(a0)
+	lw		a3,52(a0)
+	lw		a4,56(a0)
+	lw		a5,60(a0)
+	lw		a6,64(a0)
+	lw		a7,68(a0)
+	lw		s2,72(a0)
+	lw		s3,76(a0)
+	lw		s4,80(a0)
+	lw		s5,84(a0)
+	lw		s6,88(a0)
+	lw		s7,92(a0)
+	lw		s8,96(a0)
+    lw		s9,100(a0)
+	lw		s10,104(a0)
+	lw		s11,108(a0)
+	lw		t3,112(a0)
+	lw		t4,116(a0)
+	lw		t5,120(a0)
+	lw		t6,124(a0)
 
-.globl system_call
-.ent system_call
-system_call:
-   syscall
-   nop
-   jr	$ra
-   nop
-.end system_call
+	# Finally loads a0
+	lw		a0,40(a0)
+
+	mret	# Return to task enabling interrupt for M-Mode
+
+.globl hal_disable_interrupts
+hal_disable_interrupts:
+	li		t0, 0x8			# MIE
+	csrc	mstatus,t0		# Clear MIE
+	ret
 
 .section .rodata	# Constants
-.align 4
 .globl _has_priv	# Set available for 'extern'
 _has_priv:			# Define is is priv. This does not set a privilege, only used to inform prior
 	.long  1
