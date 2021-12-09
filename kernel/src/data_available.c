@@ -68,8 +68,8 @@ void data_av_send(int consumer_task, int producer_task, int consumer_addr, int p
 
 		packet.service = DATA_AV;
 		packet.src_id = (producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task;
-		packet.prod_addr = producer_addr;
-		packet.cons_task = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
+		packet.payload = ((consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task) & 0xFFFF;
+		packet.payload |= producer_addr << 16;
 		// puts("Sending DATA_AV via BrNoC\n");
 		while(!br_send(&packet, consumer_addr, BR_SVC_TGT));
 	}

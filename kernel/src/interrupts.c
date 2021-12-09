@@ -91,24 +91,27 @@ void os_isr(unsigned int status)
 
 bool os_handle_broadcast(br_packet_t *packet)
 {
+	int16_t addr_field = packet->payload >> 16;
+	int16_t task_field = packet->payload;
+
 	switch(packet->service){
 		case CLEAR_MON_TABLE:
 			/* Write to DMNI register the ID value */
-			return os_clear_mon_table(packet->task_id);
+			return os_clear_mon_table(task_field);
 		case ANNOUNCE_MONITOR:
-			return os_announce_mon(packet->task_id, packet->target_pe);
+			return os_announce_mon(task_field, addr_field);
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		case UPDATE_TASK_LOCATION:
 			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
 			return false;
 		case TASK_MIGRATION:
-			return os_task_migration(packet->task_id, packet->target_pe);
+			return os_task_migration(task_field, addr_field);
 		case DATA_AV:
-			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", packet->cons_task, packet->src_id);
-			return os_data_available(br_convert_id(packet->cons_task, MMR_NI_CONFIG), br_convert_id(packet->src_id, packet->prod_addr), packet->prod_addr);
+			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", task_field, packet->src_id);
+			return os_data_available(br_convert_id(task_field, MMR_NI_CONFIG), br_convert_id(packet->src_id, addr_field), addr_field);
 		case MESSAGE_REQUEST:
-			return os_message_request(br_convert_id(packet->src_id, packet->cons_addr), packet->cons_addr, br_convert_id(packet->prod_task, MMR_NI_CONFIG));
+			return os_message_request(br_convert_id(packet->src_id, addr_field), addr_field, br_convert_id(task_field, MMR_NI_CONFIG));
 		default:
 			printf("ERROR: unknown broadcast %x at time %d\n", packet->service, MMR_TICK_COUNTER);
 			return false;

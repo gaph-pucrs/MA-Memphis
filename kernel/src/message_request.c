@@ -45,8 +45,8 @@ void mr_send(int producer_task, int consumer_task, int producer_addr, int consum
 
 		packet.service = MESSAGE_REQUEST;
 		packet.src_id = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
-		packet.cons_addr = consumer_addr;
-		packet.prod_task = (producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task;
+		packet.payload = ((producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task) & 0xFFFF;
+		packet.payload |= consumer_addr << 16;
 		// puts("Sending MESSAGE_REQUEST via BrNoC\n");
 		while(!br_send(&packet, producer_addr, BR_SVC_TGT));
 	}
