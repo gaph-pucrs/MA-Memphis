@@ -36,7 +36,7 @@ $(TARGET).txt: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@
+	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
 
 $(TARGET).elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
@@ -48,7 +48,7 @@ $(TARGET).lst: $(TARGET)_debug.elf
 
 $(TARGET)_debug.elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking debug task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD)  --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
+	@$(LD) --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"
