@@ -41,9 +41,7 @@ void br_read(br_packet_t *packet)
 	packet->src_addr = producer >> 16;
 	packet->src_id = producer & 0xFFFF;
 	
-	uint32_t message = MMR_BR_READ_PAYLOAD;
-	packet->prod_addr = message >> 16;
-	packet->cons_task = message & 0xFFFF;
+	packet->payload = MMR_BR_READ_PAYLOAD;
 }
 
 void br_fake_packet(br_packet_t *br_packet, packet_t *packet)
