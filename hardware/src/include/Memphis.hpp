@@ -18,16 +18,6 @@
 #include "PE.hpp"
 #include "standards.h"
 
-#define BL 0
-#define BC 1
-#define BR 2
-#define CL 3
-#define CC 4
-#define CRX 5
-#define TL 6
-#define TC 7
-#define TR 8
-
 SC_MODULE(Memphis){
 	sc_in<bool>		clock;
 	sc_in<bool>		reset;
@@ -84,7 +74,6 @@ private:
 	sc_signal<uint8_t>	br_id_svc_out[N_PE][NPORT - 1];
 	sc_signal<uint8_t>	br_ksvc_out[N_PE][NPORT - 1];
 
-	static int RouterPosition(int router);
 	static regaddress RouterAddress(int router);
 
 	void pes_interconnection();
