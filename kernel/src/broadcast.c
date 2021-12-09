@@ -42,6 +42,8 @@ void br_read(br_packet_t *packet)
 	packet->src_id = producer & 0xFFFF;
 	
 	packet->payload = MMR_BR_READ_PAYLOAD;
+
+	MMR_BR_POP = 1;
 }
 
 void br_fake_packet(br_packet_t *br_packet, packet_t *packet)

@@ -16,6 +16,7 @@ public:
 
 	sc_core::sc_out<bool>		empty;
 	sc_core::sc_in<bool>		read_in;
+	sc_core::sc_in<bool>		pop_sig;
 	sc_core::sc_out<uint32_t>	payload_out;
 	sc_core::sc_out<uint32_t>	producer_out;
 	sc_core::sc_out<uint8_t>	ksvc_out;

@@ -181,6 +181,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	br_buffer.empty(br_buf_empty);
 	br_buffer.read_in(br_buf_read_in);
+	br_buffer.pop_sig(br_buf_pop);
 	br_buffer.payload_out(br_buf_payload_out);
 	br_buffer.producer_out(br_buf_producer_out);
 	br_buffer.ksvc_out(br_buf_ksvc_out);
@@ -350,6 +351,7 @@ void PE::comb_assignments(){
 	br_cfg_data = cpu_mem_data_write_reg.read();
 	br_buf_read_in = cpu_mem_address_reg.read() == BR_READ_PAYLOAD;
 	br_cfg_ksvc = cpu_mem_address_reg.read() == BR_KSVC && write_enable;
+	br_buf_pop = cpu_mem_address_reg.read() == BR_POP && write_enable;
 
 	cpu_set_mon_qos = cpu_mem_address_reg.read() == MON_PTR_QOS && write_enable;
 	cpu_set_mon_pwr = cpu_mem_address_reg.read() == MON_PTR_PWR && write_enable;
