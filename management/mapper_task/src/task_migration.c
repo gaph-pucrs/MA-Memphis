@@ -40,13 +40,13 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	}
 
 	task->old_proc = task->processor;
-	// unsigned then = GetTick();
+	// unsigned then = memphis_get_tick();
 
 	/* Check the window center disregarding the task to migrate */
 	app->center_x = 0;
 	app->center_y = 0;
 	for(int i = 0; i < app->task_cnt; i++){
-		if(i == (task_id & 0xFF))
+		if(i == (task_id & 0xFF) || app->task[i] == NULL)
 			continue;
 
 		app->center_x += app->task[i]->processor->addr >> 8;
@@ -70,8 +70,8 @@ void tm_migrate(mapper_t *mapper, int task_id)
 	/* Map to the specific window */
 	task->processor = sw_map_task(task, app, mapper->processors, &window);
 
-	// unsigned now = GetTick(); 
-	// Echo("Ticks of mapping task for migration = "); Echo(itoa(now - then)); Echo("\n");
+	// unsigned now = memphis_get_tick(); 
+	// printf("Ticks of mapping task for migration = %d\n", now-then);
 
 	if(task->old_proc == task->processor){
 		task->old_proc = NULL;
