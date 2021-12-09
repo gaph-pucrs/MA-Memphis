@@ -451,7 +451,7 @@ public:
 
 namespace Timings {
 	static const uint32_t RESET = 17;
-	static const uint32_t MEM_READ = 3;
+	static const uint32_t MEM_READ = 2;
 	static const uint32_t MEM_WRITE = 1;
 	static const uint32_t DECODE = 1;
 	static const uint32_t LOGICAL = 1;
