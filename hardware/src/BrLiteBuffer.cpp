@@ -31,9 +31,9 @@ void BrLiteBuffer::buffer_in()
 		return;
 	}
 
-	/* Priority: read */
-	if(read_in && !empty){
-		// cout << "Received READ_IN to head " << (int)head << " with payload " << buffer[head].payload << endl;
+	/* Priority: pop */
+	if(pop_sig && !empty){
+		// cout << "Received POP to head " << (int)head << " with payload " << buffer[head].payload << endl;
 		uint8_t next_head = (head + 1) % BR_BUFFER_SIZE;
 		if(next_head == tail)
 			empty = true;
