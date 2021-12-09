@@ -846,7 +846,7 @@ bool RiscV::decode_system()
 
 bool RiscV::lui()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	x[instr.rd()].range(31,12) = instr.imm_31_12();
 	x[instr.rd()].range(11,0) = 0;
 	return false;
@@ -854,7 +854,7 @@ bool RiscV::lui()
 
 bool RiscV::auipc()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	Register r;
 	r.range(31,12) = instr.imm_31_12();
 	r.range(11,0) = 0;
@@ -865,7 +865,7 @@ bool RiscV::auipc()
 
 bool RiscV::jal()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Sign-extend offset
 	Register r;
@@ -892,7 +892,7 @@ bool RiscV::jal()
 
 bool RiscV::jalr()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Sign-extend offset
 	Register r;
@@ -915,7 +915,7 @@ bool RiscV::jalr()
 
 bool RiscV::beq()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if(x[instr.rs1()].read() == x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -938,7 +938,7 @@ bool RiscV::beq()
 
 bool RiscV::bne()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if(x[instr.rs1()].read() != x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -961,7 +961,7 @@ bool RiscV::bne()
 
 bool RiscV::blt()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if((int)x[instr.rs1()].read() < (int)x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -984,7 +984,7 @@ bool RiscV::blt()
 
 bool RiscV::bge()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if((int)x[instr.rs1()].read() >= (int)x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -1007,7 +1007,7 @@ bool RiscV::bge()
 
 bool RiscV::bltu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if((unsigned int)x[instr.rs1()].read() < (unsigned int)x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -1030,7 +1030,7 @@ bool RiscV::bltu()
 
 bool RiscV::bgeu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	if((unsigned int)x[instr.rs1()].read() >= (unsigned int)x[instr.rs2()].read()){ // Taken
 		// Sign-extend offset
 		Register r;
@@ -1053,7 +1053,7 @@ bool RiscV::bgeu()
 
 bool RiscV::lb()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend offset
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1089,7 +1089,7 @@ bool RiscV::lb()
 
 bool RiscV::lh()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend offset
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1125,7 +1125,7 @@ bool RiscV::lh()
 
 bool RiscV::lw()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend offset
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1155,7 +1155,7 @@ bool RiscV::lw()
 
 bool RiscV::lbu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend offset
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1191,7 +1191,7 @@ bool RiscV::lbu()
 
 bool RiscV::lhu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend offset
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1227,7 +1227,7 @@ bool RiscV::lhu()
 
 bool RiscV::sb()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Sign-extend offset
 	Register r;
@@ -1270,7 +1270,7 @@ bool RiscV::sb()
 
 bool RiscV::sh()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Sign-extend offset
 	Register r;
@@ -1311,7 +1311,7 @@ bool RiscV::sh()
 
 bool RiscV::sw()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Sign-extend offset
 	Register r;
@@ -1344,7 +1344,7 @@ bool RiscV::sw()
 
 bool RiscV::addi()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1357,7 +1357,7 @@ bool RiscV::addi()
 
 bool RiscV::slti()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1370,7 +1370,7 @@ bool RiscV::slti()
 
 bool RiscV::sltiu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1383,7 +1383,7 @@ bool RiscV::sltiu()
 
 bool RiscV::xori()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1396,7 +1396,7 @@ bool RiscV::xori()
 
 bool RiscV::ori()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1409,7 +1409,7 @@ bool RiscV::ori()
 
 bool RiscV::andi()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// Sign-extend immediate
 	Register r;
 	r.range(31,12) = (int)instr.bit(31) * -1;
@@ -1422,7 +1422,7 @@ bool RiscV::andi()
 
 bool RiscV::slli()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// rs2 is imm[4:0] for shift
 	x[instr.rd()].write(x[instr.rs1()].read() << instr.rs2());
 
@@ -1431,7 +1431,7 @@ bool RiscV::slli()
 
 bool RiscV::srli()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 	// rs2 is imm[4:0] for shift
 	x[instr.rd()].write(x[instr.rs1()].read() >> instr.rs2());
 
@@ -1440,7 +1440,7 @@ bool RiscV::srli()
 
 bool RiscV::srai()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	Register r;
 	r.write(x[instr.rs1()].read());
@@ -1458,7 +1458,7 @@ bool RiscV::srai()
 
 bool RiscV::add()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() + x[instr.rs2()].read());
 
@@ -1467,7 +1467,7 @@ bool RiscV::add()
 
 bool RiscV::sub()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() - x[instr.rs2()].read());
 
@@ -1476,7 +1476,7 @@ bool RiscV::sub()
 
 bool RiscV::sll()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() << x[instr.rs2()].range(4, 0));
 
@@ -1485,7 +1485,7 @@ bool RiscV::sll()
 
 bool RiscV::slt()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(((int)x[instr.rs1()].read() < (int)x[instr.rs2()].read()));
 
@@ -1494,7 +1494,7 @@ bool RiscV::slt()
 
 bool RiscV::sltu()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(((unsigned int)x[instr.rs1()].read() < (unsigned int)x[instr.rs2()].read()));
 
@@ -1503,7 +1503,7 @@ bool RiscV::sltu()
 
 bool RiscV::_xor()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() ^ x[instr.rs2()].read());
 
@@ -1512,7 +1512,7 @@ bool RiscV::_xor()
 
 bool RiscV::srl()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() >> x[instr.rs2()].range(4,0));
 
@@ -1521,7 +1521,7 @@ bool RiscV::srl()
 
 bool RiscV::sra()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	Register r;
 	r.write(x[instr.rs1()].read());
@@ -1538,7 +1538,7 @@ bool RiscV::sra()
 
 bool RiscV::_or()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() | x[instr.rs2()].read());
 
@@ -1547,7 +1547,7 @@ bool RiscV::_or()
 
 bool RiscV::_and()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	x[instr.rd()].write(x[instr.rs1()].read() & x[instr.rs2()].read());
 
@@ -1556,14 +1556,14 @@ bool RiscV::_and()
 
 bool RiscV::fence()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	return false;
 }
 
 bool RiscV::ecall()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	switch(priv.get()){
 	case Privilege::Level::MACHINE:
@@ -1582,14 +1582,14 @@ bool RiscV::ecall()
 
 bool RiscV::ebreak()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	return false;
 }
 
 bool RiscV::mul()
 {
-	wait(Timings::MUL);
+	// wait(Timings::MUL);
 
 	x[instr.rd()].write((uint32_t)x[instr.rs1()].read() * (uint32_t)x[instr.rs2()].read());
 
@@ -1598,7 +1598,7 @@ bool RiscV::mul()
 
 bool RiscV::mulh()
 {
-	wait(Timings::MUL);
+	// wait(Timings::MUL);
 
 	uint64_t res = (int64_t)x[instr.rs1()].read() * (int64_t)x[instr.rs2()].read();
 	uint32_t high = res >> 32;
@@ -1610,7 +1610,7 @@ bool RiscV::mulh()
 
 bool RiscV::mulhsu()
 {
-	wait(Timings::MUL);
+	// wait(Timings::MUL);
 
 	uint64_t res = (int64_t)x[instr.rs1()].read() * (uint64_t)x[instr.rs2()].read();
 	uint32_t high = res >> 32;
@@ -1622,7 +1622,7 @@ bool RiscV::mulhsu()
 
 bool RiscV::mulhu()
 {
-	wait(Timings::MUL);
+	// wait(Timings::MUL);
 
 	uint64_t res = (uint64_t)x[instr.rs1()].read() * (uint64_t)x[instr.rs2()].read();
 	uint32_t high = res >> 32;
@@ -1634,7 +1634,7 @@ bool RiscV::mulhu()
 
 bool RiscV::div()
 {
-	wait(Timings::DIV);
+	// wait(Timings::MUL);
 
 	if(!x[instr.rs1()].read()){ // 0 divided by anything is 0
 		x[instr.rd()].write(0);
@@ -1651,7 +1651,7 @@ bool RiscV::div()
 
 bool RiscV::divu()
 {
-	wait(Timings::DIV);
+	// wait(Timings::MUL);
 
 	if(!x[instr.rs1()].read()){ // 0 divided by anything is 0
 		x[instr.rd()].write(0);
@@ -1666,7 +1666,7 @@ bool RiscV::divu()
 
 bool RiscV::rem()
 {
-	wait(Timings::DIV);
+	// wait(Timings::MUL);
 
 	if(!x[instr.rs1()].read()){ // 0 divided by anything is 0
 		x[instr.rd()].write(0);
@@ -1683,7 +1683,7 @@ bool RiscV::rem()
 
 bool RiscV::remu()
 {
-	wait(Timings::DIV);
+	// wait(Timings::MUL);
 
 	if(!x[instr.rs1()].read()){ // 0 divided by anything is 0
 		x[instr.rd()].write(0);
@@ -1698,7 +1698,7 @@ bool RiscV::remu()
 
 bool RiscV::csrrw()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1726,7 +1726,7 @@ bool RiscV::csrrw()
 
 bool RiscV::csrrs()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1753,7 +1753,7 @@ bool RiscV::csrrs()
 
 bool RiscV::csrrc()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1780,7 +1780,7 @@ bool RiscV::csrrc()
 
 bool RiscV::csrrwi()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1803,7 +1803,7 @@ bool RiscV::csrrwi()
 
 bool RiscV::csrrsi()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1826,7 +1826,7 @@ bool RiscV::csrrsi()
 
 bool RiscV::csrrci()
 {
-	wait(Timings::CSR);
+	// wait(Timings::CSR);
 
 	Register *csr = nullptr;
 	uint32_t wmand = -1;
@@ -1849,7 +1849,7 @@ bool RiscV::csrrci()
 
 bool RiscV::sret()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Can only be called in M and S-Mode and if SRET trap is disabled
 	if(priv.get() == Privilege::Level::USER || mstatus.TSR()){
@@ -1870,7 +1870,7 @@ bool RiscV::sret()
 
 bool RiscV::mret()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Can only be called in M-Mode
 	if(priv.get() != Privilege::Level::MACHINE){
@@ -1891,7 +1891,7 @@ bool RiscV::mret()
 
 bool RiscV::wfi()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	// Not available in U-Mode or if timeout wait in S-Mode
 	if(priv.get() == Privilege::Level::USER || (mstatus.TW() && priv.get() == Privilege::Level::SUPERVISOR)){
@@ -1906,7 +1906,7 @@ bool RiscV::wfi()
 
 bool RiscV::sfence_vma()
 {
-	wait(Timings::LOGICAL);
+	// wait(Timings::LOGICAL);
 
 	if(priv.get() == Privilege::Level::USER){
 		handle_exceptions(Exceptions::CODE::ILLEGAL_INSTRUCTION);
