@@ -280,7 +280,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 		prod_task = data_av->requester;
 		prod_addr = data_av->requester_addr;
-		// putsvsv("Readpipe: received DATA_AV from task ", prod_task, " with address ", prod_addr);
+		// printf("Readpipe: received DATA_AV from task %x with address %x\n", prod_task, prod_addr);
 	}
 
 	if(prod_addr == MMR_NI_CONFIG){	/* Local producer */
@@ -406,7 +406,7 @@ bool os_kernel_writepipe(int task, int addr, int size, int *msg)
 	/* Avoid overwriting pending messages */
 	while(MMR_DMNI_SEND_ACTIVE);
 
-	// putsvsv("Kernel writing pending message to task ", task, " with size ", size);
+	// printf("Kernel writing pending message to task %d with size %d\n", task, size);
 	/* Insert message in kernel output message buffer */
 	pending_msg_push(task, size, msg);
 
