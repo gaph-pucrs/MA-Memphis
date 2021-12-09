@@ -14,11 +14,11 @@
 #pragma once
 
 enum {
-	HAL_REG_ZERO,
+	// HAL_REG_ZERO,
 	HAL_REG_RA,
 	HAL_REG_SP,
 	HAL_REG_GP,
-	HAL_REG_TP,
+	// HAL_REG_TP,
 	HAL_REG_T0,
 	HAL_REG_T1,
 	HAL_REG_T2,

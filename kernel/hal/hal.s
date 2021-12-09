@@ -12,8 +12,8 @@
 # context switching
 ##
 
-.equ MAX_REGISTERS, 32
-.equ PC_ADDR, (MAX_REGISTERS)*4
+.equ MAX_REGISTERS, 30
+.equ PC_ADDR, MAX_REGISTERS*4
 .equ OFF_ADDR, (MAX_REGISTERS+1)*4
 
 .section .init
@@ -92,7 +92,7 @@ exception_handler:
 	
 	# Save Syscall return to task TCB
 	lw		t0,current		# Load "current" to t0
-	sw		a0,40(t0)		# Save a0 (syscall return)
+	sw		a0,32(t0)		# Save a0 (syscall return)
 
 	# verifies if scheduling is needed
 	lw		t0,schedule_after_syscall
@@ -112,38 +112,38 @@ save_ctx:
 	lw		t0,current		# Load "current" to t0
 
 	# Save registers
-	#sw		zero,0(t0)
-	sw		ra,4(t0)
-	sw		sp,8(t0)
-	sw		gp,12(t0)
-	# sw		tp,16(t0)
-	#sw		t0,20(t0)
-	sw		t1,24(t0)
-	sw		t2,28(t0)
-	sw		s0,32(t0)
-	sw		s1,36(t0)
-	sw		a0,40(t0)
-	sw		a1,44(t0)
-	sw		a2,48(t0)
-	sw		a3,52(t0)
-	sw		a4,56(t0)
-	sw		a5,60(t0)
-	sw		a6,64(t0)
-	sw		a7,68(t0)
-	sw		s2,72(t0)
-	sw		s3,76(t0)
-	sw		s4,80(t0)
-	sw		s5,84(t0)
-	sw		s6,88(t0)
-	sw		s7,92(t0)
-	sw		s8,96(t0)
-    sw		s9,100(t0)
-	sw		s10,104(t0)
-	sw		s11,108(t0)
-	sw		t3,112(t0)
-	sw		t4,116(t0)
-	sw		t5,120(t0)
-	sw		t6,124(t0)
+	# No use for zero
+	sw		 ra,  0(t0)
+	sw		 sp,  4(t0)
+	sw		 gp,  8(t0)
+	# No use for tp
+	# Save t0 later
+	sw		 t1, 16(t0)
+	sw		 t2, 20(t0)
+	sw		 s0, 24(t0)
+	sw		 s1, 28(t0)
+	sw		 a0, 32(t0)
+	sw		 a1, 36(t0)
+	sw		 a2, 40(t0)
+	sw		 a3, 44(t0)
+	sw		 a4, 48(t0)
+	sw		 a5, 52(t0)
+	sw		 a6, 56(t0)
+	sw		 a7, 60(t0)
+	sw		 s2, 64(t0)
+	sw		 s3, 68(t0)
+	sw		 s4, 72(t0)
+	sw		 s5, 76(t0)
+	sw		 s6, 80(t0)
+	sw		 s7, 84(t0)
+	sw		 s8, 88(t0)
+    sw		 s9, 92(t0)
+	sw		s10, 96(t0)
+	sw		s11,100(t0)
+	sw		 t3,104(t0)
+	sw		 t4,108(t0)
+	sw		 t5,112(t0)
+	sw		 t6,116(t0)
 
 	csrr	t1,mepc		# Load mepc
 	sw		t1,PC_ADDR(t0)	# Save mepc
@@ -152,7 +152,7 @@ save_ctx:
 	sw		t2,OFF_ADDR(t0)	# Save mrar
 
 	csrr	t3,mscratch	# Load t0 to t3 now that t3 has been saved
-	sw		t3,20(t0)	# Save t0 that is loaded into t3 to its reg address
+	sw		t3,12(t0)	# Save t0 that is loaded into t3 to its reg address
 	
 	li		sp,sp_addr	# Restore stack pointer to top
 
@@ -172,41 +172,48 @@ hal_run_task:
 	csrw	0x7C0,t1	# Restore mrar
 
 	# Load registers
-	#lw		zero,0(a0)
-	lw		ra,4(a0)
-	lw		sp,8(a0)
-	lw		gp,12(a0)
-	# lw		tp,16(a0)
-	lw		t0,20(a0)
-	lw		t1,24(a0)
-	lw		t2,28(a0)
-	lw		s0,32(a0)
-	lw		s1,36(a0)
-	#lw		a0,40(a0)
-	lw		a1,44(a0)
-	lw		a2,48(a0)
-	lw		a3,52(a0)
-	lw		a4,56(a0)
-	lw		a5,60(a0)
-	lw		a6,64(a0)
-	lw		a7,68(a0)
-	lw		s2,72(a0)
-	lw		s3,76(a0)
-	lw		s4,80(a0)
-	lw		s5,84(a0)
-	lw		s6,88(a0)
-	lw		s7,92(a0)
-	lw		s8,96(a0)
-    lw		s9,100(a0)
-	lw		s10,104(a0)
-	lw		s11,108(a0)
-	lw		t3,112(a0)
-	lw		t4,116(a0)
-	lw		t5,120(a0)
-	lw		t6,124(a0)
+	# No use for zero
+	lw		 ra,  0(a0)
+	# Restore sp later
+	# Restore gp later
+	# No use for tp
+	lw		 t0, 12(a0)
+	lw		 t1, 16(a0)
+	lw		 t2, 20(a0)
+	lw		 s0, 24(a0)
+	lw		 s1, 28(a0)
+	# Restore a0 later
+	lw		 a1, 36(a0)
+	lw		 a2, 40(a0)
+	lw		 a3, 44(a0)
+	lw		 a4, 48(a0)
+	lw		 a5, 52(a0)
+	lw		 a6, 56(a0)
+	lw		 a7, 60(a0)
+	lw		 s2, 64(a0)
+	lw		 s3, 68(a0)
+	lw		 s4, 72(a0)
+	lw		 s5, 76(a0)
+	lw		 s6, 80(a0)
+	lw		 s7, 84(a0)
+	lw		 s8, 88(a0)
+    lw		 s9, 92(a0)
+	lw		s10, 96(a0)
+	lw		s11,100(a0)
+	lw		 t3,104(a0)
+	lw		 t4,108(a0)
+	lw		 t5,112(a0)
+	lw		 t6,116(a0)
 
-	# Finally loads a0
-	lw		a0,40(a0)
+	# Save kernel 'context'
+	# addi	sp, sp, -4		# Add Word to stack pointer
+	# sw		gp, 0(sp)  		# Add gp to stack
+	# csrw	mscratch, sp	# Save sp to mscratch
+
+	# Restores the remaining registers
+	lw		 sp,  4(a0)
+	lw		 gp,  8(a0)
+	lw		 a0, 32(a0)
 
 	mret	# Return to task enabling interrupt for M-Mode
 
