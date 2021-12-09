@@ -54,7 +54,7 @@ void llm_clear_table(tcb_t *task)
 	packet.service = CLEAR_MON_TABLE;
 	packet.src_id = -1;
 
-	packet.task_id = id;
+	packet.payload = id;
 
 	while(!br_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL));
 }

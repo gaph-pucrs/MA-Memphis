@@ -24,24 +24,7 @@ typedef struct _br_packet {
 	int16_t src_addr;
 	int16_t src_id;
 
-	union {
-		uint32_t payload;
-
-		struct {
-			union {
-				int16_t target_pe;
-				int16_t prod_addr;
-				int16_t cons_addr;
-			};
-			union {
-				int16_t task_id;
-				int16_t cons_task;
-				int16_t prod_task;
-			};
-		};
-	};
-	
-
+	uint32_t payload;
 } br_packet_t;
 
 /**

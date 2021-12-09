@@ -50,20 +50,23 @@ void br_fake_packet(br_packet_t *br_packet, packet_t *packet)
 {
 	packet->service = br_packet->service;
 
+	int16_t id_field = br_packet->payload;
+	int16_t addr_field = br_packet->payload >> 16;
+
 	switch(packet->service){
 		case DATA_AV:
-			packet->producer_task = br_convert_id(br_packet->src_id, br_packet->prod_addr);
-			packet->consumer_task = br_convert_id(br_packet->cons_task, MMR_NI_CONFIG);
-			packet->requesting_processor = br_packet->prod_addr;
+			packet->producer_task = br_convert_id(br_packet->src_id, addr_field);
+			packet->consumer_task = br_convert_id(id_field, MMR_NI_CONFIG);
+			packet->requesting_processor = addr_field;
 			break;
 		case MESSAGE_REQUEST:
-			packet->producer_task = br_convert_id(br_packet->prod_task, MMR_NI_CONFIG);
-			packet->consumer_task = br_convert_id(br_packet->src_id, br_packet->cons_addr);
-			packet->requesting_processor = br_packet->cons_addr;
+			packet->producer_task = br_convert_id(id_field, MMR_NI_CONFIG);
+			packet->consumer_task = br_convert_id(br_packet->src_id, addr_field);
+			packet->requesting_processor = addr_field;
 			break;
 		case TASK_MIGRATION:
-			packet->task_ID = br_packet->task_id;
-			packet->allocated_processor = br_packet->target_pe;
+			packet->task_ID = id_field;
+			packet->allocated_processor = addr_field;
 			break;
 		default:
 			printf("ERROR: Service %x not implemented in br->hermes\n", packet->service);
