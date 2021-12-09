@@ -31,7 +31,7 @@ $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 
 $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 	@printf "${GREEN}Generating binary for task: %s ...${NC}\n" "$<"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
 $(SRCDIR)/%.elf: $(SRCDIR)/%.o $(BOOTOBJ) $(LIBOBJ)
 	@printf "${GREEN}Linking task: %s ...${NC}\n" "$<"

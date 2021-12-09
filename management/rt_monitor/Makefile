@@ -36,7 +36,7 @@ $(TARGET).txt: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
 $(TARGET).elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
