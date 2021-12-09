@@ -148,8 +148,8 @@ save_ctx:
 	csrr	t1,mepc		# Load mepc
 	sw		t1,PC_ADDR(t0)	# Save mepc
 
-	csrr	t2,0x7C0	# MRAR
-	sw		t2,OFF_ADDR(t0)	# Save mrar
+	# csrr	t2,0x7C0	# MRAR
+	# sw		t2,OFF_ADDR(t0)	# Save mrar
 
 	csrr	t3,mscratch	# Load t0 to t3 now that t3 has been saved
 	sw		t3,12(t0)	# Save t0 that is loaded into t3 to its reg address
