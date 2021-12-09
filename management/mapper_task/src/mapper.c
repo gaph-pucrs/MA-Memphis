@@ -179,7 +179,7 @@ void map_app_mapping_complete(app_t *app)
 
 void map_task_terminated(mapper_t *mapper, int id)
 {
-	// printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
+	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
 
 	int appid = id >> 8;
 	int taskid = id & 0xFF;

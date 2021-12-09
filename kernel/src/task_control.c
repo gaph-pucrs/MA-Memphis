@@ -142,7 +142,7 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr)
 
 unsigned int tcb_get_pc(tcb_t *tcb)
 {
-	return tcb->pc - tcb->offset;
+	return tcb->pc;
 }
 
 unsigned int tcb_get_sp(tcb_t *tcb)
@@ -189,7 +189,7 @@ unsigned int tcb_get_bss_length(tcb_t *tcb)
 
 void tcb_set_pc(tcb_t *tcb, unsigned int pc)
 {
-	tcb->pc = pc + tcb->offset;
+	tcb->pc = pc;
 }
 
 void tcb_set_sp(tcb_t *tcb, unsigned int sp)

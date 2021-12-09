@@ -500,7 +500,6 @@ bool os_migration_mr(int id, unsigned int mr_len)
 
 bool os_migration_data_av(int id , unsigned int data_av_len)
 {
-	// puts("Received MIG_DATA_AV PKT\n");
 	tcb_t *tcb = tcb_search(id);
 
 	dmni_read((unsigned int*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
