@@ -35,7 +35,7 @@ $(TARGET).txt: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@ -I elf32-bigmips -O binary
+	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@ -O binary
 
 $(TARGET).elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"

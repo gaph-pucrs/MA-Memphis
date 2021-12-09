@@ -11,6 +11,7 @@
 ##
 
 .section .init	# Start of ".init" section (means bootloader)
+.align 4
 
 .globl _start  	# Exports entry symbol
 _start:
@@ -34,17 +35,17 @@ try_exit:
 	beqz a0, try_exit	# If exit() returned non-zero, retry
 
 .section .text
+.align 4
 
-.globl SystemCall	# "registers that a global SystemCall function exists to C code"
-SystemCall:
+.globl system_call	# "registers that a global SystemCall function exists to C code"
+system_call:
 	ecall			# Syscall address = set by kernel
 	ret 			# Returns from syscall. $ra has the return address of the callee.
 
 .section .rodata	# switch to read-only data section
-
+.align 4
 # Temporary workaround for privilege check
 # This is just a check, if this value is modify the security is not compromised,
 # but the functionality may fail
 .globl _has_priv	# Set the variable as global
-_has_priv:			# Declare the variable
-   .long  0			# 4 bytes of initialized storage after the label
+_has_priv: .4byte 0

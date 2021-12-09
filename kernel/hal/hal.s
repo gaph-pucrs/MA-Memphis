@@ -13,6 +13,7 @@
 ##
 
 .section .init
+.align 4
 
 .globl _start
 _start:
@@ -52,6 +53,7 @@ $L1:
 
 
 .section .text
+.align 4
 
 vector_entry:				# Set to mtvec.BASE and DIRECT
 	j		save_ctx
@@ -82,7 +84,7 @@ exception_handler:
 	# mret						# IMPORTANT: it does not handles exceptions
 # is_call:
 	# jumps to system calls handler
-	jal		Syscall
+	jal		os_syscall
 	
 	# Save Syscall return to task TCB
 	lw		t0,current		# Load "current" to t0
@@ -93,7 +95,7 @@ exception_handler:
 	beqz	t0,system_service_restore	# If not, restore the program ctx
 
 	# Else, schedules the next ready task
-	jal		Scheduler
+	jal		sched_run
 system_service_restore:
 	# Restores the context of the scheduled task and runs it
 	lw		a0,current		# Load TCB pointer to function argument
@@ -210,7 +212,11 @@ hal_disable_interrupts:
 	csrc	mstatus,t0		# Clear MIE
 	ret
 
-.section .rodata	# Constants
+.globl system_call
+system_call:
+   ret
+
+.section .rodata		# Constants
+.align 4
 .globl _has_priv	# Set available for 'extern'
-_has_priv:			# Define is is priv. This does not set a privilege, only used to inform prior
-	.long  1
+_has_priv: .4byte 1

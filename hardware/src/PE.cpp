@@ -446,9 +446,8 @@ void PE::sequential_attr(){
 			sprintf(aux, "%s/log/log%dx%d.txt", path.c_str(), (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 
-			bool end = false;
 			uint32_t address = cpu_mem_data_write_reg.read()/4;
-			fprintf(fp, "%s", &(mem->ram_data[address]));
+			fprintf(fp, "%s", (char*)&(mem->ram_data[address]));
 
 			fclose (fp);
 		}

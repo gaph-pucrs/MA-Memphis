@@ -33,7 +33,7 @@ void tcb_init()
 	idle_tcb.offset = 0;
 	idle_tcb.proc_to_migrate = -1;
 	idle_tcb.called_exit = false;
-	idle_tcb.registers[HAL_REG_SP] = PAGE_SIZE;
+	idle_tcb.registers[HAL_REG_SP] = PKG_PAGE_SIZE;
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;

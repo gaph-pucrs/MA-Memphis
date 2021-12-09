@@ -44,7 +44,7 @@ typedef struct _message {
 } message_t;
 
 extern int system_call();
-extern const int _has_priv;
+extern const uint32_t _has_priv;
 
 /**
  * @brief Gets the ID of the running task
