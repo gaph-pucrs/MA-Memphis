@@ -12,6 +12,10 @@
 # context switching
 ##
 
+.equ MAX_REGISTERS, 32
+.equ PC_ADDR, (MAX_REGISTERS)*4
+.equ OFF_ADDR, (MAX_REGISTERS+1)*4
+
 .section .init
 .align 4
 
@@ -142,10 +146,10 @@ save_ctx:
 	sw		t6,124(t0)
 
 	csrr	t1,mepc		# Load mepc
-	sw		t1,128(t0)	# Save mepc
+	sw		t1,PC_ADDR(t0)	# Save mepc
 
 	csrr	t2,0x7C0	# MRAR
-	sw		t2,132(t0)	# Save mrar
+	sw		t2,OFF_ADDR(t0)	# Save mrar
 
 	csrr	t3,mscratch	# Load t0 to t3 now that t3 has been saved
 	sw		t3,20(t0)	# Save t0 that is loaded into t3 to its reg address
@@ -161,10 +165,10 @@ save_ctx:
 hal_run_task:
 	# a0 has the TCB pointer
 
-	lw		t0,128(a0)	# mepc
+	lw		t0,PC_ADDR(a0)	# mepc
 	csrw	mepc,t0		# Restore mepc
 
-	lw		t1,132(a0)	# offset
+	lw		t1,OFF_ADDR(a0)	# offset
 	csrw	0x7C0,t1	# Restore mrar
 
 	# Load registers
