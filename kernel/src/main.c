@@ -46,8 +46,5 @@ int main()
 		IRQ_SLACK_TIME
 	);
 	
-	hal_run_task((void*)sched_get_current());
-
-	while(true);
 	return 0;
 }

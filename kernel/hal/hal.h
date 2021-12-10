@@ -51,13 +51,6 @@ enum {
 };
 
 /**
- * @brief Changes context and runs a task
- * 
- * @param task Pointer to the TCB
- */
-void hal_run_task(void* task);
-
-/**
  * @brief Globally disables interrupts
  */
 void hal_disable_interrupts();

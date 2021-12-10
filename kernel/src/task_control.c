@@ -17,24 +17,10 @@
 #include "hal.h"
 #include "stdio.h"
 
-tcb_t idle_tcb;						//!< TCB pointer used to run idle task
 tcb_t tcbs[PKG_MAX_LOCAL_TASKS];	//!< TCB array
-
-void tcb_idle_task()
-{
-	while(true)
-		MMR_CLOCK_HOLD = 1;
-}
 
 void tcb_init()
 {
-	idle_tcb.pc = (unsigned int)&tcb_idle_task;
-	idle_tcb.id = 0;
-	idle_tcb.offset = 0;
-	idle_tcb.proc_to_migrate = -1;
-	idle_tcb.called_exit = false;
-	idle_tcb.registers[HAL_REG_SP] = PKG_PAGE_SIZE;
-
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;
 		tcbs[i].pc = 0;
@@ -47,11 +33,6 @@ void tcb_init()
 tcb_t *tcb_get()
 {
 	return tcbs;
-}
-
-tcb_t *tcb_get_idle()
-{
-	return &idle_tcb;
 }
 
 tcb_t *tcb_search(int task)

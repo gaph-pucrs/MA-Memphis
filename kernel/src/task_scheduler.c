@@ -42,7 +42,7 @@ void sched_init()
 		sched_clear(&tcbs[i]);
 	}
 
-	current = tcb_get_idle();
+	current = NULL;
 	total_slack_time = 0;
 	last_idle_time = MMR_TICK_COUNTER;
 }
@@ -73,7 +73,7 @@ tcb_t *sched_get_current()
 
 bool sched_is_idle()
 {
-	return (current == tcb_get_idle());
+	return (current == NULL);
 }
 
 void sched_update_slack_time()
@@ -184,7 +184,7 @@ void sched_run()
 
 	MMR_SCHEDULING_REPORT = REPORT_SCHEDULER;
 
-	if(tcb_need_migration(current) && current->scheduler.status == SCHED_RUNNING && current->scheduler.waiting_msg == 0)
+	if(current && tcb_need_migration(current) && current->scheduler.status == SCHED_RUNNING && current->scheduler.waiting_msg == 0)
 		tm_migrate(current);
 
 	tcb_t *scheduled = sched_lst(scheduler_call_time);
@@ -196,7 +196,7 @@ void sched_run()
 		// printf("Current TCB addr is %x\n", (unsigned)current);
 	} else {
 		/* Schedules the idle task */
-		current = tcb_get_idle();
+		current = NULL;
 		last_idle_time = MMR_TICK_COUNTER;
         MMR_SCHEDULING_REPORT = REPORT_IDLE;
 	}

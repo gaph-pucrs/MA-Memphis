@@ -16,6 +16,7 @@
 #include "packet.h"
 #include "monitor.h"
 #include "broadcast.h"
+#include "task_control.h"
 
 #define REPORT_INTERRUPTION 0x10000
 
@@ -34,8 +35,10 @@ enum IRQ_FLAGS {
  * This function implementation should assure this behavior.
  * 
  * @param status Status of the interruption. Signals the interruption type.
+ * 
+ * @return Pointer to the scheduled task
  */
-void os_isr(unsigned int status);
+tcb_t *os_isr(unsigned int status);
 
 /**
  * @brief Handles an interruption coming from a broadcast message

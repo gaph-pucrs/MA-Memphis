@@ -25,7 +25,7 @@
 #include "monitor.h"
 #include "string.h"
 
-void os_isr(unsigned int status)
+tcb_t *os_isr(unsigned int status)
 {
 	MMR_SCHEDULING_REPORT = REPORT_INTERRUPTION;
 
@@ -86,7 +86,7 @@ void os_isr(unsigned int status)
 	}
 
     /* Runs the scheduled task */
-    hal_run_task((void*)sched_get_current());
+    return sched_get_current();
 }
 
 bool os_handle_broadcast(br_packet_t *packet)

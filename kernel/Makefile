@@ -5,7 +5,7 @@ TARGET = kernel
 
 CC = riscv64-elf-gcc -march=rv32im -mabi=ilp32
 AS = riscv64-elf-as -march=rv32im -mabi=ilp32
-LD = riscv64-elf-ld -melf32lriscv --no-relax
+LD = riscv64-elf-ld -melf32lriscv
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 

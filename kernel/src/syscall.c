@@ -32,35 +32,54 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 {
 	// puts("Syscall called\n");
 	schedule_after_syscall = false;
+	int ret = 0;
 	switch(service){
 		case EXIT:
-			return os_exit(a1);
+			ret = os_exit(a1);
+			break;
 		case WRITEPIPE:
-			return os_writepipe(a1, a2, a3);
+			ret = os_writepipe(a1, a2, a3);
+			break;
 		case READPIPE:
-			return os_readpipe(a1, a2, a3);
+			ret = os_readpipe(a1, a2, a3);
+			break;
 		case GETTICK:
-			return os_get_tick();
+			ret = os_get_tick();
+			break;
 		case REALTIME:
-			return os_realtime(a1, a2, a3);
+			ret = os_realtime(a1, a2, a3);
+			break;
 		case GETLOCATION:
-			return os_get_location();
+			ret = os_get_location();
+			break;
 		case GETID:
-			return os_get_id();
+			ret = os_get_id();
+			break;
 		case SCALL_PUTC:
-			return os_putc(a1);
+			ret = os_putc(a1);
+			break;
 		case SCALL_PUTS:
-			return os_puts((char*)a1);
+			ret = os_puts((char*)a1);
+			break;
 		case SCALL_BR_SEND_ALL:
-			return os_br_send_all(a1, a2);
+			ret = os_br_send_all(a1, a2);
+			break;
 		case SCALL_BR_SEND_TGT:
-			return os_br_send_tgt(a1, a2, a3);
+			ret = os_br_send_tgt(a1, a2, a3);
+			break;
 		case SCALL_MON_PTR:
-			return os_mon_ptr((unsigned*)a1, a2);
+			ret = os_mon_ptr((unsigned*)a1, a2);
+			break;
 		default:
 			printf("ERROR: Unknown service %x\n", service);
-			return 0;
+			ret = 0;
+			break;
 	}
+
+	if(schedule_after_syscall)
+		sched_run();
+
+	return ret;
 }
 
 bool os_exit(int status)
