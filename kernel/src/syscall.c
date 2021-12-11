@@ -30,7 +30,7 @@ bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 
 int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
 {
-	// puts("Syscall called\n");
+	// printf("Syscall called %d\n", service);
 	schedule_after_syscall = false;
 	int ret = 0;
 	switch(service){
@@ -146,11 +146,10 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	}
 
 	/* Points the message in the task page. Address composition: offset + msg address */
-	// putsv("Message at virtual address ", msg_ptr);
+	// printf("Message at virtual address %x\n", msg_ptr);
 	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
-	// putsv("Message at physical address ", (int)message);
-	// putsv("Value 9 of message = ", message->msg[9]);
-	// putsv("Message length = ", message->length);
+	// printf("Message at physical address %x\n", (int)message);
+	// printf("Message length = %d\n", message->length);
 
 	/* Test if the application passed a invalid message lenght */
 	if(message->length > PKG_MAX_MSG_SIZE){

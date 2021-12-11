@@ -47,7 +47,7 @@ $(TARGET).lst: $(TARGET)_debug.elf
 
 $(TARGET)_debug.elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET)_debug.map -s -N -o $@
+	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET)_debug.map -N -o $@
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"

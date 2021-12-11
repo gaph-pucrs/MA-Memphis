@@ -91,6 +91,7 @@ tcb_t *os_isr(unsigned int status)
 
 bool os_handle_broadcast(br_packet_t *packet)
 {
+	// printf("Broadcast received %x\n", packet->service);
 	int16_t addr_field = packet->payload >> 16;
 	int16_t task_field = packet->payload;
 
@@ -120,6 +121,7 @@ bool os_handle_broadcast(br_packet_t *packet)
 
 bool os_handle_pkt(volatile packet_t *packet)
 {
+	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
@@ -156,7 +158,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_DATA_BSS:
 			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size, packet->source_PE);
 		default:
-			printf("ERROR: unknown service at time %d\n", MMR_TICK_COUNTER);
+			printf("ERROR: unknown interrupt at time %d\n", MMR_TICK_COUNTER);
 			return false;
 	}
 }
@@ -257,14 +259,14 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 		// puts("-- Received message to kernel");
 		// for(int i = 0; i < length; i++){
-		// 	putsvsv("V", i, "=", rcvmsg[i]);
+		// 	printf("V[%d]=%x\n", i, rcvmsg[i]);
 		// }
 
 		/* Process the message like a syscall triggered from another PE */
 		return os_kernel_syscall(rcvmsg, length);
 	} else {
 		/* Get consumer task */
-		// putsv("Received delivery to task ", cons_task);
+		// printf("Received delivery to task %d\n", cons_task);
 		tcb_t *cons_tcb = tcb_search(cons_task);
 
 		/* Update task location in case of migration */			
@@ -281,11 +283,11 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 		/* Message is stored in task's page + argument 1 from syscall */
 		message_t *message = tcb_get_message(cons_tcb);
-		// putsv("Message at address ", (unsigned int)message);
+		// printf("Message at address %x\n", (unsigned int)message);
 
 		/* Assert message requested is the received size */
 		message->length = length;
-		// putsv("Message length = ", message->length);
+		// printf("Message length = %d\n", (int)message->length);
 
 		/* Obtain message from DMNI */
 		dmni_read(message->payload, message->length);
