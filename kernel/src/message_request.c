@@ -22,7 +22,7 @@
 
 void mr_init(tcb_t *tcb)
 {
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++)
+	for(int i = 0; i < MR_MAX; i++)
 		tcb->message_request[i].requester = -1;
 }
 
@@ -41,7 +41,7 @@ void mr_send(int producer_task, int consumer_task, int producer_addr, int consum
 
 bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)
 {
-    for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
+    for(int i = 0; i < MR_MAX; i++){
     	if(producer_tcb->message_request[i].requester == -1){
     		producer_tcb->message_request[i].requester = consumer_task;
     		producer_tcb->message_request[i].requester_address  = consumer_addr;
@@ -60,7 +60,7 @@ bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)
 
 message_request_t *mr_peek(tcb_t *tcb, int cons_task)
 {
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
+	for(int i = 0; i < MR_MAX; i++){
 		if(tcb->message_request[i].requester == cons_task)
 			return &(tcb->message_request[i]);
 	}
@@ -78,17 +78,21 @@ unsigned int mr_defrag(tcb_t *tcb)
 	 * @todo This resembles a lot the bubblesort algorithm
 	 * Change this to a more efficient algorithm
 	 */
+	for(int i = 0; i < MR_MAX; i++)
+		printf("%d\n", tcb->message_request[i].requester);
+
 	unsigned int size = 0;
 	bool swapped = true;
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS && swapped; i++){
+	for(int i = 0; i < MR_MAX && swapped; i++){
 		if(tcb->message_request[i].requester == -1){
 			/* Slot found! */
-			for(int j = i; j < PKG_MAX_LOCAL_TASKS; j++){
-				swapped = false;
+			swapped = false;
+			for(int j = i + 1; j < MR_MAX; j++){
 				if(tcb->message_request[j].requester != -1){
 					tcb->message_request[i] = tcb->message_request[j];
 					tcb->message_request[j].requester = -1;
 					swapped = true;
+					size++;
 					break;
 				}
 			}
@@ -96,5 +100,6 @@ unsigned int mr_defrag(tcb_t *tcb)
 			size++;
 		}
 	}
+	printf("S=%d\n", size);
 	return size;
 }

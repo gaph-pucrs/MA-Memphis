@@ -413,8 +413,10 @@ void sched_real_time_task(tcb_t *task, unsigned int period, int deadline, unsign
 			ready_time += period;
 
 		task->scheduler.ready_time = ready_time;
-		task->scheduler.status = SCHED_READY;
 		task->scheduler.remaining_exec_time = execution_time;
+
+		if(task->scheduler.status != SCHED_MIGRATING)
+			task->scheduler.status = SCHED_READY;
 
 	} else {
 		cpu_utilization -= task->scheduler.utilization;
