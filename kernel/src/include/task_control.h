@@ -42,7 +42,7 @@ typedef struct _tcb {
 	int task_location[PKG_MAX_TASKS_APP];	//!< Location of app tasks
 
 	pipe_t pipe;											//!< Temporary buffer for outbound messages.
-	message_request_t message_request[PKG_MAX_TASKS_APP];	//!< Message request array
+	message_request_t message_request[MR_MAX];	//!< Message request array
 	data_av_fifo_t data_av;									//!< Data available fifo
 
 	scheduler_t scheduler;	//!< Scheduling control structure

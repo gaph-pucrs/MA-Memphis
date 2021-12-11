@@ -202,22 +202,22 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 void tm_send_stack(tcb_t *tcb, int addr)
 {
 	/* Get the stack pointer */
-	unsigned int stack_len = tcb_get_sp(tcb);
+	unsigned int stack_len = PKG_PAGE_SIZE - tcb_get_sp(tcb);
 
 	/* Align to 32 bits */
-	while((PKG_PAGE_SIZE - stack_len) % 4)
-		stack_len--;
+	while(stack_len % 4)
+		stack_len++;
 
-	stack_len = (PKG_PAGE_SIZE - stack_len) / 4;
+	if(stack_len){
+		packet_t *packet = pkt_slot_get();
 
-	packet_t *packet = pkt_slot_get();
+		packet->header = addr;
+		packet->service = MIGRATION_STACK;
+		packet->task_ID = tcb_get_id(tcb);
+		packet->stack_size = stack_len;
 
-	packet->header = addr;
-	packet->service = MIGRATION_STACK;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->stack_size = stack_len;
-
-	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
+		pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len/4);
+	}
 }
 
 void tm_send_data_bss(tcb_t *tcb, int addr)
