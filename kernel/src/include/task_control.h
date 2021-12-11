@@ -266,3 +266,21 @@ void tcb_set_pc(tcb_t *tcb, unsigned int pc);
  * @param sp Value of the stack pointer
  */
 void tcb_set_sp(tcb_t *tcb, unsigned int sp);
+
+/**
+ * @brief Sets the TCB as called exit
+ * 
+ * @details This will disable migration requests
+ * 
+ * @param tcb Pointer to the tcb to set
+ */
+void tcb_set_called_exit(tcb_t *tcb);
+
+/**
+ * @brief Checks if the TCB has called exit
+ * 
+ * @param tcb Pointer to the tcb to set
+ * 
+ * @return True if called exit
+ */
+bool tcb_has_called_exit(tcb_t *tcb);

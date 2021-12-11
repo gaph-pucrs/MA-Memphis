@@ -88,7 +88,7 @@ bool os_exit(int status)
 
 	tcb_t *current = sched_get_current();
 
-	current->called_exit = true;
+	tcb_set_called_exit(current);
 
 	/* Avoid sending a packet while DMNI is busy */
 	/* Don't erase task with message in pipe */

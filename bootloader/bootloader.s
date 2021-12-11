@@ -27,10 +27,10 @@ _start:
 	jal main		# Execute main
    
 	# Execute exit() until success
-	mv s1, a0			# Save return value to s1
+	mv s0, a0			# Save return value
 try_exit:
 	mv a0, zero			# First argument is "0" exit
-	mv a1, s1			# Second argument is the return value of main()
+	mv a1, s0			# Second argument is the return value of main()
 	ecall				# Calls the syscall(exit, return value)
 	beqz a0, try_exit	# If exit() returned non-zero, retry
 
