@@ -235,6 +235,9 @@ exception_handler:
 
 	lw		 t0, current	# Load current tcb to t0
 	
+	lb		 t1, task_terminated
+	bnez	 t1, restore_complete # If the called syscall terminated the calling task, do not save its context
+
 	beq		 t0, s0, ecall_return	# If scheduled the same TCB, simply return
 
 	# Otherwise it is needed to save the previous task (s0) context
@@ -248,8 +251,6 @@ exception_handler:
 
 	lw		 t1,  0(sp)		# Task s0 is in stack
 	sw		 t1, 24(s0)
-
-	addi	 sp, sp, 8		# Pop 16 bytes from stack
 
 	sw		 s1, 28(s0)
 	sw		 a0, 32(s0)
@@ -267,6 +268,8 @@ exception_handler:
 	csrr	 t1, mepc		# Task pc is in mepc
 	sw		 t1, PC_ADDR(s0)
 
+restore_complete:
+	addi	 sp, sp, 8		# Pop 8 bytes from stack
 	csrw	 mscratch, sp	# Save kernel sp
 
 	# If the idle task was scheduled, no need to restore the context

@@ -27,11 +27,13 @@
 #include "memphis.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
+bool task_terminated;
 
 int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
 {
 	// printf("Syscall called %d\n", service);
 	schedule_after_syscall = false;
+	task_terminated = false;
 	int ret = 0;
 	switch(service){
 		case EXIT:
@@ -94,6 +96,8 @@ bool os_exit(int status)
 	/* Don't erase task with message in pipe */
 	if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))
 		return false;
+
+	task_terminated = true;
 
 	/* Send TASK_TERMINATED */
 	tl_send_terminated(current);
