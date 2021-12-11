@@ -472,6 +472,8 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 	/* Check if task has real time parameters */
 	if(period)
 		sched_real_time_task(tcb, period, deadline, exec_time);
+	else
+		sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
 
 	// printf("Received MIGRATION_TCB from task id %d\n", id);
 
@@ -531,7 +533,7 @@ bool os_migration_stack(int id, unsigned int stack_len)
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len*4), stack_len);
+	dmni_read((unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len/4);
 
 	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
 
@@ -549,7 +551,6 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, 
 		dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (bss_len + data_len)/4);
 
 	sched_release(tcb);
-	sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
 
 	printf("Task id %d allocated by task migration at time %d from processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, source);
 

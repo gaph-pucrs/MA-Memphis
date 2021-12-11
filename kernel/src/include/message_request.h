@@ -13,6 +13,8 @@
 
 #pragma once
 
+#define MR_MAX PKG_MAX_TASKS_APP+PKG_N_PE
+
 /* Forward Declaration */
 typedef struct _tcb tcb_t;
 
