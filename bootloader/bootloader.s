@@ -39,7 +39,12 @@ try_exit:
 
 .globl system_call	# "registers that a global SystemCall function exists to C code"
 system_call:
+	# If a function gets called here, it can touch ra, so save it in stack
+	addi	sp, sp, -4
+	sw		ra, 0(sp)
 	ecall			# Syscall address = set by kernel
+	lw		ra, 0(sp)
+	addi	sp, sp, 4
 	ret 			# Returns from syscall. $ra has the return address of the callee.
 
 .section .rodata	# switch to read-only data section

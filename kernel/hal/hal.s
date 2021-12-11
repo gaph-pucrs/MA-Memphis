@@ -27,48 +27,39 @@
 
 .globl _start
 _start:
-	.option push
-    .option norelax
-    la gp, __global_pointer$
-    .option pop
-
-	li		sp,sp_addr	# Stack to top
 
 	# Configure system status MPP=0, MPIE=0, MIE=0
 	csrw	mstatus, zero
 
+	# Clear pending interrupts
+	csrw	mip, zero
+
 	# Enable MEI when unmasked (if MIE=1)
 	li		t0, 0x800
 	csrw	mie, t0
-
-	# Clear pending interrupts
-	csrw	mip, zero
 
 	# Disable S-Mode int/exc handling
 	# Handle them in M-Mode
 	csrw	mideleg, zero
 	csrw	medeleg, zero
 
+	.option push
+    .option norelax
+    la		gp, __global_pointer$
+    .option pop
+
 	# Configure Syscall
 	la		t0,vector_entry		# Load the vector_entry address to t0
 	csrw	mtvec,t0			# Write vector_entry address to mtvec
 								# Last bit is 0, means DIRECT mode
 
-	# Configure addressing
-	csrw	mrar, zero			# Clear offset addressing
+	li		sp,sp_addr	# Stack to top
 
 	jal		main
 
-	la		t0, idle
-	csrw	mepc, t0			# Load idle task to mepc
+	csrw	mscratch, sp	# Save sp to mscratch
 
-	la		a0, MMR_CLOCK_HOLD	# Load the CLOCK_HOLD address to a0
-	mret						# Let the control to mepc
-
-idle:
-	sw		zero, 0(a0)
-	j		idle
-
+	j		idle_entry
 
 .section .text
 .align 4
@@ -79,85 +70,91 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 
 	# Save gp and t0 to stack
 	addi	sp, sp, -8
-	sw		t0, 0(sp)
 	sw		gp, 4(sp)
+	sw		s0, 0(sp)
 
-	# Load gp from kernel stack. Needed before loading current which is a global variable
-	lw		gp, 8(sp)
+	# Load kernel gp
+	.option push
+    .option norelax
+    la		gp, __global_pointer$
+    .option pop
 
 	# Load "current" to s0
-	lw		t0, current
+	lw		s0, current
 
 	# If scheduled task was 'idle', no need to save minimum context
-	beqz	t0, entry_check
+	# And is obviously an interruption because idle cant call
+	# When interrupting idle, there is no need to save context
+	beqz	s0, isr_entry
 
 	# Else, if running task, save some registers to let the kernel use
 	addi	sp, sp, -8
-	sw		t2, 0(sp)
 	sw		t1, 4(sp)
+	sw		t0, 0(sp)
 	
 	# Check if it was ecall
-entry_check:
-	csrr	t1, mcause					# Load mcause
-	li 		t2, INTR_MASK				# Bit 31 (interrupt)
-	bltu	t1, t2, exception_handler	# If 0 (exception) go to ecall
+	csrr	t0, mcause					# Load mcause
+	li 		t1, INTR_MASK				# Bit 31 (interrupt)
+	bltu	t0, t1, exception_handler	# If 0 (exception) go to ecall
 
 	# Else: continue to isr
-interrupt_handler:
 
-	# If scheduled task was 'idle', no need to save remaining context
-	beqz	t0, isr_entry
-
-	# Else, an interruption breaks the task control
+	# An interruption breaks the task control
 	# So it is needed to save the caller-registers, because the callee-registers 
 	# are saved by the ABI
 	# To ease the migration process, save ALL, and not just callee registers
-	sw		 ra,  0(t0)
-	sw		 s0, 24(t0)
-	sw		 s1, 28(t0)
-	sw		 a0, 32(t0)
-	sw		 a1, 36(t0)
-	sw		 a2, 40(t0)
-	sw		 a3, 44(t0)
-	sw		 a4, 48(t0)
-	sw		 a5, 52(t0)
-	sw		 a6, 56(t0)
-	sw		 a7, 60(t0)
-	sw		 s2, 64(t0)
-	sw		 s3, 68(t0)
-	sw		 s4, 72(t0)
-	sw		 s5, 76(t0)
-	sw		 s6, 80(t0)
-	sw		 s7, 84(t0)
-	sw		 s8, 88(t0)
-    sw		 s9, 92(t0)
-	sw		s10, 96(t0)
-	sw		s11,100(t0)
-	sw		 t3,104(t0)
-	sw		 t4,108(t0)
-	sw		 t5,112(t0)
-	sw		 t6,116(t0)
+	sw		 ra,  0(s0)
 
-	# t2, t1, t0, and gp are in stack. Load them and save to current.
-	lw		 t2,  0(sp)	# Task t2
-	sw		 t2, 20(t0)
-	lw		 t2,  4(sp)	# Task t1
-	sw		 t2, 16(t0)
-	lw		 t2,  8(sp)	# Task t0
-	sw		 t2, 12(t0)
-	lw		 t2, 12(sp) # Task gp
-	sw		 t2,  8(t0)
-	addi	 sp, sp, 20	# Pop stack. 1 extra word for popped kernel gp.
+	csrr	 t0, mscratch	# Load the sp that is in the mscratch
+	sw		 t0,  4(s0)		# Save sp to current
 
-	csrr	 t2, mscratch	# Load the sp that is in the mscratch
-	sw		 t2,  4(t0)		# Save sp to current
+	# s0, t0, t1, and gp are in stack. Load them and save to current.
+	lw		 t0, 12(sp) # Task gp
+	sw		 t0,  8(s0)
+	
+	lw		 t0,  0(sp)	# Task t0
+	sw		 t0, 12(s0)
 
-	csrr	 t2, mepc			# Load the PC
-	sw		 t2, PC_ADDR(t0)	# Save the PC to current
+	lw		 t0,  4(sp)	# Task t1
+	sw		 t0, 16(s0)
+	addi	 sp, sp, 8	# Pop t0 and t1. s0 and gp will be popped later
 
-	mv		 s0, t0		# Save current to use later
+	sw		 t2, 20(s0)
+
+	lw		 t0,  0(sp)	# Task s0
+	sw		 t0, 24(s0)
+
+	sw		 s1, 28(s0)
+	sw		 a0, 32(s0)
+	sw		 a1, 36(s0)
+	sw		 a2, 40(s0)
+	sw		 a3, 44(s0)
+	sw		 a4, 48(s0)
+	sw		 a5, 52(s0)
+	sw		 a6, 56(s0)
+	sw		 a7, 60(s0)
+	sw		 s2, 64(s0)
+	sw		 s3, 68(s0)
+	sw		 s4, 72(s0)
+	sw		 s5, 76(s0)
+	sw		 s6, 80(s0)
+	sw		 s7, 84(s0)
+	sw		 s8, 88(s0)
+    sw		 s9, 92(s0)
+	sw		s10, 96(s0)
+	sw		s11,100(s0)
+	sw		 t3,104(s0)
+	sw		 t4,108(s0)
+	sw		 t5,112(s0)
+	sw		 t6,116(s0)
+
+	csrr	 t0, mepc			# Load the PC
+	sw		 t0, PC_ADDR(s0)	# Save the PC to current
 
 isr_entry:
+	# Pop gp and s0 from stack
+	addi	sp, sp, 8
+
 	# JUMP TO INTERRUPT SERVICE ROUTINE WITH ARGS
 	li		t0, MMR_ADDR	 # HW Address base
 	lw		t1, 0x20(t0)     # IRQ_STATUS
@@ -167,8 +164,6 @@ isr_entry:
 	# The function returned the scheduled task pointer in a0
 
 	# Save kernel context
-	addi	sp, sp, -4
-	sw		gp, 0(sp)		# Save gp to stack -- it will not be touched
 	csrw	mscratch, sp	# Save sp to mscratch -- it will not be used anymore
 
 	# If the idle task was scheduled, no need to restore the context
@@ -225,58 +220,57 @@ restore_minimum:
 	mret
 
 exception_handler:
-	# Save s0 in stack
-	addi	sp, sp, -4
-	sw		s0, 0(sp)
+	addi	 sp, sp, 8		# Pop t0 and t1 -- syscall is CALLED
 
-	mv		s0, t0		# Save current to use later
+	##
+	# @todo This is a workaround for saving the calling task 'message pointer' argument
+	# in case this call is a readpipe. The a1 will be used by the interruption later
+	# to get the message pointer. This should be changed. Not part of the HAL!
+	##
+	sw		 a1, 36(s0)
 
-	# @todo Check t1 (mcause) for exceptions and at least print them
+	# @todo Check t0 (mcause) for exceptions and at least print them
 
-	jal		os_syscall
+	jal		 os_syscall
 
-	lw		t0, current	# Load current tcb to t0
-
-	# Update kernel gp in stack. Needed?
-	sw		 gp, 20(sp)
+	lw		 t0, current	# Load current tcb to t0
 	
-	beq		t0, s0, ecall_return	# If scheduled the same TCB, simply return
+	beq		 t0, s0, ecall_return	# If scheduled the same TCB, simply return
 
 	# Otherwise it is needed to save the previous task (s0) context
 	# As syscall is CALLED, only save the callee-registers
-
-	mv		 t1, s0			# Keep previous in t1 (no need to save t1)
+	# ATTENTION: SAVE a0 TOO, BECAUSE IT HOLDS THE SYSCALL RETURN VALUE	
+	csrr	 t1, mscratch	# Task sp is in mscratch
+	sw		 t1,  4(s0)
 	
-	csrr	 t2, mscratch	# Task sp is in mscratch
-	sw		 t2,  4(t1)
-	
-	lw		 t2, 16(t1)		# Task gp is in stack
-	sw		 t2,  8(t1)
+	lw		 t1,  4(sp)		# Task gp is in stack
+	sw		 t1,  8(s0)
 
-	lw		 t2,  0(sp)		# Task s0 is in stack
-	sw		 t2, 24(t1)
+	lw		 t1,  0(sp)		# Task s0 is in stack
+	sw		 t1, 24(s0)
 
-	sw		 s1, 28(t1)
-	sw		 s2, 64(t1)
-	sw		 s3, 68(t1)
-	sw		 s4, 72(t1)
-	sw		 s5, 76(t1)
-	sw		 s6, 80(t1)
-	sw		 s7, 84(t1)
-	sw		 s8, 88(t1)
-    sw		 s9, 92(t1)
-	sw		s10, 96(t1)
-	sw		s11,100(t1)
+	addi	 sp, sp, 8		# Pop 16 bytes from stack
 
-	csrr	 t2, mepc		# Task pc is in mepc
-	sw		 t2, PC_ADDR(t1)
+	sw		 s1, 28(s0)
+	sw		 a0, 32(s0)
+	sw		 s2, 64(s0)
+	sw		 s3, 68(s0)
+	sw		 s4, 72(s0)
+	sw		 s5, 76(s0)
+	sw		 s6, 80(s0)
+	sw		 s7, 84(s0)
+	sw		 s8, 88(s0)
+    sw		 s9, 92(s0)
+	sw		s10, 96(s0)
+	sw		s11,100(s0)
 
-	addi	 sp, sp, 20		# Pop stack values from saved context
+	csrr	 t1, mepc		# Task pc is in mepc
+	sw		 t1, PC_ADDR(s0)
 
-	csrw	mscratch, sp	# Save kernel sp
+	csrw	 mscratch, sp	# Save kernel sp
 
 	# If the idle task was scheduled, no need to restore the context
-	beqz	t0, idle_entry
+	beqz	 t0, idle_entry
 
 	# Otherwise, restore context of scheduled task
 	# We don't know if the scheduled task stopped on a call or intr, so restore everything
@@ -289,7 +283,7 @@ exception_handler:
 	lw		 ra,  0(t0)
 	lw		 sp,  4(t0)
 	lw		 gp,  8(t0)
-
+	# t0 is being used
 	lw		 t1, 16(t0)
 	lw		 t2, 20(t0)
 	lw		 s0, 24(t0)
@@ -324,8 +318,9 @@ exception_handler:
 ecall_return:
 	# Restore minimum context from stack
 	lw		 s0,  0(sp)
-	lw		 gp, 16(sp)
-	addi	 sp, sp, 20	# Pop stack and keep the kernel gp allocated
+	lw		 gp,  4(sp)
+
+	addi	 sp, sp, 8	# Pop 8 bytes from stack
 
 	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp
 
@@ -339,15 +334,13 @@ idle_entry:
 	# Ensure mrar has the kernel offset
 	csrw	mrar, zero
 
-	la		a0, MMR_CLOCK_HOLD
+	li		a0, MMR_CLOCK_HOLD
 
 	mret
 
-.globl hal_disable_interrupts
-hal_disable_interrupts:
-	li		t0, 0x8			# MIE
-	csrc	mstatus,t0		# Clear MIE
-	ret
+idle:
+	sw		zero, 0(a0)
+	j		idle
 
 .globl system_call
 system_call:

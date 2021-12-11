@@ -21,8 +21,6 @@
 
 int main()
 {
-    hal_disable_interrupts();
-
 	printf("Initializing PE %x\n", MMR_NI_CONFIG);
 
 	pkt_init();

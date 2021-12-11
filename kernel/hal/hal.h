@@ -49,8 +49,3 @@ enum {
 
 	HAL_MAX_REGISTERS
 };
-
-/**
- * @brief Globally disables interrupts
- */
-void hal_disable_interrupts();
