@@ -191,7 +191,12 @@ void tcb_set_pc(tcb_t *tcb, unsigned int pc)
 	tcb->pc = pc + tcb->offset;
 }
 
-void tcb_set_sp(tcb_t *tcb, unsigned int sp)
+void tcb_set_called_exit(tcb_t *tcb)
 {
-	tcb->registers[HAL_REG_SP] = sp + tcb->offset;
+	tcb->called_exit = true;
+}
+
+bool tcb_has_called_exit(tcb_t *tcb)
+{
+	return tcb->called_exit;
 }

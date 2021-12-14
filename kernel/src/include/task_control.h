@@ -258,11 +258,19 @@ unsigned int tcb_get_bss_length(tcb_t *tcb);
 void tcb_set_pc(tcb_t *tcb, unsigned int pc);
 
 /**
- * @brief Sets the stack pointer of a task
+ * @brief Sets the TCB as called exit
  * 
- * @details This will take in consideration the offser
+ * @details This will disable migration requests
  * 
- * @param tcb Pointer to the TCB
- * @param sp Value of the stack pointer
+ * @param tcb Pointer to the tcb to set
  */
-void tcb_set_sp(tcb_t *tcb, unsigned int sp);
+void tcb_set_called_exit(tcb_t *tcb);
+
+/**
+ * @brief Checks if the TCB has called exit
+ * 
+ * @param tcb Pointer to the tcb to set
+ * 
+ * @return True if called exit
+ */
+bool tcb_has_called_exit(tcb_t *tcb);
