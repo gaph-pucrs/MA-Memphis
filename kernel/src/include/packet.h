@@ -30,13 +30,13 @@ typedef struct _packet {
 	union {
 		unsigned int producer_task;
 		unsigned int task_ID;			
-		unsigned int app_ID;
+		// unsigned int app_ID;
 	};
 
 	union {
 	   unsigned int consumer_task;
 	   unsigned int mapper_address;
-	   unsigned int hops;
+	//    unsigned int hops;
 	   unsigned int period;
 	};
 
@@ -46,29 +46,30 @@ typedef struct _packet {
 
 	union {
 		unsigned int mapper_task;
-		unsigned int msg_lenght;
-		unsigned int resolution;
-		unsigned int priority;
+		unsigned int msg_length;
+		// unsigned int resolution;
+		// unsigned int priority;
 		unsigned int deadline;
-		unsigned int pkt_latency;
+		// unsigned int pkt_latency;
 		unsigned int stack_size;
-		unsigned int requesting_task;
-		unsigned int released_proc;
-		unsigned int app_task_number;
-		unsigned int app_descriptor_size;
+		// unsigned int requesting_task;
+		// unsigned int released_proc;
+		// unsigned int app_task_number;
+		// unsigned int app_descriptor_size;
 		unsigned int allocated_processor;
 		unsigned int requesting_processor;
 	};
 
 	union {
-		unsigned int pkt_size;
+		// unsigned int pkt_size;
+		unsigned int waiting_msg;
 		unsigned int data_size;
 		unsigned int insert_request;
 	};
 
 	union {
 		unsigned int code_size;
-		unsigned int max_free_procs;
+		// unsigned int max_free_procs;
 		unsigned int execution_time;
 	};
 
@@ -79,7 +80,7 @@ typedef struct _packet {
 	};
 
 	union {
-		unsigned int initial_address;
+		// unsigned int initial_address;
 		unsigned int program_counter;
 		unsigned int utilization;
 	};

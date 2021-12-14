@@ -71,9 +71,15 @@ bool os_exit(int status)
 
 	current->called_exit = true;
 
-	/* Avoid sending a packet while DMNI is busy */
-	/* Don't erase task with message in pipe */
-	if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))
+	if(pipe_is_full(current)){
+		/* Don't erase task with message in pipe */
+		sched_set_wait_request(current);
+		schedule_after_syscall = true;
+		return false;
+	}
+
+	/* Avoid terminating a task with a message being sent */
+	if(MMR_DMNI_SEND_ACTIVE)
 		return false;
 
 	/* Send TASK_TERMINATED */
@@ -156,6 +162,11 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				/* Writes to the consumer page address */
 				tcb_t *cons_tcb = tcb_search(cons_task);
 				message_t *msg_dst = tcb_get_message(cons_tcb);
+
+				if(!cons_tcb){
+					puts("ERROR: CONS TCB NOT FOUND ON WRITEPIPE\n");
+					while(true);
+				}
 
 				pipe_transfer(message, msg_dst);
 
@@ -316,6 +327,11 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			// puts("Local producer\n");
 			/* Get the producer TCB */
 			tcb_t *prod_tcb = tcb_search(prod_task);
+
+			if(!prod_tcb){
+				puts("ERROR: PROD TCB NOT FOUND ON READPIPE\n");
+				while(true);
+			}
 
 			/* Searches if the message is in PIPE (local producer) */
 			pipe_t *pipe = pipe_pop(prod_tcb, cons_task);

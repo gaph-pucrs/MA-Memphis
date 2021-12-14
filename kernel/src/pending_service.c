@@ -118,7 +118,7 @@ void pending_msg_send(pending_msg_t *msg, int addr)
 	packet->service = MESSAGE_DELIVERY;
 	packet->producer_task = MMR_NI_CONFIG | 0x10000000;
 	packet->consumer_task = msg->task;
-	packet->msg_lenght = msg->size;
+	packet->msg_length = msg->size;
 
 	/* Release pipe availability. Must check if DMNI is busy before populating again */
 	msg->task = -1;

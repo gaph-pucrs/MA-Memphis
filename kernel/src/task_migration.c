@@ -115,6 +115,7 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	/* RT constraints */
 	packet->period = sched_get_period(tcb);
 	packet->deadline = sched_get_deadline(tcb);
+	packet->waiting_msg = sched_get_waiting_msg(tcb);
 	packet->execution_time = sched_get_exec_time(tcb);
 
 	/* Registers */
@@ -193,9 +194,9 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->service = MIGRATION_PIPE;
 		packet->consumer_task = pipe_get_cons_task(tcb);
-		packet->msg_lenght = pipe_get_message_len(tcb);
+		packet->msg_length = pipe_get_message_len(tcb);
 
-		pkt_send(packet, (unsigned int *)tcb->pipe.message.payload, packet->msg_lenght);
+		pkt_send(packet, (unsigned int *)tcb->pipe.message.payload, packet->msg_length);
 	}
 }
 

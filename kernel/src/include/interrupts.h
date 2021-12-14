@@ -151,10 +151,11 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
  * @param period Period of a RT task
  * @param deadline Deadline of a RT task
  * @param exec_time Execution time of a RT task
+ * @param waiting_msg Waiting message status
  *
  * @return False
  */
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time);
+bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, unsigned waiting_msg);
 
 /**
  * @brief Handles the task location received from migration
