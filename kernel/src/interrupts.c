@@ -127,7 +127,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
 			// putsv("Packet length is ", packet->msg_lenght);
-			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_lenght);
+			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_length);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
 		case TASK_ALLOCATION:
@@ -144,7 +144,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_CODE:
 			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
 		case MIGRATION_TCB:
-			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time);
+			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time, packet->waiting_msg);
 		case MIGRATION_TASK_LOCATION:
 			return os_migration_tl(packet->task_ID, packet->request_size);
 		case MIGRATION_MSG_REQUEST:
@@ -152,7 +152,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_DATA_AV:
 			return os_migration_data_av(packet->task_ID, packet->request_size);
 		case MIGRATION_PIPE:
-			return os_migration_pipe(packet->task_ID, packet->consumer_task, packet->msg_lenght);
+			return os_migration_pipe(packet->task_ID, packet->consumer_task, packet->msg_length);
 		case MIGRATION_STACK:
 			return os_migration_stack(packet->task_ID, packet->stack_size);
 		case MIGRATION_DATA_BSS:
@@ -221,6 +221,12 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 					/* Message Request came from NoC but the producer migrated to this address */
 					/* Writes to the consumer page address */
 					tcb_t *cons_tcb = tcb_search(cons_task);
+					
+					if(!cons_tcb){
+						puts("ERROR: CONS TCB NOT FOUND ON MR\n");
+						while(true);
+					}
+
 					message_t *msg_dst = tcb_get_message(cons_tcb);
 
 					pipe_transfer(&(message->message), msg_dst);
@@ -268,6 +274,11 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 		/* Get consumer task */
 		// printf("Received delivery to task %d\n", cons_task);
 		tcb_t *cons_tcb = tcb_search(cons_task);
+
+		if(!cons_tcb){
+			puts("ERROR: CONS TCB NOT FOUND ON MD\n");
+			while(true);
+		}
 
 		/* Update task location in case of migration */			
 		if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
@@ -461,7 +472,7 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	return false;
 }
 
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time)
+bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, unsigned waiting_msg)
 {
 	tcb_t *tcb = tcb_search(id);
 
@@ -474,6 +485,8 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 		sched_real_time_task(tcb, period, deadline, exec_time);
 	else
 		sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
+
+	sched_set_waiting_msg(tcb, waiting_msg);
 
 	// printf("Received MIGRATION_TCB from task id %d\n", id);
 

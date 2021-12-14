@@ -300,11 +300,28 @@ void sched_update_task_slack_time(tcb_t *task, unsigned int current_time);
 void sched_dynamic_slice_time(tcb_t *scheduled, unsigned int time);
 
 /**
- * @brief ???
+ * @brief Sets real-time execution constraints
  * 
  * @param task Pointer to the TCB
- * @param period ???
- * @param deadline ???
- * @param execution_time ???
+ * @param period Task RT period
+ * @param deadline Task RT deadline
+ * @param execution_time Task RT execution time -- profile the task first
  */
 void sched_real_time_task(tcb_t *task, unsigned int period, int deadline, unsigned int execution_time);
+
+/**
+ * @brief Gets the waiting message status
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return The status of waiting message.
+ */
+unsigned sched_get_waiting_msg(tcb_t *tcb);
+
+/**
+ * @brief Sets the waiting message status
+ * 
+ * @param tcb Pointer to the TCB
+ * @param waiting_msg Waiting message status
+ */
+void sched_set_waiting_msg(tcb_t *tcb, unsigned waiting_msg);

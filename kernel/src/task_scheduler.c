@@ -184,9 +184,6 @@ void sched_run()
 
 	MMR_SCHEDULING_REPORT = REPORT_SCHEDULER;
 
-	if(current && tcb_need_migration(current) && current->scheduler.status == SCHED_RUNNING && current->scheduler.waiting_msg == 0)
-		tm_migrate(current);
-
 	tcb_t *scheduled = sched_lst(scheduler_call_time);
 	// printf("Scheduled TCB addr is %x\n", (unsigned)scheduled);
 
@@ -425,4 +422,14 @@ void sched_real_time_task(tcb_t *task, unsigned int period, int deadline, unsign
 	task->scheduler.utilization = ((execution_time*100) / period) + 1; //10 is the inherent task overhead
 
 	cpu_utilization += task->scheduler.utilization;
+}
+
+unsigned sched_get_waiting_msg(tcb_t *tcb)
+{
+	return tcb->scheduler.waiting_msg;
+}
+
+void sched_set_waiting_msg(tcb_t *tcb, unsigned waiting_msg)
+{
+	tcb->scheduler.waiting_msg = waiting_msg;
 }
