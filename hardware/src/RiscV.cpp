@@ -367,7 +367,7 @@ void RiscV::handle_exceptions(Exceptions::CODE code)
 		}
 
 		if(code != Exceptions::CODE::ECALL_FROM_UMODE)
-			cout << "PE" << router_addr << ": Exception: " << code << " with value " << mtval.read() << endl;
+			cout << "PE" << router_addr << ": Exception code " << code << " with value " << mtval.read() << " at PC " << pc.read() << " offset " << mrar.read() << endl;
 		
 		pc.write(mtvec.BASE() << 2);					// Synchronous exceptions are always DIRECT
 	}
