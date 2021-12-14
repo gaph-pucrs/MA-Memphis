@@ -15,7 +15,7 @@
 
 PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
 	sc_module(name_), 
-	cpu("cpu", router_address),
+	cpu("cpu", address_),
 	dmni("dmni", address_),
 	br_router("brrouter", address_, path_),
 	br_buffer("brbuffer"),
