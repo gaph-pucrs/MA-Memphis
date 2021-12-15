@@ -111,3 +111,11 @@ void tm_send_stack(tcb_t *tcb, int addr);
  * @param addr Target address
  */
 void tm_send_data_bss(tcb_t *tcb, int addr);
+
+/**
+ * @brief Sends a message to abort a migrating task
+ * 
+ * @param id ID of the task to abort
+ * @param addr Address of the migration destination
+ */
+void tm_abort_task(int id, int addr);

@@ -113,6 +113,8 @@ bool os_handle_broadcast(br_packet_t *packet)
 			return os_data_available(br_convert_id(task_field, MMR_NI_CONFIG), br_convert_id(packet->src_id, addr_field), addr_field);
 		case MESSAGE_REQUEST:
 			return os_message_request(br_convert_id(packet->src_id, addr_field), addr_field, br_convert_id(task_field, MMR_NI_CONFIG));
+		case ABORT_TASK:
+			return os_abort_task(task_field);
 		default:
 			printf("ERROR: unknown broadcast %x at time %d\n", packet->service, MMR_TICK_COUNTER);
 			return false;
@@ -585,4 +587,39 @@ bool os_announce_mon(enum MONITOR_TYPE type, int addr)
 {
 	llm_set_observer(type, addr);
 	return false;
+}
+
+bool os_abort_task(int id)
+{
+	tcb_t *task = tcb_search(id);
+	if(task){
+		printf("Task id %d aborted by application\n", id);
+
+		/* Send TASK_ABORTED */
+		tl_send_terminated(task);
+
+		/* Clear task from monitor tables */
+		llm_clear_table(task);
+
+		MMR_TASK_TERMINATED = id;
+
+		int mig_addr = tcb_get_migrate_addr(task);
+		if(mig_addr != -1){
+			/* Task is migrating. Inform the destination processor of this */
+			tm_abort_task(id, mig_addr);
+		}
+
+		sched_clear(task);
+
+		tcb_clear(task);
+
+		return (sched_get_current() == task);
+	} else {
+		/* Task already terminated or migrated from here */
+		int addr = tm_get_migrated_addr(id);
+		if(addr != -1){
+			tm_abort_task(id, addr);
+		}
+		return false;
+	}
 }

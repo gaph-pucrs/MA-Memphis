@@ -84,3 +84,10 @@ int *tl_get_ptr(tcb_t *tcb);
  * @param addr New address of the application
  */
 void tl_update_local(int id, int addr);
+
+/** 
+ * @brief Sends a task aborted packet to the mapper
+ * 
+ * @param tcb Pointer of the aborted TCB
+ */
+void tl_send_aborted(tcb_t *tcb);

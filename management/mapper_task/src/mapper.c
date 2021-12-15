@@ -183,8 +183,8 @@ void map_task_terminated(mapper_t *mapper, int id)
 
 	int appid = id >> 8;
 	int taskid = id & 0xFF;
-
 	app_t *app = app_search(mapper->apps, appid);
+
 	processor_t *processor = app->task[taskid]->processor;
 
 	/* Terminate task */
@@ -194,13 +194,8 @@ void map_task_terminated(mapper_t *mapper, int id)
 		mapper->available_slots++;
 		processor_remove_task(old_proc, app->task[taskid]);
 	}
-	
-	/* Deallocate task from app */
-	app->task[taskid] = NULL;
-	app->allocated_cnt--;
 
-	/* Deallocate task from mapper */
-	mapper->available_slots++;
+	map_dealloc(mapper, app, taskid);
 
 	/* All tasks terminated, terminate app */
 	if(app->allocated_cnt == 0){
@@ -208,32 +203,7 @@ void map_task_terminated(mapper_t *mapper, int id)
 		app->id = -1;
 	}
 
-	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
-		/* Pending NEW_APP and resources freed. Map pending application which isn't built yet */
-		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
-		mapper->pending_task_cnt = 0;
-	} else if(
-		processor->failed_map &&													/* Pending static map at desired PE */
-		processor->free_page_cnt >= processor->pending_map_cnt	/* All slots needed in this processor are freed! */
-	){
-		processor->failed_map = false;
-		mapper->fail_map_cnt--;
-		if(mapper->fail_map_cnt == 0){
-			/* All needed processor slots are freed. Map and allocate now */
-			map_static_tasks(mapper->pending_map_app, mapper->processors);
-
-			sw_map_app(mapper->pending_map_app, mapper->processors);
-
-			/* Send task allocation to injector */
-			map_task_allocation(mapper->pending_map_app, mapper->processors);
-
-			map_set_score(mapper->pending_map_app, mapper->processors);
-
-			mapper->pending_map_app = NULL;
-
-			mapper->available_slots -= app->task_cnt;
-		}
-	}
+	map_test_pending(mapper, processor, old_proc);
 }
 
 void map_set_score(app_t *app, processor_t *processors)
@@ -369,4 +339,92 @@ void map_request_service(mapper_t *mapper, int address, unsigned tag, int reques
 	msg.payload[2] = id;
 	msg.length = 3;
 	memphis_send_any(&msg, requester);
+}
+
+void map_task_aborted(mapper_t *mapper, int id)
+{
+	printf("Received task aborted from id %d at time %d\n", id, memphis_get_tick());
+
+	int appid = id >> 8;
+	int taskid = id & 0xFF;
+	app_t *app = app_search(mapper->apps, appid);
+
+	processor_t *processor = app->task[taskid]->processor;
+
+	/* Terminate task */
+	processor_t *old_proc = task_terminate(app->task[taskid]);
+	if(old_proc){
+		/* The task finished with a migration request on the fly */
+		mapper->available_slots++;
+		processor_remove_task(old_proc, app->task[taskid]);
+	}
+
+	map_dealloc(mapper, app, taskid);
+
+	/* All tasks terminated, terminate app */
+	if(app->allocated_cnt == 0){
+		printf("App %d aborted at time %d\n", app->id, memphis_get_tick());
+		app->id = -1;
+	}
+
+	for(int i = 0; i < app->task_cnt; i++){
+		task_t *task = app->task[i];
+		if(task){
+			/* Task is running and needs to be aborted */
+			int addr = task->status != MIGRATING ? task->processor->addr : task->old_proc->addr;
+			uint32_t payload = task->id;
+			memphis_br_send_tgt(payload, addr, ABORT_TASK);
+		}
+	}
+
+	map_test_pending(mapper, processor, old_proc);
+}
+
+void map_dealloc(mapper_t *mapper, app_t *app, int taskid)
+{	
+	/* Deallocate task from app */
+	app->task[taskid] = NULL;
+	app->allocated_cnt--;
+
+	/* Deallocate task from mapper */
+	mapper->available_slots++;
+}
+
+void map_test_pending(mapper_t *mapper, processor_t *processor, processor_t *old_proc)
+{
+	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
+		/* Pending NEW_APP and resources freed. Map pending application which isn't built yet */
+		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
+		mapper->pending_task_cnt = 0;
+	} else {
+		map_test_failed(mapper, processor);
+		if(old_proc)
+			map_test_failed(mapper, old_proc);
+	} 
+}
+
+void map_test_failed(mapper_t *mapper, processor_t *processor)
+{
+	if(
+		processor->failed_map &&								/* Pending static map at desired PE */
+		processor->free_page_cnt >= processor->pending_map_cnt	/* All slots needed in this processor are freed! */
+	){
+		processor->failed_map = false;
+		mapper->fail_map_cnt--;
+		if(mapper->fail_map_cnt == 0){
+			/* All needed processor slots are freed. Map and allocate now */
+			map_static_tasks(mapper->pending_map_app, mapper->processors);
+
+			sw_map_app(mapper->pending_map_app, mapper->processors);
+
+			/* Send task allocation to injector */
+			map_task_allocation(mapper->pending_map_app, mapper->processors);
+
+			map_set_score(mapper->pending_map_app, mapper->processors);
+
+			mapper->available_slots -= mapper->pending_map_app->task_cnt;
+
+			mapper->pending_map_app = NULL;
+		}
+	}
 }

@@ -47,6 +47,9 @@ int main()
 			case REQUEST_SERVICE:
 				map_request_service(&mapper, msg.payload[1], msg.payload[2], msg.payload[3]);
 				break;
+			case TASK_ABORTED:
+				map_task_aborted(&mapper, msg.payload[1]);
+				break;
 			default:
 				printf("Invalid service %d received\n", msg.payload[0]);
 				break;

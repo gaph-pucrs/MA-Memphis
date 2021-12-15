@@ -28,8 +28,8 @@ _start:
    
 	# Execute exit() until success
 	mv s0, a0			# Save return value
-try_exit:
 	mv a0, zero			# First argument is "0" exit
+try_exit:
 	mv a1, s0			# Second argument is the return value of main()
 	ecall				# Calls the syscall(exit, return value)
 	beqz a0, try_exit	# If exit() returned non-zero, retry

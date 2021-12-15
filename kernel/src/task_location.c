@@ -73,3 +73,9 @@ void tl_update_local(int id, int addr)
 		}
 	}
 }
+
+void tl_send_aborted(tcb_t *tcb)
+{
+	int message[2] = {TASK_ABORTED, tcb->id};
+	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, message);
+}

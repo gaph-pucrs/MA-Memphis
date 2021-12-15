@@ -14,6 +14,7 @@
 
 .equ MMR_CLOCK_HOLD, 0x20000090
 .equ INTR_MASK, 0x80000000
+.equ ECALL_MASK, 0x00000008
 .equ MMR_ADDR, 0x20000000
 
 .equ MAX_REGISTERS, 30
@@ -94,11 +95,31 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 	
 	# Check if it was ecall
 	csrr	t0, mcause					# Load mcause
-	li 		t1, INTR_MASK				# Bit 31 (interrupt)
-	bltu	t0, t1, exception_handler	# If 0 (exception) go to ecall
+	li		t1, INTR_MASK				# Bit 31 (interrupt)
+	and		t1, t1, t0					# t1 = mcause AND interrupt mask
+	bnez	t1, intr_handler			# If INTR mask is true, jump to interrupt handler
 
-	# Else: continue to isr
+	# Exceptions: don't need to keep context, pop part of the stack
+	addi	 sp, sp, 8		# Pop t0 and t1
 
+	li 		t1, ECALL_MASK				# Bit 3 (ecall)
+	and 	t1, t1, t0					# t1 = mcause AND ecall mask
+	bnez	t1, ecall_handler			# If ECALL mask is true, jump to ecall handler
+	
+	# If its neither interrupt not ecall, it is exception
+	# We can lose the context here.
+	# For now, all exceptions will be fatal.
+	csrr	 a0, mcause
+	csrr	 a1, mtval
+	csrr	 a2, mepc
+	
+	jal hal_exception_handler
+	# It will return the next scheduled task
+
+	mv		 t0, a0
+	j restore_complete
+
+intr_handler:
 	# An interruption breaks the task control
 	# So it is needed to save the caller-registers, because the callee-registers 
 	# are saved by the ABI
@@ -219,17 +240,13 @@ restore_minimum:
 
 	mret
 
-exception_handler:
-	addi	 sp, sp, 8		# Pop t0 and t1 -- syscall is CALLED
-
+ecall_handler:
 	##
 	# @todo This is a workaround for saving the calling task 'message pointer' argument
 	# in case this call is a readpipe. The a1 will be used by the interruption later
 	# to get the message pointer. This should be changed. Not part of the HAL!
 	##
 	sw		 a1, 36(s0)
-
-	# @todo Check t0 (mcause) for exceptions and at least print them
 
 	jal		 os_syscall
 
@@ -327,7 +344,7 @@ ecall_return:
 
 	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp
 
-	mret	
+	mret
 
 idle_entry:
 	# Set the return pointer to the idle 'task'

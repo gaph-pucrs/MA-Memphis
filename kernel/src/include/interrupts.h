@@ -241,3 +241,12 @@ bool os_clear_mon_table(int task);
  * @return False
  */
 bool os_announce_mon(enum MONITOR_TYPE type, int addr);
+
+/**
+ * @brief Aborts a task
+ * 
+ * @param id ID of the task to abort
+ * 
+ * @return True if the current running task is the aborted
+ */
+bool os_abort_task(int id);

@@ -166,3 +166,37 @@ unsigned map_manhattan_distance(int source, int target);
  * @param requester The requester task ID
  */
 void map_request_service(mapper_t *mapper, int address, unsigned tag, int requester);
+
+/**
+ * @brief Handles a TASK_ABORTED message
+ * 
+ * @param mapper Pointer to the mapper structure
+ * @param id ID of the aborted task
+ */
+void map_task_aborted(mapper_t *mapper, int id);
+
+/**
+ * @brief Deallocates a terminated/aborted task
+ * 
+ * @param mapper Pointer to the mapper structure
+ * @param app App that the task terminated
+ * @param taskid ID of the task that terminated
+ */
+void map_dealloc(mapper_t *mapper, app_t *app, int taskid);
+
+/**
+ * @brief Tests if the mapper has a pending application to map
+ * 
+ * @param mapper Pointer to the mapper structure
+ * @param processor Pointer to a freed processor
+ * @param old_proc Pointer to a second freed processor. NULL if none.
+ */
+void map_test_pending(mapper_t *mapper, processor_t *processor, processor_t *old_proc);
+
+/**
+ * @brief Checks if a processor has a pending static mapping
+ * 
+ * @param mapper Pointer to the mapper structure
+ * @param processor Pointer to a freed processor
+ */
+void map_test_failed(mapper_t *mapper, processor_t *processor);

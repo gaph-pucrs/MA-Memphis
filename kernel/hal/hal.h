@@ -13,6 +13,9 @@
 
 #pragma once
 
+/* Forward Declaration */
+typedef struct _tcb tcb_t;
+
 enum {
 	// HAL_REG_ZERO,
 	HAL_REG_RA,
@@ -49,3 +52,33 @@ enum {
 
 	HAL_MAX_REGISTERS
 };
+
+enum {
+	HAL_EXC_INST_ADDR_MISALG,
+	HAL_EXC_INST_ACCS_FLT,
+	HAL_EXC_ILLGL_INST,
+	HAL_EXC_BREAKPOINT,
+	HAL_EXC_LOAD_ADDR_MISALG,
+	HAL_EXC_LOAD_ACCS_FLT,
+	HAL_EXC_STORE_ADDR_MISALG,
+	HAL_EXC_STORE_ACCS_FLT,
+	HAL_EXC_ENV_CALL_FROM_U,
+	HAL_EXC_ENV_CALL_FROM_S,
+	HAL_EXC_ENV_CALL_FROM_M = 11,
+	HAL_EXC_INST_PAGE_FLT,
+	HAL_EXC_LOAD_PAGE_FLT,
+	HAL_EXC_STORE_PAGE_FLT = 15,
+};
+
+/**
+ * @brief Handles an exception
+ * 
+ * @details Abort the running task and schedules a new one
+ * 
+ * @param cause Interruption cause -- machine dependent
+ * @param value Interruption value -- cause dependent
+ * @param pc Program counter where the exception occurred
+ * 
+ * @return Pointer to the scheduled TCB
+ */
+tcb_t *hal_exception_handler(unsigned cause, unsigned value, unsigned pc);
