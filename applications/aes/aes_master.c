@@ -182,7 +182,7 @@ int main()
 	}
 	printf("task AES finished at %d\n", memphis_get_tick());
 
-//#ifdef debug_comunication_on	
+#ifdef debug_comunication_on	
 	puts("Final Result: \n");
 	unsigned int int_aux2 = 0;
     for(x=0; x<MSG_LENGHT;x+=4){
@@ -193,7 +193,7 @@ int main()
 		puts((char*)&int_aux2);
 		int_aux2 = 0;
 	}
-//#endif 
+#endif 
 
 	return 0;		
 }
