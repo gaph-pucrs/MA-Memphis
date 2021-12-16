@@ -67,8 +67,9 @@ message_request_t *mr_peek(tcb_t *tcb, int cons_task)
 	return NULL;
 }
 
-void mr_pop(message_request_t *request)
+void mr_pop(message_request_t *request, int producer_task)
 {
+	MMR_REM_REQUEST_DEBUG = (producer_task << 16) | (request->requester & 0xFFFF);
 	request->requester = -1;
 }
 

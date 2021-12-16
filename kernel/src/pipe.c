@@ -81,6 +81,8 @@ bool pipe_push(tcb_t *tcb, message_t *message, int cons_task)
 	tcb->pipe.consumer_task = cons_task;
 	tcb->pipe.message.length = message->length;
 	// putsv("Pipe message length = ", tcb->pipe.message.length);
+	MMR_ADD_PIPE_DEBUG = (tcb->id << 16) | (cons_task & 0xFFFF);
+
 	memcpy(tcb->pipe.message.payload, message->payload, message->length * sizeof(message->payload[0]));
 
 	return true;
