@@ -585,8 +585,6 @@ int main() {
 
     reset();
 
-    memphis_real_time(AUDIO_VIDEO_PERIOD, ADPCM_DEC_deadline, ADPCM_DEC_exe_time);
-
 	for(k=0; k<FRAMES; k++ ) {
 
 

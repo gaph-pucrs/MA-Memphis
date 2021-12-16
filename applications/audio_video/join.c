@@ -14,8 +14,6 @@ int main() {
     puts("Join start...\n");
     printf("Number of frames: %d\n", FRAMES);
 
-	memphis_real_time(AUDIO_VIDEO_PERIOD, JOIN_deadline, JOIN_exe_time);
-
 	// j = 0;
 	for(k=0; k<FRAMES; k++ ) {
         

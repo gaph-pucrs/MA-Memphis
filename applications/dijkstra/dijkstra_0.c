@@ -101,8 +101,6 @@ int main(int argc, char *argv[])
 	int chStart, chEnd;
 	int u =-1;
 
-	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME); //RealTime(103349, 103349, 10500, 0) = 10% utilization
-
 	for(x=tasks[rank][0]; x<tasks[rank][1]; x++){
 		chStart = nodes_tasks[x][0];	//Start node
 		chEnd = nodes_tasks[x][1];		//End node

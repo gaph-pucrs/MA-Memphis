@@ -138,9 +138,6 @@ void dijkstra(int myID) {
 	//Echo(itoa(tasks[myID][1]));
 	puts("fim \n");
 
-	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
-
-
 	for(x=tasks[myID][0]; x<tasks[myID][1]; x++){
 		chStart = nodes_tasks[x][0];	//Start node
 		chEnd = nodes_tasks[x][1];		//End node

@@ -1,0 +1,20 @@
+ctg:
+  adpcm_dec:
+    successors:
+      - "FIR"
+  FIR:
+    successors:
+      - "join"
+  idct:
+    successors:
+      - "join"
+  iquant:
+    successors:
+      - "idct"
+  ivlc:
+    successors:
+      - "iquant"
+  split:
+    successors:
+      - "adpcm_dec"
+      - "ivlc"

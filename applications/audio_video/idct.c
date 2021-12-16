@@ -230,7 +230,6 @@ int main()
 
     puts("Task IDCT start:\n");
 
-	memphis_real_time(AUDIO_VIDEO_PERIOD, IDCT_deadline, IDCT_exe_time);
 
     for(j=0;j<FRAMES;j++)
     {

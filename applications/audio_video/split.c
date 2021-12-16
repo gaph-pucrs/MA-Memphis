@@ -49,8 +49,6 @@ int main() {
 		msg1.payload[i] = vlc_array[i];
 	msg1.length = 128;
 
-	memphis_real_time(AUDIO_VIDEO_PERIOD, SPLIT_deadline, SPLIT_exe_time);
-
 	for (i = 0; i < FRAMES; i++) {
 
 		memphis_send(&compresssed_adpcm, adpcm_dec);

@@ -18,8 +18,6 @@ int main(){
 
 	__builtin_memcpy(test, msg.payload, sizeof(test));
 
-	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
-
 	for(j=0; j<PATTERN_PER_TASK; j++){
 
 		memset(msg.payload,0, sizeof(int)*msg.length);

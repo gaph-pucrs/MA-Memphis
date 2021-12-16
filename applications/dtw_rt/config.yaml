@@ -1,0 +1,25 @@
+ctg:
+  bank:
+    successors:
+      - "p1"
+      - "p2"
+      - "p3"
+      - "p4"
+  p1:
+    successors:
+      - "recognizer"
+  p2:
+    successors:
+      - "recognizer"
+  p3:
+    successors:
+      - "recognizer"
+  p4:
+    successors:
+      - "recognizer"
+  recognizer:
+    successors:
+      - "p1"
+      - "p2"
+      - "p3"
+      - "p4"

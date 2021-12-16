@@ -105,8 +105,6 @@ int main () {
 
 	puts("FIR - start\n");
 
-	memphis_real_time(AUDIO_VIDEO_PERIOD, FIR_deadline, FIR_exe_time);
-
 	for(k=0; k<FRAMES; k++ ) {
 
 		memphis_receive(&received_msg, adpcm_dec);
