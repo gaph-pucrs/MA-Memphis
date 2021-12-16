@@ -1,4 +1,4 @@
 #pragma once
 
-#define EXEC_TIME 14000
-#define DEADLINE  41000
+#define EXEC_TIME 13000
+#define DEADLINE  36000
