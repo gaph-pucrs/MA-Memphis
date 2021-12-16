@@ -15,8 +15,8 @@
 #define KEY_SIZE	256
 #define AES_BLOCK_SIZE 16        // AES operates on 16 bytes at a time
 
-#define DEADLINE 65000
-#define EXEC_TIME 16000
+#define DEADLINE 154000
+#define EXEC_TIME 33000
 
 #define	CIPHER_MODE 	0
 #define	DECIPHER_MODE 	1
