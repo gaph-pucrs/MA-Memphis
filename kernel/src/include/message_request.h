@@ -68,8 +68,9 @@ message_request_t *mr_peek(tcb_t *tcb, int cons_task);
  * @brief Invalidates the message request
  * 
  * @param request Pointer to the request structure
+ * @param producer_task Producer that is popping the request
  */
-void mr_pop(message_request_t *request);
+void mr_pop(message_request_t *request, int producer_task);
 
 /**
  * @brief Defragments the message request structure
