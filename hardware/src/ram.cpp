@@ -36,7 +36,7 @@ void ram::load_ram(){
 			}
 
 			//Converts a hex string to unsigned integer
-			sscanf( line.substr(0, 8).c_str(), "%lx", &ram_data[i] );
+			sscanf( line.substr(0, 8).c_str(), "%x", &ram_data[i] );
 			i++;
 
 		}

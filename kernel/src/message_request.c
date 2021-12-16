@@ -79,9 +79,6 @@ unsigned int mr_defrag(tcb_t *tcb)
 	 * @todo This resembles a lot the bubblesort algorithm
 	 * Change this to a more efficient algorithm
 	 */
-	for(int i = 0; i < MR_MAX; i++)
-		printf("%d\n", tcb->message_request[i].requester);
-
 	unsigned int size = 0;
 	bool swapped = true;
 	for(int i = 0; i < MR_MAX && swapped; i++){
@@ -101,6 +98,6 @@ unsigned int mr_defrag(tcb_t *tcb)
 			size++;
 		}
 	}
-	printf("S=%d\n", size);
+
 	return size;
 }

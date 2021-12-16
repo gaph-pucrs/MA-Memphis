@@ -35,6 +35,7 @@ void tcb_init()
 	idle_tcb.observer_task = -1;
 	idle_tcb.observer_address = -1;
 	idle_tcb.called_exit = false;
+	idle_tcb.registers[HAL_REG_SP] = PKG_PAGE_SIZE;
 
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;
