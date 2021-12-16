@@ -12,29 +12,27 @@
 
 #define FRAMES				20 //Memphis 4X4 sc demora 7s para cada frame
 
+#define AUDIO_VIDEO_PERIOD	155000
 
-#define IVLC_exe_time		36000
-#define IVLC_deadline		76000
+#define IVLC_exe_time		72000
+#define IVLC_deadline		AUDIO_VIDEO_PERIOD
 
-#define FIR_exe_time		13000
-#define FIR_deadline		76000
+#define FIR_exe_time		18000
+#define FIR_deadline		AUDIO_VIDEO_PERIOD
 
-#define IDCT_exe_time		6000
-#define IDCT_deadline		76000
+#define IDCT_exe_time		9000
+#define IDCT_deadline		AUDIO_VIDEO_PERIOD
 
-#define IQUANT_exe_time		4500
-#define IQUANT_deadline		76000
+#define IQUANT_exe_time		5000
+#define IQUANT_deadline		AUDIO_VIDEO_PERIOD
 
-#define JOIN_exe_time		1800
-#define JOIN_deadline		76000
+#define JOIN_exe_time		2400
+#define JOIN_deadline		AUDIO_VIDEO_PERIOD
 
-#define SPLIT_exe_time		2400
-#define SPLIT_deadline		76000
+#define SPLIT_exe_time		3600
+#define SPLIT_deadline		AUDIO_VIDEO_PERIOD
 
-#define ADPCM_DEC_exe_time	23000
-#define ADPCM_DEC_deadline	76000
-
-#define AUDIO_VIDEO_PERIOD	76000
-
+#define ADPCM_DEC_exe_time	33000
+#define ADPCM_DEC_deadline	AUDIO_VIDEO_PERIOD
 
 #endif /* AUDIO_VIDEO_DEF_H_ */
