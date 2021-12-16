@@ -177,7 +177,7 @@ void pe::sequential_attr(){
 
 			fclose (fp);
 		}
-		if (cpu_mem_address_reg.read() == 0x20000001U && write_enable.read() == 1){
+		if (cpu_mem_address_reg.read() == UART_CHAR && write_enable.read() == 1){
 			sprintf(aux, "%s/log/log%dx%d.txt", path.c_str(), (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 			fprintf(fp, "%c", (char)cpu_mem_data_write_reg.read());
