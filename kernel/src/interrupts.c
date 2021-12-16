@@ -124,8 +124,8 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
-			// putsv("Packet length is ", packet->msg_lenght);
-			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_lenght);
+			// putsv("Packet length is ", packet->msg_length);
+			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_length);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
 		case TASK_ALLOCATION:
@@ -475,9 +475,6 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 	tcb_t *tcb = tcb_search(id);
 
 	tcb_set_pc(tcb, pc);
-
-	tcb->observer_task = observer_task;
-	tcb->observer_address = observer_address;
 
 	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
 

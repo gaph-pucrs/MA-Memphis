@@ -47,7 +47,7 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 	packet->service = MESSAGE_DELIVERY;
 	packet->producer_task = producer_task;
 	packet->consumer_task = consumer_task;
-	packet->msg_lenght = message->message.length;
+	packet->msg_length = message->message.length;
 	packet->insert_request = MMR_NI_CONFIG;
 
 	/* Release pipe availability. Must check if DMNI is busy before populating again */
@@ -57,7 +57,7 @@ void pipe_send(int producer_task, int consumer_task, int consumer_addr, pipe_t *
 		printf("ERROR: message length of %d higher than MSG_SIZE\n", packet->msg_length);
 		while(true);
 	}
-	// putsv("Sending with message len ", packet->msg_lenght);
+	// putsv("Sending with message len ", packet->msg_length);
 
 	pkt_send(packet, (unsigned int*)message->message.payload, message->message.length);
 }

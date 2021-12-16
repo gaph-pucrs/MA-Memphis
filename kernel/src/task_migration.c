@@ -118,8 +118,6 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	packet->waiting_msg = sched_get_waiting_msg(tcb);
 	packet->execution_time = sched_get_exec_time(tcb);
 
-	packet->request_size = tcb->observer_address;
-
 	/* Registers */
 	packet->program_counter = tcb_get_pc(tcb);
 
