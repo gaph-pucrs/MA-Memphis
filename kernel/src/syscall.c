@@ -171,7 +171,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				pipe_transfer(message, msg_dst);
 
 				/* Remove the message request from buffer */
-				mr_pop(request);
+				mr_pop(request, current->id);
 
 				/* Release consumer task */
 				sched_release_wait(cons_tcb);
@@ -204,7 +204,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 			// puts("Sent through NoC\n");
 			
 			/* Remove the message request from buffer */
-			mr_pop(request);
+			mr_pop(request, current->id);
 			// puts("Request popped\n");
 		}
 	} else if(!pipe_is_full(current) && !MMR_DMNI_SEND_ACTIVE){	/* Pipe is free */

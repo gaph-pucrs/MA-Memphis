@@ -29,8 +29,10 @@
 #define MMR_DMNI_SEND_ACTIVE		(*(volatile unsigned int*)0x20000250U)	//!< Signals a transfer is happening
 #define MMR_DMNI_RECEIVE_ACTIVE		(*(volatile unsigned int*)0x20000260U)	//!< Signals a transfer is happening
 #define MMR_SCHEDULING_REPORT		(*(volatile unsigned int*)0x20000270U)	//!< Report what is happening in scheduler
-#define MMR_REM_PIPE_DEBUG 			(*(volatile unsigned int*)0x20000285U)	//!< Produce debug remove pipe
+#define MMR_ADD_PIPE_DEBUG			(*(volatile unsigned int*)0x20000280U)
+#define MMR_REM_PIPE_DEBUG 			(*(volatile unsigned int*)0x20000284U)	//!< Produce debug remove pipe
 #define MMR_ADD_REQUEST_DEBUG 		(*(volatile unsigned int*)0x20000290U)	//!< Produce debug message request
+#define MMR_REM_REQUEST_DEBUG		(*(volatile unsigned int*)0x20000294U)
 #define MMR_TICK_COUNTER			(*(volatile unsigned int*)0x20000300U)	//!< CPU Clock ticks counter
 #define MMR_SLACK_TIME_MONITOR 		(*(volatile unsigned int*)0x20000370U)
 #define MMR_PENDING_SERVICE_INTR	(*(volatile unsigned int*)0x20000400U)	//!< Signals there is a service pending
