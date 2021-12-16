@@ -24,9 +24,9 @@ SC_MODULE(ram) {
 	sc_in < sc_uint<32> >	data_write_b;
 	sc_out < sc_uint<32> >	data_read_b;
 
-	unsigned long ram_data[RAM_SIZE];
-	unsigned long byte[4];
-	unsigned long half_word[2];
+	uint32_t ram_data[RAM_SIZE];
+	uint32_t byte[4];
+	uint32_t half_word[2];
 
 	/*** Process functions ***/
 	void read_a();

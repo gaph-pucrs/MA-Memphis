@@ -14,16 +14,16 @@
 #pragma once
 
 #define MMR_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
-#define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000001U)	//!< Read/Write data from/to UART
+#define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000004U)	//!< Read/Write data from/to UART
 #define MMR_IRQ_MASK 				(*(volatile unsigned int*)0x20000010U)	//!< NoC interrupt mask
 #define MMR_TIME_SLICE 				(*(volatile unsigned int*)0x20000060U)
 #define MMR_TASK_TERMINATED			(*(volatile unsigned int*)0x20000070U)	//!< Signals that a task terminated
 #define MMR_CLOCK_HOLD				(*(volatile unsigned int*)0x20000090U)	//!< Clock hold register
 #define MMR_NI_CONFIG				(*(volatile unsigned int*)0x20000140U)	//!< Net address
 #define MMR_DMNI_SIZE 				(*(volatile unsigned int*)0x20000200U)	//!< Size of the packet to read
-#define MMR_DMNI_SIZE_2 			(*(volatile unsigned int*)0x20000205U)	//!< Size of the packet payload
+#define MMR_DMNI_SIZE_2 			(*(volatile unsigned int*)0x20000204U)	//!< Size of the packet payload
 #define MMR_DMNI_ADDRESS			(*(volatile unsigned int*)0x20000210U)	//!< Address of the variable of the operation
-#define MMR_DMNI_ADDRESS_2 			(*(volatile unsigned int*)0x20000215U)	//!< Address of the packet payload
+#define MMR_DMNI_ADDRESS_2 			(*(volatile unsigned int*)0x20000214U)	//!< Address of the packet payload
 #define MMR_DMNI_OP					(*(volatile unsigned int*)0x20000220U)	//!< Operation request to DMNI
 #define MMR_DMNI_START				(*(volatile unsigned int*)0x20000230U)	//!< Signals to start operation
 #define MMR_DMNI_SEND_ACTIVE		(*(volatile unsigned int*)0x20000250U)	//!< Signals a transfer is happening
