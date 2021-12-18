@@ -383,8 +383,8 @@ bool RiscV::decode()
 		break;
 	case (uint32_t)Instructions::OPCODES::LUI:
 		execute = &RiscV::lui;
-		arith_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		arith_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		move_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		move_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::OPCODES::AUIPC:
 		execute = &RiscV::auipc;
@@ -453,13 +453,13 @@ bool RiscV::decode_op_imm()
 		break;
 	case (uint32_t)Instructions::FUNCT3::SLTI:
 		execute = &RiscV::slti;
-		shift_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		shift_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::SLTIU:
 		execute = &RiscV::sltiu;
-		shift_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		shift_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::XORI:
 		execute = &RiscV::xori;
@@ -597,13 +597,13 @@ bool RiscV::decode_op()
 			break;
 		case (uint32_t)Instructions::FUNCT3::SLT:
 			execute = &RiscV::slt;
-			shift_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-			shift_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+			logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+			logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 			break;
 		case (uint32_t)Instructions::FUNCT3::SLTU:
 			execute = &RiscV::sltu;
-			shift_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-			shift_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+			logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+			logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 			break;
 		case (uint32_t)Instructions::FUNCT3::XOR:
 			execute = &RiscV::_xor;
@@ -612,8 +612,8 @@ bool RiscV::decode_op()
 			break;
 		case (uint32_t)Instructions::FUNCT3::SRL:
 			execute = &RiscV::srl;
-			logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-			logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+			shift_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+			shift_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 			break;
 		case (uint32_t)Instructions::FUNCT3::OR:
 			execute = &RiscV::_or;
@@ -747,13 +747,13 @@ bool RiscV::decode_system()
 				switch(instr.rs2()){
 				case (uint32_t)Instructions::RS2::ECALL:
 					execute = &RiscV::ecall;
-					other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-					other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+					jump_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+					jump_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 					break;
 				case (uint32_t)Instructions::RS2::EBREAK:
 					execute = &RiscV::ebreak;
-					other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-					other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+					jump_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+					jump_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 					break;
 				default:
 					handle_exceptions(Exceptions::CODE::ILLEGAL_INSTRUCTION);
@@ -769,8 +769,8 @@ bool RiscV::decode_system()
 				switch(instr.rs2()){
 				case (uint32_t)Instructions::RS2::RET:
 					execute = &RiscV::sret;
-					other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-					other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+					jump_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+					jump_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 					break;
 				case (uint32_t)Instructions::RS2::WFI:
 					execute = &RiscV::wfi;
@@ -789,8 +789,8 @@ bool RiscV::decode_system()
 		case (uint32_t)Instructions::FUNCT7::MRET:
 			if(!(instr.rs1() || instr.rd()) && instr.rs2() == (uint32_t)Instructions::RS2::RET){
 				execute = &RiscV::mret;
-				other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-				other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+				jump_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+				jump_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 			} else {
 				handle_exceptions(Exceptions::CODE::ILLEGAL_INSTRUCTION);
 				return true;
@@ -813,33 +813,33 @@ bool RiscV::decode_system()
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRW:
 		execute = &RiscV::csrrw;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		move_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		move_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRS:
 		execute = &RiscV::csrrs;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRC:
 		execute = &RiscV::csrrc;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRWI:
 		execute = &RiscV::csrrwi;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		move_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		move_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRSI:
 		execute = &RiscV::csrrsi;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	case (uint32_t)Instructions::FUNCT3::CSRRCI:
 		execute = &RiscV::csrrci;
-		other_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
-		other_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
+		logical_inst_kernel += (int)(priv.get() != Privilege::Level::USER);
+		logical_inst_tasks += (int)(priv.get() == Privilege::Level::USER);
 		break;
 	default:
 		handle_exceptions(Exceptions::CODE::ILLEGAL_INSTRUCTION);
