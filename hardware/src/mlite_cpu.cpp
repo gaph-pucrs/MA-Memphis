@@ -267,16 +267,16 @@ void mlite_cpu::mlite() {
 							wait(1);
 							intr_enable = false;
 										
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							jump_inst_kernel=(page != 0? jump_inst_kernel : jump_inst_kernel + 1 );
+							jump_inst_tasks=(page != 0? jump_inst_tasks + 1  : jump_inst_tasks );
 							
 						break;
 
 						case 0x0d:/*BREAK*/
 							wait(1);
 							
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							jump_inst_kernel=(page != 0? jump_inst_kernel : jump_inst_kernel + 1 );
+							jump_inst_tasks=(page != 0? jump_inst_tasks + 1  : jump_inst_tasks );
 
 						break;
 
@@ -473,8 +473,8 @@ void mlite_cpu::mlite() {
 							wait(1);
 							r[rd]= (r[rs] < r[rt]);
 							
-							arith_inst_kernel=(page != 0? arith_inst_kernel : arith_inst_kernel + 1 );
-							arith_inst_tasks=(page != 0? arith_inst_tasks + 1  : arith_inst_tasks );
+							logical_inst_kernel=(page != 0? logical_inst_kernel : logical_inst_kernel + 1 );
+							logical_inst_tasks=(page != 0? logical_inst_tasks + 1  : logical_inst_tasks );
 
 						break;
 
@@ -482,8 +482,8 @@ void mlite_cpu::mlite() {
 							wait(1);
 							r[rd] = (u[rs] < u[rt]);
 							
-							arith_inst_kernel=(page != 0? arith_inst_kernel : arith_inst_kernel + 1 );
-							arith_inst_tasks=(page != 0? arith_inst_tasks + 1  : arith_inst_tasks );
+							logical_inst_kernel=(page != 0? logical_inst_kernel : logical_inst_kernel + 1 );
+							logical_inst_tasks=(page != 0? logical_inst_tasks + 1  : logical_inst_tasks );
 
 						break;
 
@@ -499,38 +499,38 @@ void mlite_cpu::mlite() {
 						case 0x31:/*TGEU*/ 
 						
 							wait(1); 
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							branch_inst_kernel=(page != 0? branch_inst_kernel : branch_inst_kernel + 1 );
+							branch_inst_tasks=(page != 0? branch_inst_tasks + 1  : branch_inst_tasks );
 
 						break;
 						
 						case 0x32:/*TLT*/  
 						
 							wait(1); 
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							branch_inst_kernel=(page != 0? branch_inst_kernel : branch_inst_kernel + 1 );
+							branch_inst_tasks=(page != 0? branch_inst_tasks + 1  : branch_inst_tasks );
 							
 						break;
 						
 						case 0x33:/*TLTU*/ 
 						
 							wait(1); 
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							branch_inst_kernel=(page != 0? branch_inst_kernel : branch_inst_kernel + 1 );
+							branch_inst_tasks=(page != 0? branch_inst_tasks + 1  : branch_inst_tasks );
 							
 						break;
 						case 0x34:/*TEQ*/  
 						
 							wait(1); 
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							branch_inst_kernel=(page != 0? branch_inst_kernel : branch_inst_kernel + 1 );
+							branch_inst_tasks=(page != 0? branch_inst_tasks + 1  : branch_inst_tasks );
 
 						break;
 						case 0x36:/*TNE*/ 
 						 
 							wait(1); 
-							other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-							other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+							branch_inst_kernel=(page != 0? branch_inst_kernel : branch_inst_kernel + 1 );
+							branch_inst_tasks=(page != 0? branch_inst_tasks + 1  : branch_inst_tasks );
 
 						break;
 						default:
@@ -754,8 +754,8 @@ void mlite_cpu::mlite() {
 					wait(1);
 					r[rt] = r[rs] < (short)imm;
 					
-					arith_inst_kernel=(page != 0? arith_inst_kernel : arith_inst_kernel + 1 );
-					arith_inst_tasks=(page != 0? arith_inst_tasks + 1  : arith_inst_tasks );
+					logical_inst_kernel=(page != 0? logical_inst_kernel : logical_inst_kernel + 1 );
+					logical_inst_tasks=(page != 0? logical_inst_tasks + 1  : logical_inst_tasks );
 
 				break;
 
@@ -763,8 +763,8 @@ void mlite_cpu::mlite() {
 					wait(1);
 					u[rt] = u[rs] < (unsigned int)(short)imm;
 					
-					arith_inst_kernel=(page != 0? arith_inst_kernel : arith_inst_kernel + 1 );
-					arith_inst_tasks=(page != 0? arith_inst_tasks + 1  : arith_inst_tasks );
+					logical_inst_kernel=(page != 0? logical_inst_kernel : logical_inst_kernel + 1 );
+					logical_inst_tasks=(page != 0? logical_inst_tasks + 1  : logical_inst_tasks );
 
 				break;
 
@@ -800,8 +800,8 @@ void mlite_cpu::mlite() {
 					wait(1);
 					r[rt] = (imm<<16);
 					
-					arith_inst_kernel=(page != 0? arith_inst_kernel : arith_inst_kernel + 1 );
-					arith_inst_tasks=(page != 0? arith_inst_tasks + 1  : arith_inst_tasks );
+					move_inst_kernel=(page != 0? move_inst_kernel : move_inst_kernel + 1 );
+					move_inst_tasks=(page != 0? move_inst_tasks + 1  : move_inst_tasks );
 
 				break;
 
@@ -1337,8 +1337,8 @@ void mlite_cpu::mlite() {
 
 				case 0x2e:/*SWR*/  
 					wait(1); 
-					other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-					other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+					load_inst_kernel=(page != 0? load_inst_kernel : load_inst_kernel + 1 );
+					load_inst_tasks=(page != 0? load_inst_tasks + 1  : load_inst_tasks );
 
 				break; //fixme
 				case 0x2f:/*CACHE*/
@@ -1395,8 +1395,8 @@ void mlite_cpu::mlite() {
 		//
 				case 0x39:/*SWC1*/ 
 					wait(1); 
-					other_inst_kernel=(page != 0? other_inst_kernel : other_inst_kernel + 1 );
-					other_inst_tasks=(page != 0? other_inst_tasks + 1  : other_inst_tasks );
+					load_inst_kernel=(page != 0? load_inst_kernel : load_inst_kernel + 1 );
+					load_inst_tasks=(page != 0? load_inst_tasks + 1  : load_inst_tasks );
 
 				break;
 		//      case 0x3a:/*SWC2*/ break;
