@@ -27,9 +27,9 @@ $ cd ~
 $ rm -rf ~/systemc
 ```
 
-Export the PKGCONFIG environment variable. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
+Export the PKGCONFIG and LD_LIBRARY_PATH environment variables. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-$ echo -e "# SystemC\nexport PKG_CONFIG_PATH=~/tools_memphis/systemc/lib-linux64/pkgconfig:$PKG_CONFIG_PATH\n" >> ~/.bashrc
+$ echo -e "# SystemC\nexport SYSTEMC_ROOT=~/tools_memphis/systemc\nPKG_CONFIG_PATH=$SYSTEMC_ROOT/lib-linux64/pkgconfig:$PKG_CONFIG_PATH\nLD_LIBRARY_PATH=$SYSTEMC_ROOT/lib-linux64:$LD_LIBRARY_PATH" >> ~/.bashrc
 ```
 
 ## Arch (pacman/aur distros)
