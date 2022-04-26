@@ -152,6 +152,6 @@ Remember to add your peripheral to the testcase the same way the macro is used i
 ...
   Peripherals: 
     - name: YOURPERIPHERAL
-      pe: 0,0
+      pe: 0, 0
       port: S
 ```

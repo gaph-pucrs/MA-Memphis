@@ -16,7 +16,7 @@ $ tar xf systemc-2.3.3.tar.gz
 $ cd systemc-2.3.3
 $ mkdir build
 $ cd build
-$ ../configure --prefix=$HOME/tools_memphis/systemc
+$ ../configure --prefix=$HOME/tools_memphis/systemc --enable-debug
 $ make -j `nproc --all`
 $ make install
 ```
@@ -27,15 +27,9 @@ $ cd ~
 $ rm -rf ~/systemc
 ```
 
-Export the environment variables:
-* C_INCLUDE_PATH
-* CPLUS_INCLUDE_PATH
-* LIBRARY_PATH
-* LD_LIBRARY_PATH
-  
-Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
+Export the PKGCONFIG environment variable. Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-$ echo -e "# SystemC\nexport SYSTEMC_HOME=~/tools_memphis/systemc\nexport C_INCLUDE_PATH=\${SYSTEMC_HOME}/include\nexport CPLUS_INCLUDE_PATH=\${SYSTEMC_HOME}/include\nexport LIBRARY_PATH=\${SYSTEMC_HOME}/lib-linux64:\${LIBRARY_PATH}\nexport LD_LIBRARY_PATH=\${SYSTEMC_HOME}/lib-linux64:\${LD_LIBRARY_PATH}\n" >> ~/.bashrc
+$ echo -e "# SystemC\nexport PKG_CONFIG_PATH=~/tools_memphis/systemc/lib-linux64/pkgconfig:$PKG_CONFIG_PATH\n" >> ~/.bashrc
 ```
 
 ## Arch (pacman/aur distros)

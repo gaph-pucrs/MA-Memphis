@@ -25,7 +25,7 @@ It is possible to use the WSL to run MA-Memphis platform under Windows.
 ### Pre-requisites
 
 * GCC (base development packages, check [how to acquire GCC](/docs/gcc.md))
-* mips-elf-gcc (to compile OS and applications, check [how to acquire MIPS cross-compiler](/docs/mips.md))
+* riscv-elf-gcc (to compile OS and applications, check [how to acquire RISCV cross-compiler](/docs/riscv.md))
 * SystemC (to compile hardware model, check [how to acquire SystemC](/docs/systemc.md))
 * Python and needed libraries (to generate platform, check [how to acquire Python](/docs/python.md))
 * Graphical Debugger (optional, check [how to acquire Debugger](/docs/Debugger.md))
@@ -108,7 +108,7 @@ $ memphis scenario example_testcase example_scenario.yaml
 To simulate the generated model, run the simulation in the generated scenario folder for a chosen time limit (here the example is 50 ms):
 
 ```console
-$ memphis simulate example_testcase/example_scenario 50
+$ memphis simulate example_testcase/example_scenario 60
 ```
 
 ## Evaluating and Debugging
@@ -160,6 +160,11 @@ Check the [GraphicalDebugger](https://github.com/gaph-pucrs/GraphicalDebugger) r
 A [video](https://youtu.be/nvgtvFcCc60) in portuguese is available showing all features of the Debugger.
 
 # Acknowledgements
+
+* Mapping heuristic
+```
+Dalzotto, A. E., Ruaro, M., Erthal, L. V., and Moraes, F. G. (2021). Dynamic Mapping for Many-cores using Management Application Organization. In Proceedings of the International Conference on Electronics, Circuits, and Systems (ICECS), pages 1-6.
+```
 
 * MA-Memphis
 ```
