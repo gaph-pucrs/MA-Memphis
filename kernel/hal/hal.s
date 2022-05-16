@@ -53,8 +53,22 @@ _start:
 	la		t0,vector_entry		# Load the vector_entry address to t0
 	csrw	mtvec,t0			# Write vector_entry address to mtvec
 								# Last bit is 0, means DIRECT mode
-
 	li		sp,sp_addr	# Stack to top
+
+	# newlib related
+	la a0, _edata
+	la a2, _end
+	sub a2, a2, a0
+	li a1, 0
+	call memset
+
+	la a0, __libc_fini_array
+	call atexit
+	call __libc_init_array
+
+	li a0, 0
+	li a1, 0
+	li a2, 0
 
 	jal		main
 
