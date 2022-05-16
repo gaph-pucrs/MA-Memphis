@@ -8,22 +8,19 @@ INCDIR = src/include
 INCLIB = ../../lib/src/include
 INCMAN = ../
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
-CC = riscv64-elf-gcc -march=rv32im -mabi=ilp32
-AS = riscv64-elf-as -march=rv32im -mabi=ilp32
-LD = riscv64-elf-ld -melf32lriscv
+CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
+
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -Wall -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
+LDFLAGS = -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,-N
 
 LIBDIR = ../../lib/src
 INCLIB = $(LIBDIR)/include
 
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
-
-BOOTDIR = ../../bootloader
-BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
-BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
+LIBSRCC = $(wildcard $(LIBDIR)/*.c)
+LIBSRCS = $(wildcard $(LIBDIR)/*.S)
+LIBOBJ = $(patsubst %.c, %.o, $(LIBSRCC)) $(patsubst %.S, %.o, $(LIBSRCS))
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
@@ -38,24 +35,21 @@ $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
 	@$(OBJCOPY) -O binary $< $@
 
-$(TARGET).elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
+$(TARGET).elf: $(OBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD) --section-start=".init"=0 -Map $(TARGET).map -s -N -o $@ $^
+	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET).map -s -o $@ $^
 
 $(TARGET).lst: $(TARGET)_debug.elf
 	@printf "${BLUE}Listing task: %s ...${NC}\n" "$(TARGET)"
 	@$(OBJDUMP) -S $< > $@
 
-$(TARGET)_debug.elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
+$(TARGET)_debug.elf: $(OBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking debug task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD) --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
+	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET)_debug.map -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"
 	@$(CC) -c $< -o $@ $(CFLAGS)
-
-$(BOOTDIR)/%.o: $(BOOTDIR)/%.s
-	@make -C $(BOOTDIR)
 
 $(LIBDIR)/%.o: $(LIBDIR)/%.c
 	@make -C ../../lib

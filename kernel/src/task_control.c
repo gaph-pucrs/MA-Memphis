@@ -59,7 +59,7 @@ tcb_t* tcb_free_get()
 
 void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr)
 {
-	tcb->pc = 0;
+	tcb->pc = 0x000000ec;
 
 	tcb->id = id;
 	tcb->text_lenght = code_sz;
@@ -73,6 +73,8 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 
 	tcb->scheduler.status = SCHED_BLOCKED;
 	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
+
+	tcb->registers[HAL_REG_SP] = PKG_PAGE_SIZE;
 
 	tcb->called_exit = false;
 }

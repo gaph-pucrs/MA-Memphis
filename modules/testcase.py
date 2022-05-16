@@ -7,7 +7,6 @@ from distutils.dir_util import copy_tree, remove_tree
 from yaml import safe_load
 from libs import Libs
 from kernel import Kernel
-from bootloader import Bootloader
 from management import Management
 from hardware import Hardware
 
@@ -27,7 +26,6 @@ class Testcase:
 
 		self.libs = Libs(self.platform_path, self.base_dir)
 		self.kernel = Kernel(yaml["sw"], yaml["hw"], self.platform_path, self.base_dir)
-		self.bootloader = Bootloader(yaml["hw"], self.platform_path, self.base_dir)
 		self.hardware = Hardware(yaml["hw"], self.platform_path, self.base_dir)
 
 		self.PKG_N_PE_X = yaml["hw"]["mpsoc_dimension"][0]
@@ -44,7 +42,6 @@ class Testcase:
 
 		self.libs.copy()
 		self.kernel.copy()
-		self.bootloader.copy()
 		self.hardware.copy()
 
 		self.__create_platform()
@@ -56,7 +53,6 @@ class Testcase:
 		
 		self.kernel.build()
 
-		self.bootloader.build()
 		self.hardware.build()
 
 		self.kernel.check_size()

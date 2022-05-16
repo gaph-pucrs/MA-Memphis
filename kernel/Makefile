@@ -3,9 +3,7 @@ NC   =\033[0m # No Color
 
 TARGET = kernel
 
-CC = riscv64-elf-gcc -march=rv32im -mabi=ilp32
-AS = riscv64-elf-as -march=rv32im_zicsr -mabi=ilp32
-LD = riscv64-elf-ld -melf32lriscv
+CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
@@ -19,7 +17,8 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -O2 -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+LDFLAGS = -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0
 
 CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
@@ -39,7 +38,7 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET).map -s -N -o $@
+	$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET).map -s -N -o $@
 
 $(TARGET).lst: $(TARGET)_debug.elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
@@ -47,7 +46,7 @@ $(TARGET).lst: $(TARGET)_debug.elf
 
 $(TARGET)_debug.elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET)_debug.map -N -o $@
+	@$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET)_debug.map -N -o $@
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
@@ -55,7 +54,7 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 
 $(HALDIR)/%.o: $(HALDIR)/%.s
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(AS) $< -o $@ --defsym sp_addr=$(PAGE_SP_INIT)
+	$(CC) -c $< -o $@ -Wa,--defsym=sp_addr=$(PAGE_SP_INIT) $(CFLAGS)
 
 $(LIBDIR)/%.o: $(LIBDIR)/%.c
 	@make -C ../lib
