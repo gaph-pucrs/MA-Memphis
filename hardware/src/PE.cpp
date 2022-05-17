@@ -93,7 +93,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	router = new RouterCCwrapped("router",router_address, path);
 	router->clock(clock);
-	router->reset_n(reset_n);
+	router->reset(reset_n);
 	router->tx[EAST](tx[EAST]);
 	router->tx[WEST](tx[WEST]);
 	router->tx[NORTH](tx[NORTH]);
