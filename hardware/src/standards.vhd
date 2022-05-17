@@ -117,7 +117,7 @@ package standards is
 	constant WEST  : integer := 1;
         constant NORTH  : integer := 2;
         constant SOUTH  : integer := 3;
-        constant LOCAL  : integet := 4;
+        constant LOCAL  : integer := 4;
 
         constant EAST0  : integer := 0;
 	constant EAST1  : integer := 1;
