@@ -23,7 +23,7 @@ void RouterCCwrapped::upd_rx(){
 
 		for(i=0;i<NPORT;i++){
 				//modified to add faults
-				l_rx_internal[i] = rx[i].read() & ~fail_out[i].read();
+				l_rx_internal[i] = rx[i].read();
 	 }
 	 rx_internal.write(l_rx_internal);
 }
@@ -34,7 +34,7 @@ void RouterCCwrapped::upd_credit_i(){
 
 	 for(i=0;i<NPORT;i++){
 		//modified to add faults
-		l_credit_i_internal[i] = (credit_i[i].read() | fail_in[i].read());
+		l_credit_i_internal[i] = credit_i[i].read();
 	 }
 
 	 credit_i_internal.write(l_credit_i_internal);
@@ -53,7 +53,7 @@ void RouterCCwrapped::upd_credit_o(){
 
 	for(i=0;i<NPORT;i++){
 			//modified to add faults
-			credit_o[i].write(l_credit_o_internal[i] | fail_out[i].read());
+			credit_o[i].write(l_credit_o_internal[i]);
 	}
 }
 
@@ -65,7 +65,7 @@ void RouterCCwrapped::upd_tx(){
 
 	for(i=0;i<NPORT;i++){
 		//modified to add faults
-		tx[i].write(l_tx_internal[i] & ~fail_in[i].read());
+		tx[i].write(l_tx_internal[i]);
 	}
 }
 
