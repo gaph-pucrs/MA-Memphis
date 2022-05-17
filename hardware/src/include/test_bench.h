@@ -22,6 +22,7 @@ using namespace std;
 #include "Memphis.hpp"
 #include "AppInjector.hpp"
 #include "MAInjector.hpp"
+#include "definitions.h"
 
 SC_MODULE(test_bench) {
 	

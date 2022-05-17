@@ -19,6 +19,7 @@
 #include <systemc>
 #include <stdint.h>
 #include "standards.h"
+#include "definitions.h"
 
 /* Length of a flit */
 static const int FLIT_SIZE = 32;

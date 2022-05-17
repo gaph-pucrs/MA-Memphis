@@ -19,6 +19,7 @@
 #include "standards.h"
 #include "queue.h"
 #include "switchcontrol.h"
+#include "definitions.h"
 
 SC_MODULE(router_cc){
 

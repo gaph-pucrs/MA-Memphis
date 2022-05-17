@@ -17,6 +17,7 @@
 #include <systemc.h>
 
 #include "standards.h"
+#include "definitions.h"
 
 SC_MODULE(BrLiteRouter){
 public:

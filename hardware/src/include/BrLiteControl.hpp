@@ -2,6 +2,8 @@
 
 #include <systemc>
 
+#include "definitions.h"
+
 SC_MODULE(BrLiteControl){
 public:
 	sc_core::sc_in<bool>		clock;

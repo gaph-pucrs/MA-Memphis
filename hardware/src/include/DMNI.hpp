@@ -16,6 +16,7 @@
 #include <systemc>
 
 #include "standards.h"
+#include "definitions.h"
 
 /*
  * send - read from memory and write to noc

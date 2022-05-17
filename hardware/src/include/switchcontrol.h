@@ -16,6 +16,7 @@
 #define _switchcontrol
 #include <systemc.h>
 #include "standards.h"
+#include "definitions.h"
 
 SC_MODULE(switch_control){
 	

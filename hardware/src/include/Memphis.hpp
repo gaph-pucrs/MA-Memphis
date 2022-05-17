@@ -17,6 +17,7 @@
 
 #include "PE.hpp"
 #include "standards.h"
+#include "definitions.h"
 
 SC_MODULE(Memphis){
 	sc_in<bool>		clock;

@@ -24,6 +24,7 @@
 #include "BrLiteControl.hpp"
 
 #include "standards.h"
+#include "definitions.h"
 
 SC_MODULE(PE) {
 	

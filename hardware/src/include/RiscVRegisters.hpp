@@ -16,6 +16,7 @@
 
 #include <systemc>
 #include <cmath>
+#include "definitions.h"
 
 static const uint32_t XLEN = 32;
 typedef sc_dt::sc_uint<XLEN> xlenreg_t;

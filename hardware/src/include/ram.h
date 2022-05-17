@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 #include "standards.h"
+#include "definitions.h"
+
 using namespace std;
 
 #define RAM_SIZE	MEMORY_SIZE_BYTES/4
