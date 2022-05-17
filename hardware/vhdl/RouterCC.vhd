@@ -89,23 +89,23 @@ signal credit_o_sig :                           regNport := (others=>'0');
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
--- Remova esse generate caso queira fazer uma synthesis.
--- Esse generate é usado para o traffic_monitor das portas de entrada do router.
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      credit_o <= credit_o_sig;
-		traffic_router: for i in 0 to (NPORT-1) generate 
-			 traffic_monit : entity work.traffic_monitor
-				  generic map( ID  =>  i )
-   			  port map(
-   			  			 clock    =>  clock,
-   			  			 reset    =>  reset,
-   			  			 data_in  =>  data_in(i),
-   					  	 address  =>  address,
-   					  	 rx       =>  rx(i),
-   					  	 credit_o =>  credit_o_sig(i));
-		  end generate traffic_router;
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
+-- --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- -- Remova esse generate caso queira fazer uma synthesis.
+-- -- Esse generate é usado para o traffic_monitor das portas de entrada do router.
+-- --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--       credit_o <= credit_o_sig;
+-- 		traffic_router: for i in 0 to (NPORT-1) generate 
+-- 			 traffic_monit : entity work.traffic_monitor
+-- 				  generic map( ID  =>  i )
+--    			  port map(
+--    			  			 clock    =>  clock,
+--    			  			 reset    =>  reset,
+--    			  			 data_in  =>  data_in(i),
+--    					  	 address  =>  address,
+--    					  	 rx       =>  rx(i),
+--    					  	 credit_o =>  credit_o_sig(i));
+-- 		  end generate traffic_router;
+-- --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 
         FEast : Entity work.Hermes_buffer
         port map(
