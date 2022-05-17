@@ -113,7 +113,12 @@ package standards is
 	--duplicated channel
 	constant NPORT  : integer := 10; 
 
-	constant EAST0  : integer := 0;
+        constant EAST  : integer := 0;
+	constant WEST  : integer := 1;
+        constant NORTH  : integer := 2;
+        constant SOUTH  : integer := 3;
+
+        constant EAST0  : integer := 0;
 	constant EAST1  : integer := 1;
 	constant WEST0  : integer := 2;
 	constant WEST1  : integer := 3;
