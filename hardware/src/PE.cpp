@@ -91,7 +91,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_payload(br_payload_out_local);
 	dmni.clear_task(br_dmni_clear);
 
-	router = new router_cc("router",router_address, path);
+	router = new RouterCCwrapped("router",router_address, path);
 	router->clock(clock);
 	router->reset_n(reset_n);
 	router->tx[EAST](tx[EAST]);

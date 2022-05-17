@@ -10,13 +10,18 @@ INCDIR = $(SRCDIR)/include
 PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
+VHDC = vcom
+VHDFLAGS = -2008
+
 CXX = sccom
 CXXFLAGS = -nologo -Wall -O2 -std=c++11 -g $(INCLUDE)
 
-SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
-OBJ = $(patsubst %.cpp, %.o, $(SRC))
+SRCSC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
+SRCVHD = $(wildcard $(SRCDIR)/*.vhd)
+OBJSC = $(patsubst %.cpp, %.o, $(SRCSC))
+OBJVHD = 
 
-all: $(OBJ)
+all: $(SC)
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
