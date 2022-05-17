@@ -3,7 +3,7 @@
 
 #include <systemc.h>
 
-#include "../../standards.h"
+#include "standards.h"
 #include "RouterCCwrapped.h"
 
 SC_MODULE(RouterCCwrapped) {

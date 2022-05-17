@@ -3,7 +3,7 @@
 
 #include <systemc.h>
 
-#include "../../standards.h"
+#include "standards.h"
 #define ROUTER_VHD
 
 class RouterCC : public sc_foreign_module
