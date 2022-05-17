@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------
 --
---  DISTRIBUTED HEMPS  - version 5.0
+--  DISTRIBUTED MEMPHIS  - version 5.0
 --
 --  Research group: GAPH-PUCRS    -    contact   fernando.moraes@pucrs.br
 --
@@ -54,17 +54,19 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use work.standards.all;
+use ieee.std_logic_arith;
+use IEEE.std_logic_textio.all;
+use std.textio.all;
+use IEEE.NUMERIC_STD.all;
 
 entity RouterCC is
 generic( address: regmetadeflit);
 port(
         clock:     in  std_logic;
         reset:     in  std_logic;
-        clock_rx:  in  regNport;
         rx:        in  regNport;
         data_in:   in  arrayNport_regflit;
         credit_o:  out regNport;    
-        clock_tx:  out regNport;
         tx:        out regNport;
         data_out:  out arrayNport_regflit;
         credit_i:  in  regNport);
@@ -77,7 +79,33 @@ signal data: arrayNport_regflit := (others=>(others=>'0'));
 signal mux_in, mux_out: arrayNport_reg3 := (others=>(others=>'0'));
 signal free: regNport := (others=>'0');
 
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- Remova esse sinal quando for fazer a synthesis.
+-- Esse signal foi utilizado para enviar o valor do credit_o dos Hermes_buffer
+-- para o hardware traffic_monit.
+-- Sendo assim, é necessário fazer o Replace de credit_o_sig para credit_o, 
+-- que corresponde a porta de saída do RouterCC.
+signal credit_o_sig :                           regNport := (others=>'0');
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- Remova esse generate caso queira fazer uma synthesis.
+-- Esse generate é usado para o traffic_monitor das portas de entrada do router.
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      credit_o <= credit_o_sig;
+		traffic_router: for i in 0 to (NPORT-1) generate 
+			 traffic_monit : entity work.traffic_monitor
+				  generic map( ID  =>  i )
+   			  port map(
+   			  			 clock    =>  clock,
+   			  			 reset    =>  reset,
+   			  			 data_in  =>  data_in(i),
+   					  	 address  =>  address,
+   					  	 rx       =>  rx(i),
+   					  	 credit_o =>  credit_o_sig(i));
+		  end generate traffic_router;
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 
         FEast : Entity work.Hermes_buffer
         port map(
@@ -90,9 +118,8 @@ begin
                 data_av => data_av(0),
                 data => data(0),
                 sender => sender(0),
-                clock_rx => clock_rx(0),
                 data_ack => data_ack(0),
-                credit_o => credit_o(0));
+                credit_o => credit_o_sig(0));
 
         FWest : Entity work.Hermes_buffer
         port map(
@@ -105,9 +132,8 @@ begin
                 data_av => data_av(1),
                 data => data(1),
                 sender => sender(1),
-                clock_rx => clock_rx(1),
                 data_ack => data_ack(1),
-                credit_o => credit_o(1));
+                credit_o => credit_o_sig(1));
 
         FNorth : Entity work.Hermes_buffer
         port map(
@@ -120,9 +146,8 @@ begin
                 data_av => data_av(2),
                 data => data(2),
                 sender => sender(2),
-                clock_rx => clock_rx(2),
                 data_ack => data_ack(2),
-                credit_o => credit_o(2));
+                credit_o => credit_o_sig(2));
 
         FSouth : Entity work.Hermes_buffer
         port map(
@@ -135,9 +160,8 @@ begin
                 data_av => data_av(3),
                 data => data(3),
                 sender => sender(3),
-                clock_rx => clock_rx(3),
                 data_ack => data_ack(3),
-                credit_o => credit_o(3));
+                credit_o => credit_o_sig(3));
 
         FLocal : Entity work.Hermes_buffer
         port map(
@@ -150,9 +174,8 @@ begin
                 data_av => data_av(4),
                 data => data(4),
                 sender => sender(4),
-                clock_rx => clock_rx(4),
                 data_ack => data_ack(4),
-                credit_o => credit_o(4));
+                credit_o => credit_o_sig(4));
 
         SwitchControl : Entity work.SwitchControl(XY)
         port map(
@@ -179,9 +202,5 @@ begin
                 tx => tx,
                 data_out => data_out,
                 credit_i => credit_i);
-
-        CLK_TX : for i in 0 to(NPORT-1) generate
-                clock_tx(i) <= clock;
-        end generate CLK_TX;  
 
 end RouterCC;
