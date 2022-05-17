@@ -13,6 +13,7 @@
 #include <map>
 
 #include "standards.h"
+#include "definitions.h"
 
 /* Packet size. Check software/kernel/modules/include/packet.h. */
 #define CONSTANT_PACKET_SIZE	13
