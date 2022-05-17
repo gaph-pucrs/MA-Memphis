@@ -1,6 +1,7 @@
 COR  =\033[0;32m
 NC   =\033[0m # No Color
 
+LIB = work
 TARGET = memphis
 
 SRCDIR = src
@@ -10,7 +11,7 @@ PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
 CXX = sccom
-CXXFLAGS = -Wall -O2 -std=c++11 $(INCLUDE)
+CXXFLAGS = -nologo -Wall -O2 -std=c++11 -g $(INCLUDE)
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
 OBJ = $(patsubst %.cpp, %.o, $(SRC))
@@ -19,17 +20,17 @@ all: $(OBJ)
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) $< $(CXXFLAGS) -work work
+	@$(CXX) $< $(CXXFLAGS) -work $(LIB)
 	
 $(PERDIR)/%.o: $(PERDIR)/%.cpp vmap
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	$(CXX) $< $(CXXFLAGS) -work work
+	$(CXX) $< $(CXXFLAGS) -work $(LIB)
 
 vmap: vlib
-	vmap work work
+	vmap $(LIB) $(LIB)
 
 vlib:
-	vlib work
+	vlib $(LIB)
 
 clean:
 	@printf "Cleaning up\n"
