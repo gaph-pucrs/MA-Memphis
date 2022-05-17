@@ -17,7 +17,6 @@ use IEEE.Std_Logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use IEEE.std_logic_arith.all;
 use IEEE.math_real.all;
-use work.hemps_pkg.all;
 
 package standards is
 
