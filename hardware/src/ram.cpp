@@ -14,10 +14,6 @@
 
 #include "ram.h"
 
-#ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(ram);
-#endif
-
 void ram::load_ram(){
 
 	string line;

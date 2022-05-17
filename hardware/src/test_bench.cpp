@@ -14,10 +14,6 @@
 
 #include "test_bench.h"
 
-#ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(test_bench);
-#endif
-
 void test_bench::ClockGenerator(){
 	while(1){
 		clock.write(0);
