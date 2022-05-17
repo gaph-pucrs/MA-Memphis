@@ -18,7 +18,6 @@
 SC_MODULE_EXPORT(test_bench);
 #endif
 
-
 void test_bench::ClockGenerator(){
 	while(1){
 		clock.write(0);
