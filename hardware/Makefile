@@ -14,8 +14,6 @@ CXXFLAGS = -Wall -O2 -fpermissive $(INCLUDE) --include definitions.h
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
 OBJ = $(patsubst %.cpp, %.o, $(SRC))
-
-all: $(TARGET)
 	
 $(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
