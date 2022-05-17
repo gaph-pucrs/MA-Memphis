@@ -85,28 +85,20 @@ SC_MODULE(RouterCCwrapped) {
 			SC_METHOD(upd_rx);
 			for (i = 0; i < NPORT; i++){
 				sensitive << rx[i];
-				sensitive << fail_out[i];
 			}
 
 			SC_METHOD(upd_credit_i);
 			for (i = 0; i < NPORT; i++){
 				sensitive << credit_i[i];
-				sensitive << fail_in[i];
 			}
 
 			//output
 
 			SC_METHOD(upd_credit_o);
 			sensitive << credit_o_internal;
-			for (i = 0; i < NPORT; i++){
-				sensitive << fail_out[i];
-			}
 
 			SC_METHOD(upd_tx);
 			sensitive << tx_internal;
-			for (i = 0; i < NPORT; i++){
-				sensitive << fail_in[i];
-			}
 
 			SC_METHOD(traffic_monitor);
 			sensitive << clock;
