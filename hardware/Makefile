@@ -9,26 +9,27 @@ INCDIR = $(SRCDIR)/include
 PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
-CXX = g++
-CXXFLAGS = -Wall -O2 -fpermissive $(INCLUDE) --include definitions.h `pkg-config --cflags systemc`
-LDFLAGS = `pkg-config --libs systemc`
+CXX = sccom
+CXXFLAGS = -Wall -O2 -fpermissive $(INCLUDE) --include definitions.h
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
 OBJ = $(patsubst %.cpp, %.o, $(SRC))
 
 all: $(TARGET)
+	
+$(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	@$(CXX) $< $(CXXFLAGS) -work work
+	
+$(PERDIR)/%.o: $(PERDIR)/%.cpp vmap
+	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
+	$(CXX) $< $(CXXFLAGS) -work work
 
-$(TARGET): $(OBJ)
-	@printf "${COR}Linking %s ...${NC}\n" "$@"
-	@$(CXX) $^ -o $@ $(LDFLAGS)
-	
-$(SRCDIR)/%.o: $(SRCDIR)/%.cpp
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CXXFLAGS)
-	
-$(PERDIR)/%.o: $(PERDIR)/%.cpp
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CXXFLAGS)
+vmap: vlib
+	vmap work work
+
+vlib:
+	vlib work
 
 clean:
 	@printf "Cleaning up\n"
