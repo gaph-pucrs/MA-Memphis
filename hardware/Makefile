@@ -10,7 +10,7 @@ PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
 CXX = sccom
-CXXFLAGS = -Wall -O2 -fpermissive $(INCLUDE) --include definitions.h
+CXXFLAGS = -Wall -O2 $(INCLUDE) --include=definitions.h
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
 OBJ = $(patsubst %.cpp, %.o, $(SRC))
