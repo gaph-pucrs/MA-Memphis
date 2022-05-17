@@ -21,7 +21,7 @@ SRCVHD = $(wildcard $(SRCDIR)/*.vhd)
 OBJSC = $(patsubst %.cpp, %.o, $(SRCSC))
 OBJVHD = 
 
-all: $(SC)
+all: $(OBJSC)
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
