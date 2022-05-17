@@ -114,7 +114,7 @@ class PkgDefinitions:
 		self.lines.append("package hemps_pkg is\n")
 
 	def define(self, key, value):
-		self.lines.append("constant {} : integer {}\n".format(key, value))
+		self.lines.append("constant {} : integer {};\n".format(key, value))
 
 	def write(self, path):
 		self.lines.append("end hemps_pkg;\n")
