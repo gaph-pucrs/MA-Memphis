@@ -28,7 +28,7 @@ public:
        rx("rx"),
        credit_o("credit_o"),
        tx("tx"),
-       credit_i("credit_i"),
+       credit_i("credit_i")
     { 
         elaborate_foreign_module(hdl_name, num_generics, generic_list);
     }

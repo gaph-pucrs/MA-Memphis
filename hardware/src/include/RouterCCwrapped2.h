@@ -54,7 +54,7 @@ SC_MODULE(RouterCCwrapped) {
 
 			const char* generic_list[1];
 			generic_list[0] = strdup("address=x\"AAAA\"");
-			sprintf((char*) generic_list[0],"address=x\"%x\"",(int)address);
+			sprintf((char*) generic_list[0],"address=x\"%.4x\"",(int)address);
 
 			router = new RouterCC("RouterCC", "RouterCC", 1, generic_list);
 

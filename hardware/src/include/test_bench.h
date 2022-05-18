@@ -60,7 +60,7 @@ SC_MODULE(test_bench) {
 	std::string path;
 	
 	SC_HAS_PROCESS(test_bench);
-	test_bench(sc_module_name name_, const char *filename_= "output_master.txt", std::string program_path = "") :
+	test_bench(sc_module_name name_, const char *filename_= "output_master.txt", std::string program_path = ".") :
     sc_module(name_), filename(filename_)
     {
 		path = program_path.substr(0, program_path.find_last_of("/"));

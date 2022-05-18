@@ -16,26 +16,38 @@ VHDFLAGS = -2008
 CXX = sccom
 CXXFLAGS = -nologo -Wall -O2 -std=c++11 -g $(INCLUDE)
 
-SRCSC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
-SRCVHD = $(wildcard $(SRCDIR)/*.vhd)
-OBJSC = $(patsubst %.cpp, %.o, $(SRCSC))
-OBJVHD = 
+all: vmap link
 
-all: $(OBJSC)
+link: sc vhd
+	@$(CXX) -work $(LIB) -link
 
-$(SRCDIR)/%.o: $(SRCDIR)/%.cpp vmap
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) $< $(CXXFLAGS) -work $(LIB)
-	
-$(PERDIR)/%.o: $(PERDIR)/%.cpp vmap
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	$(CXX) $< $(CXXFLAGS) -work $(LIB)
+sc:
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteBuffer.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteControl.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteRouter.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/DMNI.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/ram.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g peripherals/AppInjector.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g peripherals/MAInjector.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/PE.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/RiscV.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/Memphis.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/test_bench.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/RouterCCwrapped2.cpp
+
+vhd:
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) src/hemps_pkg.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/standards.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_buffer.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_crossbar.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_switchcontrol.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/RouterCC.vhd
 
 vmap: vlib
-	vmap $(LIB) $(LIB)
+	@vmap $(LIB) $(LIB)
 
 vlib:
-	vlib $(LIB)
+	@vlib $(LIB)
 
 clean:
 	@printf "Cleaning up\n"
