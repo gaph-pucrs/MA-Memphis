@@ -74,7 +74,7 @@ void RouterCCwrapped::traffic_monitor(){
 	char aux[255];
 	FILE *fp;
 
-	if(reset.read() == 0){
+	if(reset.read() == 1){
 		for(i = 0; i < NPORT; i++) {
 			bandwidth_allocation[i] = 0;
 			SM_traffic_monitor[i] = 0;

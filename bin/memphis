@@ -47,14 +47,15 @@ def simulate(debugger_path, scenario_folder, time_limit, nogui):
 	except:
 		pass
 
-	simulation = Popen(["{}/memphis".format(scenario_folder), "-c", "{}".format(time_limit)])
+	# simulation = Popen(["{}/memphis".format(scenario_folder), "-c", "{}".format(time_limit)])
+	simulation = Popen(["vsim", "-t", "ps", "work.test_bench".format(scenario_folder)], cwd="./{}".format(scenario_folder))
 	if not nogui:
 		debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])
 
 	try:
 		simulation.wait()
 		if not nogui:
-			debugger.wait()
+			debugger.wait(), "-c", "{}".format(time_limit)
 	except KeyboardInterrupt:
 		pass
 
