@@ -74,6 +74,7 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 	tcb->scheduler.status = SCHED_BLOCKED;
 	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
 
+	tcb->raw_recv = 0;
 	tcb->called_exit = false;
 }
 
@@ -88,6 +89,7 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->proc_to_migrate = -1;
 
 	tcb->scheduler.status = SCHED_MIGRATING;
+	tcb->raw_recv = 0;
 	tcb->called_exit = false;
 }
 
@@ -181,4 +183,28 @@ void tcb_set_called_exit(tcb_t *tcb)
 bool tcb_has_called_exit(tcb_t *tcb)
 {
 	return tcb->called_exit;
+}
+
+void tcb_set_raw_receiver(tcb_t *tcb, unsigned length)
+{
+	tcb->raw_recv = length;
+}
+
+tcb_t *tcb_get_raw_receiver()
+{
+	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
+		if(tcbs[i].id != -1 && tcbs[i].raw_recv != 0){
+			sched_release_wait(&tcbs[i]);
+			return &tcbs[i];
+		}
+	}
+
+	return NULL;
+}
+
+unsigned tcb_get_raw_length(tcb_t *tcb)
+{
+	unsigned ret = tcb->raw_recv;
+	tcb->raw_recv = 0;
+	return ret;
 }

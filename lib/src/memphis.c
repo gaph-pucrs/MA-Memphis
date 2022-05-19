@@ -70,3 +70,15 @@ int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 	while(!system_call(SCALL_BR_SEND_TGT, payload, target, ksvc));
 	return 0;
 }
+
+int memphis_send_raw(unsigned *msg, unsigned length)
+{
+	while(!system_call(SCALL_RAW_SEND, msg, length, 0));
+	return 0;
+}
+
+int memphis_receive_raw(unsigned *msg, unsigned length)
+{
+	while(!system_call(SCALL_RAW_RECEIVE, msg, length, 0));
+	return 0;
+}

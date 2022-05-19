@@ -35,7 +35,9 @@ enum SYSCALL {
 	GETLOCATION,
 	SCALL_BR_SEND_ALL,
 	SCALL_MON_PTR,
-	SCALL_BR_SEND_TGT
+	SCALL_BR_SEND_TGT,
+	SCALL_RAW_SEND,
+	SCALL_RAW_RECEIVE
 };
 
 typedef struct _message {
@@ -143,3 +145,23 @@ int memphis_br_send_all(uint32_t payload, uint8_t ksvc);
  * @return 1
  */
 int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);
+
+/**
+ * @brief Sends a message without following protocols
+ * 
+ * @param msg Pointer to array of flits (32-bits each)
+ * @param length Number of flits
+ * 
+ * @return 0
+ */
+int memphis_send_raw(unsigned *msg, unsigned length);
+
+/**
+ * @brief Receives a message that was sent without following protocols
+ * 
+ * @param msg Pointer to the array of flits (32-bits each) where the message will be written to
+ * @param length Number of flits allocated to the buffer
+ * 
+ * @return 0
+ */
+int memphis_receive_raw(unsigned *msg, unsigned length);

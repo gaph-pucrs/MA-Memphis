@@ -123,6 +123,27 @@ bool os_handle_broadcast(br_packet_t *packet)
 
 bool os_handle_pkt(volatile packet_t *packet)
 {
+	tcb_t *raw_receiver = tcb_get_raw_receiver();
+
+	if(raw_receiver != NULL){
+		unsigned *message = (unsigned*)tcb_get_message(raw_receiver);
+		unsigned max_len = tcb_get_raw_length(raw_receiver);
+
+		memcpy(message, packet, 11*sizeof(unsigned));
+		unsigned written = 11;
+		unsigned waddr = 11;
+
+		while(packet->payload_size - written > 0){
+			unsigned to_write = (packet->payload_size - written) > (max_len - waddr) ? (max_len - waddr): (packet->payload_size - waddr);
+			dmni_read(&message[waddr], to_write);
+			written += to_write;
+			waddr += to_write;
+			waddr %= max_len;
+		}
+
+		return true;
+	}
+
 	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:

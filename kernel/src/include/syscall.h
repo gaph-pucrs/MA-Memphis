@@ -171,3 +171,25 @@ int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);
  * @return 0 if success. 1 if unauthorized. 2 if wrong type.
  */
 int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type);
+
+/**
+ * @brief Sends a message without following protocols
+ * 
+ * @param msg_ptr Address to the message buffer in task memory space
+ * @param length Length of the message to send in 32-bit flits
+ * 
+ * @return 0 if success. 1 if DMNI is busy.
+ */
+int os_raw_send(unsigned msg_ptr, unsigned length);
+
+/**
+ * @brief Sets the task to receive a message without following protocols
+ * 
+ * @details No need to pass the message pointer to this function. It will be 
+ * retrieved from a1 when interrupted.
+ * 
+ * @param length Length of the buffer to save the message in 32-bit flits
+ * 
+ * @return 0
+ */
+int os_raw_receive(unsigned length);
