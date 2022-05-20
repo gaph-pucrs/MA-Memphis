@@ -10,6 +10,8 @@
 
 #include "AppInjector.hpp"
 
+#include <array>
+
 /* VHDL integration */
 #ifdef MTI_SYSTEMC
 SC_MODULE_EXPORT(AppInjector);

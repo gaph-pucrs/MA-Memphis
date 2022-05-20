@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <array>
 
 /* This line enables the integration with vhdl */
 #ifdef MTI_SYSTEMC
