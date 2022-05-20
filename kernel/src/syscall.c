@@ -74,7 +74,7 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			ret = os_mon_ptr((unsigned*)a1, a2);
 			break;
 		case SCALL_RAW_SEND:
-			ret = os_raw_send((unsigned*)a1, a2);
+			ret = os_raw_send(a1, a2);
 			break;
 		case SCALL_RAW_RECEIVE:
 			ret = os_raw_receive(a2);

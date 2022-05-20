@@ -19,7 +19,7 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+CFLAGS = -Os -Wall -fno-builtin -ffreestanding -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
 
 CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))

@@ -24,6 +24,7 @@
 #include "stdio.h"
 #include "monitor.h"
 #include "string.h"
+#include "packet.h"
 
 tcb_t *os_isr(unsigned int status)
 {
@@ -129,9 +130,9 @@ bool os_handle_pkt(volatile packet_t *packet)
 		unsigned *message = (unsigned*)tcb_get_message(raw_receiver);
 		unsigned max_len = tcb_get_raw_length(raw_receiver);
 
-		memcpy(message, packet, 11*sizeof(unsigned));
-		unsigned written = 11;
-		unsigned waddr = 11;
+		memcpy(message, (void*)packet, PKT_SIZE*sizeof(unsigned));
+		unsigned written = PKT_SIZE;
+		unsigned waddr = PKT_SIZE;
 
 		while(packet->payload_size - written > 0){
 			unsigned to_write = (packet->payload_size - written) > (max_len - waddr) ? (max_len - waddr): (packet->payload_size - waddr);
