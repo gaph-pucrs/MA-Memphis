@@ -10,6 +10,8 @@
 
 #include "AppInjector.hpp"
 
+#include <array>
+
 AppInjector::AppInjector(sc_module_name _name, std::string _path) : 
 	sc_module(_name),
 	path(_path)

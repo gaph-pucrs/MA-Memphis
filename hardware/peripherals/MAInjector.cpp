@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <array>
 
 MAInjector::MAInjector(sc_module_name _name, std::string _path) :
 	sc_module(_name),

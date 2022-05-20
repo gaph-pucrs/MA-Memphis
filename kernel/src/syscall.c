@@ -25,6 +25,7 @@
 #include "broadcast.h"
 #include "llm.h"
 #include "memphis.h"
+#include "dmni.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
@@ -71,6 +72,12 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			break;
 		case SCALL_MON_PTR:
 			ret = os_mon_ptr((unsigned*)a1, a2);
+			break;
+		case SCALL_RAW_SEND:
+			ret = os_raw_send(a1, a2);
+			break;
+		case SCALL_RAW_RECEIVE:
+			ret = os_raw_receive(a2);
 			break;
 		default:
 			printf("ERROR: Unknown service %x\n", service);
@@ -584,4 +591,40 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	}
 
 	return 0;
+}
+
+int os_raw_send(unsigned msg_ptr, unsigned length)
+{
+	if(MMR_DMNI_SEND_ACTIVE)
+		return 0;
+
+	tcb_t *current = sched_get_current();
+	unsigned *message = (unsigned*)(tcb_get_offset(current) | msg_ptr);
+
+	/**
+	 * @todo
+	 * Create a dmni_send function 
+	 */
+
+	MMR_DMNI_SIZE = length;
+	MMR_DMNI_ADDRESS = (unsigned)message;
+
+	MMR_DMNI_OP = DMNI_READ;
+	MMR_DMNI_START = 1;
+
+	while(MMR_DMNI_SEND_ACTIVE);
+
+	return 1;
+}
+
+int os_raw_receive(unsigned length)
+{
+	schedule_after_syscall = true;
+
+	tcb_t *current = sched_get_current();
+
+	sched_set_wait_delivery(current);
+	tcb_set_raw_receiver(current, length);
+
+	return 1;
 }
