@@ -130,18 +130,18 @@ bool os_handle_pkt(volatile packet_t *packet)
 		unsigned *message = (unsigned*)tcb_get_message(raw_receiver);
 		unsigned max_len = tcb_get_raw_length(raw_receiver);
 
-		memcpy(message, (void*)packet, PKT_SIZE*sizeof(unsigned));
-		unsigned written = PKT_SIZE;
-		unsigned waddr = PKT_SIZE;
-
-		while(packet->payload_size - written > 0){
-			unsigned to_write = (packet->payload_size - written) > (max_len - waddr) ? (max_len - waddr): (packet->payload_size - waddr);
-			dmni_read(&message[waddr], to_write);
-			written += to_write;
-			waddr += to_write;
-			waddr %= max_len;
+		if(packet->payload_size + 2 > max_len){
+			printf("FATAL: Not enough memory in raw receiver. DMNI will hang.\n");
+			while(1);
 		}
 
+		/* Save the 13 flits of already read packet */
+		memcpy(message, (void*)packet, PKT_SIZE*sizeof(unsigned));
+
+		unsigned remaining = packet->payload_size + 2 - PKT_SIZE;
+		if(remaining)
+			dmni_read(&message[PKT_SIZE], remaining);
+		
 		return true;
 	}
 

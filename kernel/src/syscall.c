@@ -596,7 +596,7 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 int os_raw_send(unsigned msg_ptr, unsigned length)
 {
 	if(MMR_DMNI_SEND_ACTIVE)
-		return 1;
+		return 0;
 
 	tcb_t *current = sched_get_current();
 	unsigned *message = (unsigned*)(tcb_get_offset(current) | msg_ptr);
@@ -614,7 +614,7 @@ int os_raw_send(unsigned msg_ptr, unsigned length)
 
 	while(MMR_DMNI_SEND_ACTIVE);
 
-	return 0;
+	return 1;
 }
 
 int os_raw_receive(unsigned length)
@@ -626,5 +626,5 @@ int os_raw_receive(unsigned length)
 	sched_set_wait_delivery(current);
 	tcb_set_raw_receiver(current, length);
 
-	return 0;
+	return 1;
 }

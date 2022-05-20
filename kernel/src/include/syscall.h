@@ -178,7 +178,7 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type);
  * @param msg_ptr Address to the message buffer in task memory space
  * @param length Length of the message to send in 32-bit flits
  * 
- * @return 0 if success. 1 if DMNI is busy.
+ * @return 1 if success. 0 if DMNI is busy.
  */
 int os_raw_send(unsigned msg_ptr, unsigned length);
 
@@ -190,6 +190,6 @@ int os_raw_send(unsigned msg_ptr, unsigned length);
  * 
  * @param length Length of the buffer to save the message in 32-bit flits
  * 
- * @return 0
+ * @return 1
  */
 int os_raw_receive(unsigned length);
