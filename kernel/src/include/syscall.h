@@ -28,7 +28,7 @@
  * @param a2		Argument in the A2 register
  * @param a3		Argument in the A3 register
  */
-int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3);
+int os_syscall(unsigned service, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number);
 
 /**
  * @brief Exit the task and deallocate resources

@@ -18,6 +18,7 @@ system_call:
 	# If a function gets called here, it can touch ra, so save it in stack
 	addi	sp, sp, -4
 	sw		ra, 0(sp)
+	mv  	a7, a0	# Copy argument to the right place
 	ecall			# Syscall address = set by kernel
 	lw		ra, 0(sp)
 	addi	sp, sp, 4

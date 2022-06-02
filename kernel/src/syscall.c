@@ -29,27 +29,27 @@
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
 
-int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
+int os_syscall(unsigned service, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
 {
-	// printf("Syscall called %d\n", service);
+	printf("Syscall called %d\n", service, number);
 	schedule_after_syscall = false;
 	task_terminated = false;
 	int ret = 0;
-	switch(service){
+	switch(number){
 		case EXIT:
-			ret = os_exit(a1);
+			ret = os_exit(arg2);
 			break;
 		case WRITEPIPE:
-			ret = os_writepipe(a1, a2, a3);
+			ret = os_writepipe(arg2, arg3, arg4);
 			break;
 		case READPIPE:
-			ret = os_readpipe(a1, a2, a3);
+			ret = os_readpipe(arg2, arg3, arg4);
 			break;
 		case GETTICK:
 			ret = os_get_tick();
 			break;
 		case REALTIME:
-			ret = os_realtime(a1, a2, a3);
+			ret = os_realtime(arg2, arg3, arg4);
 			break;
 		case GETLOCATION:
 			ret = os_get_location();
@@ -58,19 +58,19 @@ int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned 
 			ret = os_get_id();
 			break;
 		case SCALL_PUTC:
-			ret = os_putc(a1);
+			ret = os_putc(arg2);
 			break;
 		case SCALL_PUTS:
-			ret = os_puts((char*)a1);
+			ret = os_puts((char*)arg2);
 			break;
 		case SCALL_BR_SEND_ALL:
-			ret = os_br_send_all(a1, a2);
+			ret = os_br_send_all(arg2, arg3);
 			break;
 		case SCALL_BR_SEND_TGT:
-			ret = os_br_send_tgt(a1, a2, a3);
+			ret = os_br_send_tgt(arg2, arg3, arg4);
 			break;
 		case SCALL_MON_PTR:
-			ret = os_mon_ptr((unsigned*)a1, a2);
+			ret = os_mon_ptr((unsigned*)arg2, arg3);
 			break;
 		default:
 			printf("ERROR: Unknown service %x\n", service);
