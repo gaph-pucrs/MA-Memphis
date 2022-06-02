@@ -316,6 +316,9 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		std::getline(repository, line);
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
+		std::getline(repository, line);
+		unsigned entry_point = std::stoul(line, nullptr, 16);
+		// std::cout << "Entry point: " << bss_size << std::endl;
 
 		std::getline(repository, line);
 		unsigned init_addr = std::stoul(line, nullptr, 16);
@@ -346,7 +349,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		packet.push_back(data_size);
 		packet.push_back(txt_size);
 		packet.push_back(bss_size);
-		packet.push_back(0);
+		packet.push_back(entry_point);
 
 		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
 			std::getline(repository, line);

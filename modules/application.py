@@ -58,6 +58,7 @@ class Application:
 		self.text_sizes = {}
 		self.data_sizes = {}
 		self.bss_sizes	= {}
+		self.entry_points = {}
 
 		for task in self.tasks:
 			path = "{}/applications/{}/{}.elf".format(self.testcase_path, self.app_name, task)
@@ -67,6 +68,9 @@ class Application:
 			self.data_sizes[task] = int(out[1])
 			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
 			self.bss_sizes[task] = int(out[2])
+
+			out = check_output(["riscv64-elf-readelf", path, "-h"]).split(b'\n')[10].split(b' ')[-1]
+			self.entry_points[task] = int(out, 16)
 
 			
 		print("\n************ {} page size report ************".format(self.app_name.center(20)))

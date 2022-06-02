@@ -101,12 +101,13 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr);
  * @param length Code length of the new task
  * @param data_len Length of the data section
  * @param bss_len Length of the BSS section
+ * @param entry_point Starting execution address
  * @param mapper_task ID of the mapper task
  * @param mapper_addr Address of the mapper task
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, int mapper_task, int mapper_addr);
+bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, unsigned entry_point, int mapper_task, int mapper_addr);
 
 /**
  * @brief Handles a task release packet

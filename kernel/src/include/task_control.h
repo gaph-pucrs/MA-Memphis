@@ -98,10 +98,11 @@ tcb_t *tcb_free_get();
  * @param code_sz Size of the code section
  * @param data_sz Size of the data section
  * @param bss_sz Size of the BSS section
+ * @param entry_point Starting execution address
  * @param mapper_task ID of the mapper task
  * @param mapper_addr Address of the mapper task
  */
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr);
+void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, unsigned entry_point, int mapper_task, int mapper_addr);
 
 /**
  * @brief Clears the TCB to allocate a migrated task

@@ -57,9 +57,9 @@ tcb_t* tcb_free_get()
     return NULL;
 }
 
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr)
+void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, unsigned entry_point, int mapper_task, int mapper_addr)
 {
-	tcb->pc = 0x0000004c;
+	tcb->pc = entry_point;
 
 	tcb->id = id;
 	tcb->text_lenght = code_sz;

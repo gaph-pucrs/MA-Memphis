@@ -79,6 +79,7 @@ class Management:
 		self.text_sizes = {}
 		self.data_sizes = {}
 		self.bss_sizes	= {}
+		self.entry_points = {}
 
 		for task in self.unique_tasks:
 			path = "{}/management/{}/{}.elf".format(self.testcase_path, task, task)
@@ -89,6 +90,8 @@ class Management:
 			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
 			self.bss_sizes[task] = int(out[2])
 
+			out = check_output(["riscv64-elf-readelf", path, "-h"]).split(b'\n')[10].split(b' ')[-1]
+			self.entry_points[task] = int(out, 16)
 			
 		print("\n********************* MA page size report *********************")
 		for task in self.unique_tasks:
@@ -111,6 +114,7 @@ class Management:
 			repo.add(self.text_sizes[task], "txt size")
 			repo.add(self.data_sizes[task], "data size")
 			repo.add(self.bss_sizes[task], "bss size")
+			repo.add(self.entry_points[task], "entry point")
 
 			task_hex = open(self.testcase_path+"/management/"+task+"/"+task+".txt", "r")
 

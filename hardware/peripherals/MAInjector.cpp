@@ -182,6 +182,10 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		std::getline(repo, line);
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
+
+		std::getline(repo, line);
+		unsigned entry_point = std::stoul(line, nullptr, 16);
+		// std::cout << "Entry point: " << entry_point << std::endl;
 		
 		unsigned packet_size = (txt_size + data_size)/4 + CONSTANT_PACKET_SIZE;
 		
@@ -200,7 +204,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		packet.push_back(data_size);			/* Data section size */
 		packet.push_back(txt_size);				/* Text section size */
 		packet.push_back(bss_size);				/* BSS section size */
-		packet.push_back(0);
+		packet.push_back(entry_point);			/* Entry point address */
 
 		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 

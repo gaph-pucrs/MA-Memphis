@@ -134,7 +134,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
 		case TASK_ALLOCATION:
 			/* Injector -> Kernel. No need to insert inside delivery */
-			return os_task_allocation(packet->task_ID, packet->code_size, packet->data_size, packet->bss_size, packet->mapper_task, packet->mapper_address);
+			return os_task_allocation(packet->task_ID, packet->code_size, packet->data_size, packet->bss_size, packet->program_counter, packet->mapper_task, packet->mapper_address);
 		case TASK_RELEASE:
 			puts("DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY\n");
 			return false;
@@ -358,14 +358,14 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 	return false;
 }
 
-bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, int mapper_task, int mapper_addr)
+bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, unsigned entry_point, int mapper_task, int mapper_addr)
 {
 	tcb_t *free_tcb = tcb_free_get();
 	// printf("TCB address is %x\n", (unsigned)free_tcb);
 	// printf("TCB offset is %x\n", free_tcb->offset);
 
 	/* Initializes the TCB */
-	tcb_alloc(free_tcb, id, length, data_len, bss_len, mapper_task, mapper_addr);
+	tcb_alloc(free_tcb, id, length, data_len, bss_len, entry_point, mapper_task, mapper_addr);
 
 	/* Clear the DATA_AV fifo of the task */
 	data_av_init(free_tcb);
@@ -379,7 +379,7 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
 	/* Clears the message request table */
 	mr_init(free_tcb);
 
-	printf("Task id %d allocated at %d\n", id, MMR_TICK_COUNTER);
+	printf("Task id %d allocated at %d with entry point %x\n", id, MMR_TICK_COUNTER, entry_point);
 
 	/* Obtain the program code */
 	dmni_read((unsigned int*)free_tcb->offset, (length+data_len)/4);
