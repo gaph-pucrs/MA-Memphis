@@ -250,6 +250,9 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 				if(sched_is_waiting_request(prod_tcb)){
 					sched_release_wait(prod_tcb);
 					force_sched |= sched_is_idle();
+					if(tcb_has_called_exit(prod_tcb)){
+						tcb_terminate(prod_tcb);
+					}
 				}
 			}
 		}

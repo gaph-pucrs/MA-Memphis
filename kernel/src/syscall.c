@@ -44,9 +44,6 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 	task_terminated = false;
 	int ret = 0;
 	switch(number){
-		case EXIT:
-			ret = os_exit(arg2);
-			break;
 		case WRITEPIPE:
 			ret = os_writepipe(arg2, arg3, arg4);
 			break;
@@ -83,6 +80,12 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case SYS_write:
 			ret = os_write(arg1, arg2);
 			break;
+		case SYS_close:
+			ret = os_close(arg2);
+			break;
+		case SYS_exit:
+			ret = os_exit(arg2);
+			break;
 		default:
 			printf("ERROR: Unknown syscall %x\n", number);
 			ret = 0;
@@ -101,33 +104,19 @@ bool os_exit(int status)
 
 	tcb_t *current = sched_get_current();
 
-	tcb_set_called_exit(current);
+	printf("Task id %d terminated with status %d\n", current->id, status);
 
 	if(pipe_is_full(current)){
 		/* Don't erase task with message in pipe */
+		tcb_set_called_exit(current);
 		sched_set_wait_request(current);
 		schedule_after_syscall = true;
 		return false;
 	}
-
-	/* Avoid terminating a task with a message being sent */
-	if(MMR_DMNI_SEND_ACTIVE)
-		return false;
-
+	
 	task_terminated = true;
 
-	/* Send TASK_TERMINATED */
-	tl_send_terminated(current);
-
-	/* Clear task from monitor tables */
-	llm_clear_table(current);
-
-	printf("Task id %d terminated with status %d\n", current->id, status);
-	MMR_TASK_TERMINATED = current->id;
-
-	sched_clear(current);
-
-	tcb_clear(current);
+	tcb_terminate(current);
 
 	return true;
 }
@@ -625,4 +614,12 @@ int os_fstat(int file, struct stat *st)
 	// _r->_errno = errno;
 
 	return ret;
+}
+
+int os_close(int file)
+{
+	// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
+	// _r->_errno = EBADF;
+
+	return -1;
 }

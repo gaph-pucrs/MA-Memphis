@@ -23,8 +23,7 @@
 #define BR_SVC_ALL	6
 
 enum SYSCALL {
-	EXIT,
-	WRITEPIPE,
+	WRITEPIPE = 1,
 	READPIPE,
 	GETTICK,
 	REALTIME = 5,
@@ -41,7 +40,6 @@ typedef struct _message {
 } message_t;
 
 extern int system_call();
-extern const uint32_t _has_priv;
 
 /**
  * @brief Gets the ID of the running task

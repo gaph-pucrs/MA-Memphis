@@ -195,3 +195,21 @@ void tcb_heap_incr(tcb_t *tcb, unsigned incr)
 {
 	tcb->heap_end += incr;
 }
+
+void tcb_terminate(tcb_t *tcb)
+{
+	/* Avoid terminating a task with a message being sent */
+	while(MMR_DMNI_SEND_ACTIVE);
+
+	/* Send TASK_TERMINATED */
+	tl_send_terminated(tcb);
+
+	/* Clear task from monitor tables */
+	llm_clear_table(tcb);
+
+	MMR_TASK_TERMINATED = tcb->id;
+
+	sched_clear(tcb);
+
+	tcb_clear(tcb);
+}
