@@ -9,40 +9,36 @@ ELFS = $(patsubst %.c, %.elf, $(SRC))
 
 INCLIB = ../../lib/src/include
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -std=c99 -I$(INCLIB) --include id_tasks.h
-CC		= riscv64-elf-gcc -march=rv32im -mabi=ilp32
-AS		= riscv64-elf-as -march=rv32im -mabi=ilp32
-LD		= riscv64-elf-ld -melf32lriscv
-OBJCOPY	= riscv64-elf-objcopy
+CC = riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
+
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCLIB) --include id_tasks.h
+LDFLAGS = -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,-N,--gc-sections
 
 LIBDIR = ../../lib/src
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
-
-BOOTDIR = ../../bootloader
-BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
-BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
+LIBSRCC = $(wildcard $(LIBDIR)/*.c)
+LIBSRCS = $(wildcard $(LIBDIR)/*.S)
+LIBOBJ = $(patsubst %.c, %.o, $(LIBSRCC)) $(patsubst %.S, %.o, $(LIBSRCS))
 
 all: $(TARGET) $(ELFS)
 
 $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 	@printf "${GREEN}Dumping task: %s ...${NC}\n" "$<"
-	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
+	hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 	@printf "${GREEN}Generating binary for task: %s ...${NC}\n" "$<"
-	@$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) -O binary $< $@
 
-$(SRCDIR)/%.elf: $(SRCDIR)/%.o $(BOOTOBJ) $(LIBOBJ)
+$(SRCDIR)/%.elf: $(SRCDIR)/%.o $(LIBOBJ)
 	@printf "${GREEN}Linking task: %s ...${NC}\n" "$<"
-	@$(LD) $^ --section-start=".init"=0 -s -N -o $@
+	$(CC) $(LDFLAGS) -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${GREEN}Compiling task: %s ...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(BOOTDIR)/%.o: $(BOOTDIR)/%.s
-	@make -C $(BOOTDIR)
 
 $(LIBDIR)/%.o: $(LIBDIR)/%.c
 	@make -C ../../lib
@@ -55,3 +51,5 @@ clean:
 	@rm -rf *.lst
 	@rm -rf *.txt
 	@rm -rf *.elf
+
+.PHONY: clean

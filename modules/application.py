@@ -89,11 +89,16 @@ class Application:
 
 		dep_list, dep_list_len = self.__get_dep_list()
 
-		address = 4 + 4*len(self.tasks)*4 + dep_list_len*4
+		# First line is the number of tasks
+		# Then, each task has 5 lines (txt, data, bss, entry, repo)
+		# Finally, add the length of the dependence list
+		address = 4 + 5*len(self.tasks)*4 + dep_list_len*4
+
 		for task in self.tasks:
 			repo.add(self.text_sizes[task], "txt size")
 			repo.add(self.data_sizes[task], "data size")
 			repo.add(self.bss_sizes[task], "bss size")
+			repo.add(self.entry_points[task], "entry point")
 			repo.add(address, "Repository address")
 
 			address += self.text_sizes[task] + self.data_sizes[task]

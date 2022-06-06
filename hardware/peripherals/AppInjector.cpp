@@ -207,6 +207,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 			std::getline(repository, line);		/* data */
 			std::getline(repository, line);		/* bss */
 			std::getline(repository, line);		/* addr */
+			std::getline(repository, line);		/* entry point */
 		}
 
 		static_mapping.clear();
