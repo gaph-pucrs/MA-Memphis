@@ -15,7 +15,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <newlib.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <machine/syscall.h>
+#include <unistd.h>
 
 #include "syscall.h"
 #include "services.h"
@@ -28,12 +32,14 @@
 #include "llm.h"
 #include "memphis.h"
 
+#undef errno
+extern int errno;
+
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
 
 int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
 {
-	printf("Syscall called %d\n", number);
 	schedule_after_syscall = false;
 	task_terminated = false;
 	int ret = 0;
@@ -59,9 +65,6 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case GETID:
 			ret = os_get_id();
 			break;
-		case SCALL_PUTC:
-			ret = os_putc(arg2);
-			break;
 		case SCALL_BR_SEND_ALL:
 			ret = os_br_send_all(arg2, arg3);
 			break;
@@ -72,16 +75,13 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_mon_ptr((unsigned*)arg2, arg3);
 			break;
 		case SYS_fstat:
-			printf("Called FSTAT with file %d, stat pointer %x, reent pointer %x\n", arg1, arg2, arg3);
-			ret = fstat_r(arg1, arg2, arg3);
+			ret = os_fstat(arg1, arg2);
 			break;
 		case SYS_brk:
-			printf("Called SBRK arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x, arg6 %x\n", arg1, arg2, arg3, arg4, arg5, arg6);
-			ret = os_sbrk(arg2, (struct _reent *)arg4);
+			ret = os_sbrk(arg2);
 			break;
 		case SYS_write:
-			printf("Called WRITE arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x, arg6 %x\n", arg1, arg2, arg3, arg4, arg5, arg6);
-			ret = os_write(arg1, arg2, arg3);
+			ret = os_write(arg1, arg2);
 			break;
 		default:
 			printf("ERROR: Unknown syscall %x\n", number);
@@ -503,13 +503,6 @@ int os_get_id()
 	return sched_get_current()->id;
 }
 
-int os_putc(char c)
-{
-	MMR_UART_CHAR = c;
-
-	return 0;
-}
-
 int os_br_send_all(uint32_t payload, uint8_t ksvc)
 {
 	int producer = sched_get_current_id();
@@ -584,7 +577,7 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	return 0;
 }
 
-int os_sbrk(int incr, struct _reent *_r)
+int os_sbrk(int incr)
 {
 	tcb_t *current = sched_get_current();
 
@@ -594,10 +587,8 @@ int os_sbrk(int incr, struct _reent *_r)
 
 	if(heap_end + incr > sp){
 		printf("Heap and stack collision in task %d\n", tcb_get_id(current));
-		return NULL;
+		return (int)NULL;
 	}
-
-	printf("Growing task heap by %d\n", incr);
 
 	tcb_heap_incr(current, incr);
 	return prev_heap_end;
@@ -607,12 +598,31 @@ int os_write(int file, char *buf, int nbytes)
 {
 	tcb_t *current = sched_get_current();
 
+	if(file != STDOUT_FILENO && file != STDERR_FILENO){
+		// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
+		// _r->_errno = EBADF;
+		return -1;
+    }
+
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;
 
-	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)buf);
+	buf = (char*)(tcb_get_offset(current) | (unsigned)buf);
 
-	printf("$$$_%dx%d_%d_%d_%s", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, msg_ptr);
+	printf("$$$_%dx%d_%d_%d_%s", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, buf);
 
 	return nbytes;
+}
+
+int os_fstat(int file, struct stat *st)
+{
+	tcb_t *current = sched_get_current();
+
+	st = (struct stat*)(tcb_get_offset(current) | (unsigned)st);
+	int ret = fstat(file, st);
+
+	// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
+	// _r->_errno = errno;
+
+	return ret;
 }
