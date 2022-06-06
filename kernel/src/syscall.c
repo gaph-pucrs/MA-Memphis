@@ -62,9 +62,6 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case SCALL_PUTC:
 			ret = os_putc(arg2);
 			break;
-		case SCALL_PUTS:
-			ret = os_puts((char*)arg2);
-			break;
 		case SCALL_BR_SEND_ALL:
 			ret = os_br_send_all(arg2, arg3);
 			break;
@@ -513,19 +510,6 @@ int os_putc(char c)
 	return 0;
 }
 
-int os_puts(char *str)
-{
-	tcb_t *current = sched_get_current();
-	int id = sched_get_current_id();
-	int addr = MMR_NI_CONFIG;
-	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)str);
-	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
-	puts(msg_ptr);
-	puts("\n");
-
-	return 0;
-}
-
 int os_br_send_all(uint32_t payload, uint8_t ksvc)
 {
 	int producer = sched_get_current_id();
@@ -623,10 +607,12 @@ int os_write(int file, char *buf, int nbytes)
 {
 	tcb_t *current = sched_get_current();
 
-	printf("Current %x\n", tcb_get_offset(current));
-	printf("Buffer %x\n", buf);
-	buf = (unsigned)buf | (unsigned)tcb_get_offset(current);
-	printf("Adjusted %x\n", buf);
+	int id = sched_get_current_id();
+	int addr = MMR_NI_CONFIG;
 
-	return _write(file, buf, nbytes);
+	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)buf);
+
+	printf("$$$_%dx%d_%d_%d_%s", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, msg_ptr);
+
+	return nbytes;
 }

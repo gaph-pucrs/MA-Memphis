@@ -36,6 +36,8 @@ enum MONITOR_TABLES {
 // Memory map constants.
 #define DEBUG 					0x20000000
 #define UART_CHAR				0x20000004
+#define DEBUG_LEN				0x20000008
+#define DEBUG_START				0x2000000C
 #define IRQ_MASK 				0x20000010
 #define IRQ_STATUS_ADDR 		0x20000020
 #define TIME_SLICE_ADDR 		0x20000060

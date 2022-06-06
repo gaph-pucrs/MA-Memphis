@@ -45,16 +45,9 @@ int _write(int file, char *ptr, int len) {
 		return -1;
     }
 
-	/**
-	 * @todo
-	 * Use a MMR for LEN and another for PTR
-	 * Write whole stream at once, let the simulator handle it.
-	 */
-	int todo;
-
-	for (todo = 0; todo < len; todo++) {
-		MMR_UART_CHAR = *ptr++;
-	}
+	MMR_UART_LEN = len;
+	MMR_UART_DATA = ptr;
+	MMR_UART_START = 1;
 
 	return len;
 }

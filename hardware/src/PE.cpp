@@ -444,12 +444,20 @@ void PE::sequential_attr(){
 		//*********************************************************************
 
 		//************** simluation-time debug implementation *******************
+		if (cpu_mem_address_reg.read() == DEBUG_LEN && write_enable.read() == 1){
+			debug_len = cpu_mem_data_write_reg.read();
+		}
 		if (cpu_mem_address_reg.read() == DEBUG && write_enable.read() == 1){
+			debug_data = cpu_mem_data_write_reg.read();
+		}
+		if (cpu_mem_address_reg.read() == DEBUG_START && write_enable.read() == 1){
 			sprintf(aux, "%s/log/log%dx%d.txt", path.c_str(), (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 
-			uint32_t address = cpu_mem_data_write_reg.read()/4;
-			fprintf(fp, "%s", (char*)&(mem->ram_data[address]));
+			fwrite((char*)&(mem->ram_data[debug_data/4]), 1, debug_len, fp);
+
+			// uint32_t address = cpu_mem_data_write_reg.read()/4;
+			// fprintf(fp, "%s", (char*)&(mem->ram_data[address]));
 
 			fclose (fp);
 		}

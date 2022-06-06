@@ -15,6 +15,8 @@
 
 #define MMR_UART_DATA 				(*(volatile unsigned int*)0x20000000U)	//!< Read/Write data from/to UART
 #define MMR_UART_CHAR 				(*(volatile unsigned int*)0x20000004U)	//!< Read/Write data from/to UART
+#define MMR_UART_LEN 				(*(volatile unsigned int*)0x20000008U)	//!< Read/Write data from/to UART
+#define MMR_UART_START 				(*(volatile unsigned int*)0x2000000CU)	//!< Read/Write data from/to UART
 #define MMR_IRQ_MASK 				(*(volatile unsigned int*)0x20000010U)	//!< NoC interrupt mask
 #define MMR_TIME_SLICE 				(*(volatile unsigned int*)0x20000060U)
 #define MMR_TASK_TERMINATED			(*(volatile unsigned int*)0x20000070U)	//!< Signals that a task terminated

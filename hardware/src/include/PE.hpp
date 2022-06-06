@@ -226,6 +226,9 @@ private:
 	unsigned long int nop_instant_instructions;
 	unsigned long int mult_div_instant_instructions;
 
+	unsigned debug_len;
+	unsigned debug_data;
+
 	char x_address;
 	char y_address;
 
