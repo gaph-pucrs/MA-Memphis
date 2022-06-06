@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <machine/syscall.h>
+
 #include "syscall.h"
 #include "services.h"
 #include "memphis.h"
@@ -29,9 +31,9 @@
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
 
-int os_syscall(unsigned service, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
+int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
 {
-	printf("Syscall called %d\n", service, number);
+	printf("Syscall called %d\n", number);
 	schedule_after_syscall = false;
 	task_terminated = false;
 	int ret = 0;
@@ -72,8 +74,20 @@ int os_syscall(unsigned service, unsigned arg2, unsigned arg3, unsigned arg4, un
 		case SCALL_MON_PTR:
 			ret = os_mon_ptr((unsigned*)arg2, arg3);
 			break;
+		case SYS_fstat:
+			printf("Called FSTAT with file %d, stat pointer %x, reent pointer %x\n", arg1, arg2, arg3);
+			ret = fstat_r(arg1, arg2, arg3);
+			break;
+		case SYS_brk:
+			printf("Called SBRK arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x, arg6 %x\n", arg1, arg2, arg3, arg4, arg5, arg6);
+			ret = os_sbrk(arg2, (struct _reent *)arg4);
+			break;
+		case SYS_write:
+			printf("Called WRITE arg1 %x, arg2 %x, arg3 %x, arg4 %x, arg5 %x, arg6 %x\n", arg1, arg2, arg3, arg4, arg5, arg6);
+			ret = os_write(arg1, arg2, arg3);
+			break;
 		default:
-			printf("ERROR: Unknown service %x\n", service);
+			printf("ERROR: Unknown syscall %x\n", number);
 			ret = 0;
 			break;
 	}
@@ -584,4 +598,35 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	}
 
 	return 0;
+}
+
+int os_sbrk(int incr, struct _reent *_r)
+{
+	tcb_t *current = sched_get_current();
+
+	unsigned heap_end = tcb_get_heap_end(current);
+	unsigned prev_heap_end = heap_end;
+	unsigned sp = tcb_get_sp(current);
+
+	if(heap_end + incr > sp){
+		printf("Heap and stack collision in task %d\n", tcb_get_id(current));
+		return NULL;
+	}
+
+	printf("Growing task heap by %d\n", incr);
+
+	tcb_heap_incr(current, incr);
+	return prev_heap_end;
+}
+
+int os_write(int file, char *buf, int nbytes)
+{
+	tcb_t *current = sched_get_current();
+
+	printf("Current %x\n", tcb_get_offset(current));
+	printf("Buffer %x\n", buf);
+	buf = (unsigned)buf | (unsigned)tcb_get_offset(current);
+	printf("Adjusted %x\n", buf);
+
+	return _write(file, buf, nbytes);
 }

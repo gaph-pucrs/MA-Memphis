@@ -33,6 +33,7 @@ typedef struct _tcb {
 	unsigned int text_lenght;		//!< Memory TEXT section lenght in bytes
 	unsigned int data_lenght;		//!< Memory DATA section lenght in bytes
 	unsigned int bss_lenght;		//!< Memory BSS section lenght in bytes
+	unsigned int heap_end;
 
 	int mapper_address;
 	int mapper_task;
@@ -275,3 +276,20 @@ void tcb_set_called_exit(tcb_t *tcb);
  * @return True if called exit
  */
 bool tcb_has_called_exit(tcb_t *tcb);
+
+/**
+ * @brief Gets the current TCB heap end
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return unsigned heap end byte
+ */
+unsigned tcb_get_heap_end(tcb_t *tcb);
+
+/**
+ * @brief Increments the heap
+ * 
+ * @param tcb Pointer to the TCB
+ * @param incr bytes to increment 
+ */
+void tcb_heap_incr(tcb_t *tcb, unsigned incr);

@@ -1,32 +1,41 @@
+#include <errno.h>
 #include <sys/stat.h>
 #include <newlib.h>
-#include <errno.h>
+#include <unistd.h>
 #undef errno
 extern int errno;
 
-
 #include <mmr.h>
-
-#define STDOUT_FILENO 1
 
 
 /* It turns out that older newlib versions use different symbol names which goes
  * against newlib recommendations. Anyway this is fixed in later version.
  */
-#if __NEWLIB__ <= 2 && __NEWLIB_MINOR__ <= 5
-#	define _sbrk sbrk
-#	define _write write
-#	define _close close
-#	define _lseek lseek
-#	define _read read
-#	define _fstat fstat
-#	define _isatty isatty
-#endif
+// #if __NEWLIB__ <= 2 && __NEWLIB_MINOR__ <= 5
+// #	define _sbrk sbrk
+// #	define _write write
+// #	define _close close
+// #	define _lseek lseek
+// #	define _read read
+// #	define _fstat fstat
+// #	define _isatty isatty
+// #endif
 
 int _fstat(int file, struct stat *st)
 {
 	st->st_mode = S_IFCHR;
 	return 0;
+}
+
+int fstat_r(int file, struct stat *st, struct _reent *_r)
+{
+	if(file == STDOUT_FILENO || file == STDERR_FILENO){
+		st->st_mode = S_IFCHR;
+		return 0;
+	} else {
+		_r->_errno = EBADF;
+		return -1;
+	}
 }
 
 int _write(int file, char *ptr, int len) {
