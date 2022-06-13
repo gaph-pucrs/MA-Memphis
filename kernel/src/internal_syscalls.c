@@ -1,7 +1,10 @@
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include <newlib.h>
 #include <unistd.h>
+
 #undef errno
 extern int errno;
 
@@ -19,7 +22,7 @@ int _fstat(int file, struct stat *st)
 }
 
 int _write(int file, char *ptr, int len)
-{	
+{
 	if(file != STDOUT_FILENO && file != STDERR_FILENO){
 		errno = EBADF;
 		return -1;
@@ -32,7 +35,8 @@ int _write(int file, char *ptr, int len)
 	return len;
 }
 
-caddr_t _sbrk(int incr) {
+caddr_t _sbrk(int incr)
+{
 	extern char _end;		/* Defined by the linker */
 	static char *heap_end;
 	char *prev_heap_end;
@@ -55,6 +59,12 @@ caddr_t _sbrk(int incr) {
 	return (caddr_t) prev_heap_end;
 }
 
-int _close(int file) {
+int _close(int file)
+{
+	return -1;
+}
+
+int _gettimeofday(struct timeval *tp, void *tzp)
+{
 	return -1;
 }

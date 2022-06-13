@@ -38,15 +38,11 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET).map -s -N -o $@
+	@$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET).map -N -o $@
 
-$(TARGET).lst: $(TARGET)_debug.elf
+$(TARGET).lst: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJDUMP) -S $< > $@
-
-$(TARGET)_debug.elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
-	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET)_debug.map -N -o $@
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
@@ -54,7 +50,12 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 
 $(HALDIR)/%.o: $(HALDIR)/%.s
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	$(CC) -c $< -o $@ -Wa,--defsym=sp_addr=$(PAGE_SP_INIT) $(CFLAGS)
+	@$(CC) -c $< -o $@ -Wa,--defsym=sp_addr=$(PAGE_SP_INIT) $(CFLAGS)
+
+$(HALDIR)/%.o: $(HALDIR)/%.c
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS)
+
 
 $(LIBDIR)/%.o: $(LIBDIR)/%.c
 	@make -C ../lib

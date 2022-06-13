@@ -11,11 +11,12 @@
  * @brief Defines the task migration functions
  */
 
+#include <stdio.h>
+
 #include "task_migration.h"
 #include "services.h"
 #include "packet.h"
 #include "task_location.h"
-#include "stdio.h"
 #include "broadcast.h"
 
 typedef struct _tm_ring_t {

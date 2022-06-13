@@ -27,8 +27,7 @@ enum SYSCALL {
 	READPIPE,
 	GETTICK,
 	REALTIME = 5,
-	GETID = 8,
-	GETLOCATION,
+	GETLOCATION = 9,
 	SCALL_BR_SEND_ALL,
 	SCALL_MON_PTR,
 	SCALL_BR_SEND_TGT
@@ -40,13 +39,6 @@ typedef struct _message {
 } message_t;
 
 extern int system_call();
-
-/**
- * @brief Gets the ID of the running task
- * 
- * @return The complete ID
- */
-int memphis_get_id();
 
 /**
  * @brief Gets the PE address of the runnning task

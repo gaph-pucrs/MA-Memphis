@@ -15,11 +15,6 @@
 #include "services.h"
 #include "mmr.h"
 
-int memphis_get_id()
-{
-	return system_call(GETID, 0, 0, 0);
-}
-
 int memphis_get_addr()
 {
 	return system_call(GETLOCATION, 0, 0, 0);

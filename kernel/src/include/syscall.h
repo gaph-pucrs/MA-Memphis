@@ -16,7 +16,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <sys/times.h>
+
 #include "monitor.h"
+
+struct __timespec64 {
+    int64_t tv_sec;         /* Seconds */
+    int32_t tv_nsec;        /* Nanoseconds */
+    int32_t __padding;      /* Padding */
+};
 
 /**
  * @brief Syscall function call. It choses a service and pass the right arguments
@@ -121,25 +132,7 @@ int os_get_location();
  * 
  * @return Task ID (with application ID)
  */
-int os_get_id();
-
-/**
- * @brief Put a char to debug 'UART'
- * 
- * @param c Character to put
- * 
- * @return 0
- */
-int os_putc(char c);
-
-/**
- * @brief Put a string to debug 'UART'
- * 
- * @param str Pointer to string
- * 
- * @return 0
- */
-int os_puts(char *str);
+int os_getpid();
 
 /**
  * @brief Sends a message via broadcast
@@ -171,3 +164,54 @@ int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);
  * @return 0 if success. 1 if unauthorized. 2 if wrong type.
  */
 int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type);
+
+/**
+ * @brief Closes a file
+ * 
+ * @details There are no valid files for closing.
+ * 
+ * @param file File number
+ * 
+ * @return int -1
+ */
+int os_close(int file);
+
+/**
+ * @brief Writes to a file
+ * 
+ * @param file File number
+ * @param buf Pointer of the buffer to write
+ * @param nbytes Number of bytes to write
+ * 
+ * @return int Number of bytes written
+ */
+int os_write(int file, char *buf, int nbytes);
+
+/**
+ * @brief Get status of a file
+ * 
+ * @param file File number
+ * @param st Pointer to stat structure
+ * 
+ * @return int -1 if invalid file, 0 if valid
+ */
+int os_fstat(int file, struct stat *st);
+
+/**
+ * @brief Increment heap
+ * 
+ * @param incr Number of bytes to increment
+ * 
+ * @return int Address of previous heap end, NULL if failure
+ */
+int os_sbrk(int incr);
+
+/**
+ * @brief Gets time of the day. Currently not implemented.
+ * 
+ * @param tp Timespec64 structure pointer
+ * @param tzp Deprecated timezone. Should be NULL.
+ * 
+ * @return int -1
+ */
+int os_clock_gettime64(struct __timespec64 *ts64, void *tzp);

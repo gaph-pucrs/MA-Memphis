@@ -11,6 +11,8 @@
  * @brief Standard function for OD(A) tasks
  */
 
+#include <unistd.h>
+
 #include "memphis.h"
 
 #include "oda.h"
@@ -30,7 +32,7 @@ void oda_request_service(oda_t *oda, int type_tag)
 	msg.payload[0] = REQUEST_SERVICE;
 	msg.payload[1] = memphis_get_addr();
 	msg.payload[2] = oda->tag;
-	msg.payload[3] = memphis_get_id();
+	msg.payload[3] = getpid();
 	msg.length = 4;
 
 	memphis_send_any(&msg, 0);	/* Standard mapper task is ID 0 */

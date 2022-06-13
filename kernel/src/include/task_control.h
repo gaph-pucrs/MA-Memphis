@@ -293,3 +293,10 @@ unsigned tcb_get_heap_end(tcb_t *tcb);
  * @param incr bytes to increment 
  */
 void tcb_heap_incr(tcb_t *tcb, unsigned incr);
+
+/**
+ * @brief Terminates a task after exit
+ * 
+ * @param tcb Pointer to the TCB to terminate
+ */
+void tcb_terminate(tcb_t *tcb);

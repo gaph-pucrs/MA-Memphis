@@ -15,9 +15,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <newlib.h>
-#include <errno.h>
-#include <sys/stat.h>
 #include <machine/syscall.h>
 #include <unistd.h>
 
@@ -31,9 +28,6 @@
 #include "broadcast.h"
 #include "llm.h"
 #include "memphis.h"
-
-#undef errno
-extern int errno;
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
@@ -59,9 +53,6 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case GETLOCATION:
 			ret = os_get_location();
 			break;
-		case GETID:
-			ret = os_get_id();
-			break;
 		case SCALL_BR_SEND_ALL:
 			ret = os_br_send_all(arg2, arg3);
 			break;
@@ -71,20 +62,26 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case SCALL_MON_PTR:
 			ret = os_mon_ptr((unsigned*)arg2, arg3);
 			break;
+		case SYS_close:
+			ret = os_close(arg2);
+			break;
+		case SYS_write:
+			ret = os_write(arg1, (char*)arg2, 0);
+			break;
 		case SYS_fstat:
-			ret = os_fstat(arg1, arg2);
+			ret = os_fstat(arg1, (struct stat*)arg2);
+			break;
+		case SYS_exit:
+			ret = os_exit(arg2);
+			break;
+		case SYS_getpid:
+			ret = os_getpid();
 			break;
 		case SYS_brk:
 			ret = os_sbrk(arg2);
 			break;
-		case SYS_write:
-			ret = os_write(arg1, arg2);
-			break;
-		case SYS_close:
-			ret = os_close(arg2);
-			break;
-		case SYS_exit:
-			ret = os_exit(arg2);
+		case SYS_clock_gettime64:
+			ret = os_clock_gettime64((struct __timespec64*)arg2, 0);
 			break;
 		default:
 			printf("ERROR: Unknown syscall %x\n", number);
@@ -487,9 +484,9 @@ int os_get_location()
 	return MMR_NI_CONFIG;
 }
 
-int os_get_id()
+int os_getpid()
 {
-	return sched_get_current()->id;
+	return sched_get_current_id();
 }
 
 int os_br_send_all(uint32_t payload, uint8_t ksvc)
@@ -621,5 +618,10 @@ int os_close(int file)
 	// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
 	// _r->_errno = EBADF;
 
+	return -1;
+}
+
+int os_clock_gettime64(struct __timespec64 *ts64, void *tzp)
+{
 	return -1;
 }

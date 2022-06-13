@@ -14,6 +14,8 @@
 #include <stddef.h>
 
 #include "task_control.h"
+#include "task_location.h"
+#include "llm.h"
 #include "hal.h"
 #include "stdio.h"
 

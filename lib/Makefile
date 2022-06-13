@@ -8,7 +8,7 @@ CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -Wall -std=c99  -I$(INCDIR) --include kernel_definitions.h
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99  -I$(INCDIR) --include kernel_definitions.h
 # LDFLAGS = -march=rv32im -mabi=ilp32
 
 SRCC = $(wildcard $(SRCDIR)/*.c)
