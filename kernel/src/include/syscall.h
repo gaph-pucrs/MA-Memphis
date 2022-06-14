@@ -198,13 +198,13 @@ int os_write(int file, char *buf, int nbytes);
 int os_fstat(int file, struct stat *st);
 
 /**
- * @brief Increment heap
+ * @brief Change data segment size
  * 
- * @param incr Number of bytes to increment
+ * @param addr Program break address to set
  * 
- * @return int Address of previous heap end, NULL if failure
+ * @return int Program break address on success, -1 on failure
  */
-int os_sbrk(int incr);
+int os_brk(void *addr);
 
 /**
  * @brief Gets time of the day. Currently not implemented.

@@ -67,7 +67,7 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 	tcb->text_lenght = code_sz;
 	tcb->data_lenght = data_sz;
 	tcb->bss_lenght = bss_sz;
-	tcb->heap_end = code_sz+data_sz+bss_sz;
+	tcb->heap_end = code_sz+data_sz+bss_sz + 4;
 
 	tcb->mapper_address = mapper_addr;
 	tcb->mapper_task = mapper_task;
@@ -193,9 +193,9 @@ unsigned tcb_get_heap_end(tcb_t *tcb)
 	return tcb->heap_end;
 }
 
-void tcb_heap_incr(tcb_t *tcb, unsigned incr)
+void tcb_set_brk(tcb_t *tcb, unsigned addr)
 {
-	tcb->heap_end += incr;
+	tcb->heap_end = addr;
 }
 
 void tcb_terminate(tcb_t *tcb)

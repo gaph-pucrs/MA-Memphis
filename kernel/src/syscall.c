@@ -34,6 +34,7 @@ bool task_terminated;
 
 int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
 {
+	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
 	schedule_after_syscall = false;
 	task_terminated = false;
 	int ret = 0;
@@ -66,7 +67,7 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_close(arg2);
 			break;
 		case SYS_write:
-			ret = os_write(arg1, (char*)arg2, 0);
+			ret = os_write(arg1, (char*)arg2, arg3);
 			break;
 		case SYS_fstat:
 			ret = os_fstat(arg1, (struct stat*)arg2);
@@ -78,7 +79,7 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_getpid();
 			break;
 		case SYS_brk:
-			ret = os_sbrk(arg2);
+			ret = os_brk((void*)arg1);
 			break;
 		case SYS_clock_gettime64:
 			ret = os_clock_gettime64((struct __timespec64*)arg2, 0);
@@ -154,6 +155,10 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 
 	/* Points the message in the task page. Address composition: offset + msg address */
 	// printf("Message at virtual address %x\n", msg_ptr);
+	if(!msg_ptr){
+		printf("ERROR: message pointer is null\n");
+		return false;
+	}
 	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 	// printf("Message at physical address %x\n", (int)message);
 	// printf("Message length = %d\n", message->length);
@@ -321,6 +326,10 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			pending_msg_t *msg = pending_msg_search(cons_task);
 	
 			/* Store it like a MESSAGE_DELIVERY */
+			if(!msg_ptr){
+				printf("ERROR: msg_ptr is null\n");
+				return false;
+			}
 			message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 			
 			// putsv("Message length is ", msg->size);
@@ -361,6 +370,10 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			} else {
 				/* Message was found in pipe, writes to the consumer page address (local producer) */
+				if(!msg_ptr){
+					printf("ERROR: msg_ptr is null\n");
+					return false;
+				}
 				message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 				message_t *msg_src = pipe_get_message(pipe);
 
@@ -538,6 +551,10 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 		return 1;
 
 	unsigned offset = tcb_get_offset(current);
+	if(table == NULL){
+		printf("ERROR: Table is null.\n");
+		return false;
+	}
 	table = (unsigned*)((unsigned)table | offset);
 
 	switch(type){
@@ -563,21 +580,27 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	return 0;
 }
 
-int os_sbrk(int incr)
+int os_brk(void *addr)
 {
 	tcb_t *current = sched_get_current();
 
 	unsigned heap_end = tcb_get_heap_end(current);
-	unsigned prev_heap_end = heap_end;
+
+	if(addr == NULL)
+		return heap_end;
+
 	unsigned sp = tcb_get_sp(current);
 
-	if(heap_end + incr > sp){
+	if((unsigned)addr > sp){
 		printf("Heap and stack collision in task %d\n", tcb_get_id(current));
-		return (int)NULL;
+		return -1;
 	}
 
-	tcb_heap_incr(current, incr);
-	return prev_heap_end;
+	// printf("Growing heap from %u to %u\n", heap_end, (unsigned)addr);
+
+	tcb_set_brk(current, (unsigned)addr);
+
+	return (int)addr;
 }
 
 int os_write(int file, char *buf, int nbytes)
@@ -593,16 +616,27 @@ int os_write(int file, char *buf, int nbytes)
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;
 
+	if(buf == NULL){
+		printf("ERROR: buffer is null\n");
+		return false;
+	}
+
 	buf = (char*)(tcb_get_offset(current) | (unsigned)buf);
 
-	printf("$$$_%dx%d_%d_%d_%s", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF, buf);
+	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
+	fflush(stdout);
 
-	return nbytes;
+	return write(file, buf, nbytes);
 }
 
 int os_fstat(int file, struct stat *st)
 {
 	tcb_t *current = sched_get_current();
+
+	if(st == NULL){
+		printf("ERROR: st is null");
+		return false;
+	}
 
 	st = (struct stat*)(tcb_get_offset(current) | (unsigned)st);
 	int ret = fstat(file, st);
