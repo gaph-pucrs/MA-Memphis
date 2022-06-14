@@ -64,7 +64,7 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_mon_ptr((unsigned*)arg2, arg3);
 			break;
 		case SYS_close:
-			ret = os_close(arg2);
+			ret = os_close(arg1);
 			break;
 		case SYS_write:
 			ret = os_write(arg1, (char*)arg2, arg3);
@@ -73,7 +73,7 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_fstat(arg1, (struct stat*)arg2);
 			break;
 		case SYS_exit:
-			ret = os_exit(arg2);
+			ret = os_exit(arg1);
 			break;
 		case SYS_getpid:
 			ret = os_getpid();
@@ -82,7 +82,7 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 			ret = os_brk((void*)arg1);
 			break;
 		case SYS_clock_gettime64:
-			ret = os_clock_gettime64((struct __timespec64*)arg2, 0);
+			ret = os_clock_gettime64((struct __timespec64*)arg2, (void*)arg1);
 			break;
 		default:
 			printf("ERROR: Unknown syscall %x\n", number);
