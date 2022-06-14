@@ -17,6 +17,7 @@
 
 #include <machine/syscall.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "syscall.h"
 #include "services.h"
@@ -39,19 +40,19 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 	task_terminated = false;
 	int ret = 0;
 	switch(number){
-		case WRITEPIPE:
-			ret = os_writepipe(arg2, arg3, arg4);
+		case SYS_writepipe:
+			ret = os_writepipe(arg1, arg2, arg3);
 			break;
 		case READPIPE:
 			ret = os_readpipe(arg2, arg3, arg4);
 			break;
-		case GETTICK:
+		case SYS_gettick:
 			ret = os_get_tick();
 			break;
 		case REALTIME:
 			ret = os_realtime(arg2, arg3, arg4);
 			break;
-		case GETLOCATION:
+		case SYS_getlocation:
 			ret = os_get_location();
 			break;
 		case SCALL_BR_SEND_ALL:
@@ -119,13 +120,13 @@ bool os_exit(int status)
 	return true;
 }
 
-bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
+int os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 {
 	tcb_t *current = sched_get_current();
 
 	if((cons_task & 0xFFFF0000) && current->id >> 8 != 0){
 		puts("ERROR: Unauthorized message to kernel/peripheral from task with app id > 0\n");
-		while(1);
+		return -EACCES;
 	}
 
 	int cons_addr;
@@ -149,7 +150,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 			/* Task is blocked until a TASK_RELEASE packet is received */
 			sched_block(current);
 			schedule_after_syscall = 1;
-			return false;
+			return -EAGAIN;
 		}
 	}
 
@@ -157,8 +158,9 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	// printf("Message at virtual address %x\n", msg_ptr);
 	if(!msg_ptr){
 		printf("ERROR: message pointer is null\n");
-		return false;
+		return -EINVAL;
 	}
+
 	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 	// printf("Message at physical address %x\n", (int)message);
 	// printf("Message length = %d\n", message->length);
@@ -166,7 +168,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	/* Test if the application passed a invalid message lenght */
 	if(message->length > PKG_MAX_MSG_SIZE){
 		printf("ERROR: Message length of %d must be lower than PKG_MAX_MSG_SIZE\n", message->length);
-		while(1);
+		return -EINVAL;
 	}
 
 	/* Searches if there is a message request to the produced message */
@@ -180,8 +182,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				/* Message directed to kernel. No TCB to write to */
 				/* This should NEVER happen because it means the kernel made a request without receiving a DATA_AV */
 				puts("ERROR: Kernel made a request without receiving DATA_AV!\n");
-				while(1);
-				return false;
+				return -EBADMSG;
 			} else {
 				/* Writes to the consumer page address */
 				tcb_t *cons_tcb = tcb_search(cons_task);
@@ -189,7 +190,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 
 				if(!cons_tcb){
 					puts("ERROR: CONS TCB NOT FOUND ON WRITEPIPE\n");
-					while(true);
+					return -EBADMSG;
 				}
 
 				pipe_transfer(message, msg_dst);
@@ -213,8 +214,10 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 
 			/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
 			/* Also, don't send a message if the previous is still in pipe */
-			if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))
-				return false;
+			if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current)){
+				schedule_after_syscall = true;
+				return -EAGAIN;
+			}
 
 			/* Insert the message in the pipe to avoid overwrite by task */
 			pipe_push(current, message, cons_task);
@@ -242,7 +245,7 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
 					schedule_after_syscall = os_kernel_syscall(message->payload, message->length);
-					return true;
+					return 0;
 				} else {
 					/* Insert a DATA_AV to consumer table */
 					tcb_t *cons_tcb = tcb_search(cons_task);
@@ -274,10 +277,10 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 			schedule_after_syscall = 1;
 		} /* else: the DMNI is sending the older message. Must retry */
 		
-		return false;
+		return -EAGAIN;
 	}
 
-	return true;
+	return 0;
 }
 
 bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
@@ -611,7 +614,7 @@ int os_write(int file, char *buf, int nbytes)
 		// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
 		// _r->_errno = EBADF;
 		return -1;
-    }
+	}
 
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;

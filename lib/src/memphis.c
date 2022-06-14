@@ -15,15 +15,20 @@
 #include "services.h"
 #include "mmr.h"
 
+#include "internal_syscall.h"
+
 int memphis_get_addr()
 {
-	return system_call(GETLOCATION, 0, 0, 0);
+	return __internal_syscall(SYS_getlocation, 0, 0, 0, 0, 0, 0, 0);
 }
 
 int memphis_send(message_t *msg, int target_id)
 {
-	while(!system_call(WRITEPIPE, msg, target_id, 0));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_writepipe, 3, (int)msg, target_id, 0, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
 }
 
 int memphis_receive(message_t *msg, int source_id)
@@ -32,15 +37,19 @@ int memphis_receive(message_t *msg, int source_id)
 	return 0;
 }
 
-int memphis_get_tick()
+unsigned memphis_get_tick()
 {
-	return system_call(GETTICK, 0, 0, 0);
+	return __internal_syscall(SYS_gettick, 0, 0, 0, 0, 0, 0, 0);
 }
 
 int memphis_send_any(message_t *msg, int target_id)
 {
-	while(!system_call(WRITEPIPE, msg, target_id, 1));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_writepipe, 3, (int)msg, target_id, 1, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
+
 }
 
 int memphis_receive_any(message_t *msg)

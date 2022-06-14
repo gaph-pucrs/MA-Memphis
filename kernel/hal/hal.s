@@ -262,7 +262,11 @@ ecall_handler:
 	##
 	sw		 a1, 36(s0)
 
+	addi	 sp, sp, -4
+	sw		 ra, 0(sp)
 	jal		 os_syscall
+	lw		 ra, 0(sp)
+	addi	 sp, sp, 4
 
 	lw		 t0, current	# Load current tcb to t0
 	

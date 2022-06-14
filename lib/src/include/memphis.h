@@ -23,11 +23,11 @@
 #define BR_SVC_ALL	6
 
 enum SYSCALL {
-	WRITEPIPE = 1,
+	SYS_writepipe = 1,
 	READPIPE,
-	GETTICK,
+	SYS_gettick,
 	REALTIME = 5,
-	GETLOCATION = 9,
+	SYS_getlocation = 9,
 	SCALL_BR_SEND_ALL,
 	SCALL_MON_PTR,
 	SCALL_BR_SEND_TGT
@@ -72,7 +72,7 @@ int memphis_receive(message_t *msg, int source_id);
  * 
  * @return Tick count
  */
-int memphis_get_tick();
+unsigned memphis_get_tick();
 
 /**
  * @brief Sends a message with a 3-way handshake

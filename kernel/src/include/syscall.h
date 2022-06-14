@@ -24,9 +24,9 @@
 #include "monitor.h"
 
 struct __timespec64 {
-    int64_t tv_sec;         /* Seconds */
-    int32_t tv_nsec;        /* Nanoseconds */
-    int32_t __padding;      /* Padding */
+	int64_t tv_sec;         /* Seconds */
+	int32_t tv_nsec;        /* Nanoseconds */
+	int32_t __padding;      /* Padding */
 };
 
 /**
@@ -57,9 +57,12 @@ bool os_exit(int status);
  * @param cons_task ID of the consumer task
  * @param sync If it should send a data available message before delivery
  * 
- * @return True if message sent (including stored in pipe). False if must retry
+ * @return 0 if message sent (including stored in pipe).
+ *         -EAGAIN if must retry
+ *         -EBADMSG on message protocol errors
+ *         -EACCES on unauthorized targets
  */
-bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
+int os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
 
 /**
  * @brief Receives a message
