@@ -58,6 +58,7 @@ bool os_exit(int status);
  * @param sync If it should send a data available message before delivery
  * 
  * @return 0 if message sent (including stored in pipe).
+ * 		   -EINVAL on invalid argument
  *         -EAGAIN if must retry
  *         -EBADMSG on message protocol errors
  *         -EACCES on unauthorized targets
@@ -71,10 +72,12 @@ int os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
  * @param prod_task ID of the producer task
  * @param sync If it should wait for a data available message before requesting
  * 
- * @return True if read is sucess (including if waiting for delivery). False if
- * must retry
+ * @return 0 if read is sucess (including if waiting for delivery). 
+ * 		   -EINVAL on invalid argument
+ *         -EAGAIN if must retry
+ *         -EBADMSG on message protocol errors
  */
-bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync);
+int os_readpipe(unsigned int msg_ptr, int prod_task, bool sync);
 
 /**	
  * @brief Get the tick count	

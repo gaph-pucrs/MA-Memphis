@@ -29,6 +29,7 @@ void tcb_init()
 		tcbs[i].offset = PKG_PAGE_SIZE * (i + 1);
 		tcbs[i].proc_to_migrate = -1;
 		tcbs[i].called_exit = false;
+		tcbs[i].msg_ptr	= NULL;
 	}
 }
 
@@ -98,7 +99,17 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 
 message_t *tcb_get_message(tcb_t *tcb)
 {
-	return (message_t*)(tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1]);
+	if(tcb->msg_ptr == NULL)
+		return NULL;
+		
+	message_t *real_ptr = (message_t*)(tcb_get_offset(tcb) | (unsigned)tcb->msg_ptr);
+	tcb->msg_ptr = NULL;
+	return real_ptr;
+}
+
+void tcb_set_message(tcb_t *tcb, message_t *msg_ptr)
+{
+	tcb->msg_ptr = msg_ptr;
 }
 
 unsigned int tcb_get_offset(tcb_t *tcb)
@@ -156,6 +167,7 @@ void tcb_clear(tcb_t *tcb)
 	tcb->pc = 0;
 	tcb->id = -1;
 	tcb->proc_to_migrate = -1;
+	tcb->msg_ptr = NULL;
 }
 
 unsigned int tcb_get_code_length(tcb_t *tcb)

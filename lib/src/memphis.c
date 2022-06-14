@@ -33,8 +33,11 @@ int memphis_send(message_t *msg, int target_id)
 
 int memphis_receive(message_t *msg, int source_id)
 {
-	while(!system_call(READPIPE, msg, source_id, 0));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_readpipe, 3, (int)msg, source_id, 0, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
 }
 
 unsigned memphis_get_tick()
@@ -49,13 +52,15 @@ int memphis_send_any(message_t *msg, int target_id)
 		ret = syscall_errno(SYS_writepipe, 3, (int)msg, target_id, 1, 0, 0, 0);
 	} while(ret == -1 && errno == EAGAIN);
 	return ret;
-
 }
 
 int memphis_receive_any(message_t *msg)
 {
-	while(!system_call(READPIPE, msg, 0, 1));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_readpipe, 3, (int)msg, 0, 1, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
 }
 
 int memphis_real_time(int period, int deadline, int exec_time)

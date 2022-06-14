@@ -43,8 +43,9 @@ typedef struct _tcb {
 	int task_location[PKG_MAX_TASKS_APP];	//!< Location of app tasks
 
 	pipe_t pipe;											//!< Temporary buffer for outbound messages.
-	message_request_t message_request[MR_MAX];	//!< Message request array
+	message_request_t message_request[MR_MAX];				//!< Message request array
 	data_av_fifo_t data_av;									//!< Data available fifo
+	message_t *msg_ptr;										//!< Pointer to receive a message
 
 	scheduler_t scheduler;	//!< Scheduling control structure
 
@@ -124,6 +125,14 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
  * @return Pointer to the message structure
  */
 message_t *tcb_get_message(tcb_t *tcb);
+
+/**
+ * @brief Sets the pointer to the message variable
+ * 
+ * @param tcb Pointer to the TCB
+ * @param msg_ptr Pointer to the message structure
+ */
+void tcb_set_message(tcb_t *tcb, message_t *msg_ptr);
 
 /**
  * @brief Gets the offset of a task

@@ -24,7 +24,7 @@
 
 enum SYSCALL {
 	SYS_writepipe = 1,
-	READPIPE,
+	SYS_readpipe,
 	SYS_gettick,
 	REALTIME = 5,
 	SYS_getlocation = 9,

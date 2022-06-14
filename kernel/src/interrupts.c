@@ -299,6 +299,10 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 		/* Message is stored in task's page + argument 1 from syscall */
 		message_t *message = tcb_get_message(cons_tcb);
+		if(message == NULL){
+			puts("ERROR: BUFFER NOT ALLOCATED FOR MD\n");
+			while(true);
+		}
 		// printf("Message at address %x\n", (unsigned int)message);
 
 		/* Assert message requested is the received size */

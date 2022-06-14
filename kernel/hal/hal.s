@@ -255,13 +255,6 @@ restore_minimum:
 	mret
 
 ecall_handler:
-	##
-	# @todo This is a workaround for saving the calling task 'message pointer' argument
-	# in case this call is a readpipe. The a1 will be used by the interruption later
-	# to get the message pointer. This should be changed. Not part of the HAL!
-	##
-	sw		 a1, 36(s0)
-
 	addi	 sp, sp, -4
 	sw		 ra, 0(sp)
 	jal		 os_syscall

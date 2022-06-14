@@ -43,8 +43,8 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case SYS_writepipe:
 			ret = os_writepipe(arg1, arg2, arg3);
 			break;
-		case READPIPE:
-			ret = os_readpipe(arg2, arg3, arg4);
+		case SYS_readpipe:
+			ret = os_readpipe(arg1, arg2, arg3);
 			break;
 		case SYS_gettick:
 			ret = os_get_tick();
@@ -283,8 +283,13 @@ int os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 	return 0;
 }
 
-bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
+int os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 {
+	if(!msg_ptr){
+		printf("ERROR: msg_ptr is null\n");
+		return -EINVAL;
+	}
+
 	tcb_t *current = sched_get_current();
 	int cons_task = sched_get_current_id();
 
@@ -292,18 +297,18 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 	if(!sync){	/* Not synced READ must define the producer */
 		prod_task |= (cons_task & 0xFF00);
 		prod_addr = tl_search(current, prod_task);
-		// putsvsv("Trying to read from task ", prod_task, " at address ", prod_addr);
+		// printf("Trying to read from task %x at address %x\n", prod_task, prod_addr);
 
 		/* Test if the producer task is not allocated */
 		if(prod_addr == -1){
 			/* Task is blocked until its a TASK_RELEASE packet */
 			sched_block(current);
-
-			return false;
+			schedule_after_syscall = 1;
+			return -EAGAIN;
 		}
 
-		// printf("Readpipe: trying to read from task %d with address %d\n", prod_task, prod_addr);
-		
+		// printf("Readpipe: trying to read from task %x with address %x\n", prod_task, prod_addr);
+
 	} else {
 		/* Synced READ, must see what applications have data available for it */
 		data_av_t *data_av = data_av_peek(current);
@@ -312,8 +317,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			/* Block task and wait for DATA_AV packet */
 			sched_set_wait_data_av(current);
 			schedule_after_syscall = 1;
-
-			return false;
+			return -EAGAIN;
 		}
 
 		prod_task = data_av->requester;
@@ -329,10 +333,6 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 			pending_msg_t *msg = pending_msg_search(cons_task);
 	
 			/* Store it like a MESSAGE_DELIVERY */
-			if(!msg_ptr){
-				printf("ERROR: msg_ptr is null\n");
-				return false;
-			}
 			message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 			
 			// putsv("Message length is ", msg->size);
@@ -353,7 +353,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 				data_av_insert(current, 0x10000000 | MMR_NI_CONFIG, MMR_NI_CONFIG);
 			}
 
-			return true;
+			return 0;
 		} else {
 			// puts("Local producer\n");
 			/* Get the producer TCB */
@@ -361,7 +361,7 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			if(!prod_tcb){
 				puts("ERROR: PROD TCB NOT FOUND ON READPIPE\n");
-				while(true);
+				return -EBADMSG;
 			}
 
 			/* Searches if the message is in PIPE (local producer) */
@@ -373,10 +373,6 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 			} else {
 				/* Message was found in pipe, writes to the consumer page address (local producer) */
-				if(!msg_ptr){
-					printf("ERROR: msg_ptr is null\n");
-					return false;
-				}
 				message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
 				message_t *msg_src = pipe_get_message(pipe);
 
@@ -385,14 +381,16 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 				if(sched_is_waiting_request(prod_tcb))
 					sched_release_wait(prod_tcb);
 
-				return true;
+				return 0;
 			}
 		}
 	} else { /* Remote producer : Sends the message request */
 		// puts("Remote producer\n");
 		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-		if(MMR_DMNI_SEND_ACTIVE)
-			return false;
+		if(MMR_DMNI_SEND_ACTIVE){
+			schedule_after_syscall = true;
+			return -EAGAIN;
+		}
 		
 		if(sync){
 			/* DATA_AV is processed, erase it */
@@ -404,11 +402,14 @@ bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 		// puts("Sent request\n");
 	}
 
+	/* Stores the message pointer to receive */
+	tcb_set_message(current, (message_t*)msg_ptr);
+
 	/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
 	sched_set_wait_delivery(current);
 	schedule_after_syscall = 1;
 
-	return true;
+	return 0;
 }
 
 unsigned int os_get_tick()	
