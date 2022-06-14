@@ -93,9 +93,9 @@ unsigned int os_get_tick();
  * @param deadline Task deadline in cycles
  * @param exec_time Task execution time in cycles
  * 
- * @return True.
+ * @return 0.
  */
-bool os_realtime(unsigned int period, int deadline, unsigned int exec_time);
+int os_realtime(unsigned int period, int deadline, unsigned int exec_time);
 
 /**
  * @brief Calls a syscall from a received message (MESSAGE_DELIVERY)

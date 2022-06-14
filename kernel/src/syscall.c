@@ -49,20 +49,20 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 		case SYS_gettick:
 			ret = os_get_tick();
 			break;
-		case REALTIME:
-			ret = os_realtime(arg2, arg3, arg4);
+		case SYS_realtime:
+			ret = os_realtime(arg1, arg2, arg3);
 			break;
 		case SYS_getlocation:
 			ret = os_get_location();
 			break;
-		case SCALL_BR_SEND_ALL:
-			ret = os_br_send_all(arg2, arg3);
+		case SYS_brall:
+			ret = os_br_send_all(arg1, arg2);
 			break;
-		case SCALL_BR_SEND_TGT:
-			ret = os_br_send_tgt(arg2, arg3, arg4);
+		case SYS_brtgt:
+			ret = os_br_send_tgt(arg1, arg2, arg3);
 			break;
-		case SCALL_MON_PTR:
-			ret = os_mon_ptr((unsigned*)arg2, arg3);
+		case SYS_monptr:
+			ret = os_mon_ptr((unsigned*)arg1, arg2);
 			break;
 		case SYS_close:
 			ret = os_close(arg1);
@@ -417,14 +417,14 @@ unsigned int os_get_tick()
 	return MMR_TICK_COUNTER;	
 }
 
-bool os_realtime(unsigned int period, int deadline, unsigned int exec_time)
+int os_realtime(unsigned int period, int deadline, unsigned int exec_time)
 {
 	tcb_t *current = sched_get_current();
 	sched_real_time_task(current, period, deadline, exec_time);
 
 	schedule_after_syscall = 1;
 
-	return true;
+	return 0;
 }
 
 bool os_kernel_syscall(unsigned int *message, int length)
@@ -511,19 +511,21 @@ int os_br_send_all(uint32_t payload, uint8_t ksvc)
 	int producer = sched_get_current_id();
 	
 	if(producer >> 8 != 0)	/* AppID should be 0 */
-		return 0;
+		return -EINVAL;
 
 	br_packet_t packet;
 	packet.service = ksvc;
 	packet.src_id = producer;
 	packet.payload = payload;
 
-	if(!br_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL))
-		return false;
+	if(!br_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL)){
+		schedule_after_syscall = true;
+		return -EAGAIN;
+	}
 		
 	packet.src_addr = MMR_NI_CONFIG;
 	schedule_after_syscall = os_handle_broadcast(&packet);
-	return true;
+	return 0;
 }
 
 int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
@@ -531,7 +533,7 @@ int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 	int producer = sched_get_current_id();
 	
 	if(producer >> 8 != 0)	/* AppID should be 0 */
-		return 0;
+		return -EINVAL;
 
 	br_packet_t packet;
 	packet.service = ksvc;
@@ -541,10 +543,15 @@ int os_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 	if(target == MMR_NI_CONFIG){
 		packet.src_addr = MMR_NI_CONFIG;
 		schedule_after_syscall = os_handle_broadcast(&packet);
-		return true;
+		return 0;
 	}
 
-	return br_send(&packet, target, BR_SVC_TGT);
+	if(!br_send(&packet, target, BR_SVC_TGT)){
+		schedule_after_syscall = true;
+		return -EAGAIN;
+	}
+
+	return 0;
 }
 
 int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
@@ -552,12 +559,12 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	tcb_t *current = sched_get_current();
 	
 	if(tcb_get_appid(current) != 0)	/* AppID should be 0 */
-		return 1;
+		return -EINVAL;
 
 	unsigned offset = tcb_get_offset(current);
 	if(table == NULL){
 		printf("ERROR: Table is null.\n");
-		return false;
+		return -EINVAL;
 	}
 	table = (unsigned*)((unsigned)table | offset);
 
@@ -611,18 +618,15 @@ int os_write(int file, char *buf, int nbytes)
 {
 	tcb_t *current = sched_get_current();
 
-	if(file != STDOUT_FILENO && file != STDERR_FILENO){
-		// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
-		// _r->_errno = EBADF;
-		return -1;
-	}
+	if(file != STDOUT_FILENO && file != STDERR_FILENO)
+		return -EBADF;
 
 	int id = sched_get_current_id();
 	int addr = MMR_NI_CONFIG;
 
 	if(buf == NULL){
 		printf("ERROR: buffer is null\n");
-		return false;
+		return -EINVAL;
 	}
 
 	buf = (char*)(tcb_get_offset(current) | (unsigned)buf);
@@ -630,7 +634,11 @@ int os_write(int file, char *buf, int nbytes)
 	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
 	fflush(stdout);
 
-	return write(file, buf, nbytes);
+	int rv = write(file, buf, nbytes);
+	if(rv == -1)
+		return -errno;
+
+	return rv;
 }
 
 int os_fstat(int file, struct stat *st)
@@ -645,18 +653,15 @@ int os_fstat(int file, struct stat *st)
 	st = (struct stat*)(tcb_get_offset(current) | (unsigned)st);
 	int ret = fstat(file, st);
 
-	// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
-	// _r->_errno = errno;
+	if(ret == -1)
+		return -errno;
 
 	return ret;
 }
 
 int os_close(int file)
 {
-	// _r = (struct _reent *)(tcb_get_offset(current) | (unsigned)_r);
-	// _r->_errno = EBADF;
-
-	return -1;
+	return -EBADF;
 }
 
 int os_clock_gettime64(struct __timespec64 *ts64, void *tzp)

@@ -16,6 +16,8 @@
 #include "memphis.h"
 #include "services.h"
 
+#include "internal_syscall.h"
+
 void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS])
 {
 	for(int n = 0; n < PKG_N_PE; n++){
@@ -25,9 +27,9 @@ void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS])
 	}
 }
 
-bool monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type)
+int monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type)
 {
-	return !system_call(SCALL_MON_PTR, table, type, 0);
+	return syscall_errno(SYS_monptr, 2, (int)table, type, 0, 0, 0, 0);
 }
 
 void monitor_announce(enum MONITOR_TYPE type)

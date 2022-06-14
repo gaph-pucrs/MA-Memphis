@@ -65,17 +65,23 @@ int memphis_receive_any(message_t *msg)
 
 int memphis_real_time(int period, int deadline, int exec_time)
 {
-	return system_call(REALTIME, period, deadline, exec_time);
+	return __internal_syscall(SYS_realtime, 3, period, deadline, exec_time, 0, 0, 0);
 }
 
 int memphis_br_send_all(uint32_t payload, uint8_t ksvc)
 {
-	while(!system_call(SCALL_BR_SEND_ALL, payload, ksvc, 0));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_brall, 2, payload, ksvc, 0, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
 }
 
 int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 {
-	while(!system_call(SCALL_BR_SEND_TGT, payload, target, ksvc));
-	return 0;
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_brtgt, 3, payload, target, ksvc, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
 }

@@ -26,11 +26,11 @@ enum SYSCALL {
 	SYS_writepipe = 1,
 	SYS_readpipe,
 	SYS_gettick,
-	REALTIME = 5,
+	SYS_realtime = 5,
 	SYS_getlocation = 9,
-	SCALL_BR_SEND_ALL,
-	SCALL_MON_PTR,
-	SCALL_BR_SEND_TGT
+	SYS_brall,
+	SYS_monptr,
+	SYS_brtgt
 };
 
 typedef struct _message {
@@ -53,7 +53,8 @@ int memphis_get_addr();
  * @param msg Pointer to the message structure
  * @param target_id ID of the consumer task
  * 
- * @return 0
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_send(message_t *msg, int target_id);
 
@@ -63,7 +64,8 @@ int memphis_send(message_t *msg, int target_id);
  * @param msg Pointer to the message structure
  * @param target_id ID of the consumer task
  * 
- * @return 0
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_receive(message_t *msg, int source_id);
 
@@ -80,7 +82,8 @@ unsigned memphis_get_tick();
  * @param msg Pointer to the message structure
  * @param target_id ID of the consumer task
  * 
- * @return 0
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_send_any(message_t *msg, int target_id);
 
@@ -89,7 +92,8 @@ int memphis_send_any(message_t *msg, int target_id);
  * 
  * @param msg Pointer to the message structure to store the message
  * 
- * @return 0
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_receive_any(message_t *msg);
 
@@ -116,7 +120,8 @@ int memphis_real_time(int period, int deadline, int exec_time);
  * @param payload Message to send (1 word)
  * @param ksvc Message Kernel Service, used for TGT and ALL (check services.h)
  * 
- * @return 1
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_br_send_all(uint32_t payload, uint8_t ksvc);
 
@@ -127,6 +132,7 @@ int memphis_br_send_all(uint32_t payload, uint8_t ksvc);
  * @param target Target address to send
  * @param ksvc Message Kernel Service, used for TGT and ALL (check services.h)
  * 
- * @return 1
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
 int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);

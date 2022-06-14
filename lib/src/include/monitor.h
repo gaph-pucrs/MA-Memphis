@@ -45,9 +45,10 @@ void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS]);
  * @param table Table to save the data
  * @param type Monitor class type
  * 
- * @return True if table is set
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
  */
-bool monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type);
+int monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type);
 
 /**
  * @brief Broadcast this task as a monitor
