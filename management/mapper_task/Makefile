@@ -37,15 +37,11 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf: $(OBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
-	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET).map -s -o $@ $^
+	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET).map -o $@ $^
 
-$(TARGET).lst: $(TARGET)_debug.elf
+$(TARGET).lst: $(TARGET).elf
 	@printf "${BLUE}Listing task: %s ...${NC}\n" "$(TARGET)"
 	@$(OBJDUMP) -S $< > $@
-
-$(TARGET)_debug.elf: $(OBJ) $(LIBOBJ)
-	@printf "${BLUE}Linking debug task: %s ...${NC}\n" "$(TARGET)"
-	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET)_debug.map -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"

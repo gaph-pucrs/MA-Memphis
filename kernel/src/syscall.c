@@ -621,9 +621,6 @@ int os_write(int file, char *buf, int nbytes)
 	if(file != STDOUT_FILENO && file != STDERR_FILENO)
 		return -EBADF;
 
-	int id = sched_get_current_id();
-	int addr = MMR_NI_CONFIG;
-
 	if(buf == NULL){
 		printf("ERROR: buffer is null\n");
 		return -EINVAL;
@@ -631,10 +628,20 @@ int os_write(int file, char *buf, int nbytes)
 
 	buf = (char*)(tcb_get_offset(current) | (unsigned)buf);
 
-	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
-	fflush(stdout);
 
-	int rv = write(file, buf, nbytes);
+	int rv = 0;
+	if(nbytes == 1 && buf[0] == '\n'){
+		rv = write(file, buf, nbytes);
+	} else {
+		int id = sched_get_current_id();
+		int addr = MMR_NI_CONFIG;
+
+		printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
+		fflush(stdout);
+
+		rv = write(file, buf, nbytes);
+	}
+
 	if(rv == -1)
 		return -errno;
 
