@@ -20,8 +20,8 @@
 int main()
 {
 	printf("Mapper task started at time %d\n", memphis_get_tick());
-	
-	mapper_t mapper;
+
+	static mapper_t mapper;	
 	map_init(&mapper);
 
 	while(true){

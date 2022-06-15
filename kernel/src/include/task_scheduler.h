@@ -325,3 +325,11 @@ unsigned sched_get_waiting_msg(tcb_t *tcb);
  * @param waiting_msg Waiting message status
  */
 void sched_set_waiting_msg(tcb_t *tcb, unsigned waiting_msg);
+
+/**
+ * @brief Checks for stack overflows in current task
+ * 
+ * @return true If overflowed
+ * @return false If everything is ok
+ */
+bool sched_check_stack();

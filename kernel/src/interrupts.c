@@ -29,8 +29,15 @@ tcb_t *os_isr(unsigned int status)
 {
 	MMR_SCHEDULING_REPORT = REPORT_INTERRUPTION;
 
-	if(sched_is_idle())
-		sched_update_slack_time();	
+	if(sched_is_idle()){
+		sched_update_slack_time();
+	} else if(sched_check_stack()){
+		puts("ERROR: TODO");
+		// abort task
+		// schedule after syscall
+		// task terminated
+		return 0;
+	}
 
 	bool call_scheduler = false;
 	/* Check interrupt source */
@@ -72,9 +79,6 @@ tcb_t *os_isr(unsigned int status)
 	}
 
 	call_scheduler |= status & IRQ_SCHEDULER;
-
-	// if(!sched_is_idle())
-	// 	call_scheduler |= tcb_check_stack();
 
 	if(call_scheduler)
 		sched_run();

@@ -36,6 +36,15 @@ bool task_terminated;
 int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned arg6, unsigned arg7, unsigned number)
 {
 	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
+
+	if(sched_check_stack()){
+		puts("ERROR: TODO");
+		// abort task
+		// schedule after syscall
+		// task terminated
+		return 0;
+	}
+
 	schedule_after_syscall = false;
 	task_terminated = false;
 	int ret = 0;

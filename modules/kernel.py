@@ -15,7 +15,7 @@ class Kernel:
 		self.PKG_N_PE_X 			= hw["mpsoc_dimension"][0]
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
-		self.stack_size				= hw["stack_size"]
+		# self.stack_size				= hw["stack_size"]
 
 		self.PKG_N_PE = self.PKG_N_PE_X * self.PKG_N_PE_Y
 
@@ -80,7 +80,7 @@ class Kernel:
 
 		out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
 
-		size = self.__get_txt_size()*4 + self.stack_size + int(out[2])
+		size = self.__get_txt_size()*4 + int(out[2])# + self.stack_size
 					
 		print("\n******************* Kernel page size report *******************")
 		if size <= self.PKG_PAGE_SIZE*1024:

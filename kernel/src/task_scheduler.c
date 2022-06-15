@@ -433,3 +433,8 @@ void sched_set_waiting_msg(tcb_t *tcb, unsigned waiting_msg)
 {
 	tcb->scheduler.waiting_msg = waiting_msg;
 }
+
+bool sched_check_stack()
+{
+	return (tcb_get_sp(current) < tcb_get_heap_end(current));
+}

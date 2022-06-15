@@ -28,7 +28,7 @@ class Scenario:
 		tc_yaml = safe_load(open("{}/{}.yaml".format(self.testcase_path, tc_name), "r"))
 		self.max_tasks_app	= tc_yaml["sw"]["max_tasks_app"]
 		self.page_size		= tc_yaml["hw"]["page_size_KB"]*1024
-		self.stack_size		= tc_yaml["hw"]["stack_size"]
+		# self.stack_size		= tc_yaml["hw"]["stack_size"]
 
 		self.management = Management(yaml["management"], self.platform_path, self.testcase_path)
 
@@ -87,9 +87,11 @@ class Scenario:
 		for app in self.applications:
 			self.applications[app].check_count(self.max_tasks_app)
 
-		self.management.check_size(self.page_size, self.stack_size)
+		# self.management.check_size(self.page_size, self.stack_size)
+		self.management.check_size(self.page_size, 0)
 		for app in self.applications:
-			self.applications[app].check_size(self.page_size, self.stack_size)
+			self.applications[app].check_size(self.page_size, 0)
+			# self.applications[app].check_size(self.page_size, self.stack_size)
 
 		self.management.generate_repo(self.base_dir)
 
