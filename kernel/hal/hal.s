@@ -100,11 +100,28 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 	# If scheduled task was 'idle', no need to save minimum context
 	# And is obviously an interruption because idle cant call
 	# When interrupting idle, there is no need to save context
-	beqz	s0, isr_entry
+	bnez	s0, save_minimum
+	addi	sp, sp, 8	# Pop s0 and gp from stack
+	j 		isr_entry
 
-	# Else, if running task, save some registers to let the kernel use
-	sw		t0, 12(s0)
-	sw		t1, 16(s0)
+save_minimum:
+	# Else, if running task, save some registers
+	sw		ra,  0(s0) # Despite being caller-saved, ra needs to be saved in syscall
+	
+	sw		t0, 12(s0) # Save t0 to allow kernel to use it
+	sw		t1, 16(s0) # Save t1 to allow kernel to use it
+	sw		t2, 20(s0) # Save t2 to allow kernel to use it
+
+	csrr	t0, mscratch	# Load sp that is in mscratch
+	sw		t0,  4(s0)		# Save sp to allow stack check by kernel
+
+	lw 		t1,  4(sp)
+	sw		t1,  8(s0) # Save gp that is in stack
+
+	lw		t2,  0(sp)
+	sw		t2, 24(s0) # Save s0 that is in stack
+
+	addi	sp, sp, 8  # Pop s0 and gp from stack
 	
 	# Check if it was ecall
 	csrr	t0, mcause					# Load mcause
@@ -112,9 +129,9 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 	and		t1, t1, t0					# t1 = mcause AND interrupt mask
 	bnez	t1, intr_handler			# If INTR mask is true, jump to interrupt handler
 
-	li 		t1, ECALL_MASK				# Bit 3 (ecall)
-	and 	t1, t1, t0					# t1 = mcause AND ecall mask
-	bnez	t1, ecall_handler			# If ECALL mask is true, jump to ecall handler
+	li 		t2, ECALL_MASK				# Bit 3 (ecall)
+	and 	t2, t2, t0					# t2 = mcause AND ecall mask
+	bnez	t2, ecall_handler			# If ECALL mask is true, jump to ecall handler
 	
 	# If its neither interrupt not ecall, it is exception
 	# We can lose the context here.
@@ -134,22 +151,14 @@ intr_handler:
 	# So it is needed to save the caller-registers, because the callee-registers 
 	# are saved by the ABI
 	# To ease the migration process, save ALL, and not just callee registers
-	sw		 ra,  0(s0)
 
-	csrr	 t0, mscratch	# Load the sp that is in the mscratch
-	sw		 t0,  4(s0)		# Save sp to current
-
-	# s0, t0, t1, and gp are in stack. Load them and save to current.
-	lw		 t0,  4(sp) # Task gp
-	sw		 t0,  8(s0)
-	
-	# t0 already saved
-	# t1 already saved
-	sw		 t2, 20(s0)
-
-	lw		 t0,  0(sp)	# Task s0
-	sw		 t0, 24(s0)
-
+	# ra is already saved
+	# sp is already saved
+	# gp is already saved
+	# t0 is already saved
+	# t1 is already saved
+	# t2 is already saved
+	# s0 is already saved
 	sw		 s1, 28(s0)
 	sw		 a0, 32(s0)
 	sw		 a1, 36(s0)
@@ -178,9 +187,6 @@ intr_handler:
 	sw		 t0, PC_ADDR(s0)	# Save the PC to current
 
 isr_entry:
-	# Pop gp and s0 from stack
-	addi	sp, sp, 8
-
 	# JUMP TO INTERRUPT SERVICE ROUTINE WITH ARGS
 	li		t0, MMR_ADDR	 # HW Address base
 	lw		t1, 0x20(t0)     # IRQ_STATUS
@@ -239,18 +245,14 @@ restore_minimum:
 	lw		 t4,108(a0)
 	lw		 t5,112(a0)
 	lw		 t6,116(a0)
-	# No need to restore remaining s registers. ABI takes care of this.
+	# No need to restore remaining registers. ABI takes care of this.
 
 	lw		 a0, 32(a0)
 
 	mret
 
 ecall_handler:
-	addi	 sp, sp, -4
-	sw		 ra, 0(sp)
 	jal		 os_syscall
-	lw		 ra, 0(sp)
-	addi	 sp, sp, 4
 
 	lw		 t0, current	# Load current tcb to t0
 	
@@ -261,18 +263,14 @@ ecall_handler:
 
 	# Otherwise it is needed to save the previous task (s0) context
 	# As syscall is CALLED, only save the callee-registers
-	# ATTENTION: SAVE a0 TOO, BECAUSE IT HOLDS THE SYSCALL RETURN VALUE	
-	csrr	 t1, mscratch	# Task sp is in mscratch
-	sw		 t1,  4(s0)
-	
-	lw		 t1,  4(sp)		# Task gp is in stack
-	sw		 t1,  8(s0)
 
-	lw		 t1,  0(sp)		# Task s0 is in stack
-	sw		 t1, 24(s0)
-
+	# ra is already saved
+	# sp is already saved
+	# gp is already saved
+	# t0-t2 are already saved despite not being needed
+	# s0 is already saved
 	sw		 s1, 28(s0)
-	sw		 a0, 32(s0)
+	sw		 a0, 32(s0)	# ATTENTION: SAVE a0 TOO, BECAUSE IT HOLDS THE SYSCALL RETURN VALUE	
 	sw		 s2, 64(s0)
 	sw		 s3, 68(s0)
 	sw		 s4, 72(s0)
@@ -288,7 +286,6 @@ ecall_handler:
 	sw		 t1, PC_ADDR(s0)
 
 restore_complete:
-	addi	 sp, sp, 8		# Pop 8 bytes from stack
 	csrw	 mscratch, sp	# Save kernel sp
 
 	# If the idle task was scheduled, no need to restore the context
@@ -299,8 +296,8 @@ restore_complete:
 	lw		 t1, PC_ADDR(t0)
 	csrw	 mepc, t1			# Load task PC
 
-	lw		 t1, OFF_ADDR(t0)
-	csrw	 mrar, t1			# Load task offset
+	lw		 t2, OFF_ADDR(t0)
+	csrw	 mrar, t2			# Load task offset
 
 	lw		 ra,  0(t0)
 	lw		 sp,  4(t0)
@@ -338,13 +335,15 @@ restore_complete:
 	mret
 
 ecall_return:
-	# Restore minimum context from stack
-	lw		 s0,  0(sp)
-	lw		 gp,  4(sp)
+	# Restore minimum context
+	lw		 ra,  0(s0)			# Despite being caller-saved, syscall needs to restore ra
+	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp, faster than loading from memory
+	lw		 gp,  8(s0)
+	lw		 s0, 24(s0)			# Only restore s0 because we changed
+	# Remaining registers are taken care by the ABI
 
-	addi	 sp, sp, 8	# Pop 8 bytes from stack
-
-	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp
+	# Ideally we should 0 every temporary register to avoid data leak, but we are not doing this
+	# for performance reasons
 
 	mret
 
@@ -363,12 +362,3 @@ idle_entry:
 idle:
 	sw		zero, 0(a0)
 	j		idle
-
-.globl system_call
-system_call:
-   ret
-
-.section .rodata		# Constants
-.align 4
-.globl _has_priv	# Set available for 'extern'
-_has_priv: .4byte 1

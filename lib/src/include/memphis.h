@@ -38,8 +38,6 @@ typedef struct _message {
 	unsigned int payload[PKG_MAX_MSG_SIZE];
 } message_t;
 
-extern int system_call();
-
 /**
  * @brief Gets the PE address of the runnning task
  * 
