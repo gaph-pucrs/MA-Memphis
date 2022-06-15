@@ -73,16 +73,18 @@ tcb_t *os_isr(unsigned int status)
 
 	call_scheduler |= status & IRQ_SCHEDULER;
 
-	if(call_scheduler){
+	// if(!sched_is_idle())
+	// 	call_scheduler |= tcb_check_stack();
+
+	if(call_scheduler)
 		sched_run();
-	} else if(sched_is_idle()){
+	
+	if(sched_is_idle()){
 		sched_update_idle_time();
 
 		MMR_SCHEDULING_REPORT = REPORT_IDLE;
-
 	} else {
 		MMR_SCHEDULING_REPORT = sched_get_current_id();
-
 	}
 
     /* Runs the scheduled task */
