@@ -103,18 +103,14 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 	beqz	s0, isr_entry
 
 	# Else, if running task, save some registers to let the kernel use
-	addi	sp, sp, -8
-	sw		t1, 4(sp)
-	sw		t0, 0(sp)
+	sw		t0, 12(s0)
+	sw		t1, 16(s0)
 	
 	# Check if it was ecall
 	csrr	t0, mcause					# Load mcause
 	li		t1, INTR_MASK				# Bit 31 (interrupt)
 	and		t1, t1, t0					# t1 = mcause AND interrupt mask
 	bnez	t1, intr_handler			# If INTR mask is true, jump to interrupt handler
-
-	# Exceptions: don't need to keep context, pop part of the stack
-	addi	 sp, sp, 8		# Pop t0 and t1
 
 	li 		t1, ECALL_MASK				# Bit 3 (ecall)
 	and 	t1, t1, t0					# t1 = mcause AND ecall mask
@@ -144,16 +140,11 @@ intr_handler:
 	sw		 t0,  4(s0)		# Save sp to current
 
 	# s0, t0, t1, and gp are in stack. Load them and save to current.
-	lw		 t0, 12(sp) # Task gp
+	lw		 t0,  4(sp) # Task gp
 	sw		 t0,  8(s0)
 	
-	lw		 t0,  0(sp)	# Task t0
-	sw		 t0, 12(s0)
-
-	lw		 t0,  4(sp)	# Task t1
-	sw		 t0, 16(s0)
-	addi	 sp, sp, 8	# Pop t0 and t1. s0 and gp will be popped later
-
+	# t0 already saved
+	# t1 already saved
 	sw		 t2, 20(s0)
 
 	lw		 t0,  0(sp)	# Task s0
