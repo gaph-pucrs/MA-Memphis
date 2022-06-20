@@ -69,22 +69,11 @@ tcb_t *hal_exception_handler(unsigned cause, unsigned value, unsigned pc)
 			printf("ERROR: Unknown exception %x\n", cause);
 			break;
 	}
+
 	tcb_t *current = sched_get_current();
 	if(current){
 		printf("Task id %d aborted with cause %d\n", tcb_get_id(current), cause);
-
-		/* Send TASK_ABORTED */
-		tl_send_aborted(current);
-
-		/* Clear task from monitor tables */
-		llm_clear_table(current);
-
-		MMR_TASK_TERMINATED = current->id;
-
-		sched_clear(current);
-
-		tcb_clear(current);
-
+		tcb_abort_task(current);
 		sched_run();
 	}
 

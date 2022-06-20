@@ -436,5 +436,6 @@ void sched_set_waiting_msg(tcb_t *tcb, unsigned waiting_msg)
 
 bool sched_check_stack()
 {
+	// printf("Checking stack pointer %u against heap %d\n", tcb_get_sp(current), tcb_get_heap_end(current));
 	return (tcb_get_sp(current) < tcb_get_heap_end(current));
 }

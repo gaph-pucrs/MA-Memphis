@@ -309,3 +309,17 @@ void tcb_set_brk(tcb_t *tcb, unsigned incr);
  * @param tcb Pointer to the TCB to terminate
  */
 void tcb_terminate(tcb_t *tcb);
+
+/**
+ * @brief Aborts a task
+ * 
+ * @param tcb Pointer to the TCB to terminate
+ */
+void tcb_abort_task(tcb_t *tcb);
+
+/**
+ * @brief Cleans up a terminated (exited or aborted) task
+ * 
+ * @param tcb Pointer to the TCB to terminate
+ */
+void tcb_cleanup(tcb_t *tcb);

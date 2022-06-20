@@ -29,15 +29,8 @@ tcb_t *os_isr(unsigned int status)
 {
 	MMR_SCHEDULING_REPORT = REPORT_INTERRUPTION;
 
-	if(sched_is_idle()){
+	if(sched_is_idle())
 		sched_update_slack_time();
-	} else if(sched_check_stack()){
-		puts("ERROR: TODO");
-		// abort task
-		// schedule after syscall
-		// task terminated
-		return 0;
-	}
 
 	bool call_scheduler = false;
 	/* Check interrupt source */
@@ -70,12 +63,26 @@ tcb_t *os_isr(unsigned int status)
 		if(packet)
 			call_scheduler = os_handle_pkt(packet);
 		
-	} else if(status & IRQ_SLACK_TIME){
-		/* Send a monitoring packet */
+	} else {
+		if(status & IRQ_SLACK_TIME){
+			/* Send a monitoring packet */
 
-		/** @todo Send to whom? */
-		// sched_report_slack_time();
-		MMR_SLACK_TIME_MONITOR = 0;
+			/** @todo Send to whom? */
+			// sched_report_slack_time();
+			MMR_SLACK_TIME_MONITOR = 0;
+		}
+
+		/* Only check stack if scheduling interrupt and no message treated in this interrupt */
+		if(
+			(status & IRQ_SCHEDULER) &&
+			!sched_is_idle() &&
+			sched_check_stack()
+		){
+			tcb_t *current = sched_get_current();
+			printf("Task id %d aborted due to stack overflow\n", tcb_get_id(current));
+
+			tcb_abort_task(current);
+		}
 	}
 
 	call_scheduler |= status & IRQ_SCHEDULER;

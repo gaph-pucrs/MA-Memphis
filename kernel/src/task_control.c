@@ -218,12 +218,22 @@ void tcb_set_brk(tcb_t *tcb, unsigned addr)
 
 void tcb_terminate(tcb_t *tcb)
 {
-	/* Avoid terminating a task with a message being sent */
-	while(MMR_DMNI_SEND_ACTIVE);
-
 	/* Send TASK_TERMINATED */
 	tl_send_terminated(tcb);
 
+	tcb_cleanup(tcb);
+}
+
+void tcb_abort_task(tcb_t *tcb)
+{
+	/* Send TASK_ABORTED */
+	tl_send_aborted(tcb);
+
+	tcb_cleanup(tcb);
+}
+
+void tcb_cleanup(tcb_t *tcb)
+{
 	/* Clear task from monitor tables */
 	llm_clear_table(tcb);
 
@@ -231,5 +241,5 @@ void tcb_terminate(tcb_t *tcb)
 
 	sched_clear(tcb);
 
-	tcb_clear(tcb);
+	tcb_clear(tcb);	
 }

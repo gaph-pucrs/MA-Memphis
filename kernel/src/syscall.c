@@ -37,67 +37,70 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 {
 	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
 
-	if(sched_check_stack()){
-		puts("ERROR: TODO");
-		// abort task
-		// schedule after syscall
-		// task terminated
-		return 0;
-	}
-
+	int ret = 0;
 	schedule_after_syscall = false;
 	task_terminated = false;
-	int ret = 0;
-	switch(number){
-		case SYS_writepipe:
-			ret = os_writepipe(arg1, arg2, arg3);
-			break;
-		case SYS_readpipe:
-			ret = os_readpipe(arg1, arg2, arg3);
-			break;
-		case SYS_gettick:
-			ret = os_get_tick();
-			break;
-		case SYS_realtime:
-			ret = os_realtime(arg1, arg2, arg3);
-			break;
-		case SYS_getlocation:
-			ret = os_get_location();
-			break;
-		case SYS_brall:
-			ret = os_br_send_all(arg1, arg2);
-			break;
-		case SYS_brtgt:
-			ret = os_br_send_tgt(arg1, arg2, arg3);
-			break;
-		case SYS_monptr:
-			ret = os_mon_ptr((unsigned*)arg1, arg2);
-			break;
-		case SYS_close:
-			ret = os_close(arg1);
-			break;
-		case SYS_write:
-			ret = os_write(arg1, (char*)arg2, arg3);
-			break;
-		case SYS_fstat:
-			ret = os_fstat(arg1, (struct stat*)arg2);
-			break;
-		case SYS_exit:
-			ret = os_exit(arg1);
-			break;
-		case SYS_getpid:
-			ret = os_getpid();
-			break;
-		case SYS_brk:
-			ret = os_brk((void*)arg1);
-			break;
-		case SYS_clock_gettime64:
-			ret = os_clock_gettime64((struct __timespec64*)arg2, (void*)arg1);
-			break;
-		default:
-			printf("ERROR: Unknown syscall %x\n", number);
-			ret = 0;
-			break;
+
+	if(sched_check_stack()){
+		tcb_t *current = sched_get_current();
+		printf("Task id %d aborted due to stack overflow\n", tcb_get_id(current));
+
+		tcb_abort_task(current);
+
+		schedule_after_syscall = true;
+		task_terminated = true;
+	} else {
+		switch(number){
+			case SYS_writepipe:
+				ret = os_writepipe(arg1, arg2, arg3);
+				break;
+			case SYS_readpipe:
+				ret = os_readpipe(arg1, arg2, arg3);
+				break;
+			case SYS_gettick:
+				ret = os_get_tick();
+				break;
+			case SYS_realtime:
+				ret = os_realtime(arg1, arg2, arg3);
+				break;
+			case SYS_getlocation:
+				ret = os_get_location();
+				break;
+			case SYS_brall:
+				ret = os_br_send_all(arg1, arg2);
+				break;
+			case SYS_brtgt:
+				ret = os_br_send_tgt(arg1, arg2, arg3);
+				break;
+			case SYS_monptr:
+				ret = os_mon_ptr((unsigned*)arg1, arg2);
+				break;
+			case SYS_close:
+				ret = os_close(arg1);
+				break;
+			case SYS_write:
+				ret = os_write(arg1, (char*)arg2, arg3);
+				break;
+			case SYS_fstat:
+				ret = os_fstat(arg1, (struct stat*)arg2);
+				break;
+			case SYS_exit:
+				ret = os_exit(arg1);
+				break;
+			case SYS_getpid:
+				ret = os_getpid();
+				break;
+			case SYS_brk:
+				ret = os_brk((void*)arg1);
+				break;
+			case SYS_clock_gettime64:
+				ret = os_clock_gettime64((struct __timespec64*)arg2, (void*)arg1);
+				break;
+			default:
+				printf("ERROR: Unknown syscall %x\n", number);
+				ret = 0;
+				break;
+		}
 	}
 
 	if(schedule_after_syscall)
