@@ -425,7 +425,7 @@ void MAInjector::rcv_packet(){
 			break;
 		case RCV_PAYLOAD_SIZE:
 			if(rx.read() && sig_credit_out.read()){
-				payload_size = data_in.read();
+				payload_size = data_in.read() & 0x00FFFFFF;
 				flit_counter = 0;
 				rcv_pkt_state = RCV_SERVICE;
 				// std::cout << "MAInjector: received payload size = " << payload_size << std::endl;

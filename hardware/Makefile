@@ -13,6 +13,9 @@ INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 VHDC = vcom
 VHDFLAGS = -2008
 
+VLOGC = vlog
+#VLOGFLAGS = 
+
 CXX = sccom
 CXXFLAGS = -nologo -Wall -O2 -std=c++11 -g $(INCLUDE)
 
@@ -41,6 +44,7 @@ vhd:
 	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_buffer.vhd
 	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_crossbar.vhd
 	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_switchcontrol.vhd
+	@$(VLOGC) -quiet -work $(LIB) $(VLOGCFLAGS) +acc=rwc sv/PacketFilter.sv
 	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/RouterCC.vhd
 
 vmap: vlib

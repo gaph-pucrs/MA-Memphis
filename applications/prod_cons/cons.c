@@ -17,11 +17,12 @@ int main()
 	int i;
 	unsigned int time[PROD_CONS_ITERATIONS];
 
-	puts("Inicio da aplicacao cons\n");
+	printf("Inicio da aplicacao cons %d\n", PROD_CONS_ITERATIONS);
 
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
 		memphis_receive(&msg, prod);
 		time[i] = memphis_get_tick();
+        printf("Rcv %d\n", i);
 	}
 
 

@@ -275,7 +275,8 @@ void DMNI::receive()
 
 			case PAYLOAD:
 				is_header[last.read()] = 0;
-				payload_size.write(data_in.read() - 1);
+				//payload_size.write(data_in.read() - 1);
+				payload_size.write((data_in.read() & 0x00FFFFFF) - 1);
 				SR.write(DATA);
 			break;
 

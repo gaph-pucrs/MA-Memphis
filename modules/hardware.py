@@ -11,7 +11,13 @@ class Hardware:
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
 
-		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1) # 1 page for kernel
+		self.filterEnable           = hw["filter_enable"]
+		if isinstance(self.filterEnable, bool):
+				self.filterEnable = [self.filterEnable for i in range(0, PKG_N_PE_X*PKG_N_PE_Y)]
+
+		self.timeoutMax             = hw["timeout_max"]
+
+		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1)  # 1 page for kernel
 
 		self.PKG_N_PE = self.PKG_N_PE_X * self.PKG_N_PE_Y
 
@@ -51,6 +57,9 @@ class Hardware:
 		definitions.define("NUMBER_PROCESSORS_X", str(self.PKG_N_PE_X))
 		definitions.define("NUMBER_PROCESSORS_Y", str(self.PKG_N_PE_Y))
 		definitions.define("NUMBER_PROCESSORS", str(self.PKG_N_PE))
+
+		definitions.define("FILTER_ENABLE", "(" + "".join([str(en) + ", " if i != len(self.filterEnable)-1 else str(en) for i, en in enumerate(self.filterEnable)]) + ")", "boolean_vector(0 to NUMBER_PROCESSORS_X*NUMBER_PROCESSORS_Y - 1)")
+		definitions.define("TIMEOUT_MAX", str(self.timeoutMax))
 
 		definitions.write(self.testcase_path+"/hardware/src/hemps_pkg.vhd")
 
@@ -111,13 +120,16 @@ class PkgDefinitions:
 		self.lines.append("use IEEE.Std_Logic_1164.all;\n")
 		self.lines.append("use IEEE.std_logic_unsigned.all;\n")
 		self.lines.append("use IEEE.std_logic_arith.all;\n")
-		self.lines.append("package hemps_pkg is\n")
+		self.lines.append("package hemps_pkg is\n\n")
 
-	def define(self, key, value):
-		self.lines.append("constant {} : integer := {};\n".format(key, value))
+	#def define(self, key, value):
+	#	self.lines.append("constant {} : integer := {};\n".format(key, value))
+
+	def define(self, key, value, value_type = "integer"):
+		self.lines.append("    constant {} : {} := {};\n".format(key, value_type, value))
 
 	def write(self, path):
-		self.lines.append("end hemps_pkg;\n")
+		self.lines.append("\nend hemps_pkg;\n")
 		file = open(path, "w")
 		file.writelines(self.lines)
 		file.close()

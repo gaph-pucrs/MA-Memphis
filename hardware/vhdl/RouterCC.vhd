@@ -54,39 +54,61 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use work.standards.all;
+use work.hemps_pkg.all;
 use ieee.std_logic_arith;
 use IEEE.std_logic_textio.all;
 use std.textio.all;
 use IEEE.NUMERIC_STD.all;
 
 entity RouterCC is
-generic( address: regmetadeflit);
-port(
+
+    generic(
+        address: regmetadeflit;
+        EnablePacketFilter: boolean := FILTER_ENABLE(RouterIndex(address));
+        XMax: regquartoflit := std_logic_vector(to_unsigned(NUMBER_PROCESSORS_X, QUARTOFLIT));
+        YMax: regquartoflit := std_logic_vector(to_unsigned(NUMBER_PROCESSORS_Y, QUARTOFLIT));
+        TimeoutMax: integer := TIMEOUT_MAX
+    );
+
+    port(
         clock:     in  std_logic;
         reset:     in  std_logic;
+        --clock_rx:  in  regNport;
         rx:        in  regNport;
         data_in:   in  arrayNport_regflit;
         credit_o:  out regNport;    
+        --clock_tx:  out regNport;
         tx:        out regNport;
         data_out:  out arrayNport_regflit;
-        credit_i:  in  regNport);
+        credit_i:  in  regNport
+    );
+
 end RouterCC;
 
 architecture RouterCC of RouterCC is
 
-signal h, ack_h, data_av, sender, data_ack: regNport := (others=>'0');
-signal data: arrayNport_regflit := (others=>(others=>'0'));
-signal mux_in, mux_out: arrayNport_reg3 := (others=>(others=>'0'));
-signal free: regNport := (others=>'0');
+    signal h, ack_h, data_av, sender, data_ack: regNport := (others=>'0');
+    signal data: arrayNport_regflit := (others=>(others=>'0'));
+    signal mux_in, mux_out: arrayNport_reg3 := (others=>(others=>'0'));
+    signal free: regNport := (others=>'0');
 
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
--- Remova esse sinal quando for fazer a synthesis.
--- Esse signal foi utilizado para enviar o valor do credit_o dos Hermes_buffer
--- para o hardware traffic_monit.
--- Sendo assim, é necessário fazer o Replace de credit_o_sig para credit_o, 
--- que corresponde a porta de saída do RouterCC.
-signal credit_o_sig :                           regNport := (others=>'0');
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    signal packetFilterDataOut: regflit;
+    signal packetFilterTx: std_logic;
+    signal packetFilterCreditI: std_logic;
+
+    signal localBufferDataIn: regflit;
+    signal localBufferRx: std_logic;
+    signal localBufferCreditO: std_logic;
+
+    --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    -- Remova esse sinal quando for fazer a synthesis.
+    -- Esse signal foi utilizado para enviar o valor do credit_o dos Hermes_buffer
+    -- para o hardware traffic_monit.
+    -- Sendo assim, é necessário fazer o Replace de credit_o_sig para credit_o, 
+    -- que corresponde a porta de saída do RouterCC.
+    signal credit_o_sig: regNport := (others=>'0');
+    --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 begin
 
       credit_o <= credit_o_sig;
@@ -107,78 +129,129 @@ begin
 		--   end generate traffic_router;
 -- --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 
-        FEast : Entity work.Hermes_buffer
-        port map(
+        FEast: entity work.Hermes_buffer
+
+            port map(
                 clock => clock,
                 reset => reset,
-                data_in => data_in(0),
-                rx => rx(0),
-                h => h(0),
-                ack_h => ack_h(0),
-                data_av => data_av(0),
-                data => data(0),
-                sender => sender(0),
-                data_ack => data_ack(0),
-                credit_o => credit_o_sig(0));
+                data_in => data_in(EAST),
+                rx => rx(EAST),
+                h => h(EAST),
+                ack_h => ack_h(EAST),
+                data_av => data_av(EAST),
+                data => data(EAST),
+                sender => sender(EAST),
+                data_ack => data_ack(EAST),
+                credit_o => credit_o_sig(EAST)
+            );
 
-        FWest : Entity work.Hermes_buffer
-        port map(
+        FWest: entity work.Hermes_buffer
+
+            port map(
                 clock => clock,
                 reset => reset,
-                data_in => data_in(1),
-                rx => rx(1),
-                h => h(1),
-                ack_h => ack_h(1),
-                data_av => data_av(1),
-                data => data(1),
-                sender => sender(1),
-                data_ack => data_ack(1),
-                credit_o => credit_o_sig(1));
+                data_in => data_in(WEST),
+                rx => rx(WEST),
+                h => h(WEST),
+                ack_h => ack_h(WEST),
+                data_av => data_av(WEST),
+                data => data(WEST),
+                sender => sender(WEST),
+                data_ack => data_ack(WEST),
+                credit_o => credit_o_sig(WEST)
+            );
 
-        FNorth : Entity work.Hermes_buffer
-        port map(
+        FNorth: entity work.Hermes_buffer
+
+            port map(
                 clock => clock,
                 reset => reset,
-                data_in => data_in(2),
-                rx => rx(2),
-                h => h(2),
-                ack_h => ack_h(2),
-                data_av => data_av(2),
-                data => data(2),
-                sender => sender(2),
-                data_ack => data_ack(2),
-                credit_o => credit_o_sig(2));
+                data_in => data_in(NORTH),
+                rx => rx(NORTH),
+                h => h(NORTH),
+                ack_h => ack_h(NORTH),
+                data_av => data_av(NORTH),
+                data => data(NORTH),
+                sender => sender(NORTH),
+                data_ack => data_ack(NORTH),
+                credit_o => credit_o_sig(NORTH)
+            );
 
-        FSouth : Entity work.Hermes_buffer
-        port map(
+        FSouth: entity work.Hermes_buffer
+
+            port map(
                 clock => clock,
                 reset => reset,
-                data_in => data_in(3),
-                rx => rx(3),
-                h => h(3),
-                ack_h => ack_h(3),
-                data_av => data_av(3),
-                data => data(3),
-                sender => sender(3),
-                data_ack => data_ack(3),
-                credit_o => credit_o_sig(3));
+                data_in => data_in(SOUTH),
+                rx => rx(SOUTH),
+                h => h(SOUTH),
+                ack_h => ack_h(SOUTH),
+                data_av => data_av(SOUTH),
+                data => data(SOUTH),
+                sender => sender(SOUTH),
+                data_ack => data_ack(SOUTH),
+                credit_o => credit_o_sig(SOUTH)
+            );
 
-        FLocal : Entity work.Hermes_buffer
-        port map(
+        FLocal: entity work.Hermes_buffer
+
+            port map(
                 clock => clock,
                 reset => reset,
-                data_in => data_in(4),
-                rx => rx(4),
-                h => h(4),
-                ack_h => ack_h(4),
-                data_av => data_av(4),
-                data => data(4),
-                sender => sender(4),
-                data_ack => data_ack(4),
-                credit_o => credit_o_sig(4));
+                --data_in => data_in(LOCAL),
+                --rx => rx(LOCAL),
+                data_in => localBufferDataIn,
+                rx => localBufferRx,
+                h => h(LOCAL),
+                ack_h => ack_h(LOCAL),
+                data_av => data_av(LOCAL),
+                data => data(LOCAL),
+                sender => sender(LOCAL),
+                data_ack => data_ack(LOCAL),
+                --credit_o => credit_o_sig(LOCAL)
+                credit_o => localBufferCreditO
+            );
 
-        SwitchControl : Entity work.SwitchControl(XY)
-        port map(
+        PacketFilterGen: if EnablePacketFilter generate
+
+            PacketFilter: entity work.PacketFilter
+
+                generic map(
+                    XMax => XMax,
+                    YMax => YMax,
+                    TimeoutMax => TimeoutMax
+                )
+
+                port map(
+                    clk => clock,
+                    reset => reset,
+                    data_in => data_in(LOCAL),
+                    rx => rx(LOCAL),
+                    --credit_o => credit_o(LOCAL),
+                    credit_o => credit_o_sig(LOCAL),
+                    data_out => packetFilterDataOut,
+                    tx => packetFilterTx,
+                    --credit_i => localBufferCreditO
+                    credit_i => packetFilterCreditI
+                );
+                
+                localBufferDataIn <= packetFilterDataOut;
+                localBufferRx <= packetFilterTx;
+                packetFilterCreditI <= localBufferCreditO;
+
+        end generate;
+
+        NoPacketFilter: if not EnablePacketFilter generate
+
+            localBufferDataIn <= data_in(LOCAL);
+            localBufferRx <= rx(LOCAL);
+            credit_o_sig(LOCAL) <= localBufferCreditO;
+
+        end generate;
+
+        SwitchControl: entity work.SwitchControl(XY)
+
+            port map(
                 clock => clock,
                 reset => reset,
                 h => h,
@@ -188,10 +261,12 @@ begin
                 sender => sender,
                 free => free,
                 mux_in => mux_in,
-                mux_out => mux_out);
+                mux_out => mux_out
+            );
 
-        CrossBar : Entity work.Hermes_crossbar
-        port map(
+        CrossBar: entity work.Hermes_crossbar
+
+            port map(
                 data_av => data_av,
                 data_in => data,
                 data_ack => data_ack,
@@ -201,6 +276,11 @@ begin
                 tab_out => mux_out,
                 tx => tx,
                 data_out => data_out,
-                credit_i => credit_i);
+                credit_i => credit_i
+            );
+
+        --CLK_TX: for i in 0 to(NPORT-1) generate
+        --    clock_tx(i) <= clock;
+        --end generate CLK_TX;  
 
 end RouterCC;

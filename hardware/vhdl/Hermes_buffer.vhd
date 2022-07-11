@@ -67,7 +67,8 @@ signal EA : fila_out;
 signal buf: buff := (others=>(others=>'0'));
 signal first,last: pointer := (others=>'0');
 signal tem_espaco: std_logic := '0';
-signal counter_flit: regflit := (others=>'0');
+--signal counter_flit: regflit := (others=>'0');
+signal counter_flit: std_logic_vector(23 downto 0) := (others=>'0');
 
 begin
 
@@ -192,7 +193,8 @@ begin
                                 when S_PAYLOAD =>
                                         if data_ack = '1' and counter_flit /= x"1" then -- confirma��o do envio de um dado que n�o � o tail
                                                 -- se counter_flit � zero indica recep��o do size do payload
-                                                if counter_flit = x"0" then    counter_flit <=  buf(CONV_INTEGER(first));
+                                                --if counter_flit = x"0" then    counter_flit <=  buf(CONV_INTEGER(first));
+                                                if counter_flit = x"0" then    counter_flit <=  buf(CONV_INTEGER(first))(23 downto 0);
                                                 else counter_flit <= counter_flit - 1;
                                                 end if;
 

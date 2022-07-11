@@ -49,6 +49,7 @@ tcb_t *os_isr(unsigned int status)
 			call_scheduler |= os_handle_broadcast(&br_packet);
 		}
 	} else if(status & IRQ_NOC){
+        // printf("intr from noc\n");
 		volatile packet_t packet; 
 		pkt_read(&packet);
 
@@ -124,33 +125,33 @@ bool os_handle_broadcast(br_packet_t *packet)
 
 bool os_handle_pkt(volatile packet_t *packet)
 {
-	tcb_t *raw_receiver = tcb_get_raw_receiver();
+	//tcb_t *raw_receiver = tcb_get_raw_receiver();
 
-	if(raw_receiver != NULL){
-		unsigned *message = (unsigned*)tcb_get_message(raw_receiver);
-		unsigned max_len = tcb_get_raw_length(raw_receiver);
+	//if(raw_receiver != NULL){
+		//unsigned *message = (unsigned*)tcb_get_message(raw_receiver);
+		//unsigned max_len = tcb_get_raw_length(raw_receiver);
 
-		if(packet->payload_size + 2 > max_len){
-			printf("FATAL: Not enough memory in raw receiver. DMNI will hang.\n");
-			while(1);
-		}
+		//if(packet->payload_size + 2 > max_len){
+		//	printf("FATAL: Not enough memory in raw receiver. DMNI will hang.\n");
+			//while(1);
+		//}
 
 		/* Save the 13 flits of already read packet */
-		memcpy(message, (void*)packet, PKT_SIZE*sizeof(unsigned));
+		//memcpy(message, (void*)packet, PKT_SIZE*sizeof(unsigned));
 
-		unsigned remaining = packet->payload_size + 2 - PKT_SIZE;
-		if(remaining)
-			dmni_read(&message[PKT_SIZE], remaining);
+		//unsigned remaining = packet->payload_size + 2 - PKT_SIZE;
+		//if(remaining)
+			//dmni_read(&message[PKT_SIZE], remaining);
 		
-		return true;
-	}
+		//return true;
+	//}
 
 	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
-			// putsv("Packet length is ", packet->msg_lenght);
+			// printf("Packet length is %d\n", packet->msg_length);
 			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_length);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
@@ -301,7 +302,8 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 		if(!cons_tcb){
 			puts("ERROR: CONS TCB NOT FOUND ON MD\n");
-			while(true);
+			// while(true);
+			return false;
 		}
 
 		/* Update task location in case of migration */			
@@ -344,7 +346,7 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 
 bool os_data_available(int cons_task, int prod_task, int prod_addr)
 {
-	// printf("DATA_AV from id %x addr %x to id %x\n", prod_task, prod_addr, cons_task);
+	printf("DATA_AV from id %x addr %x to id %x\n", prod_task, prod_addr, cons_task);
 	if(cons_task & 0x10000000){
 		/* This message was directed to kernel */
 		/* Kernel is always ready to receive. Send message request */

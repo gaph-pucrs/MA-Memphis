@@ -23,6 +23,9 @@ int main()
 
 	msg.payload[9]=0xBA;
 
+	unsigned bad[18] = {0x0101, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+	memphis_send_raw(bad, 13);
+
 	for(i=0; i<PROD_CONS_ITERATIONS; i++){
 		memphis_send(&msg, cons);
 	}

@@ -149,6 +149,7 @@ package standards is
 ---------------------------------------------------------
         function RouterPosition(router: integer) return integer;
         function RouterAddress(router: integer) return std_logic_vector; 
+        function RouterIndex(router: regmetadeflit) return integer;
         function log_filename(i: integer) return string;
 
 end standards;
@@ -330,6 +331,17 @@ package body standards is
                 addr := pos_x & pos_y;
                 return addr;
         end RouterAddress;
+
+        function RouterIndex(router: regmetadeflit) return integer is
+                variable pos_x, pos_y: integer;
+        begin
+
+                pos_x := conv_integer(unsigned(router(METADEFLIT - 1 downto QUARTOFLIT)));
+                pos_y := conv_integer(unsigned(router(QUARTOFLIT - 1 downto 0)));
+
+                return (pos_y*NUMBER_PROCESSORS_X) + pos_x;
+
+        end function RouterIndex;
         
         function log_filename(i: integer) return string is
                 variable filename               : string(1 to 14);
