@@ -13,7 +13,7 @@ OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
 CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
-LDFLAGS = -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,-N,--gc-sections
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections
 
 LIBDIR = ../../lib/src
 INCLIB = $(LIBDIR)/include

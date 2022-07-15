@@ -14,6 +14,10 @@
 
 #include <errno.h>
 
+#ifndef asm
+#define asm __asm
+#endif
+
 static inline long
 __syscall_error(long a0)
 {

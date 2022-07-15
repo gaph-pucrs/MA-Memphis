@@ -605,6 +605,7 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 
 int os_brk(void *addr)
 {
+	// printf("brk(%d)\n", addr);
 	tcb_t *current = sched_get_current();
 
 	unsigned heap_end = tcb_get_heap_end(current);
@@ -612,10 +613,13 @@ int os_brk(void *addr)
 	if(addr == NULL)
 		return heap_end;
 
+	if((unsigned)addr < heap_end)
+		return addr;
+
 	unsigned sp = tcb_get_sp(current);
 
 	if((unsigned)addr > sp){
-		printf("Heap and stack collision in task %d\n", tcb_get_id(current));
+		fprintf(stderr, "Heap and stack collision in task %d\n", tcb_get_id(current));
 		return -1;
 	}
 
