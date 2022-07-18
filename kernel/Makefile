@@ -17,14 +17,14 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
 LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections
 
 CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
-ASSRC = $(wildcard $(HALDIR)/*.s)
-ASOBJ = $(patsubst %.s,%.o, $(ASSRC))
+ASSRC = $(wildcard $(HALDIR)/*.S)
+ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
 all: $(TARGET).txt $(TARGET).lst
 
@@ -48,9 +48,9 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(HALDIR)/%.o: $(HALDIR)/%.s
+$(HALDIR)/%.o: $(HALDIR)/%.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ -Wa,--defsym=sp_addr=$(PAGE_SP_INIT) $(CFLAGS)
+	@$(CC) -c $< -o $@ -Dsp_addr=$(PAGE_SP_INIT) $(CFLAGS)
 
 $(HALDIR)/%.o: $(HALDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"

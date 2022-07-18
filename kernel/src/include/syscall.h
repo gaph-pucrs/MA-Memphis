@@ -210,7 +210,7 @@ int os_fstat(int file, struct stat *st);
  * 
  * @return int Program break address on success, -1 on failure
  */
-int os_brk(void *addr);
+int os_brk(unsigned addr);
 
 /**
  * @brief Gets time of the day. Currently not implemented.

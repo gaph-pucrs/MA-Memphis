@@ -21,21 +21,7 @@
 
 int main()
 {
-	// printf("OI\n");
-	// while(1);
-
-	unsigned *a = malloc(sizeof(unsigned)*1564);
-	if(a == NULL){
-		printf("E=%d\n", errno);
-		while(1);
-	} else {
-		a[1563] = memphis_get_tick();
-		printf("ADDR=%d    T=%u\n", a, a[1563]);
-		while(1);
-	}
-
-	
-	// printf("Mapper task started at time %u\n", memphis_get_tick());
+	printf("Mapper task started at time %u\n", memphis_get_tick());
 
 	static mapper_t mapper;	
 	map_init(&mapper);

@@ -91,11 +91,11 @@ int os_syscall(unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsig
 				ret = os_getpid();
 				break;
 			case SYS_brk:
-				ret = os_brk((void*)arg1);
+				ret = os_brk(arg1);
 				break;
-			case SYS_clock_gettime64:
-				ret = os_clock_gettime64((struct __timespec64*)arg2, (void*)arg1);
-				break;
+			// case SYS_clock_gettime64:
+			// 	ret = os_clock_gettime64((struct __timespec64*)arg2, (void*)arg1);
+			// 	break;
 			default:
 				printf("ERROR: Unknown syscall %x\n", number);
 				ret = 0;
@@ -603,18 +603,20 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 	return 0;
 }
 
-int os_brk(void *addr)
+int os_brk(unsigned addr)
 {
-	// printf("brk(%d)\n", addr);
+	// printf("brk(%u)\n", addr);
 	tcb_t *current = sched_get_current();
 
 	unsigned heap_end = tcb_get_heap_end(current);
 
-	if(addr == NULL)
+	if(addr == 0 || addr == heap_end){
+		// printf("Returning %u\n", heap_end);
 		return heap_end;
+	}
 
-	if((unsigned)addr < heap_end)
-		return addr;
+	// if(addr < heap_end)
+	// 	return addr;
 
 	unsigned sp = tcb_get_sp(current);
 
@@ -625,9 +627,9 @@ int os_brk(void *addr)
 
 	// printf("Growing heap from %u to %u\n", heap_end, (unsigned)addr);
 
-	tcb_set_brk(current, (unsigned)addr);
+	tcb_set_brk(current, addr);
 
-	return (int)addr;
+	return addr;
 }
 
 int os_write(int file, char *buf, int nbytes)

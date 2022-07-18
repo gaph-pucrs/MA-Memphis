@@ -105,23 +105,29 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 	j 		isr_entry
 
 save_minimum:
-	# Else, if running task, save some registers
-	sw		ra,  0(s0) # Despite being caller-saved, ra needs to be saved in syscall
-	
-	sw		t0, 12(s0) # Save t0 to allow kernel to use it
-	sw		t1, 16(s0) # Save t1 to allow kernel to use it
-	sw		t2, 20(s0) # Save t2 to allow kernel to use it
+	# Else, if running task, save caller registers
+	# Callee registers are saved by the ABI.
+	# Despite being a call, syscall needs to save everything (except a0, which will hold the return value)
 
-	csrr	t0, mscratch	# Load sp that is in mscratch
-	sw		t0,  4(s0)		# Save sp to allow stack check by kernel
+	sw		ra,  0(s0)
+	sw		t0, 12(s0)
+	sw		t1, 16(s0)
+	sw		t2, 20(s0)
+	# a0 is modified by syscall
+	sw		a1, 36(s0)
+	sw		a2, 40(s0)
+	sw		a3, 44(s0)
+	sw		a4, 48(s0)
+	sw		a5, 52(s0)
+	sw		a6, 56(s0)
+	sw		a7, 60(s0)
+	sw		t3, 104(s0)
+	sw		t4, 108(s0)
+	sw		t5, 112(s0)
+	sw		t6, 116(s0)
 
-	lw 		t1,  4(sp)
-	sw		t1,  8(s0) # Save gp that is in stack
-
-	lw		t2,  0(sp)
-	sw		t2, 24(s0) # Save s0 that is in stack
-
-	addi	sp, sp, 8  # Pop s0 and gp from stack
+	csrr	t3, mscratch	# Load sp that is in mscratch
+	sw		t3,  4(s0)		# Save sp to allow stack check by kernel
 	
 	# Check if it was ecall
 	csrr	t0, mcause					# Load mcause
@@ -149,25 +155,22 @@ save_minimum:
 intr_handler:
 	# An interruption breaks the task control
 	# So it is needed to save the caller-registers, because the callee-registers 
-	# are saved by the ABI
-	# To ease the migration process, save ALL, and not just callee registers
+	# are saved by the ABI. Caller registers are already saved at this point.
+	# To ease the migration process, save ALL, and not just caller registers.
+	# Therefore, save callee registers here.
 
-	# ra is already saved
 	# sp is already saved
-	# gp is already saved
-	# t0 is already saved
-	# t1 is already saved
-	# t2 is already saved
-	# s0 is already saved
+
+	lw 		 t4,  4(sp)
+	sw		 t4,  8(s0) # Save gp that is in stack
+
+	lw		 t5,  0(sp)
+	sw		 t5, 24(s0) # Save s0 that is in stack
+
+	addi	 sp, sp, 8  # Pop s0 and gp from stack
+
 	sw		 s1, 28(s0)
-	sw		 a0, 32(s0)
-	sw		 a1, 36(s0)
-	sw		 a2, 40(s0)
-	sw		 a3, 44(s0)
-	sw		 a4, 48(s0)
-	sw		 a5, 52(s0)
-	sw		 a6, 56(s0)
-	sw		 a7, 60(s0)
+	sw		 a0, 32(s0)	# a0 was not saved before
 	sw		 s2, 64(s0)
 	sw		 s3, 68(s0)
 	sw		 s4, 72(s0)
@@ -178,13 +181,9 @@ intr_handler:
     sw		 s9, 92(s0)
 	sw		s10, 96(s0)
 	sw		s11,100(s0)
-	sw		 t3,104(s0)
-	sw		 t4,108(s0)
-	sw		 t5,112(s0)
-	sw		 t6,116(s0)
 
-	csrr	 t0, mepc			# Load the PC
-	sw		 t0, PC_ADDR(s0)	# Save the PC to current
+	csrr	 t6, mepc			# Load the PC
+	sw		 t6, PC_ADDR(s0)	# Save the PC to current
 
 isr_entry:
 	# JUMP TO INTERRUPT SERVICE ROUTINE WITH ARGS
@@ -262,13 +261,16 @@ ecall_handler:
 	beq		 t0, s0, ecall_return	# If scheduled the same TCB, simply return
 
 	# Otherwise it is needed to save the previous task (s0) context
-	# As syscall is CALLED, only save the callee-registers
+	# Caller registers and sp are already saved
 
-	# ra is already saved
-	# sp is already saved
-	# gp is already saved
-	# t0-t2 are already saved despite not being needed
-	# s0 is already saved
+	lw 		 t2,  4(sp)
+	sw		 t2,  8(s0) # Save gp that is in stack
+
+	lw		 t3,  0(sp)
+	sw		 t3, 24(s0) # Save s0 that is in stack
+
+	addi	 sp, sp, 8  # Pop s0 and gp from stack
+
 	sw		 s1, 28(s0)
 	sw		 a0, 32(s0)	# ATTENTION: SAVE a0 TOO, BECAUSE IT HOLDS THE SYSCALL RETURN VALUE	
 	sw		 s2, 64(s0)
@@ -282,8 +284,8 @@ ecall_handler:
 	sw		s10, 96(s0)
 	sw		s11,100(s0)
 
-	csrr	 t1, mepc		# Task pc is in mepc
-	sw		 t1, PC_ADDR(s0)
+	csrr	 t4, mepc		# Task pc is in mepc
+	sw		 t4, PC_ADDR(s0)
 
 restore_complete:
 	csrw	 mscratch, sp	# Save kernel sp
@@ -336,14 +338,30 @@ restore_complete:
 
 ecall_return:
 	# Restore minimum context
-	lw		 ra,  0(s0)			# Despite being caller-saved, syscall needs to restore ra
-	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp, faster than loading from memory
-	lw		 gp,  8(s0)
-	lw		 s0, 24(s0)			# Only restore s0 because we changed
-	# Remaining registers are taken care by the ABI
+	# Need to restore all caller-saved registers
+	# Callee registers are taken care by the ABI (except s0)
 
-	# Ideally we should 0 every temporary register to avoid data leak, but we are not doing this
-	# for performance reasons
+	lw		 ra,  0(s0)
+	lw		 t0, 12(s0)
+	lw		 t1, 16(s0)
+	lw		 t2, 20(s0)
+	# a0 has the return value
+	lw 		 a1, 36(s0)
+	lw		 a2, 40(s0)
+	lw		 a3, 44(s0)
+	lw		 a4, 48(s0)
+	lw		 a5, 52(s0)
+	lw		 a6, 56(s0)
+	lw		 a7, 60(s0)
+	lw		 t3,104(s0)
+	lw		 t4,108(s0)
+	lw		 t5,112(s0)
+	lw		 t6,116(s0)
+
+	lw 		 gp,  4(sp)	# Restore gp that is in stack
+	lw		 s0,  0(sp) # Restore s0 that is in stack
+	addi	 sp, sp, 8	# Pop stack
+	csrrw	 sp, mscratch, sp	# Swap back kernel sp with task sp, faster than loading from memory
 
 	mret
 

@@ -8,6 +8,8 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
+#include <array>
+
 #include "AppInjector.hpp"
 
 /* VHDL integration */
