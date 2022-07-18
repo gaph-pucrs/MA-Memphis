@@ -50,7 +50,7 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 
 $(HALDIR)/%.o: $(HALDIR)/%.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ -Dsp_addr=$(PAGE_SP_INIT) $(CFLAGS)
+	@$(CC) -c $< -o $@ -Dsp_addr=$(PAGE_SP_INIT) $(CFLAGS) -march=rv32im_zicsr
 
 $(HALDIR)/%.o: $(HALDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
