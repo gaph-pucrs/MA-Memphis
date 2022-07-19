@@ -24,7 +24,7 @@ void randPattern(int in[SIZE][SIZE]){
 
 	for(i=0; i<SIZE; i++){
 		for(j=0; j<SIZE; j++){
-			in[i][j] = abs(rand(23, 2, 100)%5000);
+			in[i][j] = abs(rand() % 99 + 2);
 		}
 	}
 }
@@ -36,6 +36,7 @@ int main(){
 
 	int i, j;
 	int pattern[SIZE][SIZE];
+	srand(memphis_get_tick());
 	// char a[50];
 
 	msg.length = SIZE * SIZE; //SIZE*SIZE nao pode ser maior que 128, senao usar o SendData
