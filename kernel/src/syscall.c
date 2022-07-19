@@ -390,8 +390,12 @@ int os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
 
 				pipe_transfer(msg_src, message);
 
-				if(sched_is_waiting_request(prod_tcb))
+				if(sched_is_waiting_request(prod_tcb)){
 					sched_release_wait(prod_tcb);
+					if(tcb_has_called_exit(prod_tcb)){
+						tcb_terminate(prod_tcb);
+					}
+				}
 
 				return 0;
 			}
