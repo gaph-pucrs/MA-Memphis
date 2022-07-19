@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{

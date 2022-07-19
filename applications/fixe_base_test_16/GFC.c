@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -77,7 +77,7 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
+int div_fixed(int a, int b)
 {
 	int i;
 	int res=0;
@@ -93,7 +93,7 @@ int div(int a, int b)
 		return -1;
 	}
 
-    /*récupère la partie entière du résultat de la division*/
+    /*récupère la partie entière du résultat de la div_fixedision*/
 	entier=a/b;
 
 	/*calcul le résultat entier avec FIXE zéros derrières*/
@@ -151,14 +151,14 @@ int div(int a, int b)
 	return res;
 }
 
-int sqrt(int x)
+int sqrt_fixed(int x)
 {
 	int racine=10000;
 	int i,a;
 	a=x;
 	for(i=0;i<20;i++)
 	{
-		racine=mult(5000,add(racine,div(a,racine)));
+		racine=mult(5000,add(racine,div_fixed(a,racine)));
 	}
 	return racine;
 }
@@ -190,8 +190,8 @@ int main()
 
     if (sum_EM<0)
     sum_EM=mult(sum_EM,-10000);
-    gfc=mult(sqrt(sum_Es),sqrt(sum_Me));
-    gfc=div(sum_EM,gfc);
+    gfc=mult(sqrt_fixed(sum_Es),sqrt_fixed(sum_Me));
+    gfc=div_fixed(sum_EM,gfc);
 
     printf("distance GFC: %d\n", gfc);
 

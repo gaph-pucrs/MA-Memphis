@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -77,7 +77,7 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
+int div_fixed(int a, int b)
 {
 	int i;
 	int res=0;
@@ -93,7 +93,7 @@ int div(int a, int b)
 		return -1;
 	}
 
-    /*récupère la partie entière du résultat de la division*/
+    /*récupère la partie entière du résultat de la div_fixedision*/
 	entier=a/b;
 
 	/*calcul le résultat entier avec FIXE zéros derrières*/
@@ -151,14 +151,14 @@ int div(int a, int b)
 	return res;
 }
 
-int sqrt(int x)
+int sqrt_fixed(int x)
 {
 	int racine=10000;
 	int i,a;
 	a=x;
 	for(i=0;i<20;i++)
 	{
-		racine=mult(5000,add(racine,div(a,racine)));
+		racine=mult(5000,add(racine,div_fixed(a,racine)));
 	}
 	return racine;
 }
@@ -185,7 +185,7 @@ int main()
     for(i=0;i<size;i++)
 		sum=add(mult(sub(msg1.payload[i],msg2.payload[i]),sub(msg1.payload[i],msg2.payload[i])),sum);
 
-    dis_rms= div(sqrt(sum),size_val);
+    dis_rms= div_fixed(sqrt_fixed(sum),size_val);
     printf("distance RMS: %d\n", dis_rms);
 
     puts("Communication RMS finished.");

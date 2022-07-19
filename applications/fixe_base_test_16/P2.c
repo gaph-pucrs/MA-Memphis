@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -77,7 +77,7 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
+int div_fixed(int a, int b)
 {
 	int i;
 	int res=0;
@@ -93,7 +93,7 @@ int div(int a, int b)
 		return -1;
 	}
 
-    /*récupère la partie entière du résultat de la division*/
+    /*récupère la partie entière du résultat de la div_fixedision*/
 	entier=a/b;
 
 	/*calcul le résultat entier avec FIXE zéros derrières*/
@@ -184,7 +184,7 @@ void calcul_moyenne(int* moyenne)
 		  {
 		     	sum=add(sum,tabdata[j]);
 		  }
-          moyenne[m]=div(sum,data_val);
+          moyenne[m]=div_fixed(sum,data_val);
 	    }
 }
 

@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -77,7 +77,7 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
+int div_fixed(int a, int b)
 {
 	int i;
 	int res=0;
@@ -93,7 +93,7 @@ int div(int a, int b)
 		return -1;
 	}
 
-    /*récupère la partie entière du résultat de la division*/
+    /*récupère la partie entière du résultat de la div_fixedision*/
 	entier=a/b;
 
 	/*calcul le résultat entier avec FIXE zéros derrières*/
@@ -165,10 +165,10 @@ int	racine(int val,int expo)
 		value=10000;
 		for (j=0;j<(ex/10000);j++)
             value=mult(value,result);
-		result=div(add(mult(value,sub(ex,10000)),val),mult(ex,div(value,result)));
+		result=div_fixed(add(mult(value,sub(ex,10000)),val),mult(ex,div_fixed(value,result)));
 	}
 	if (expo<0)
-       result=div(10000,result);
+       result=div_fixed(10000,result);
 	return result;
 }
 
@@ -181,7 +181,7 @@ void lab(int* sum,int* LAB)
     int val_a,val_l,val_b,var_X,var_Y,var_Z;
 
         /*calcul de L*/
-	    var_Y = div(sum[1],1000000);
+	    var_Y = div_fixed(sum[1],1000000);
 	    if (var_Y>89)   /*valeur th�orique : 0.008856*/
         {
 
@@ -189,37 +189,37 @@ void lab(int* sum,int* LAB)
 
         }
 	    else
-		           var_Y = add(mult( 77870,var_Y ),div(160000,1160000));
+		           var_Y = add(mult( 77870,var_Y ),div_fixed(160000,1160000));
 
 	    val_l=sub(mult( 1160000,var_Y ),160000);
 	    LAB[0]=val_l;
 
      /*calcul de a*/
-	    var_X=div(sum[0],950470);  /*vrai valeur 95.047*/
-	    var_Y=div(sum[1],1000000);
+	    var_X=div_fixed(sum[0],950470);  /*vrai valeur 95.047*/
+	    var_Y=div_fixed(sum[1],1000000);
 	     if (var_X > 89)  /*valeur th�orique : 0.008856*/
 		           var_X = racine(var_X,30000);
 	     else
-		           var_X = div(add(mult(9033000,var_X),160000),1160000);
+		           var_X = div_fixed(add(mult(9033000,var_X),160000),1160000);
 	     if (var_Y > 89)  /*valeur th�orique : 0.008856*/
 	                var_Y = racine(var_Y,30000);
 	      else
-	                var_Y = div(add(mult(9033000,var_Y),160000),1160000);
+	                var_Y = div_fixed(add(mult(9033000,var_Y),160000),1160000);
 
 	    val_a=mult(5000000,sub(var_X,var_Y));
 	    LAB[1]=val_a;
 
         /*calcul de b*/
-	      var_Y=div(sum[1],1000000);
-	      var_Z=div(sum[2],1088830); /*vrai valeur 108.883*/
+	      var_Y=div_fixed(sum[1],1000000);
+	      var_Z=div_fixed(sum[2],1088830); /*vrai valeur 108.883*/
 	      if (var_Y > 89) /*valeur th�orique : 0.008856*/
 	               var_Y = racine(var_Y,30000);
 	      else
-	               var_Y = div(add(mult(9033000,var_Y),160000),1160000);
+	               var_Y = div_fixed(add(mult(9033000,var_Y),160000),1160000);
 	      if (var_Z>89) /*valeur th�orique : 0.008856*/
                    var_Z= racine(var_Z,30000);
 	      else
-     		       var_Z = div(add(mult(9033000,var_Z),160000),1160000);
+     		       var_Z = div_fixed(add(mult(9033000,var_Z),160000),1160000);
           val_b=mult(2000000,sub(var_Y,var_Z));
           LAB[2]=val_b;
 
