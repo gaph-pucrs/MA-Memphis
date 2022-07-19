@@ -28,7 +28,7 @@ int main()
 		{0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4}
 	};
 
-	printf("task AES SLAVE %d started at %d\n", memphis_get_id(), memphis_get_tick());
+	printf("task AES SLAVE %d started at %d\n", getpid(), memphis_get_tick());
 	aes_key_setup(&key[0][0], key_schedule, 256);    
     
 	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
@@ -81,7 +81,7 @@ int main()
 			memphis_send(&msg, aes_master);
 		}
 	}
-    printf("task AES SLAVE %d finished at %d\n", memphis_get_id(), memphis_get_tick());
+    printf("task AES SLAVE %d finished at %d\n", getpid(), memphis_get_tick());
    
 	return 0;
 }
