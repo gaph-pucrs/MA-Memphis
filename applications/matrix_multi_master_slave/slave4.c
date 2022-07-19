@@ -123,7 +123,7 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 	fim = msg.payload[1];
 	numMSG = msg.payload[2];
 	qtdElem = msg.payload[3];
-	int sizeMSG;
+	int sizeMSG=0;
 	int A[qtdElem];
 	numLinhasA = fim - ini + 1;
 	
@@ -187,7 +187,7 @@ void mult(int* A, int* B, int* R, int numLinhasA){
 	//Echo(itoa(GetTick()));
 	sendR(R,tamMatR);
 	
-	printf("Fim da aplicação slave4 %d\n");
+	printf("Fim da aplicação slave4 %d\n", memphis_get_tick());
 
 	return 0;
 }	
