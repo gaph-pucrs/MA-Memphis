@@ -33,7 +33,10 @@ int main()
 {
 	volatile int x, y, i,j;
 	int plain_msg[MSG_LENGHT];
-	int cipher_msg[MSG_LENGHT], decipher_msg[MSG_LENGHT];
+	int cipher_msg[MSG_LENGHT];
+#ifdef debug_comunication_on
+	int decipher_msg[MSG_LENGHT];
+#endif
 	int blocks, qtd_messages[MAX_SLAVES];
 	int aux_msg[3];
 	int aux1_blocks_PE;
@@ -158,7 +161,9 @@ int main()
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
+				#ifdef debug_comunication_on
 					decipher_msg[i] = msg.payload[j];
+				#endif
 					j++;
 				}
 				j = 0;
