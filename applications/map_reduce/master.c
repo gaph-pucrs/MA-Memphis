@@ -38,10 +38,6 @@ int main()
     sum_cum += sum(msg1.payload, div_number);
     memphis_receive(&msg1, worker04);
     sum_cum += sum(msg1.payload, div_number);
-    memphis_receive(&msg1, worker08);
-    sum_cum += sum(msg1.payload, div_number);
-    memphis_receive(&msg1, worker16);
-    sum_cum += sum(msg1.payload, div_number);
 
     printf("Soma acumulada:  %d\n", sum_cum);
 

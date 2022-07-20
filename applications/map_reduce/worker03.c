@@ -1,6 +1,7 @@
 #include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "map_reduce_std.h"
 
 message_t msg;
@@ -10,7 +11,7 @@ int main()
 {
     unsigned int sum_cum = 0;
 
-    printf("Worker%d\n", memphis_get_id()-255-1);
+    printf("Worker%d\n", getpid()-255-1);
 
     memphis_receive(&msg, master);
 
