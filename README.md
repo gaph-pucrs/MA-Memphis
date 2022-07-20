@@ -47,7 +47,7 @@ Export the environment variables:
 
 Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
+echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/bin:\${PATH}\n" >> ~/.bashrc
 ```
 
 ## Generating the model
