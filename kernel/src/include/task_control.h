@@ -30,9 +30,9 @@ typedef struct _tcb {
 	unsigned int offset;						//!< Initial address of the task code in page
 
 	int id;							//!< TCB identifier
-	unsigned int text_lenght;		//!< Memory TEXT section lenght in bytes
-	unsigned int data_lenght;		//!< Memory DATA section lenght in bytes
-	unsigned int bss_lenght;		//!< Memory BSS section lenght in bytes
+	unsigned int text_length;		//!< Memory TEXT section lenght in bytes
+	unsigned int data_length;		//!< Memory DATA section lenght in bytes
+	unsigned int bss_length;		//!< Memory BSS section lenght in bytes
 	unsigned int heap_end;
 
 	int mapper_address;
@@ -250,6 +250,14 @@ unsigned int tcb_get_code_length(tcb_t *tcb);
 unsigned int tcb_get_data_length(tcb_t *tcb);
 
 /**
+ * @brief Sets the data segment length
+ * 
+ * @param tcb Pointer to the TCB
+ * @param data_length Length of the data segment
+ */
+void tcb_set_data_length(tcb_t *tcb, unsigned data_length);
+
+/**
  * @brief Gets the length of the bss section
  * 
  * @param tcb Pointer to the TCB
@@ -257,6 +265,14 @@ unsigned int tcb_get_data_length(tcb_t *tcb);
  * @return Length of the bss
  */
 unsigned int tcb_get_bss_length(tcb_t *tcb);
+
+/**
+ * @brief Sets the bss segment length
+ * 
+ * @param tcb Pointer to the TCB
+ * @param bss_length Length of the bss segment
+ */
+void tcb_set_bss_length(tcb_t *tcb, unsigned bss_length);
 
 /**
  * @brief Sets the program counter of a task

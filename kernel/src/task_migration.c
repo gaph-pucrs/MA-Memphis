@@ -64,9 +64,6 @@ void tm_migrate(tcb_t *tcb)
 	/* Send base TCB info */
 	// puts("Sending migration TCB\n");
 	tm_send_tcb(tcb, migrate_addr);
-	/* Send task location array (only what is needed) */
-	// puts("Sending migration task location\n");
-	tm_send_tl(tcb, migrate_addr);
 	/* Send message request array (only what is needed) */
 	// puts("Sending migration message request\n");
 	tm_send_mr(tcb, migrate_addr);
@@ -76,15 +73,26 @@ void tm_migrate(tcb_t *tcb)
 	/* Send pipe */
 	// puts("Sending migration pipe\n");
 	tm_send_pipe(tcb, migrate_addr);
-	/* Send stack */
-	// puts("Sending migration stack\n");
-	tm_send_stack(tcb, migrate_addr);
 	/* Send data and BSS */
 	// puts("Sending migration data and bss\n");
 	tm_send_data_bss(tcb, migrate_addr);
+	/* Send heap */
+	// puts("Sending migration heap");
+	tm_send_heap(tcb, migrate_addr);
+	/* Send stack */
+	// puts("Sending migration stack\n");
+	tm_send_stack(tcb, migrate_addr);	
+	/* Send task location array */
+	// puts("Sending migration task location\n");
+	tm_send_tl(tcb, migrate_addr);
 	
 	/* Code (.text) is in another function */
-	printf("Task id %d migrated at time %d to processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, migrate_addr);
+	printf(
+		"Task id %d migrated at time %d to processor %x\n", 
+		tcb_get_id(tcb), 
+		MMR_TICK_COUNTER, 
+		migrate_addr
+	);
 
 	sched_clear(tcb);
 	tcb_clear(tcb);
@@ -101,7 +109,11 @@ void tm_send_code(tcb_t *tcb)
 	packet->mapper_task = tcb->mapper_task;
 	packet->mapper_address = tcb->mapper_address;
 
-	pkt_send(packet, (unsigned int*)tcb_get_offset(tcb), tcb_get_code_length(tcb)/4);
+	pkt_send(
+		packet, 
+		(unsigned int*)tcb_get_offset(tcb), 
+		tcb_get_code_length(tcb)/4
+	);
 }
 
 void tm_send_tcb(tcb_t *tcb, int addr)
@@ -151,7 +163,11 @@ void tm_send_mr(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->request_size = mr_len;
 
-		pkt_send(packet, (unsigned int*)tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(unsigned int));
+		pkt_send(
+			packet, 
+			(unsigned int*)tcb_get_mr(tcb), 
+			mr_len*sizeof(message_request_t)/sizeof(unsigned int)
+		);
 	}
 }
 
@@ -168,7 +184,11 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, (unsigned int*)data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
+		pkt_send(
+			packet, 
+			(unsigned int*)data_av_get_buffer_head(tcb), 
+			data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
+		);
 	}
 
 	data_av_len = data_av_get_len_start_tail(tcb);
@@ -182,7 +202,11 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(packet, (unsigned int*)data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
+		pkt_send(
+			packet, 
+			(unsigned int*)data_av_get_buffer_start(tcb), 
+			data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
+		);
 	}
 }
 
@@ -198,7 +222,11 @@ void tm_send_pipe(tcb_t *tcb, int addr)
 		packet->consumer_task = pipe_get_cons_task(tcb);
 		packet->msg_length = pipe_get_message_len(tcb);
 
-		pkt_send(packet, (unsigned int *)tcb->pipe.message.payload, packet->msg_length);
+		pkt_send(
+			packet, 
+			(unsigned int *)tcb->pipe.message.payload, 
+			packet->msg_length
+		);
 	}
 }
 
@@ -219,21 +247,63 @@ void tm_send_stack(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->stack_size = stack_len;
 
-		pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len/4);
+		pkt_send(
+			packet, 
+			(unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), 
+			stack_len/4
+		);
+	}
+}
+
+void tm_send_heap(tcb_t *tcb, int addr)
+{
+	/* Get the stack pointer */
+	unsigned int heap_start = 
+		tcb_get_code_length(tcb) + 
+		tcb_get_data_length(tcb) + 
+		tcb_get_bss_length(tcb);
+	unsigned int heap_len = tcb_get_heap_end(tcb) - heap_start;
+
+	/* Align to 32 bits */
+	while(heap_len % 4)
+		heap_len++;
+
+	if(heap_len){
+		packet_t *packet = pkt_slot_get();
+
+		packet->header = addr;
+		packet->service = MIGRATION_HEAP;
+		packet->task_ID = tcb_get_id(tcb);
+		packet->heap_size = heap_len;
+
+		pkt_send(
+			packet, 
+			(unsigned int*)(tcb_get_offset(tcb) + heap_start), 
+			heap_len/4
+		);
 	}
 }
 
 void tm_send_data_bss(tcb_t *tcb, int addr)
 {
-	packet_t *packet = pkt_slot_get();
+	unsigned data_size = tcb_get_data_length(tcb);
+	unsigned bss_size = tcb_get_bss_length(tcb);
 
-	packet->header = addr;
-	packet->service = MIGRATION_DATA_BSS;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->data_size = tcb_get_data_length(tcb);
-	packet->bss_size = tcb_get_bss_length(tcb);
+	if(data_size + bss_size){
+		packet_t *packet = pkt_slot_get();
 
-	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (packet->data_size + packet->bss_size)/4);
+		packet->header = addr;
+		packet->service = MIGRATION_DATA_BSS;
+		packet->task_ID = tcb_get_id(tcb);
+		packet->data_size = data_size;
+		packet->bss_size = bss_size;
+
+		pkt_send(
+			packet, 
+			(unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), 
+			(data_size + bss_size)/4
+		);
+	}
 }
 
 void tm_abort_task(int id, int addr)

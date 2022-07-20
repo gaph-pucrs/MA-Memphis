@@ -16,6 +16,7 @@
 
 #include <memphis.h>
 #include <monitor.h>
+#include <errno.h>
 
 #include "rt.h"
 #include "services.h"

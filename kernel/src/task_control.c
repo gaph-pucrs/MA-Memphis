@@ -65,9 +65,9 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 	tcb->pc = entry_point;
 
 	tcb->id = id;
-	tcb->text_lenght = code_sz;
-	tcb->data_lenght = data_sz;
-	tcb->bss_lenght = bss_sz;
+	tcb->text_length = code_sz;
+	tcb->data_length = data_sz;
+	tcb->bss_length = bss_sz;
 	tcb->heap_end = code_sz + data_sz + bss_sz;
 
 	tcb->mapper_address = mapper_addr;
@@ -92,7 +92,7 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
 {
 	tcb->id = id;
-	tcb->text_lenght = code_sz;
+	tcb->text_length = code_sz;
 
 	tcb->mapper_task = mapper_task;
 	tcb->mapper_address = mapper_addr;
@@ -101,6 +101,10 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 
 	tcb->scheduler.status = SCHED_MIGRATING;
 	tcb->called_exit = false;
+
+	tcb->data_length = 0;
+	tcb->bss_length = 0;
+	tcb->heap_end = code_sz;
 }
 
 message_t *tcb_get_message(tcb_t *tcb)
@@ -178,17 +182,27 @@ void tcb_clear(tcb_t *tcb)
 
 unsigned int tcb_get_code_length(tcb_t *tcb)
 {
-	return tcb->text_lenght;
+	return tcb->text_length;
 }
 
 unsigned int tcb_get_data_length(tcb_t *tcb)
 {
-	return tcb->data_lenght;
+	return tcb->data_length;
+}
+
+void tcb_set_data_length(tcb_t *tcb, unsigned data_length)
+{
+	tcb->data_length = data_length;
 }
 
 unsigned int tcb_get_bss_length(tcb_t *tcb)
 {
-	return tcb->bss_lenght;
+	return tcb->bss_length;
+}
+
+void tcb_set_bss_length(tcb_t *tcb, unsigned bss_length)
+{
+	tcb->bss_length = bss_length;
 }
 
 void tcb_set_pc(tcb_t *tcb, unsigned int pc)

@@ -52,6 +52,7 @@ typedef struct _packet {
 		unsigned int deadline;
 		// unsigned int pkt_latency;
 		unsigned int stack_size;
+		unsigned int heap_size;
 		// unsigned int requesting_task;
 		// unsigned int released_proc;
 		// unsigned int app_task_number;

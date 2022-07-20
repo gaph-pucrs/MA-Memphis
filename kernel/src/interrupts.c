@@ -141,7 +141,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MESSAGE_REQUEST:
 			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
 		case MESSAGE_DELIVERY:
-			// putsv("Packet length is ", packet->msg_lenght);
+			// putsv("Packet length is ", packet->msg_length);
 			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_length);
 		case DATA_AV:
 			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
@@ -161,7 +161,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_TCB:
 			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time, packet->waiting_msg);
 		case MIGRATION_TASK_LOCATION:
-			return os_migration_tl(packet->task_ID, packet->request_size);
+			return os_migration_tl(packet->task_ID, packet->request_size, packet->source_PE);
 		case MIGRATION_MSG_REQUEST:
 			return os_migration_mr(packet->task_ID, packet->request_size);
 		case MIGRATION_DATA_AV:
@@ -170,8 +170,10 @@ bool os_handle_pkt(volatile packet_t *packet)
 			return os_migration_pipe(packet->task_ID, packet->consumer_task, packet->msg_length);
 		case MIGRATION_STACK:
 			return os_migration_stack(packet->task_ID, packet->stack_size);
+		case MIGRATION_HEAP:
+			return os_migration_heap(packet->task_ID, packet->heap_size);
 		case MIGRATION_DATA_BSS:
-			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size, packet->source_PE);
+			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size);
 		default:
 			printf("ERROR: unknown interrupt at time %d\n", MMR_TICK_COUNTER);
 			return false;
@@ -515,7 +517,7 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
 	return false;
 }
 
-bool os_migration_tl(int id, unsigned int tl_len)
+bool os_migration_tl(int id, unsigned int tl_len, int source)
 {
 	tcb_t *tcb = tcb_search(id);
 
@@ -523,7 +525,21 @@ bool os_migration_tl(int id, unsigned int tl_len)
 
 	// printf("Received MIGRATION_TASK_LOCATION from task id %d with size %d\n", id, tl_len);
 
-	return false;
+	sched_release(tcb);
+
+	printf(
+		"Task id %d allocated by task migration at time %d from processor %x\n", 
+		tcb_get_id(tcb), 
+		MMR_TICK_COUNTER, 
+		source
+	);
+
+	tl_update_local(id, MMR_NI_CONFIG);
+
+	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
+	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);
+
+	return true;
 }
 
 bool os_migration_mr(int id, unsigned int mr_len)
@@ -575,26 +591,33 @@ bool os_migration_stack(int id, unsigned int stack_len)
 	return false;
 }
 
-bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, int source)
+bool os_migration_heap(int id, unsigned int heap_len)
+{
+	// putsv("Id received ", id);
+	tcb_t *tcb = tcb_search(id);
+
+	unsigned heap_start = tcb_get_heap_end(tcb);
+
+	dmni_read((unsigned int*)(tcb_get_offset(tcb) + heap_start), heap_len/4);
+	tcb_set_brk(tcb, heap_start + heap_len);
+
+	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
+
+	return false;
+}
+
+bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len)
 {
 	tcb_t *tcb = tcb_search(id);
 	
-	tcb->data_lenght = data_len;
-	tcb->bss_lenght = bss_len;
+	tcb_set_data_length(tcb, data_len);
+	tcb_set_bss_length(tcb, bss_len);
 
-	if(bss_len + data_len)
-		dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (bss_len + data_len)/4);
+	tcb_set_brk(tcb, tcb_get_code_length(tcb) + data_len + bss_len);
 
-	sched_release(tcb);
+	dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (bss_len + data_len)/4);
 
-	printf("Task id %d allocated by task migration at time %d from processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, source);
-
-	tl_update_local(id, MMR_NI_CONFIG);
-
-	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
-	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);
-
-	return true;
+	return false;
 }
 
 bool os_clear_mon_table(int task)

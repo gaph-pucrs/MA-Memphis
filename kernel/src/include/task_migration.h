@@ -105,6 +105,14 @@ void tm_send_pipe(tcb_t *tcb, int addr);
 void tm_send_stack(tcb_t *tcb, int addr);
 
 /**
+ * @brief Migrate the heap
+ * 
+ * @param tcb Pointer to the TCB
+ * @param addr Target address
+ */
+void tm_send_heap(tcb_t *tcb, int addr);
+
+/**
  * @brief Migrate the data and bss
  * 
  * @param tcb Pointer to the TCB

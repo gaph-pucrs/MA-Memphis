@@ -166,10 +166,11 @@ bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline
  * 
  * @param id ID of the task that has migrated
  * @param tl_len Number of entries in the task location
+ * @param source Source PE of the task migration
  * 
- * @return False
+ * @return True
  */
-bool os_migration_tl(int id, unsigned int tl_len);
+bool os_migration_tl(int id, unsigned int tl_len, int source);
 
 /**
  * @brief Handles the message request received from migration
@@ -213,16 +214,25 @@ bool os_migration_pipe(int id, int cons_task, unsigned int msg_len);
 bool os_migration_stack(int id, unsigned int stack_len);
 
 /**
+ * @brief Handles the heap received from migration
+ * 
+ * @param id ID of the task that has migrated
+ * @param heap_len Length of the heap
+ * 
+ * @return False
+ */
+bool os_migration_heap(int id, unsigned int heap_len);
+
+/**
  * @brief Handles the data and bss received from migration
  * 
  * @param id ID of the task that has migrated
  * @param data_len Length of the data section
  * @param bss_len Length of the bss section
- * @param source Address of the source processor
  * 
- * @return True
+ * @return False
  */
-bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len, int source);
+bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len);
 
 /**
  * @brief Clears a task from the monitoring DMNI LUT
