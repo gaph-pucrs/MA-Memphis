@@ -4,14 +4,14 @@
 
 Run:
 ```console
-# apt update
-# apt install default-jre
+apt update
+apt install default-jre
 ```
 
 ## Arch (pacman/aur distros)
 
 Run:
 ```console
-# pacman -Syu
-# pacman -S jre-openjdk
+pacman -Syu
+pacman -S jre-openjdk
 ```

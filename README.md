@@ -6,8 +6,8 @@ Application-Managed Many-core Modeling Platform for Heterogenous SoCs
 
 MA-Memphis is a platform derived from [Memphis](https://github.com/gaph-pucrs/Memphis), which is based on [HeMPS](https://github.com/gaph-pucrs/hemps). 
 MA-Memphis is a full many-core model with:
-* SystemC-modeled hardware
-* C Kernel
+* SystemC-modeled hardware (some parts can use VHDL)
+* C Kernel and application library with newlib
 * Standard set of applications
 * Standard set of Management Application
 * Scenario generation
@@ -25,7 +25,7 @@ It is possible to use the WSL to run MA-Memphis platform under Windows.
 ### Pre-requisites
 
 * GCC (base development packages, check [how to acquire GCC](/docs/gcc.md))
-* riscv-elf-gcc (to compile OS and applications, check [how to acquire RISCV cross-compiler](/docs/riscv.md))
+* riscv64-elf-gcc (to build OS, Memphis library and applications, check [how to acquire RISCV cross-compiler](/docs/riscv.md))
 * SystemC (to compile hardware model, check [how to acquire SystemC](/docs/systemc.md))
 * Python and needed libraries (to generate platform, check [how to acquire Python](/docs/python.md))
 * Graphical Debugger (optional, check [how to acquire Debugger](/docs/Debugger.md))
@@ -37,8 +37,8 @@ The master branch is the latest release without development commits.
 In this example we chose the home directory.
 
 ```console
-$ cd ~
-$ git clone https://github.com/gaph-pucrs/MA-Memphis.git
+cd ~
+git clone https://github.com/gaph-pucrs/MA-Memphis.git
 ```
 
 Export the environment variables:
@@ -47,7 +47,7 @@ Export the environment variables:
 
 Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-$ echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
+echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
 ```
 
 ## Generating the model
@@ -95,12 +95,12 @@ apps:                       # Application properties
 
 After creating the description of the testcase and the scenario, the testcase should be generated:
 ```console
-$ memphis testcase example_testcase.yaml
+memphis testcase example_testcase.yaml
 ```
 
 Then, the scenario should be generated inside the testcase folder that was created by `memphis testcase`:
 ```console
-$ memphis scenario example_testcase example_scenario.yaml 
+memphis scenario example_testcase example_scenario.yaml 
 ```
 
 ## Simulating
@@ -108,7 +108,7 @@ $ memphis scenario example_testcase example_scenario.yaml
 To simulate the generated model, run the simulation in the generated scenario folder for a chosen time limit (here the example is 50 ms):
 
 ```console
-$ memphis simulate example_testcase/example_scenario 60
+memphis simulate example_testcase/example_scenario 60
 ```
 
 ## Evaluating and Debugging
@@ -117,7 +117,7 @@ When the `memphis simulate` command executes, it runs the simulation and opens t
 To open manually after a simulation is already done, run:
 
 ```console
-$ memphis debug example_testcase/example_scenario
+memphis debug example_testcase/example_scenario
 ```
 
 ### Main window
