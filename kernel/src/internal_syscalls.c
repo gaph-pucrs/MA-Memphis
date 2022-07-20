@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file internal_syscalls.c
+ *
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date June 2022
+ * 
+ * @brief Internal syscalls for newlib in Memphis kernel
+ */
+
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/time.h>

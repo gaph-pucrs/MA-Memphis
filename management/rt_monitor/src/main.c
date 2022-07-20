@@ -36,10 +36,14 @@ int main()
 		if(msg.payload[0] == SERVICE_PROVIDER && oda_service_provider(&decider, msg.payload[1], msg.payload[2]))
 			break;
 	}
+	// printf("Received service provider %d\n", decider.id);
 
 	monitor_init(qos_table);
 
-	while(!monitor_set_dmni(qos_table, MON_QOS));
+	if(monitor_set_dmni(qos_table, MON_QOS) != 0){
+		puts("ERROR: Unable to set DMNI table. Exiting.");
+		exit(errno);
+	}
 
 	monitor_announce(MON_QOS);
 

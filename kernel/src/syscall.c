@@ -601,7 +601,7 @@ int os_mon_ptr(unsigned* table, enum MONITOR_TYPE type)
 			MMR_MON_PTR_4 = (unsigned)table;
 			break;
 		default:
-			return 2;
+			return -EINVAL;
 	}
 
 	return 0;
