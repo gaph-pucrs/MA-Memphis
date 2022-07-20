@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <memphis.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "aes.h"
 /**************************** VARIABLES *****************************/
 
