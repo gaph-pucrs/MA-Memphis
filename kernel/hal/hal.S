@@ -39,6 +39,11 @@ _start:
 	li		t0, 0x800
 	csrw	mie, t0
 
+	# Disable mrar and delegate to satp which is disabled
+	# li		t1, 1
+	# csrw	mrar, t1
+	# csrw	satp, zero
+
 	# Disable S-Mode int/exc handling
 	# Handle them in M-Mode
 	csrw	mideleg, zero
@@ -220,10 +225,6 @@ isr_entry:
 	lw		t0, PC_ADDR(a0)
 	csrw	mepc, t0
 
-	# Load offset from scheduled task
-	lw		t0, OFF_ADDR(a0)
-	csrw	mrar, t0
-
 	# Continue to restore the remaining context
 restore_minimum:
 	lw		 ra,  0(a0)
@@ -298,9 +299,6 @@ restore_complete:
 	lw		 t1, PC_ADDR(t0)
 	csrw	 mepc, t1			# Load task PC
 
-	lw		 t2, OFF_ADDR(t0)
-	csrw	 mrar, t2			# Load task offset
-
 	lw		 ra,  0(t0)
 	lw		 sp,  4(t0)
 	lw		 gp,  8(t0)
@@ -369,9 +367,6 @@ idle_entry:
 	# Set the return pointer to the idle 'task'
 	la		t0, idle
 	csrw	mepc, t0
-
-	# Ensure mrar has the kernel offset
-	csrw	mrar, zero
 
 	li		a0, MMR_CLOCK_HOLD
 

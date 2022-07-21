@@ -223,8 +223,9 @@ bool RiscV::paging(Address src_addr, Address &dst_addr, Exceptions::CODE e_code)
 			dst_addr.write(src_addr.read());
 			return false;
 		} else { // U-Mode with offset
-			current_page.write(mrar.read()>>PAGE_SHIFT);
-			dst_addr.write(src_addr.read() | mrar.read());
+			// current_page.write(mrar.read()>>PAGE_SHIFT);
+			// dst_addr.write(src_addr.read() | mrar.read());
+			dst_addr.write(src_addr.read());
 			return false;
 		}
 	} else { // Sv32

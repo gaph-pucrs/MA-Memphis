@@ -17,8 +17,8 @@ INCLIB = $(LIBDIR)/include
 LIBSRC = $(wildcard $(LIBDIR)/*.c)
 LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
 
-CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections
+CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fPIE -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections -fPIE -static-pie
 
 CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))

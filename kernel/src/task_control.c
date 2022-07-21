@@ -62,13 +62,13 @@ tcb_t* tcb_free_get()
 
 void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, unsigned entry_point, int mapper_task, int mapper_addr)
 {
-	tcb->pc = entry_point;
+	tcb->pc = entry_point + tcb->offset;
 
 	tcb->id = id;
 	tcb->text_length = code_sz;
 	tcb->data_length = data_sz;
 	tcb->bss_length = bss_sz;
-	tcb->heap_end = code_sz + data_sz + bss_sz;
+	tcb->heap_end = code_sz + data_sz + bss_sz + tcb->offset;
 
 	tcb->mapper_address = mapper_addr;
 	tcb->mapper_task = mapper_task;
@@ -78,7 +78,7 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 	tcb->scheduler.status = SCHED_BLOCKED;
 	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
 
-	tcb->registers[HAL_REG_SP] = PKG_PAGE_SIZE - 2*sizeof(int);
+	tcb->registers[HAL_REG_SP] = PKG_PAGE_SIZE - 2*sizeof(int) + tcb->offset;
 
 	/**
 	 * @todo
