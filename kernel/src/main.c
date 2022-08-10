@@ -18,6 +18,7 @@
 #include "stdio.h"
 #include "llm.h"
 #include "interrupts.h"
+#include "pending_msg.h"
 
 int main()
 {
@@ -28,7 +29,7 @@ int main()
 	tcb_init();
 
 	pending_svc_init();
-	pending_msg_init();
+	pend_msg_init();
 
 	sched_init();
 

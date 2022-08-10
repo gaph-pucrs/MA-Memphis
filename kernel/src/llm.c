@@ -11,6 +11,10 @@
  * @brief Implements the Low-Level Monitor for Management Application support.
  */
 
+#include <stdlib.h>
+
+#include <memphis.h>
+
 #include "llm.h"
 
 #include "syscall.h"
@@ -19,8 +23,6 @@
 #include "interrupts.h"
 
 #include "services.h"
-
-#include "stdlib.h"
 
 observer_t observers[MON_MAX];
 

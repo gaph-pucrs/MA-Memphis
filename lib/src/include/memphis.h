@@ -14,15 +14,15 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
-#define MEMPHIS_KERNEL_MSG 0x10000000
-#define MEMPHIS_FORCE_PORT 0x80000000
-#define PKG_MAX_MSG_SIZE 128
+static const unsigned MEMPHIS_KERNEL_MSG = 0x10000000;
+static const unsigned MEMPHIS_FORCE_PORT = 0x80000000;
 
-#define BR_SVC_TGT	5
-#define BR_SVC_ALL	6
+static const int BR_SVC_TGT = 5;
+static const int BR_SVC_ALL = 6;
 
-enum SYSCALL {
+enum _syscall {
 	SYS_writepipe = 1,
 	SYS_readpipe,
 	SYS_gettick,
@@ -32,11 +32,6 @@ enum SYSCALL {
 	SYS_monptr,
 	SYS_brtgt
 };
-
-typedef struct _message {
-	unsigned short length;
-	unsigned int payload[PKG_MAX_MSG_SIZE];
-} message_t;
 
 /**
  * @brief Gets the PE address of the runnning task
@@ -48,24 +43,26 @@ int memphis_get_addr();
 /**
  * @brief Sends a message through Hermes
  * 
- * @param msg Pointer to the message structure
+ * @param msg Pointer to the message
+ * @param size Message size in bytes
  * @param target_id ID of the consumer task
  * 
  * @return 0 on success
  * 		   -1 on failure and sets errno
  */
-int memphis_send(message_t *msg, int target_id);
+int memphis_send(void *msg, size_t size, int target_id);
 
 /**
  * @brief Sends a message through Hermes
  * 
- * @param msg Pointer to the message structure
+ * @param msg Pointer to the buffer to receive the message
+ * @param size Maximum size in bytes to receive
  * @param target_id ID of the consumer task
  * 
- * @return 0 on success
+ * @return The number of bytes read on success
  * 		   -1 on failure and sets errno
  */
-int memphis_receive(message_t *msg, int source_id);
+int memphis_receive(void *msg, size_t size, int source_id);
 
 /**
  * @brief Gets the current tick count
@@ -77,23 +74,25 @@ unsigned memphis_get_tick();
 /**
  * @brief Sends a message with a 3-way handshake
  * 
- * @param msg Pointer to the message structure
+ * @param msg Pointer to the message
+ * @param size Message size in bytes
  * @param target_id ID of the consumer task
  * 
  * @return 0 on success
  * 		   -1 on failure and sets errno
  */
-int memphis_send_any(message_t *msg, int target_id);
+int memphis_send_any(void *msg, size_t size, int target_id);
 
 /**
  * @brief Receives a message from any producer
  * 
- * @param msg Pointer to the message structure to store the message
+ * @param msg Pointer to the buffer to receive the message
+ * @param size Maximum size in bytes to receive
  * 
  * @return 0 on success
  * 		   -1 on failure and sets errno
  */
-int memphis_receive_any(message_t *msg);
+int memphis_receive_any(void *msg, size_t size);
 
 /**
  * @brief Set the running task as real-time

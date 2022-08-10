@@ -28,8 +28,13 @@ void tl_init(tcb_t *tcb)
 
 bool tl_send_allocated(tcb_t *allocated_task)
 {
-	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};
-	return os_kernel_writepipe(allocated_task->mapper_task, allocated_task->mapper_address, 2, task_allocated);
+	int task_allocated[] = {TASK_ALLOCATED, allocated_task->id};
+	return os_kernel_writepipe(
+		task_allocated, 
+		sizeof(task_allocated),
+		allocated_task->mapper_task, 
+		allocated_task->mapper_address
+	);
 }
 
 void tl_insert_update(tcb_t *tcb, int id, int addr)
@@ -39,8 +44,13 @@ void tl_insert_update(tcb_t *tcb, int id, int addr)
 
 bool tl_send_terminated(tcb_t *tcb)
 {
-	int task_terminated[2] = {TASK_TERMINATED, tcb->id};
-	return os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_terminated);
+	int task_terminated[] = {TASK_TERMINATED, tcb->id};
+	return os_kernel_writepipe(
+		task_terminated, 
+		sizeof(task_terminated),
+		tcb->mapper_task, 
+		tcb->mapper_address
+	);
 }
 
 int tl_search(tcb_t *tcb, int task)
@@ -76,6 +86,11 @@ void tl_update_local(int id, int addr)
 
 void tl_send_aborted(tcb_t *tcb)
 {
-	int message[2] = {TASK_ABORTED, tcb->id};
-	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, message);
+	int task_aborted[] = {TASK_ABORTED, tcb->id};
+	os_kernel_writepipe(
+		task_aborted, 
+		sizeof(task_aborted), 
+		tcb->mapper_task, 
+		tcb->mapper_address
+	);
 }

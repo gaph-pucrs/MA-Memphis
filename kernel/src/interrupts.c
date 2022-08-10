@@ -12,6 +12,9 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
+
+#include <memphis.h>
 
 #include "interrupts.h"
 #include "services.h"
@@ -24,6 +27,7 @@
 #include "stdio.h"
 #include "monitor.h"
 #include "string.h"
+#include "pending_msg.h"
 
 tcb_t *os_isr(unsigned int status)
 {
@@ -38,7 +42,13 @@ tcb_t *os_isr(unsigned int status)
 		br_packet_t br_packet;
 		br_read(&br_packet);
 
-		if((MMR_DMNI_SEND_ACTIVE && (br_packet.service == MESSAGE_REQUEST || br_packet.service == TASK_MIGRATION))){
+		if(
+			MMR_DMNI_SEND_ACTIVE && 
+			(
+				br_packet.service == MESSAGE_REQUEST || 
+				br_packet.service == TASK_MIGRATION
+			)
+		){
 			/* Fake a packet as a pending service */
 			packet_t packet;
 			br_fake_packet(&br_packet, &packet);
@@ -48,14 +58,17 @@ tcb_t *os_isr(unsigned int status)
 			call_scheduler |= os_handle_broadcast(&br_packet);
 		}
 	} else if(status & IRQ_NOC){
-		volatile packet_t packet; 
-		pkt_read(&packet);
+		packet_t packet;
+		dmni_read(&packet, PKT_SIZE);
 
-		if(MMR_DMNI_SEND_ACTIVE && (packet.service == DATA_AV || packet.service == MESSAGE_REQUEST)){
+		if(
+			MMR_DMNI_SEND_ACTIVE && 
+			(packet.service == DATA_AV || packet.service == MESSAGE_REQUEST)
+		)
 			pending_svc_push(&packet);
-		} else {
+		else
 			call_scheduler = os_handle_pkt(&packet);
-		}
+		
 	} else if(status & IRQ_PENDING_SERVICE){
 		/* Pending packet. Handle it */
 
@@ -79,7 +92,10 @@ tcb_t *os_isr(unsigned int status)
 			sched_check_stack()
 		){
 			tcb_t *current = sched_get_current();
-			printf("Task id %d aborted due to stack overflow\n", tcb_get_id(current));
+			printf(
+				"Task id %d aborted due to stack overflow\n", 
+				tcb_get_id(current)
+			);
 
 			tcb_abort_task(current);
 		}
@@ -117,19 +133,33 @@ bool os_handle_broadcast(br_packet_t *packet)
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
 		case UPDATE_TASK_LOCATION:
-			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
+			puts(
+				"DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST"
+			);
 			return false;
 		case TASK_MIGRATION:
 			return os_task_migration(task_field, addr_field);
 		case DATA_AV:
 			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", task_field, packet->src_id);
-			return os_data_available(br_convert_id(task_field, MMR_NI_CONFIG), br_convert_id(packet->src_id, addr_field), addr_field);
+			return os_data_available(
+				br_convert_id(task_field, MMR_NI_CONFIG), 
+				br_convert_id(packet->src_id, addr_field), 
+				addr_field
+			);
 		case MESSAGE_REQUEST:
-			return os_message_request(br_convert_id(packet->src_id, addr_field), addr_field, br_convert_id(task_field, MMR_NI_CONFIG));
+			return os_message_request(
+				br_convert_id(packet->src_id, addr_field), 
+				addr_field, 
+				br_convert_id(task_field, MMR_NI_CONFIG)
+			);
 		case ABORT_TASK:
 			return os_abort_task(task_field);
 		default:
-			printf("ERROR: unknown broadcast %x at time %d\n", packet->service, MMR_TICK_COUNTER);
+			printf(
+				"ERROR: unknown broadcast %x at time %d\n", 
+				packet->service, 
+				MMR_TICK_COUNTER
+			);
 			return false;
 	}
 }
@@ -139,41 +169,96 @@ bool os_handle_pkt(volatile packet_t *packet)
 	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:
-			return os_message_request(packet->consumer_task, packet->requesting_processor, packet->producer_task);
+			return os_message_request(
+				packet->consumer_task, 
+				packet->requesting_processor, 
+				packet->producer_task
+			);
 		case MESSAGE_DELIVERY:
 			// putsv("Packet length is ", packet->msg_length);
-			return os_message_delivery(packet->consumer_task, packet->producer_task, packet->insert_request, packet->msg_length);
+			return os_message_delivery(
+				packet->consumer_task, 
+				packet->producer_task, 
+				packet->insert_request, 
+				packet->msg_length
+			);
 		case DATA_AV:
-			return os_data_available(packet->consumer_task, packet->producer_task, packet->requesting_processor);
+			return os_data_available(
+				packet->consumer_task, 
+				packet->producer_task, 
+				packet->requesting_processor
+			);
 		case TASK_ALLOCATION:
 			/* Injector -> Kernel. No need to insert inside delivery */
-			return os_task_allocation(packet->task_ID, packet->code_size, packet->data_size, packet->bss_size, packet->program_counter, packet->mapper_task, packet->mapper_address);
+			return os_task_allocation(
+				packet->task_ID, 
+				packet->code_size, 
+				packet->data_size, 
+				packet->bss_size, 
+				packet->program_counter, 
+				packet->mapper_task, 
+				packet->mapper_address
+			);
 		case TASK_RELEASE:
-			puts("DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY\n");
+			puts(
+				"DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY"
+			);
 			return false;
 		case UPDATE_TASK_LOCATION:
-			puts("DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST\n");
+			puts(
+				"DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST"
+			);
 			return false;
 		case TASK_MIGRATION:
-			return os_task_migration(packet->task_ID, packet->allocated_processor);
+			return os_task_migration(
+				packet->task_ID, 
+				packet->allocated_processor
+			);
 		case MIGRATION_CODE:
-			return os_migration_code(packet->task_ID, packet->code_size, packet->mapper_task, packet->mapper_address);
+			return os_migration_code(
+				packet->task_ID, 
+				packet->code_size, 
+				packet->mapper_task, 
+				packet->mapper_address
+			);
 		case MIGRATION_TCB:
-			return os_migration_tcb(packet->task_ID, packet->program_counter, packet->period, packet->deadline, packet->execution_time, packet->waiting_msg);
+			return os_migration_tcb(
+				packet->task_ID, 
+				packet->program_counter, 
+				packet->period, 
+				packet->deadline, 
+				packet->execution_time, 
+				packet->waiting_msg
+			);
 		case MIGRATION_TASK_LOCATION:
-			return os_migration_tl(packet->task_ID, packet->request_size, packet->source_PE);
+			return os_migration_tl(
+				packet->task_ID, 
+				packet->request_size, 
+				packet->source_PE
+			);
 		case MIGRATION_MSG_REQUEST:
 			return os_migration_mr(packet->task_ID, packet->request_size);
 		case MIGRATION_DATA_AV:
 			return os_migration_data_av(packet->task_ID, packet->request_size);
 		case MIGRATION_PIPE:
-			return os_migration_pipe(packet->task_ID, packet->consumer_task, packet->msg_length);
+			return os_migration_pipe(
+				packet->task_ID, 
+				packet->consumer_task, 
+				packet->msg_length
+			);
 		case MIGRATION_STACK:
-			return os_migration_stack(packet->task_ID, packet->stack_size);
+			return os_migration_stack(
+				packet->task_ID, 
+				packet->stack_size
+			);
 		case MIGRATION_HEAP:
 			return os_migration_heap(packet->task_ID, packet->heap_size);
 		case MIGRATION_DATA_BSS:
-			return os_migration_data_bss(packet->task_ID, packet->data_size, packet->bss_size);
+			return os_migration_data_bss(
+				packet->task_ID, 
+				packet->data_size, 
+				packet->bss_size
+			);
 		default:
 			printf("ERROR: unknown interrupt at time %d\n", MMR_TICK_COUNTER);
 			return false;
@@ -184,23 +269,33 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 {
 	bool force_sched = false;
 
-	if(prod_task & 0x10000000){
+	if(prod_task & MEMPHIS_KERNEL_MSG){
 		/* Message directed to kernel */
 		/* ATTENTION: Never request directly to kernel. Always use SReceive! */
 
 		/* Search for the kernel-produced message */
-		pending_msg_t *msg = pending_msg_search(cons_task);
-		if(!msg){
-			puts("ERROR: Kernel received request but message not found. Use memphis_receive_any!\n");
+		opipe_t *opipe = pend_msg_find(cons_task);
+		
+		if(opipe == NULL){
+			puts(
+				"ERROR: Kernel received request but message not found. Use memphis_receive_any!"
+			);
 			while(1);
 		}
+
 		/* Send it like a MESSAGE_DELIVERY */
-		pending_msg_send(msg, cons_addr);
+		opipe_send(opipe, prod_task, cons_addr);
+		pend_msg_remove(opipe);
 
 		/* If still pending messages to requesting task, also send a data available */
-		if(pending_msg_search(cons_task) != NULL){
+		if(pend_msg_find(cons_task) != NULL){
 			/* Send data available to the right processor */
-			data_av_send(cons_task, 0x10000000 | MMR_NI_CONFIG, cons_addr, MMR_NI_CONFIG);
+			data_av_send(
+				cons_task, 
+				MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, 
+				cons_addr, 
+				MMR_NI_CONFIG
+			);
 		}
 	} else {
 		// printf("Received message request from task %d to task %d\n", cons_task, prod_task);
@@ -221,15 +316,18 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			// puts("Producer found!\n");
 			
 			/* Update task location in case of migration */			
-			if(!(cons_task & 0xFFFF0000) && ((cons_task >> 8) == (prod_task >> 8))){
+			if(
+				!(cons_task & 0xFFFF0000) && 
+				((cons_task >> 8) == (prod_task >> 8))
+			){
 				/* Only update if message came from another task of the same app */
 				tl_insert_update(prod_tcb, cons_task, cons_addr);
 			}
 			
 			/* Task found. Now search for message. */
-			pipe_t *message = pipe_pop(prod_tcb, cons_task);
+			opipe_t *opipe = tcb_get_opipe(prod_tcb);
 		
-			if(!message){	/* No message in producer's pipe to the consumer task */
+			if(opipe == NULL || opipe_get_cons_task(opipe) != cons_task){	/* No message in producer's pipe to the consumer task */
 				/* Insert the message request in the producer's TCB */
 				// puts("Message not found. Inserting message request.\n");
 				mr_insert(prod_tcb, cons_task, cons_addr);
@@ -240,13 +338,32 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 					tcb_t *cons_tcb = tcb_search(cons_task);
 					
 					if(!cons_tcb){
-						puts("ERROR: CONS TCB NOT FOUND ON MR\n");
+						puts("ERROR: CONS TCB NOT FOUND ON MR");
 						while(true);
 					}
 
-					message_t *msg_dst = tcb_get_message(cons_tcb);
+					ipipe_t *ipipe = tcb_get_ipipe(cons_tcb);
 
-					pipe_transfer(&(message->message), msg_dst);
+					size_t buf_size;
+					void *src = opipe_get_buf(opipe, &buf_size);
+
+					int result = ipipe_transfer(
+						ipipe, 
+						tcb_get_offset(cons_tcb), 
+						src, 
+						buf_size
+					);
+
+					if(result != buf_size){
+						puts("ERROR: could not transfer pipe on request");
+						/**
+						 * @todo while(1)?
+						 */
+						return false;
+					}
+
+					opipe_pop(opipe);
+					tcb_destroy_opipe(prod_tcb);
 
 					/* Release consumer task */
 					sched_release_wait(cons_tcb);
@@ -258,7 +375,8 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 				} else {
 					/* Send through NoC */
 					// puts("Message found. Sending through NoC.\n");
-					pipe_send(prod_task, cons_task, cons_addr, message);
+					opipe_send(opipe, prod_task, cons_addr);
+					tcb_destroy_opipe(prod_tcb);
 				}
 
 				/* Release task for execution if it was blocking another send */
@@ -276,27 +394,31 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 	return force_sched;
 }
 
-bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned int length)
+bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size)
 {
-	if(cons_task & 0x10000000){
+	if(cons_task & MEMPHIS_KERNEL_MSG){
 		/* This message was directed to kernel */
-		static unsigned int rcvmsg[PKG_MAX_MSG_SIZE];
-		dmni_read(rcvmsg, length);
-
-		// puts("-- Received message to kernel");
-		// for(int i = 0; i < length; i++){
-		// 	printf("V[%d]=%x\n", i, rcvmsg[i]);
-		// }
+		size_t align_size = (size + 3) & ~3;
+		void *rcvmsg = malloc(align_size);
+		dmni_read(rcvmsg, align_size >> 2);
 
 		/* Process the message like a syscall triggered from another PE */
-		return os_kernel_syscall(rcvmsg, length);
+		int ret = os_kernel_syscall(rcvmsg, align_size >> 2);
+
+		free(rcvmsg);
+		rcvmsg = NULL;
+
+		return ret;
 	} else {
 		/* Get consumer task */
-		// printf("Received delivery to task %d\n", cons_task);
+		// printf("Received delivery to task %d with size %d\n", cons_task, size);
 		tcb_t *cons_tcb = tcb_search(cons_task);
 
 		if(!cons_tcb){
-			puts("ERROR: CONS TCB NOT FOUND ON MD\n");
+			puts("ERROR: CONS TCB NOT FOUND ON MD");
+			/**
+			 * @todo Create an exception and abort task?
+			 */
 			while(true);
 		}
 
@@ -307,31 +429,30 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned i
 		}
 		/* No need to check if task migrated here. Once REQUEST is emitted a task cannot migrate */
 
-		// if(cons_tcb)
-		// 	puts("Found TCB\n");
-		// else
-		// 	puts("TCB not found\n");
+		ipipe_t *ipipe = tcb_get_ipipe(cons_tcb);
 
-		/* Message is stored in task's page + argument 1 from syscall */
-		message_t *message = tcb_get_message(cons_tcb);
-		if(message == NULL){
-			puts("ERROR: BUFFER NOT ALLOCATED FOR MD\n");
+		if(ipipe == NULL){
+			puts("ERROR: BUFFER NOT ALLOCATED FOR MD");
+			/**
+			 * @todo Create an exception and abort task?
+			 */
 			while(true);
 		}
-		// printf("Message at address %x\n", (unsigned int)message);
+		// printf("Message at virtual address %p\n", ipipe->buf);
 
-		/* Assert message requested is the received size */
-		message->length = length;
-		// printf("Message length = %d\n", (int)message->length);
-
-		/* Obtain message from DMNI */
-		dmni_read(message->payload, message->length);
-
-		// puts("Message read from DMNI\n");
+		int result = ipipe_receive(ipipe, tcb_get_offset(cons_tcb), size);
+		if(result != size){
+			puts("ERROR: buffer failure on message delivery");
+			/** 
+			 * @todo Create an exception and abort task?
+			 */
+			while(true);
+		}
+		// puts("Message read from DMNI");
 
 		/* Release task to execute */
 		sched_release_wait(cons_tcb);
-		// puts("Consumer released\n");
+		// puts("Consumer released");
 
 		if(tcb_need_migration(cons_tcb)){
 			tm_migrate(cons_tcb);
@@ -355,7 +476,10 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 
 		if(cons_tcb){	/* Ensure task is allocated here */
 			/* Update task location in case of migration */			
-			if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
+			if(
+				!(prod_task & 0xFFFF0000) && 
+				((prod_task >> 8) == (cons_task >> 8))
+			){
 				/* Only update if message came from another task of the same app */
 				tl_insert_update(cons_tcb, prod_task, prod_addr);
 			}
@@ -380,14 +504,31 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 	return false;
 }
 
-bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, unsigned entry_point, int mapper_task, int mapper_addr)
+bool os_task_allocation(
+	int id, 
+	unsigned length, 
+	unsigned data_len, 
+	unsigned bss_len, 
+	unsigned entry_point, 
+	int mapper_task, 
+	int mapper_addr
+)
 {
 	tcb_t *free_tcb = tcb_free_get();
 	// printf("TCB address is %x\n", (unsigned)free_tcb);
 	// printf("TCB offset is %x\n", free_tcb->offset);
 
 	/* Initializes the TCB */
-	tcb_alloc(free_tcb, id, length, data_len, bss_len, entry_point, mapper_task, mapper_addr);
+	tcb_alloc(
+		free_tcb, 
+		id, 
+		length, 
+		data_len, 
+		bss_len, 
+		entry_point, 
+		mapper_task, 
+		mapper_addr
+	);
 
 	/* Clear the DATA_AV fifo of the task */
 	data_av_init(free_tcb);
@@ -395,16 +536,18 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
 	/* Clear the task location array of the task */
 	tl_init(free_tcb);
 
-	/* Initialize the pipe for the task */
-	pipe_init(free_tcb);
-
 	/* Clears the message request table */
 	mr_init(free_tcb);
 
-	printf("Task id %d allocated at %d with entry point %x\n", id, MMR_TICK_COUNTER, entry_point);
+	printf(
+		"Task id %d allocated at %d with entry point %x\n", 
+		id, 
+		MMR_TICK_COUNTER, 
+		entry_point
+	);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)free_tcb->offset, (length+data_len)/4);
+	dmni_read(free_tcb->offset, (length + data_len) >> 2);
 
 	// printf("Code lenght: %x\n", length);
 	// printf("Mapper task: %d\n", mapper_task);
@@ -420,11 +563,8 @@ bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss
 	}
 }
 
-bool os_task_release(
-	int id, 
-	int task_number, 
-	int *task_location
-){
+bool os_task_release(int id, int task_number, int *task_location)
+{
 	/* Get task to release */
 	tcb_t *task = tcb_search(id);
 
@@ -459,7 +599,12 @@ bool os_task_migration(int id, int addr)
 				return true;
 			}
 		} else {
-			printf("ERROR: task %x proc_to_migrate already assigned to %x when tried to assign %x\n", id, task->proc_to_migrate, addr);
+			printf(
+				"ERROR: task %x proc_to_migrate already assigned to %x when tried to assign %x\n", 
+				id, 
+				task->proc_to_migrate, 
+				addr
+			);
 			while(1);
 		}
 	} else {
@@ -482,21 +627,25 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
 	/* Clear the task location array of the task */
 	tl_init(free_tcb);
 
-	/* Initialize the pipe for the task */
-	pipe_init(free_tcb);
-
 	/* Clears the message request table */
 	mr_init(free_tcb);
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz/4);
+	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz >> 2);
 
 	// printf("Received MIGRATION_CODE from task id %d with size %d\n", id, code_sz);
 
 	return false;
 }
 
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, unsigned waiting_msg)
+bool os_migration_tcb(
+	int id, 
+	unsigned int pc, 
+	unsigned int period, 
+	int deadline, 
+	unsigned int exec_time, 
+	unsigned waiting_msg
+)
 {
 	tcb_t *tcb = tcb_search(id);
 
@@ -537,7 +686,12 @@ bool os_migration_tl(int id, unsigned int tl_len, int source)
 	tl_update_local(id, MMR_NI_CONFIG);
 
 	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
-	os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_migrated);
+	os_kernel_writepipe(
+		task_migrated, 
+		2*sizeof(int), 
+		tcb->mapper_task, 
+		tcb->mapper_address
+	);
 
 	return true;
 }
@@ -546,7 +700,10 @@ bool os_migration_mr(int id, unsigned int mr_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)tcb->message_request, mr_len*sizeof(message_request_t)/sizeof(unsigned int));
+	dmni_read(
+		(unsigned int*)tcb->message_request, 
+		mr_len*sizeof(message_request_t)/sizeof(unsigned int)
+	);
 
 	// printf("Received MIGRATION_MESSAGE_REQUEST from task id %d with size %d\n", id, mr_len);
 
@@ -557,7 +714,10 @@ bool os_migration_data_av(int id , unsigned int data_av_len)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)data_av_get_buffer_tail(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
+	dmni_read(
+		(unsigned int*)data_av_get_buffer_tail(tcb), 
+		data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
+	);
 
 	data_av_add_tail(tcb, data_av_len);
 
@@ -566,13 +726,20 @@ bool os_migration_data_av(int id , unsigned int data_av_len)
 	return false;
 }
 
-bool os_migration_pipe(int id, int cons_task, unsigned int msg_len)
+bool os_migration_pipe(int id, int cons_task, size_t size)
 {
 	tcb_t *tcb = tcb_search(id);
 
-	pipe_set_cons_task(tcb, cons_task);
-	pipe_set_message_len(tcb, msg_len);
-	dmni_read(tcb->pipe.message.payload, msg_len);
+	opipe_t *opipe = tcb_create_opipe(tcb);
+
+	int result = opipe_receive(opipe, size, cons_task);
+
+	if(result != size){
+		puts("ERROR: not enough memory for pipe migration");
+		/**
+		 * @todo Abort task
+		 */
+	}
 
 	// printf("Received MIGRATION_PIPE from task id %d with size %d\n", id, msg_len);
 
@@ -584,7 +751,10 @@ bool os_migration_stack(int id, unsigned int stack_len)
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_search(id);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len/4);
+	dmni_read(
+		(unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), 
+		stack_len >> 2
+	);
 
 	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
 
@@ -598,7 +768,7 @@ bool os_migration_heap(int id, unsigned int heap_len)
 
 	unsigned heap_start = tcb_get_heap_end(tcb);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + heap_start), heap_len/4);
+	dmni_read((unsigned int*)(tcb_get_offset(tcb) + heap_start), heap_len >> 2);
 	tcb_set_brk(tcb, heap_start + heap_len);
 
 	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
@@ -615,7 +785,10 @@ bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len)
 
 	tcb_set_brk(tcb, tcb_get_code_length(tcb) + data_len + bss_len);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (bss_len + data_len)/4);
+	dmni_read(
+		(unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), 
+		(bss_len + data_len) >> 2
+	);
 
 	return false;
 }

@@ -15,9 +15,9 @@
 #include "mmr.h"
 #include "services.h"
 #include "stdio.h"
+#include "dmni.h"
 
 pending_svc_t pending_svcs;
-pending_msg_t pending_msgs[PKG_PENDING_MSG_MAX];
 
 void pending_svc_init()
 {
@@ -27,16 +27,10 @@ void pending_svc_init()
 	pending_svcs.tail = 0;
 }
 
-void pending_msg_init()
-{
-	for(int i = 0; i < PKG_PENDING_MSG_MAX; i++)
-		pending_msgs[i].task = -1;
-}
-
 bool pending_svc_push(const volatile packet_t *packet)
 {
 	if(pending_svcs.full){
-		puts("ERROR: Pending service FIFO FULL\n");
+		puts("ERROR: Pending service FIFO FULL");
 		while(1);
 		return false;
 	}
@@ -51,32 +45,6 @@ bool pending_svc_push(const volatile packet_t *packet)
 
 	//puts("Interruption set ON\n");
 	MMR_PENDING_SERVICE_INTR = 1;
-
-	return true;
-}
-
-bool pending_msg_push(int task, int size, int *msg)
-{
-	if(size > PKG_MAX_KERNEL_MSG_LEN){
-		puts("ERROR: Message too big for kernel 'pipe'\n");
-		while(1);
-		return false;
-	}
-
-	/* Search for a free slot */
-	pending_msg_t *pending = pending_msg_search(-1);
-
-	if(!pending){
-		puts("FATAL: No available slots in kernel 'pipe' to replace\n");
-		while(1);
-		return false;
-	}
-
-	/* Push message to buffer */
-	pending->task = task;
-	pending->size = size;
-	for(int i = 0; i < size; i++)
-		pending->message[i] = msg[i];
 
 	return true;
 }
@@ -99,29 +67,4 @@ packet_t *pending_svc_pop()
 	pending_svcs.full = false;
 
 	return packet;
-}
-
-pending_msg_t *pending_msg_search(int id)
-{
-	for(int i = 0; i < PKG_PENDING_MSG_MAX; i++){
-		if(pending_msgs[i].task == id)
-			return &pending_msgs[i];
-	}
-	return NULL;
-}
-
-void pending_msg_send(pending_msg_t *msg, int addr)
-{
-	packet_t *packet = pkt_slot_get();
-
-	packet->header = addr;
-	packet->service = MESSAGE_DELIVERY;
-	packet->producer_task = MMR_NI_CONFIG | 0x10000000;
-	packet->consumer_task = msg->task;
-	packet->msg_length = msg->size;
-
-	/* Release pipe availability. Must check if DMNI is busy before populating again */
-	msg->task = -1;
-
-	pkt_send(packet, (unsigned*)msg->message, msg->size);
 }

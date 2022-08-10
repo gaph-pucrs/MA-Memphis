@@ -53,31 +53,33 @@ bool os_exit(int status);
 /**
  * @brief Sends a message
  * 
- * @param msg_ptr Pointer to the message structure
+ * @param buf Pointer to the message
+ * @param size Size of the message
  * @param cons_task ID of the consumer task
  * @param sync If it should send a data available message before delivery
  * 
- * @return 0 if message sent (including stored in pipe).
+ * @return Number of bytes sent/stored in pipe/transferred.
  * 		   -EINVAL on invalid argument
  *         -EAGAIN if must retry
  *         -EBADMSG on message protocol errors
  *         -EACCES on unauthorized targets
  */
-int os_writepipe(unsigned int msg_ptr, int cons_task, bool sync);
+int os_writepipe(void *buf, size_t size, int cons_task, bool sync);
 
 /**
  * @brief Receives a message
  * 
- * @param msg_ptr Pointer to message structure to save to
+ * @param buf Pointer to message to save to
+ * @param size Size of the allocated buffer
  * @param prod_task ID of the producer task
  * @param sync If it should wait for a data available message before requesting
  * 
- * @return 0 if read is sucess (including if waiting for delivery). 
+ * @return Number of bytes read.
  * 		   -EINVAL on invalid argument
- *         -EAGAIN if must retry
+ *         -EAGAIN if must retry (busy/waiting for interruption)
  *         -EBADMSG on message protocol errors
  */
-int os_readpipe(unsigned int msg_ptr, int prod_task, bool sync);
+int os_readpipe(void *buf, size_t size, int prod_task, bool sync);
 
 /**	
  * @brief Get the tick count	
@@ -110,14 +112,14 @@ bool os_kernel_syscall(unsigned int *message, int length);
 /**
  * @brief Sends a message delivery from kernel
  * 
- * @param task Consumer task
- * @param addr Consumer address
- * @param size Lenght of the message
- * @param msg Pointer to the message
+ * @param buf Pointer to the message
+ * @param size Size of the message
+ * @param cons_task Consumer task
+ * @param cons_addr Consumer address
  * 
  * @return True if should schedule
  */
-bool os_kernel_writepipe(int task, int addr, int size, int *msg);
+bool os_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr);
 
 /**
  * @brief Releases peripherals connected to this PE

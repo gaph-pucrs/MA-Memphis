@@ -25,6 +25,7 @@
 #include "llm.h"
 #include "stdio.h"
 #include "interrupts.h"
+#include "dmni.h"
 
 const int SCHED_NO_DEADLINE = -1;			//!< A task that is best-effor have its deadline variable equal to -1
 
@@ -119,7 +120,7 @@ void sched_report_slack_time()
 	packet->service = SLACK_TIME_REPORT;
 	packet->cpu_slack_time = ((total_slack_time*100) / PKG_SLACK_TIME_WINDOW);
 
-	pkt_send(packet, NULL, 0);
+	dmni_send(packet, NULL, 0);
 
 	total_slack_time = 0;
 }

@@ -12,6 +12,7 @@
  */
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "task_control.h"
 #include "task_location.h"
@@ -26,10 +27,11 @@ void tcb_init()
 	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
 		tcbs[i].id = -1;
 		tcbs[i].pc = 0;
-		tcbs[i].offset = PKG_PAGE_SIZE * (i + 1);
+		tcbs[i].offset = (void*)(PKG_PAGE_SIZE * (i + 1));
 		tcbs[i].proc_to_migrate = -1;
 		tcbs[i].called_exit = false;
-		tcbs[i].msg_ptr	= NULL;
+		tcbs[i].pipe_in = NULL;
+		tcbs[i].pipe_out = NULL;
 	}
 }
 
@@ -107,22 +109,12 @@ void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_tas
 	tcb->heap_end = code_sz;
 }
 
-message_t *tcb_get_message(tcb_t *tcb)
+ipipe_t *tcb_get_ipipe(tcb_t *tcb)
 {
-	if(tcb->msg_ptr == NULL)
-		return NULL;
-		
-	message_t *real_ptr = (message_t*)(tcb_get_offset(tcb) | (unsigned)tcb->msg_ptr);
-	tcb->msg_ptr = NULL;
-	return real_ptr;
+	return tcb->pipe_in;
 }
 
-void tcb_set_message(tcb_t *tcb, message_t *msg_ptr)
-{
-	tcb->msg_ptr = msg_ptr;
-}
-
-unsigned int tcb_get_offset(tcb_t *tcb)
+void *tcb_get_offset(tcb_t *tcb)
 {
 	return tcb->offset;
 }
@@ -177,7 +169,8 @@ void tcb_clear(tcb_t *tcb)
 	tcb->pc = 0;
 	tcb->id = -1;
 	tcb->proc_to_migrate = -1;
-	tcb->msg_ptr = NULL;
+	tcb->pipe_in = NULL;
+	tcb->pipe_out = NULL;
 }
 
 unsigned int tcb_get_code_length(tcb_t *tcb)
@@ -256,4 +249,35 @@ void tcb_cleanup(tcb_t *tcb)
 	sched_clear(tcb);
 
 	tcb_clear(tcb);	
+}
+
+ipipe_t *tcb_create_ipipe(tcb_t *tcb)
+{
+	tcb->pipe_in = malloc(sizeof(ipipe_t));
+	ipipe_init(tcb->pipe_in);
+	return tcb->pipe_in;
+}
+
+void tcb_destroy_ipipe(tcb_t *tcb)
+{
+	free(tcb->pipe_in);
+	tcb->pipe_in = NULL;
+}
+
+opipe_t *tcb_create_opipe(tcb_t *tcb)
+{
+	tcb->pipe_out = malloc(sizeof(opipe_t));
+	return tcb->pipe_out;
+}
+
+opipe_t *tcb_get_opipe(tcb_t *tcb)
+{
+	return tcb->pipe_out;
+}
+
+void tcb_destroy_opipe(tcb_t *tcb)
+{
+	free(tcb->pipe_out);
+	tcb->pipe_out = NULL;
+	/* Note: the actual message is not freed here. Check DMNI */
 }

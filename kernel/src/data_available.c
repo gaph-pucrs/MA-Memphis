@@ -13,12 +13,15 @@
 
 #include <stddef.h>
 
+#include <memphis.h>
+
 #include "data_available.h"
 #include "task_control.h"
 #include "services.h"
 #include "packet.h"
 #include "broadcast.h"
 #include "stdio.h"
+#include "dmni.h"
 
 void data_av_init(tcb_t *tcb)
 {
@@ -62,7 +65,7 @@ void data_av_send(int consumer_task, int producer_task, int consumer_addr, int p
 		packet->consumer_task = consumer_task;
 		packet->requesting_processor = producer_addr;
 
-		pkt_send(packet, NULL, 0);
+		dmni_send(packet, NULL, 0);
 	} else {
 		br_packet_t packet;
 

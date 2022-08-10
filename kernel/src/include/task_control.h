@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "pipe.h"
+#include "ipipe.h"
+#include "opipe.h"
 #include "message_request.h"
 #include "data_available.h"
 #include "task_scheduler.h"
@@ -27,7 +28,7 @@
 typedef struct _tcb {
 	unsigned int registers[HAL_MAX_REGISTERS];	//!< Register bank
 	unsigned int pc;							//!< Register file
-	unsigned int offset;						//!< Initial address of the task code in page
+	void *offset;								//!< Initial address of the task code in page
 
 	int id;							//!< TCB identifier
 	unsigned int text_length;		//!< Memory TEXT section lenght in bytes
@@ -42,20 +43,15 @@ typedef struct _tcb {
 
 	int task_location[PKG_MAX_TASKS_APP];	//!< Location of app tasks
 
-	pipe_t pipe;											//!< Temporary buffer for outbound messages.
-	message_request_t message_request[MR_MAX];				//!< Message request array
-	data_av_fifo_t data_av;									//!< Data available fifo
-	message_t *msg_ptr;										//!< Pointer to receive a message
+	opipe_t *pipe_out;							//!< Temporary buffer for outbound messages.
+	ipipe_t *pipe_in;							//!< Pointer storage for inbound messages.
+	message_request_t message_request[MR_MAX];	//!< Message request array
+	data_av_fifo_t data_av;						//!< Data available fifo
 
 	scheduler_t scheduler;	//!< Scheduling control structure
 
 	bool called_exit;
 } tcb_t;
-
-/**
- * @brief Idle function.
- */
-void tcb_idle_task();
 
 /**
  * @brief Initializes the TCB structures
@@ -68,13 +64,6 @@ void tcb_init();
  * @return Pointer to the first element of the TCB array.
  */
 tcb_t *tcb_get();
-
-/**
- * @brief Gets the idle task TCB
- * 
- * @return Pointer to the idle task TCB
- */
-tcb_t *tcb_get_idle();
 
 /**
  * @brief Searches for the TCB of a given task ID
@@ -104,7 +93,16 @@ tcb_t *tcb_free_get();
  * @param mapper_task ID of the mapper task
  * @param mapper_addr Address of the mapper task
  */
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, unsigned entry_point, int mapper_task, int mapper_addr);
+void tcb_alloc(
+	tcb_t *tcb, 
+	int id, 
+	unsigned int code_sz, 
+	unsigned int data_sz, 
+	unsigned int bss_sz, 
+	unsigned entry_point, 
+	int mapper_task, 
+	int mapper_addr
+);
 
 /**
  * @brief Clears the TCB to allocate a migrated task
@@ -118,21 +116,13 @@ void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, u
 void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr);
 
 /**
- * @brief Gets the pointer to the message variable
+ * @brief Gets the pinter to the input pipe
  * 
  * @param tcb Pointer to the TCB
  * 
- * @return Pointer to the message structure
+ * @return ipipe_t* Pointer to the input pipe
  */
-message_t *tcb_get_message(tcb_t *tcb);
-
-/**
- * @brief Sets the pointer to the message variable
- * 
- * @param tcb Pointer to the TCB
- * @param msg_ptr Pointer to the message structure
- */
-void tcb_set_message(tcb_t *tcb, message_t *msg_ptr);
+ipipe_t *tcb_get_ipipe(tcb_t *tcb);
 
 /**
  * @brief Gets the offset of a task
@@ -141,7 +131,7 @@ void tcb_set_message(tcb_t *tcb, message_t *msg_ptr);
  * 
  * @return Address of the task offset
  */
-unsigned int tcb_get_offset(tcb_t *tcb);
+void *tcb_get_offset(tcb_t *tcb);
 
 /**
  * @brief Gets the application ID of a running task
@@ -339,3 +329,46 @@ void tcb_abort_task(tcb_t *tcb);
  * @param tcb Pointer to the TCB to terminate
  */
 void tcb_cleanup(tcb_t *tcb);
+
+/**
+ * @brief Creates an input pipe structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return ipipe_t* Pointer to the created pipe
+ */
+ipipe_t *tcb_create_ipipe(tcb_t *tcb);
+
+/**
+ * @brief Destroys the input pipe
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tcb_destroy_ipipe(tcb_t *tcb);
+
+/**
+ * @brief Creates an output pipe structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return opipe_t* Pointer to the created pipe
+ */
+opipe_t *tcb_create_opipe(tcb_t *tcb);
+
+/**
+ * @brief Gets the output pipe structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return opipe_t* Pointer to the PIPE. NULL if not present.
+ */
+opipe_t *tcb_get_opipe(tcb_t *tcb);
+
+/**
+ * @brief Destroys the output pipe
+ * 
+ * @details The message buffer is not freed here. Check DMNI functions.
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tcb_destroy_opipe(tcb_t *tcb);

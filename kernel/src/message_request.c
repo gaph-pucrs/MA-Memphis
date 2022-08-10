@@ -20,6 +20,8 @@
 #include "packet.h"
 #include "stdio.h"
 #include "broadcast.h"
+#include "memphis.h"
+#include "dmni.h"
 
 void mr_init(tcb_t *tcb)
 {
@@ -39,15 +41,20 @@ void mr_send(int producer_task, int consumer_task, int producer_addr, int consum
 		packet->producer_task = producer_task;
 		packet->consumer_task = consumer_task;
 
-		pkt_send(packet, NULL, 0);
+		// puts("Sending MESSAGE_REQUEST via DMNI");
+
+		dmni_send(packet, NULL, 0);
 	} else {
 		br_packet_t packet;
 
 		packet.service = MESSAGE_REQUEST;
 		packet.src_id = (consumer_task & MEMPHIS_KERNEL_MSG) ? -1 : consumer_task;
-		packet.payload = ((producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task) & 0xFFFF;
+		packet.payload = (
+				(producer_task & MEMPHIS_KERNEL_MSG) ? -1 : producer_task
+			) & 
+			0xFFFF;
 		packet.payload |= consumer_addr << 16;
-		// puts("Sending MESSAGE_REQUEST via BrNoC\n");
+		// puts("Sending MESSAGE_REQUEST via BrNoC");
 		while(!br_send(&packet, producer_addr, BR_SVC_TGT));
 	}
 }
@@ -60,13 +67,18 @@ bool mr_insert(tcb_t *producer_tcb, int consumer_task, int consumer_addr)
     		producer_tcb->message_request[i].requester_address  = consumer_addr;
 
     		/* Only for debug purposes */
-    		MMR_ADD_REQUEST_DEBUG = (producer_tcb->id << 16) | (consumer_task & 0xFFFF);
+    		MMR_ADD_REQUEST_DEBUG = 
+				(producer_tcb->id << 16) | 
+				(consumer_task & 0xFFFF);
 
     		return true;
 		}
 	}
 
-	printf("ERROR: producer request array of task %d is full\n", producer_tcb->id);
+	printf(
+		"ERROR: producer request array of task %d is full\n", 
+		producer_tcb->id
+	);
 	// while(true);
 	return false;
 }
@@ -82,7 +94,9 @@ message_request_t *mr_peek(tcb_t *tcb, int cons_task)
 
 void mr_pop(message_request_t *request, int producer_task)
 {
-	MMR_REM_REQUEST_DEBUG = (producer_task << 16) | (request->requester & 0xFFFF);
+	MMR_REM_REQUEST_DEBUG = 
+		(producer_task << 16) | 
+		(request->requester & 0xFFFF);
 	request->requester = -1;
 }
 

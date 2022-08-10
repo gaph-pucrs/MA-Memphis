@@ -77,11 +77,11 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task);
  * @param cons_task ID of the consumer task
  * @param prod_task ID of the producer task
  * @param prod_addr Address of the producer task
- * @param length Length of the message received
+ * @param size Size of the message received
  * 
  * @return True if the scheduler should be called
  */
-bool os_message_delivery(int cons_task, int prod_task, int prod_addr, unsigned int length);
+bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size);
 
 /**
  * @brief Handles a data available packet
@@ -107,7 +107,15 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr);
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_allocation(int id, unsigned length, unsigned data_len, unsigned bss_len, unsigned entry_point, int mapper_task, int mapper_addr);
+bool os_task_allocation(
+	int id, 
+	unsigned length, 
+	unsigned data_len, 
+	unsigned bss_len, 
+	unsigned entry_point, 
+	int mapper_task, 
+	int mapper_addr
+);
 
 /**
  * @brief Handles a task release packet
@@ -159,7 +167,14 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
  *
  * @return False
  */
-bool os_migration_tcb(int id, unsigned int pc, unsigned int period, int deadline, unsigned int exec_time, unsigned waiting_msg);
+bool os_migration_tcb(
+	int id, 
+	unsigned int pc, 
+	unsigned int period, 
+	int deadline, 
+	unsigned int exec_time, 
+	unsigned waiting_msg
+);
 
 /**
  * @brief Handles the task location received from migration

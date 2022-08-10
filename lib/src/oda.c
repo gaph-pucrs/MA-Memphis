@@ -27,15 +27,15 @@ void oda_init(oda_t *oda)
 void oda_request_service(oda_t *oda, int type_tag)
 {
 	oda->tag = type_tag;
-	message_t msg;
 
-	msg.payload[0] = REQUEST_SERVICE;
-	msg.payload[1] = memphis_get_addr();
-	msg.payload[2] = oda->tag;
-	msg.payload[3] = getpid();
-	msg.length = 4;
+	int msg[] = {
+		REQUEST_SERVICE,
+		memphis_get_addr(),
+		oda->tag,
+		getpid()
+	};
 
-	memphis_send_any(&msg, 0);	/* Standard mapper task is ID 0 */
+	memphis_send_any(&msg, sizeof(msg), 0);	/* Standard mapper task is ID 0 */
 }
 
 bool oda_is_enabled(oda_t *oda)

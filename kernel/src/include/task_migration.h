@@ -89,14 +89,6 @@ void tm_send_mr(tcb_t *tcb, int addr);
 void tm_send_data_av(tcb_t *tcb, int addr);
 
 /**
- * @brief Migrate the pipe
- * 
- * @param tcb Pointer to the TCB
- * @param addr Target address
- */
-void tm_send_pipe(tcb_t *tcb, int addr);
-
-/**
  * @brief Migrate the stack
  * 
  * @param tcb Pointer to the TCB

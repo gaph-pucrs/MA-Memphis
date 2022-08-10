@@ -13,11 +13,14 @@
 
 #include <stdio.h>
 
+#include <memphis.h>
+
 #include "task_migration.h"
 #include "services.h"
 #include "packet.h"
 #include "task_location.h"
 #include "broadcast.h"
+#include "dmni.h"
 
 typedef struct _tm_ring_t {
 	migrated_task_t tasks[PKG_MAX_LOCAL_TASKS];
@@ -70,9 +73,19 @@ void tm_migrate(tcb_t *tcb)
 	/* Send data available fifo */
 	// puts("Sending migration data available\n");
 	tm_send_data_av(tcb, migrate_addr);
+	
 	/* Send pipe */
 	// puts("Sending migration pipe\n");
-	tm_send_pipe(tcb, migrate_addr);
+	opipe_t *opipe = tcb_get_opipe(tcb);
+
+	if(opipe != NULL){
+		// puts("Will send pipe migration\n");
+
+		opipe_migrate(opipe, migrate_addr, tcb_get_id(tcb));
+
+		tcb_destroy_opipe(tcb);
+	}
+
 	/* Send data and BSS */
 	// puts("Sending migration data and bss\n");
 	tm_send_data_bss(tcb, migrate_addr);
@@ -109,10 +122,10 @@ void tm_send_code(tcb_t *tcb)
 	packet->mapper_task = tcb->mapper_task;
 	packet->mapper_address = tcb->mapper_address;
 
-	pkt_send(
+	dmni_send(
 		packet, 
 		(unsigned int*)tcb_get_offset(tcb), 
-		tcb_get_code_length(tcb)/4
+		tcb_get_code_length(tcb) >> 2
 	);
 }
 
@@ -135,7 +148,7 @@ void tm_send_tcb(tcb_t *tcb, int addr)
 	/* Registers */
 	packet->program_counter = tcb_get_pc(tcb);
 
-	pkt_send(packet, tcb->registers, HAL_MAX_REGISTERS);
+	dmni_send(packet, tcb->registers, HAL_MAX_REGISTERS);
 }
 
 void tm_send_tl(tcb_t *tcb, int addr)
@@ -147,7 +160,7 @@ void tm_send_tl(tcb_t *tcb, int addr)
 	packet->service = MIGRATION_TASK_LOCATION;
 	packet->request_size = tl_get_len(tcb);
 
-	pkt_send(packet, (unsigned int*)tl_get_ptr(tcb), packet->request_size);
+	dmni_send(packet, (unsigned int*)tl_get_ptr(tcb), packet->request_size);
 }
 
 void tm_send_mr(tcb_t *tcb, int addr)
@@ -163,10 +176,10 @@ void tm_send_mr(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->request_size = mr_len;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)tcb_get_mr(tcb), 
-			mr_len*sizeof(message_request_t)/sizeof(unsigned int)
+			(mr_len*sizeof(message_request_t)) >> 2
 		);
 	}
 }
@@ -184,10 +197,10 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)data_av_get_buffer_head(tcb), 
-			data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
+			(data_av_len*sizeof(data_av_t)) >> 2
 		);
 	}
 
@@ -202,30 +215,10 @@ void tm_send_data_av(tcb_t *tcb, int addr)
 		packet->service = MIGRATION_DATA_AV;
 		packet->request_size = data_av_len;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)data_av_get_buffer_start(tcb), 
-			data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
-		);
-	}
-}
-
-void tm_send_pipe(tcb_t *tcb, int addr)
-{
-	if(pipe_is_full(tcb)){
-		// puts("Will send pipe migration\n");
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_PIPE;
-		packet->consumer_task = pipe_get_cons_task(tcb);
-		packet->msg_length = pipe_get_message_len(tcb);
-
-		pkt_send(
-			packet, 
-			(unsigned int *)tcb->pipe.message.payload, 
-			packet->msg_length
+			(data_av_len*sizeof(data_av_t)) >> 2
 		);
 	}
 }
@@ -247,10 +240,10 @@ void tm_send_stack(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->stack_size = stack_len;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), 
-			stack_len/4
+			stack_len >> 2
 		);
 	}
 }
@@ -276,10 +269,10 @@ void tm_send_heap(tcb_t *tcb, int addr)
 		packet->task_ID = tcb_get_id(tcb);
 		packet->heap_size = heap_len;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)(tcb_get_offset(tcb) + heap_start), 
-			heap_len/4
+			heap_len >> 2
 		);
 	}
 }
@@ -298,10 +291,10 @@ void tm_send_data_bss(tcb_t *tcb, int addr)
 		packet->data_size = data_size;
 		packet->bss_size = bss_size;
 
-		pkt_send(
+		dmni_send(
 			packet, 
 			(unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), 
-			(data_size + bss_size)/4
+			(data_size + bss_size) >> 2
 		);
 	}
 }

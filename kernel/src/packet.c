@@ -16,36 +16,21 @@
 
 #include "packet.h"
 #include "mmr.h"
+#include "services.h"
 #include "dmni.h"
-
-#define PKT_SLOTS 2
 
 enum {
 	PKT_SLOT_A,
-	PKT_SLOT_B
+	PKT_SLOT_B,
+	PKT_SLOT_MAX
 };
 
-pkt_slot_t pkt_slots[PKT_SLOTS];		//!< Packet send control.
-
-// unsigned int global_inst = 0;			//!<Global CPU instructions counter
-
-const unsigned int PKT_SIZE = 13; //!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
+pkt_slot_t pkt_slots[PKT_SLOT_MAX];	//!< Packet send control.
 
 void pkt_init()
 {
-	for(int i = 0; i < PKT_SLOTS; i++)
+	for(int i = 0; i < PKT_SLOT_MAX; i++)
 		pkt_slots[i].free = true;
-}
-
-void pkt_read(volatile packet_t *packet)
-{	
-	MMR_DMNI_SIZE = PKT_SIZE;
-	MMR_DMNI_OP = DMNI_WRITE;
-	MMR_DMNI_ADDRESS = (unsigned int)packet;
-	MMR_DMNI_START = 1;
-	
-	/* Wait for data transfer */
-	while(MMR_DMNI_RECEIVE_ACTIVE);
 }
 
 packet_t *pkt_slot_get()
@@ -61,25 +46,29 @@ packet_t *pkt_slot_get()
 	}
 }
 
-void pkt_send(packet_t *packet, unsigned int *buffer, unsigned int size){
+void pkt_set_message_delivery(packet_t *packet, int consumer_addr, int producer_task, int consumer_task, size_t size)
+{
+	packet->header = consumer_addr;
+	packet->service = MESSAGE_DELIVERY;
+	packet->producer_task = producer_task;
+	packet->consumer_task = consumer_task;
+	packet->msg_length = size;
+	packet->insert_request = MMR_NI_CONFIG;
+}
 
-	packet->payload_size = (PKT_SIZE - 2) + size;
+void pkt_set_migration_pipe(packet_t *packet, int addr, int producer_task, int consumer_task, int size)
+{
+	packet->header = addr;
+	packet->task_ID = producer_task;
+	packet->service = MIGRATION_PIPE;
+	packet->consumer_task = consumer_task;
+	packet->msg_length = size;
+}
+
+void pkt_set_dmni_info(packet_t *packet, size_t payload_size)
+{
+	packet->payload_size = (PKT_SIZE - 2) + payload_size;
 	packet->transaction = 0;
 	packet->source_PE = MMR_NI_CONFIG;
-
-	/* Wait for DMNI be release */
-	while(MMR_DMNI_SEND_ACTIVE);
-
 	packet->timestamp = MMR_TICK_COUNTER;
-
-	MMR_DMNI_SIZE = PKT_SIZE;
-	MMR_DMNI_ADDRESS = (unsigned int)packet;
-
-	if(size > 0){
-		MMR_DMNI_SIZE_2 = size;
-		MMR_DMNI_ADDRESS_2 = (unsigned int)buffer;
-	}
-
-	MMR_DMNI_OP = DMNI_READ;
-	MMR_DMNI_START = 1;
 }

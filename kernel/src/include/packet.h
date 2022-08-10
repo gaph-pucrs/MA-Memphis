@@ -17,6 +17,9 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
+
+static const unsigned PKT_SIZE = 13;	//!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
 
 /**
  * @brief This structure is to be filled by the software when needed to send a 
@@ -102,13 +105,6 @@ typedef struct _pkt_slot_t {
 void pkt_init();
 
 /**
- * @brief Reads a packet from the DMNI
- * 
- * @param packet A pointer to a packet structure.
- */
-void pkt_read(volatile packet_t *packet);
-
-/**
  * @brief Searches for a free packet slot.
  * 
  * @details A free slot is the one which is not being used by DMNI. Prevents 
@@ -119,11 +115,31 @@ void pkt_read(volatile packet_t *packet);
 packet_t *pkt_slot_get();
 
 /**
- * @brief Function that abstracts the process to send a generic packet to NoC 
- * by programming the DMNI.
+ * @brief Sets a packet to a message delivery format
  * 
- * @param packet	Packet pointer
- * @param buffer	Buffer to send. If single word, pointer to this word.
- * @param size		Size of the packet payload
+ * @param packet Pointer to the packet structure
+ * @param consumer_addr Address of the consumer task
+ * @param producer_task ID of the producer task
+ * @param consumer_task ID of the consumer task
+ * @param size Message size in bytes
  */
-void pkt_send(packet_t *packet, unsigned int *buffer, unsigned int size);
+void pkt_set_message_delivery(packet_t *packet, int consumer_addr, int producer_task, int consumer_task, size_t size);
+
+/**
+ * @brief Sets a packet to a migration pipe format
+ * 
+ * @param packet Pointer to the packet structure
+ * @param addr Address of the migration target
+ * @param producer_task ID of the producer task
+ * @param consumer_task ID of the consumer task
+ * @param size Message size in bytes
+ */
+void pkt_set_migration_pipe(packet_t *packet, int addr, int producer_task, int consumer_task, int size);
+
+/**
+ * @brief Sets DMNI info into the packet structure
+ * 
+ * @param packet Pointer of the message structure
+ * @param payload_size Payload size in flits (32-bit). 0 if none.
+ */
+void pkt_set_dmni_info(packet_t *packet, size_t payload_size);
