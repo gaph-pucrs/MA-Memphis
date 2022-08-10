@@ -189,7 +189,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		unsigned entry_point = std::stoul(line, nullptr, 16);
 		// std::cout << "Entry point: " << entry_point << std::endl;
 		
-		unsigned packet_size = (txt_size + data_size)/4 + CONSTANT_PACKET_SIZE;
+		unsigned packet_size = ((txt_size + data_size) >> 2) + CONSTANT_PACKET_SIZE;
 		
 		packet.clear();
 		packet.reserve(packet_size);
@@ -211,7 +211,7 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 
 		/* Assembles payload */
-		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
+		for(unsigned i = 0; i < (txt_size+data_size) >> 2; i++){
 			std::getline(repo, line);
 			// std::cout << line << std::endl;
 			packet.push_back(std::stoul(line, nullptr, 16));
@@ -242,7 +242,7 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
-	packet.push_back(message_len);	/* Message length */
+	packet.push_back(message_len << 2);		/* Message length */
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);

@@ -231,7 +231,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 
 		/* Fill previous flits */
 		packet[1] = packet_size - 2;
-		packet[8] = message_len;
+		packet[8] = message_len << 2;
 
 		// for(unsigned i = 0; i < packet_size; i++){
 		// 	std::cout << hex << packet[i] << std::endl;
