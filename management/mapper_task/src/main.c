@@ -19,6 +19,8 @@
 #include "services.h"
 #include "task_migration.h"
 
+const size_t MAX_SIZE = 128;
+
 int main()
 {
 	printf("Mapper task started at time %u\n", memphis_get_tick());
@@ -26,34 +28,41 @@ int main()
 	static mapper_t mapper;	
 	map_init(&mapper);
 
+	size_t alloc_size = MAX_SIZE*sizeof(int);
+	int *in_msg = malloc(alloc_size);
+
+	if(in_msg == NULL){
+		puts("Not enough memory");
+		return errno;
+	}
+
 	while(true){
-		static message_t msg;
-		memphis_receive_any(&msg);
+		memphis_receive_any(in_msg, alloc_size);
 		/* Check what service has been received */
-		switch(msg.payload[0]){
+		switch(in_msg[0]){
 			case NEW_APP:
-				map_new_app(&mapper, msg.payload[1], (int*)&msg.payload[2], (int*)&msg.payload[2*msg.payload[1] + 2]);
+				map_new_app(&mapper, in_msg[1], (int*)&in_msg[2], (int*)&in_msg[2*in_msg[1] + 2]);
 				break;
 			case TASK_ALLOCATED:
-				map_task_allocated(&mapper, msg.payload[1]);
+				map_task_allocated(&mapper, in_msg[1]);
 				break;
 			case TASK_TERMINATED:
-				map_task_terminated(&mapper, msg.payload[1]);
+				map_task_terminated(&mapper, in_msg[1]);
 				break;
 			case TASK_MIGRATION_MAP:
-				tm_migrate(&mapper, msg.payload[1]);
+				tm_migrate(&mapper, in_msg[1]);
 				break;
 			case TASK_MIGRATED:
-				tm_migration_complete(&mapper, msg.payload[1]);
+				tm_migration_complete(&mapper, in_msg[1]);
 				break;
 			case REQUEST_SERVICE:
-				map_request_service(&mapper, msg.payload[1], msg.payload[2], msg.payload[3]);
+				map_request_service(&mapper, in_msg[1], in_msg[2], in_msg[3]);
 				break;
 			case TASK_ABORTED:
-				map_task_aborted(&mapper, msg.payload[1]);
+				map_task_aborted(&mapper, in_msg[1]);
 				break;
 			default:
-				printf("Invalid service %d received\n", msg.payload[0]);
+				printf("Invalid service %x received\n", in_msg[0]);
 				break;
 		}
 	}

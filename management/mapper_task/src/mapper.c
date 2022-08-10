@@ -120,7 +120,7 @@ void map_static_tasks(app_t *app, processor_t *processors)
 
 void map_task_allocated(mapper_t *mapper, int id)
 {
-	// printf("Received task allocated from id %d\n", id);
+	printf("Received task allocated from id %d\n", id);
 
 	int appid = id >> 8;
 
@@ -140,40 +140,41 @@ void map_task_allocated(mapper_t *mapper, int id)
 void map_task_release(mapper_t *mapper, app_t *app)
 {
 	/* Assemble and send task release */
-	message_t msg;
-	msg.payload[0] = TASK_RELEASE;
-	// msg.payload[1] = appid_shift | i;
-	msg.payload[2] = app->task_cnt;
+	size_t msg_size = (app->task_cnt + 3)*sizeof(int);
+	int *out_msg = malloc(msg_size);
+	out_msg[0] = TASK_RELEASE;
+	// out_msg[1] = appid_shift | i;
+	out_msg[2] = app->task_cnt;
 
 	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 3] = app->task[i]->processor->addr;
-	
-	msg.length = app->task_cnt + 3;
+		out_msg[i + 3] = app->task[i]->processor->addr;
 
 	int appid_shift = app->id << 8;
 	for(int i = 0; i < app->task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
-		msg.payload[1] = appid_shift | i;
+		out_msg[1] = appid_shift | i;
 
 		/* Send message directed to kernel at task address */
-		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 3]);
+		memphis_send_any(out_msg, msg_size, MEMPHIS_KERNEL_MSG | out_msg[i + 3]);
 
 		/* Mark task as running */
 		app->task[i]->status = RUNNING;
 	}
+
+	free(out_msg);
+	out_msg = NULL;
 }
 
 void map_app_mapping_complete(app_t *app)
 {
-	message_t msg;
-	msg.payload[0] = APP_MAPPING_COMPLETE;
-	msg.length = 1;
+	int out_msg = APP_MAPPING_COMPLETE;
+	
 	if(app->id == 0){
-		memphis_send_any(&msg, MAINJECTOR);
+		memphis_send_any(&out_msg, sizeof(out_msg), MAINJECTOR);
 
 		memphis_br_send_all(0, RELEASE_PERIPHERAL);
 	} else {
-		memphis_send_any(&msg, APP_INJECTOR);
+		memphis_send_any(&out_msg, sizeof(out_msg), APP_INJECTOR);
 	}
 }
 
@@ -228,22 +229,24 @@ void map_task_allocation(app_t *app, processor_t *processors)
 	// puts("Mapping success! Requesting task allocation.\n");
 
 	/* Ask injector for task allocation */
-	message_t msg;
+	size_t msg_size = (app->task_cnt * 2 + 1)*sizeof(int);
+	int *out_msg = malloc(msg_size);
 
-	msg.payload[0] = APP_ALLOCATION_REQUEST;
-	unsigned int *payload = &msg.payload[1];
+	out_msg[0] = APP_ALLOCATION_REQUEST;
+	int *payload = &out_msg[1];
 
 	for(int i = 0; i < app->task_cnt; i++){
 		payload[i*2] = app->task[i]->id;
 		payload[i*2 + 1] = app->task[i]->processor->addr;
 	}
 
-	msg.length = app->task_cnt * 2 + 1;
-
 	if(app->id == 0)
-		memphis_send_any(&msg, MAINJECTOR);
+		memphis_send_any(out_msg, msg_size, MAINJECTOR);
 	else
-		memphis_send_any(&msg, APP_INJECTOR);
+		memphis_send_any(out_msg, msg_size, APP_INJECTOR);
+
+	free(out_msg);
+	out_msg = NULL;
 }
 
 void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int *comm, processor_t *processors)
@@ -333,12 +336,9 @@ void map_request_service(mapper_t *mapper, int address, unsigned tag, int reques
 	if(oda != NULL)
 		id = oda->id;
 	
-	message_t msg;
-	msg.payload[0] = SERVICE_PROVIDER;
-	msg.payload[1] = tag;
-	msg.payload[2] = id;
-	msg.length = 3;
-	memphis_send_any(&msg, requester);
+	int out_msg[] = {SERVICE_PROVIDER, tag, id};
+	
+	memphis_send_any(out_msg, sizeof(out_msg), requester);
 }
 
 void map_task_aborted(mapper_t *mapper, int id)
