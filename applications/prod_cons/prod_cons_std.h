@@ -8,9 +8,7 @@
 #ifndef PROD_CONS_STD_H_
 #define PROD_CONS_STD_H_
 
-
-#define PROD_CONS_ITERATIONS	50
-
-
+#define PROD_CONS_MSG_SIZE      128
+#define PROD_CONS_ITERATIONS	 50
 
 #endif /* PROD_CONS_STD_H_ */
