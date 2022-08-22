@@ -12,59 +12,40 @@
  */
 
 #include "pending_service.h"
+
 #include "mmr.h"
-#include "services.h"
-#include "stdio.h"
-#include "dmni.h"
 
-pending_svc_t pending_svcs;
+list_t _psvcs;
 
-void pending_svc_init()
+void psvc_init()
 {
-	pending_svcs.empty = true;
-	pending_svcs.full = false;
-	pending_svcs.head = 0;
-	pending_svcs.tail = 0;
+	list_init(&_psvcs);
 }
 
-bool pending_svc_push(const volatile packet_t *packet)
+list_entry_t *psvc_push_back(packet_t *packet)
 {
-	if(pending_svcs.full){
-		puts("ERROR: Pending service FIFO FULL");
-		while(1);
-		return false;
-	}
-
-	/* Push packet to buffer */
-	pending_svcs.buffer[pending_svcs.tail] = *packet;
-
-	pending_svcs.tail++;
-	pending_svcs.tail %= PKG_PENDING_SVC_MAX;
-	pending_svcs.full = (pending_svcs.tail == pending_svcs.head);
-	pending_svcs.empty = false;
-
-	//puts("Interruption set ON\n");
-	MMR_PENDING_SERVICE_INTR = 1;
-
-	return true;
-}
-
-packet_t *pending_svc_pop()
-{
-	if(pending_svcs.empty)
+	list_entry_t *entry = list_push_back(&_psvcs, packet);
+	if(entry == NULL)
 		return NULL;
 
-	packet_t *packet = &pending_svcs.buffer[pending_svcs.head++];
+	MMR_PENDING_SERVICE_INTR = 1;
+	return entry;
+}
 
-	pending_svcs.head %= PKG_PENDING_SVC_MAX;
-	if(pending_svcs.head == pending_svcs.tail){
-		pending_svcs.empty = true;
+packet_t *psvc_front()
+{
+	list_entry_t *entry = list_front(&_psvcs);
+	
+	if(entry == NULL)
+		return NULL;
 
-		/* No more pending packets. Unset interrupt flag */
+	return list_get_data(entry);
+}
+
+void psvc_pop_front()
+{
+	list_pop_front(&_psvcs);
+
+	if(list_empty(&_psvcs))
 		MMR_PENDING_SERVICE_INTR = 0;
-	}
-
-	pending_svcs.full = false;
-
-	return packet;
 }

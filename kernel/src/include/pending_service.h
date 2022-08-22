@@ -13,38 +13,32 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <list.h>
 
 #include "packet.h"
 
 /**
- * @brief FIFO data structure for pending services
- */
-typedef struct _pending_svc {
-	packet_t buffer[PKG_PENDING_SVC_MAX];	//!<pending services array declaration
-	unsigned char head;
-	unsigned char tail;
-	bool empty;
-	bool full;
-} pending_svc_t;
-
-/**
  * @brief Initialize the pending service structures
  */
-void pending_svc_init();
+void psvc_init();
 
 /**
  * @brief Adds a service to pending structure
  * 
  * @param packet Pointer to service packet
  *
- * @return True if sucess
+ * @return list_entry_t* Pointer to entry
  */
-bool pending_svc_push(const volatile packet_t *packet);
+list_entry_t *psvc_push_back(packet_t *packet);
 
 /**
- * @brief Gets the next pending service and remove from the buffer
+ * @brief Gets the first element from the fifo
  * 
- * @return Pointer to the next service. NULL if no service is pending.
+ * @return packet_t* Pointer to a packet
  */
-packet_t *pending_svc_pop();
+packet_t *psvc_front();
+
+/**
+ * @brief Removes the first element from the FIFO
+ */
+void psvc_pop_front();
