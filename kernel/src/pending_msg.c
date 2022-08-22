@@ -11,24 +11,29 @@
  * @brief Outgoing kernel messages encapsulated in the Memphis messaging API.
  */
 
+#include "pending_msg.h"
+
 #include <stdlib.h>
 
 #include <memphis.h>
+#include <list.h>
 
-#include "list.h"
-#include "pending_msg.h"
 #include "mmr.h"
 
-list_t _pend_msgs;
+list_t _pmsgs;
 
-void pend_msg_init()
+void pmsg_init()
 {
-    list_init(&_pend_msgs);
+    list_init(&_pmsgs);
 }
 
-int pend_msg_push(void *buf, size_t size, int cons_task)
+int pmsg_emplace_back(void *buf, size_t size, int cons_task)
 {
     opipe_t *opipe = malloc(sizeof(opipe));
+
+    if(opipe == NULL)
+        return -1;
+
     int result = opipe_push(
         opipe, 
         buf, 
@@ -40,12 +45,12 @@ int pend_msg_push(void *buf, size_t size, int cons_task)
     if(result != size)
         return result;
 
-    list_push_back(&_pend_msgs, opipe);
+    list_push_back(&_pmsgs, opipe);
 
 	return size;
 }
 
-bool _pend_msg_find_fnc(void *data, void *cmpval)
+bool _pmsg_find_fnc(void *data, void *cmpval)
 {
     opipe_t *opipe = (opipe_t*)data;
     int cons_task = *((int*)cmpval);
@@ -53,9 +58,9 @@ bool _pend_msg_find_fnc(void *data, void *cmpval)
     return (opipe->consumer_task == cons_task);
 }
 
-opipe_t *pend_msg_find(int cons_task)
+opipe_t *pmsg_find(int cons_task)
 {
-    list_entry_t *entry = list_find(&_pend_msgs, &cons_task, _pend_msg_find_fnc);
+    list_entry_t *entry = list_find(&_pmsgs, &cons_task, _pmsg_find_fnc);
 
     if(entry == NULL)
         return NULL;
@@ -63,8 +68,8 @@ opipe_t *pend_msg_find(int cons_task)
     return list_get_data(entry);
 }
 
-void pend_msg_remove(opipe_t *pending)
+void pmsg_remove(opipe_t *pending)
 {
-    list_entry_t *entry = list_find(&_pend_msgs, pending, NULL);
-    list_remove(&_pend_msgs, entry);
+    list_entry_t *entry = list_find(&_pmsgs, pending, NULL);
+    list_remove(&_pmsgs, entry);
 }

@@ -18,7 +18,7 @@
 /**
  * @brief Initializes the pending message FIFO
  */
-void pend_msg_init();
+void pmsg_init();
 
 /**
  * @brief Pushes a pending message to the FIFO
@@ -29,7 +29,7 @@ void pend_msg_init();
  * 
  * @return int Number of bytes in the message
  */
-int pend_msg_push(void *buf, size_t size, int cons_task);
+int pmsg_emplace_back(void *buf, size_t size, int cons_task);
 
 /**
  * @brief Finds a message in the pending FIFO
@@ -38,11 +38,11 @@ int pend_msg_push(void *buf, size_t size, int cons_task);
  * 
  * @return opipe_t* Pointer to an output pipe
  */
-opipe_t *pend_msg_find(int cons_task);
+opipe_t *pmsg_find(int cons_task);
 
 /**
  * @brief Removes an output pipe from the pending messages
  * 
  * @param pending Pointer to the output pipe
  */
-void pend_msg_remove(opipe_t *pending);
+void pmsg_remove(opipe_t *pending);
