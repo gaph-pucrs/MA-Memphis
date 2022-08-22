@@ -30,7 +30,9 @@ enum _syscall {
 	SYS_getlocation = 9,
 	SYS_brall,
 	SYS_monptr,
-	SYS_brtgt
+	SYS_brtgt,
+	SYS_getnprocs,
+	SYS_getmaxtasks
 };
 
 /**
@@ -133,3 +135,17 @@ int memphis_br_send_all(uint32_t payload, uint8_t ksvc);
  * 		   -1 on failure and sets errno
  */
 int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);
+
+/**
+ * @brief Gets the number of processors in the system
+ * 
+ * @return int Number of processors
+ */
+int memphis_get_nprocs();
+
+/**
+ * @brief Gets the maximum local tasks
+ * 
+ * @return int Number of maximum local tasks
+ */
+int memphis_get_max_tasks();

@@ -229,3 +229,17 @@ int sys_fstat(tcb_t *tcb, int file, struct stat *st);
  * @return int -EBADF
  */
 int sys_close(int file);
+
+/**
+ * @brief Gets the number of PEs in the system
+ * 
+ * @return int Number of PEs
+ */
+int sys_get_nprocs();
+
+/**
+ * @brief Gets the number of tasks a PE can hold
+ * 
+ * @return int Maximum local tasks
+ */
+int sys_get_max_tasks();

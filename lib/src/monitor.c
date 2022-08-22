@@ -18,18 +18,20 @@
 
 #include "internal_syscall.h"
 
-void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS])
+void monitor_init(volatile monitor_t *table)
 {
-	for(int n = 0; n < PKG_N_PE; n++){
-		for(int t = 0; t < PKG_MAX_LOCAL_TASKS; t++){
-			table[n][t].task = -1;
-		}
+	const int N_PE = memphis_get_nprocs();
+	const int N_TASKS = memphis_get_max_tasks();
+
+	for(int n = 0; n < N_PE; n++){
+		for(int t = 0; t < N_TASKS; t++)
+			table[n*N_TASKS + t].task = -1;
 	}
 }
 
-int monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type)
+int monitor_set_dmni(volatile monitor_t *table, enum MONITOR_TYPE type)
 {
-	return syscall_errno(SYS_monptr, 2, (int)table, type, 0, 0, 0, 0);
+	return syscall_errno(SYS_monptr, 2, (long)table, type, 0, 0, 0, 0);
 }
 
 void monitor_announce(enum MONITOR_TYPE type)

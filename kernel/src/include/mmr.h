@@ -57,3 +57,7 @@
 #define MMR_BR_KSVC					(*(volatile unsigned int*)0x2000063CU)
 #define MMR_BR_READ_KSVC			(*(volatile unsigned int*)0x20000640U)
 #define MMR_BR_POP					(*(volatile unsigned int*)0x20000644U)
+#define MMR_PAGE_SIZE				(*(volatile unsigned int*)0x20000648U)
+#define MMR_MAX_LOCAL_TASKS			(*(volatile unsigned int*)0x2000064CU)
+#define MMR_N_PE_X      			(*(volatile unsigned int*)0x20000650U)
+#define MMR_N_PE_Y      			(*(volatile unsigned int*)0x20000654U)

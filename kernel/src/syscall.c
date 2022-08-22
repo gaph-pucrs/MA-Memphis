@@ -87,6 +87,12 @@ int sys_syscall(
 			case SYS_monptr:
 				ret = sys_mon_ptr(current, (unsigned*)arg1, arg2);
 				break;
+			case SYS_getnprocs:
+				ret = sys_get_nprocs();
+				break;
+			case SYS_getmaxtasks:
+				ret = sys_get_max_tasks();
+				break;
 			case SYS_close:
 				ret = sys_close(arg1);
 				break;
@@ -775,4 +781,14 @@ int sys_fstat(tcb_t *tcb, int file, struct stat *st)
 int sys_close(int file)
 {
 	return -EBADF;
+}
+
+int sys_get_nprocs()
+{
+	return MMR_N_PE_X*MMR_N_PE_Y;
+}
+
+int sys_get_max_tasks()
+{
+	return MMR_MAX_LOCAL_TASKS;
 }

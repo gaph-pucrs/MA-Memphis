@@ -30,14 +30,12 @@ typedef struct _monitor {
 	int value;
 } monitor_t;
 
-#define MONITOR_TABLE(var) volatile static monitor_t var[PKG_N_PE][PKG_MAX_LOCAL_TASKS]
-
 /**
  * @brief Initializes the monitoring table
  * 
  * @param table Table to initialize
  */
-void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS]);
+void monitor_init(volatile monitor_t *table);
 
 /**
  * @brief Sets the pointer to the monitor table in the monitoring infrastructure
@@ -48,7 +46,7 @@ void monitor_init(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS]);
  * @return 0 on success
  * 		   -1 on failure and sets errno
  */
-int monitor_set_dmni(volatile monitor_t table[PKG_N_PE][PKG_MAX_LOCAL_TASKS], enum MONITOR_TYPE type);
+int monitor_set_dmni(volatile monitor_t *table, enum MONITOR_TYPE type);
 
 /**
  * @brief Broadcast this task as a monitor

@@ -13,7 +13,6 @@
 
 #include "memphis.h"
 #include "services.h"
-#include "mmr.h"
 
 #include "internal_syscall.h"
 
@@ -120,4 +119,14 @@ int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 		ret = syscall_errno(SYS_brtgt, 3, payload, target, ksvc, 0, 0, 0);
 	} while(ret == -1 && errno == EAGAIN);
 	return ret;
+}
+
+int memphis_get_nprocs()
+{
+	return __internal_syscall(SYS_getnprocs, 0, 0, 0, 0, 0, 0, 0);
+}
+
+int memphis_get_max_tasks()
+{
+	return __internal_syscall(SYS_getmaxtasks, 0, 0, 0, 0, 0, 0, 0);
 }
