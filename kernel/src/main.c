@@ -19,23 +19,23 @@
 #include "llm.h"
 #include "interrupts.h"
 #include "pending_msg.h"
+#include "paging.h"
+#include "application.h"
 
 int main()
 {
 	printf("Initializing PE %x\n", MMR_NI_CONFIG);
 
-	pkt_init();
-
+	page_init();
+	app_init();
 	tcb_init();
-
-	pending_svc_init();
-	pend_msg_init();
-
 	sched_init();
-
+	pend_msg_init();
+	pend_svc_init();
 	tm_init();
-
 	llm_init();
+
+	pkt_init();
 
 	MMR_IRQ_MASK = (
 		IRQ_BRNOC |

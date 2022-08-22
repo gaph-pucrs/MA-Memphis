@@ -11,27 +11,25 @@
  * @brief Defines the interrupts procedures of the kernel.
  */
 
-#include <stdint.h>
+#include "interrupts.h"
+
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <memphis.h>
+#include <services.h>
 
-#include "interrupts.h"
-#include "services.h"
-#include "task_migration.h"
-#include "pending_service.h"
-#include "dmni.h"
-#include "task_location.h"
 #include "syscall.h"
-#include "llm.h"
-#include "stdio.h"
-#include "monitor.h"
-#include "string.h"
+#include "pending_service.h"
 #include "pending_msg.h"
+#include "task_migration.h"
+#include "dmni.h"
+#include "mmr.h"
+#include "llm.h"
 
-tcb_t *os_isr(unsigned int status)
+tcb_t *os_isr(unsigned status)
 {
-	MMR_SCHEDULING_REPORT = REPORT_INTERRUPTION;
+	sched_report_interruption();
 
 	if(sched_is_idle())
 		sched_update_slack_time();
@@ -39,42 +37,48 @@ tcb_t *os_isr(unsigned int status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
-		br_packet_t br_packet;
-		br_read(&br_packet);
+		bcast_t bcast_packet;
+		bcast_read(&bcast_packet);
 
 		if(
 			MMR_DMNI_SEND_ACTIVE && 
 			(
-				br_packet.service == MESSAGE_REQUEST || 
-				br_packet.service == TASK_MIGRATION
+				bcast_packet.service == MESSAGE_REQUEST || 
+				bcast_packet.service == TASK_MIGRATION
 			)
 		){
 			/* Fake a packet as a pending service */
-			packet_t packet;
-			br_fake_packet(&br_packet, &packet);
+			packet_t *packet = malloc(sizeof(packet_t));
+			bcast_fake_packet(&bcast_packet, packet);
 			// puts("Faking packet as pending service\n");
-			pending_svc_push(&packet);
+			psvc_push_back(packet);
 		} else {
-			call_scheduler |= os_handle_broadcast(&br_packet);
+			call_scheduler |= os_handle_broadcast(&bcast_packet);
 		}
 	} else if(status & IRQ_NOC){
-		packet_t packet;
-		dmni_read(&packet, PKT_SIZE);
+		packet_t *packet = malloc(sizeof(packet_t));
+		dmni_read(packet, PKT_SIZE);
 
 		if(
 			MMR_DMNI_SEND_ACTIVE && 
-			(packet.service == DATA_AV || packet.service == MESSAGE_REQUEST)
-		)
-			pending_svc_push(&packet);
-		else
-			call_scheduler = os_handle_pkt(&packet);
+			(packet->service == DATA_AV || packet->service == MESSAGE_REQUEST)
+		){
+			psvc_push_back(packet);
+		} else {
+			call_scheduler = os_handle_pkt(packet);
+			free(packet);
+		}
 		
 	} else if(status & IRQ_PENDING_SERVICE){
 		/* Pending packet. Handle it */
 
-		packet_t *packet = pending_svc_pop();
-		if(packet)
+		packet_t *packet = psvc_front();
+
+		if(packet != NULL){
+			psvc_pop_front();
 			call_scheduler = os_handle_pkt(packet);
+			free(packet);
+		}
 		
 	} else {
 		if(status & IRQ_SLACK_TIME){
@@ -86,18 +90,18 @@ tcb_t *os_isr(unsigned int status)
 		}
 
 		/* Only check stack if scheduling interrupt and no message treated in this interrupt */
-		if(
-			(status & IRQ_SCHEDULER) &&
-			!sched_is_idle() &&
-			sched_check_stack()
-		){
-			tcb_t *current = sched_get_current();
-			printf(
-				"Task id %d aborted due to stack overflow\n", 
-				tcb_get_id(current)
-			);
+		if((status & IRQ_SCHEDULER) && !sched_is_idle()){
+			tcb_t *current = sched_get_current_tcb();
 
-			tcb_abort_task(current);
+			if(tcb_check_stack(current)){
+				tcb_t *current = sched_get_current_tcb();
+				printf(
+					"Task id %d aborted due to stack overflow\n", 
+					tcb_get_id(current)
+				);
+
+				tcb_abort_task(current);
+			}
 		}
 	}
 
@@ -106,19 +110,18 @@ tcb_t *os_isr(unsigned int status)
 	if(call_scheduler)
 		sched_run();
 	
-	if(sched_is_idle()){
-		sched_update_idle_time();
+	tcb_t *current = sched_get_current_tcb();
 
-		MMR_SCHEDULING_REPORT = REPORT_IDLE;
-	} else {
-		MMR_SCHEDULING_REPORT = sched_get_current_id();
-	}
+	if(current == NULL)
+		sched_update_idle_time();
+	else
+		sched_report(tcb_get_id(current));	
 
     /* Runs the scheduled task */
-    return sched_get_current();
+    return sched_get_current_tcb();
 }
 
-bool os_handle_broadcast(br_packet_t *packet)
+bool os_handle_broadcast(bcast_t *packet)
 {
 	// printf("Broadcast received %x\n", packet->service);
 	int16_t addr_field = packet->payload >> 16;
@@ -132,25 +135,20 @@ bool os_handle_broadcast(br_packet_t *packet)
 			return os_announce_mon(task_field, addr_field);
 		case RELEASE_PERIPHERAL:
 			return os_release_peripheral();
-		case UPDATE_TASK_LOCATION:
-			puts(
-				"DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST"
-			);
-			return false;
 		case TASK_MIGRATION:
 			return os_task_migration(task_field, addr_field);
 		case DATA_AV:
 			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", task_field, packet->src_id);
 			return os_data_available(
-				br_convert_id(task_field, MMR_NI_CONFIG), 
-				br_convert_id(packet->src_id, addr_field), 
+				bcast_convert_id(task_field, MMR_NI_CONFIG), 
+				bcast_convert_id(packet->src_id, addr_field), 
 				addr_field
 			);
 		case MESSAGE_REQUEST:
 			return os_message_request(
-				br_convert_id(packet->src_id, addr_field), 
+				bcast_convert_id(packet->src_id, addr_field), 
 				addr_field, 
-				br_convert_id(task_field, MMR_NI_CONFIG)
+				bcast_convert_id(task_field, MMR_NI_CONFIG)
 			);
 		case ABORT_TASK:
 			return os_abort_task(task_field);
@@ -195,20 +193,10 @@ bool os_handle_pkt(volatile packet_t *packet)
 				packet->code_size, 
 				packet->data_size, 
 				packet->bss_size, 
-				packet->program_counter, 
+				(void*)packet->program_counter, 
 				packet->mapper_task, 
 				packet->mapper_address
 			);
-		case TASK_RELEASE:
-			puts(
-				"DEPRECATED: TASK_RELEASE should be inside MESSAGE_DELIVERY"
-			);
-			return false;
-		case UPDATE_TASK_LOCATION:
-			puts(
-				"DEPRECATED: UPDATE_TASK_LOCATION is now embedded in DATA_AV/MESSAGE_REQUEST"
-			);
-			return false;
 		case TASK_MIGRATION:
 			return os_task_migration(
 				packet->task_ID, 
@@ -224,22 +212,29 @@ bool os_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_TCB:
 			return os_migration_tcb(
 				packet->task_ID, 
-				packet->program_counter, 
+				(void*)packet->program_counter
+			);
+		case MIGRATION_TASK_LOCATION:
+			return os_migration_app(
+				packet->task_ID, 
+				packet->request_size
+			);
+		case MIGRATION_SCHED:
+			return os_migration_sched(
+				packet->task_ID, 
 				packet->period, 
 				packet->deadline, 
 				packet->execution_time, 
-				packet->waiting_msg
-			);
-		case MIGRATION_TASK_LOCATION:
-			return os_migration_tl(
-				packet->task_ID, 
-				packet->request_size, 
+				packet->waiting_msg,
 				packet->source_PE
 			);
-		case MIGRATION_MSG_REQUEST:
-			return os_migration_mr(packet->task_ID, packet->request_size);
 		case MIGRATION_DATA_AV:
-			return os_migration_data_av(packet->task_ID, packet->request_size);
+		case MIGRATION_MSG_REQUEST:
+			return os_migration_tl(
+				packet->task_ID, 
+				packet->request_size,
+				packet->service
+			);
 		case MIGRATION_PIPE:
 			return os_migration_pipe(
 				packet->task_ID, 
@@ -274,7 +269,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 		/* ATTENTION: Never request directly to kernel. Always use SReceive! */
 
 		/* Search for the kernel-produced message */
-		opipe_t *opipe = pend_msg_find(cons_task);
+		opipe_t *opipe = pmsg_find(cons_task);
 		
 		if(opipe == NULL){
 			puts(
@@ -285,43 +280,45 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 
 		/* Send it like a MESSAGE_DELIVERY */
 		opipe_send(opipe, prod_task, cons_addr);
-		pend_msg_remove(opipe);
+		pmsg_remove(opipe);
 
 		/* If still pending messages to requesting task, also send a data available */
-		if(pend_msg_find(cons_task) != NULL){
+		if(pmsg_find(cons_task) != NULL){
 			/* Send data available to the right processor */
-			data_av_send(
-				cons_task, 
-				MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, 
-				cons_addr, 
-				MMR_NI_CONFIG
-			);
+			tl_t dav;
+			dav.task = MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG;
+			dav.addr = MMR_NI_CONFIG;
+
+			tl_send_dav(&dav, cons_task, cons_addr);
 		}
 	} else {
 		// printf("Received message request from task %d to task %d\n", cons_task, prod_task);
 
 		/* Get the producer task */
-		tcb_t *prod_tcb = tcb_search(prod_task);
+		tcb_t *prod_tcb = tcb_find(prod_task);
 
-		if(!prod_tcb){
+		if(prod_tcb == NULL){
 			// puts("Producer NOT found. Will resend the request and update location\n");
 			/* Task is not here. Probably migrated. */
-			int migrated_addr = tm_get_migrated_addr(prod_task);
+			tl_t *mig = tm_find(prod_task);
+			int migrated_addr = tl_get_addr(mig);
 			// printf("Migrated address is %d\n", migrated_addr);
 
 			/* Forward the message request to the migrated processor */
-			mr_send(prod_task, cons_task, migrated_addr, cons_addr);
-
+			tl_t msgreq;
+			tl_set(&msgreq, cons_task, cons_addr);
+			tl_send_msgreq(&msgreq, prod_task, migrated_addr);
 		} else {
 			// puts("Producer found!\n");
 			
 			/* Update task location in case of migration */			
 			if(
-				!(cons_task & 0xFFFF0000) && 
+				((cons_task & 0xFFFF0000) == 0) && 
 				((cons_task >> 8) == (prod_task >> 8))
 			){
 				/* Only update if message came from another task of the same app */
-				tl_insert_update(prod_tcb, cons_task, cons_addr);
+				app_t *app = tcb_get_app(prod_tcb);
+				app_update(app, cons_task, cons_addr);
 			}
 			
 			/* Task found. Now search for message. */
@@ -330,14 +327,15 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 			if(opipe == NULL || opipe_get_cons_task(opipe) != cons_task){	/* No message in producer's pipe to the consumer task */
 				/* Insert the message request in the producer's TCB */
 				// puts("Message not found. Inserting message request.\n");
-				mr_insert(prod_tcb, cons_task, cons_addr);
+				list_t *msgreqs = tcb_get_msgreqs(prod_tcb);
+				tl_emplace_back(msgreqs, cons_task, cons_addr);
 			} else {	/* Message found */
 				if(cons_addr == MMR_NI_CONFIG){
 					/* Message Request came from NoC but the producer migrated to this address */
 					/* Writes to the consumer page address */
-					tcb_t *cons_tcb = tcb_search(cons_task);
+					tcb_t *cons_tcb = tcb_find(cons_task);
 					
-					if(!cons_tcb){
+					if(cons_tcb == NULL){
 						puts("ERROR: CONS TCB NOT FOUND ON MR");
 						while(true);
 					}
@@ -366,7 +364,8 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 					tcb_destroy_opipe(prod_tcb);
 
 					/* Release consumer task */
-					sched_release_wait(cons_tcb);
+					sched_t *sched = tcb_get_sched(cons_tcb);
+					sched_release_wait(sched);
 
 					if(tcb_need_migration(cons_tcb)){
 						tm_migrate(cons_tcb);
@@ -380,8 +379,9 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 				}
 
 				/* Release task for execution if it was blocking another send */
-				if(sched_is_waiting_request(prod_tcb)){
-					sched_release_wait(prod_tcb);
+				sched_t *sched = tcb_get_sched(prod_tcb);
+				if(sched_is_waiting_msgreq(sched)){
+					sched_release_wait(sched);
 					force_sched |= sched_is_idle();
 					if(tcb_has_called_exit(prod_tcb)){
 						tcb_terminate(prod_tcb);
@@ -406,15 +406,14 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 		int ret = os_kernel_syscall(rcvmsg, align_size >> 2);
 
 		free(rcvmsg);
-		rcvmsg = NULL;
 
 		return ret;
 	} else {
 		/* Get consumer task */
 		// printf("Received delivery to task %d with size %d\n", cons_task, size);
-		tcb_t *cons_tcb = tcb_search(cons_task);
+		tcb_t *cons_tcb = tcb_find(cons_task);
 
-		if(!cons_tcb){
+		if(cons_tcb == NULL){
 			puts("ERROR: CONS TCB NOT FOUND ON MD");
 			/**
 			 * @todo Create an exception and abort task?
@@ -425,7 +424,8 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 		/* Update task location in case of migration */			
 		if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
 			/* Only update if message came from another task of the same app */
-			tl_insert_update(cons_tcb, prod_task, prod_addr);
+			app_t *app = tcb_get_app(cons_tcb);
+			app_update(app, prod_task, prod_addr);
 		}
 		/* No need to check if task migrated here. Once REQUEST is emitted a task cannot migrate */
 
@@ -451,7 +451,8 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 		// puts("Message read from DMNI");
 
 		/* Release task to execute */
-		sched_release_wait(cons_tcb);
+		sched_t *sched = tcb_get_sched(cons_tcb);
+		sched_release_wait(sched);
 		// puts("Consumer released");
 
 		if(tcb_need_migration(cons_tcb)){
@@ -466,88 +467,97 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 bool os_data_available(int cons_task, int prod_task, int prod_addr)
 {
 	// printf("DATA_AV from id %x addr %x to id %x\n", prod_task, prod_addr, cons_task);
-	if(cons_task & 0x10000000){
+	if(cons_task & MEMPHIS_KERNEL_MSG){
 		/* This message was directed to kernel */
 		/* Kernel is always ready to receive. Send message request */
-		mr_send(prod_task, cons_task, prod_addr, MMR_NI_CONFIG);
+		tl_t msgreq;
+		msgreq.task = cons_task;
+		msgreq.addr = MMR_NI_CONFIG;
+
+		tl_send_msgreq(&msgreq, prod_task, prod_addr);
 	} else {
 		/* Insert the packet received */
-		tcb_t *cons_tcb = tcb_search(cons_task);
+		tcb_t *cons_tcb = tcb_find(cons_task);
 
-		if(cons_tcb){	/* Ensure task is allocated here */
+		if(cons_tcb != NULL){	/* Ensure task is allocated here */
 			/* Update task location in case of migration */			
 			if(
-				!(prod_task & 0xFFFF0000) && 
+				((prod_task & 0xFFFF0000) == 0) && 
 				((prod_task >> 8) == (cons_task >> 8))
 			){
 				/* Only update if message came from another task of the same app */
-				tl_insert_update(cons_tcb, prod_task, prod_addr);
+				app_t *app = tcb_get_app(cons_tcb);
+				app_update(app, prod_task, prod_addr);
 			}
 
 			/* Insert the packet to TCB */
-			data_av_insert(cons_tcb, prod_task, prod_addr);
+			list_t *davs = tcb_get_davs(cons_tcb);
+			tl_emplace_back(davs, prod_task, prod_addr);
 
 			/* If the consumer task is waiting for a DATA_AV, release it */
-			if(sched_is_waiting_data_av(cons_tcb)){
-				sched_release_wait(cons_tcb);
+			sched_t *sched = tcb_get_sched(cons_tcb);
+			if(sched_is_waiting_dav(sched)){
+				sched_release_wait(sched);
 				return sched_is_idle();
 			}
 
 		} else {
 			/* Task migrated? Forward. */
-			int migrated_addr = tm_get_migrated_addr(cons_task);
+			tl_t *mig = tm_find(cons_task);
+			int migrated_addr = tl_get_addr(mig);
 
 			/* Forward the message request to the migrated processor */
-			data_av_send(cons_task, prod_task, migrated_addr, prod_addr);
+			tl_t dav;
+			dav.task = prod_task;
+			dav.addr = prod_addr;
+
+			tl_send_dav(&dav, cons_task, migrated_addr);
 		}
 	}
+
 	return false;
 }
 
 bool os_task_allocation(
 	int id, 
-	unsigned length, 
-	unsigned data_len, 
-	unsigned bss_len, 
-	unsigned entry_point, 
+	size_t text_size, 
+	size_t data_size, 
+	size_t bss_size, 
+	void *entry_point, 
 	int mapper_task, 
 	int mapper_addr
 )
 {
-	tcb_t *free_tcb = tcb_free_get();
-	// printf("TCB address is %x\n", (unsigned)free_tcb);
-	// printf("TCB offset is %x\n", free_tcb->offset);
+	tcb_t *tcb = malloc(sizeof(tcb_t));
+
+	if(tcb == NULL){
+		puts("FATAL: could not allocate TCB");
+		while(true);
+	}
+
+	tcb_push_back(tcb);
 
 	/* Initializes the TCB */
 	tcb_alloc(
-		free_tcb, 
+		tcb, 
 		id, 
-		length, 
-		data_len, 
-		bss_len, 
-		entry_point, 
+		text_size, 
+		data_size, 
+		bss_size, 
 		mapper_task, 
-		mapper_addr
+		mapper_addr,
+		entry_point
 	);
 
-	/* Clear the DATA_AV fifo of the task */
-	data_av_init(free_tcb);
-
-	/* Clear the task location array of the task */
-	tl_init(free_tcb);
-
-	/* Clears the message request table */
-	mr_init(free_tcb);
-
 	printf(
-		"Task id %d allocated at %d with entry point %x\n", 
+		"Task id %d allocated at %d with entry point %p\n", 
 		id, 
 		MMR_TICK_COUNTER, 
 		entry_point
 	);
 
 	/* Obtain the program code */
-	dmni_read(free_tcb->offset, (length + data_len) >> 2);
+	dmni_read(tcb_get_offset(tcb), (text_size + data_size) >> 2);
 
 	// printf("Code lenght: %x\n", length);
 	// printf("Mapper task: %d\n", mapper_task);
@@ -555,46 +565,72 @@ bool os_task_allocation(
 
 	if(mapper_task != -1){
 		/* Sends task allocated to mapper */
-		return tl_send_allocated(free_tcb);
+		return tcb_send_allocated(tcb);
 	} else {
 		/* Task came from Injector directly. Release immediately */
-		sched_release(free_tcb);
+		sched_t *sched = tcb_get_sched(tcb);
+
+		if(sched == NULL)
+			sched = sched_emplace_back(tcb);
+
+		if(sched == NULL){
+			puts("FATAL: unable to allocate scheduler");
+			while(true);
+		}
+
 		return sched_is_idle();
 	}
 }
 
-bool os_task_release(int id, int task_number, int *task_location)
+bool os_task_release(int id, int task_cnt, int *task_location)
 {
 	/* Get task to release */
-	tcb_t *task = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
-	printf("-> TASK RELEASE received to task %d\n", task->id);
+	printf("-> TASK RELEASE received to task %d\n", tcb_get_id(tcb));
 	// putsv("-> Task count: ", task_number);
 
 	/* Write task location */
-	memcpy(task->task_location, task_location, task_number*sizeof(int));
+	app_t *app = tcb_get_app(tcb);
+
+	size_t current_size = app_get_task_cnt(app);
+	if(current_size != task_cnt){
+		int result = app_copy_location(app, task_cnt, task_location);
+
+		if(result < 0){
+			puts("FATAL: Could not allocate memory for task location.");
+			while(true);
+		}
+	}
 
 	/* If the task is blocked, release it */
-	if(sched_is_blocked(task))
-		sched_release(task);
+	sched_t *sched = tcb_get_sched(tcb);
+	if(sched == NULL)
+		sched = sched_emplace_back(tcb);
+	
+	if(sched == NULL){
+		puts("FATAL: could not allocate scheduler");
+		while(true);
+	}
 
 	return sched_is_idle();
 }
 
 bool os_task_migration(int id, int addr)
 {	
-	tcb_t *task = tcb_search(id);
+	tcb_t *task = tcb_find(id);
 
 	if(task && !tcb_has_called_exit(task)){
 		if(!tcb_need_migration(task)){
 			printf("Trying to migrate task %d to address %d\n", id, addr);
 			tcb_set_migrate_addr(task, addr);
 
-			tm_send_code(task);
+			tm_send_text(task);
 
-			llm_clear_table(task);
+			// llm_clear_table(id);
 
-			if(!sched_is_waiting_delivery(task)){
+			sched_t *sched = tcb_get_sched(task);
+			if(!sched_is_waiting_delivery(sched)){
 				tm_migrate(task);
 				return true;
 			}
@@ -605,7 +641,6 @@ bool os_task_migration(int id, int addr)
 				task->proc_to_migrate, 
 				addr
 			);
-			while(1);
 		}
 	} else {
 		printf("Tried to migrate task %x but it already terminated\n", id);
@@ -614,121 +649,118 @@ bool os_task_migration(int id, int addr)
 	return false;
 }
 
-bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper_addr)
+bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr)
 {
-	tcb_t *free_tcb = tcb_free_get();
+	tcb_t *tcb = malloc(sizeof(tcb_t));
+
+	if(tcb == NULL){
+		puts("FATAL: could not allocate TCB");
+		while(true);
+	}
+
+	tcb_push_back(tcb);
 
 	/* Initializes the TCB */
-	tcb_alloc_migrated(free_tcb, id, code_sz, mapper_task, mapper_addr);
+	tcb_alloc_migrated(tcb, id, text_size, mapper_task, mapper_addr);
 
-	/* Clear the DATA_AV fifo of the task */
-	data_av_init(free_tcb);
-
-	/* Clear the task location array of the task */
-	tl_init(free_tcb);
-
-	/* Clears the message request table */
-	mr_init(free_tcb);
+	text_size = (text_size + 3) & ~3;
 
 	/* Obtain the program code */
-	dmni_read((unsigned int*)tcb_get_offset(free_tcb), code_sz >> 2);
+	dmni_read(tcb_get_offset(tcb), text_size >> 2);
 
 	// printf("Received MIGRATION_CODE from task id %d with size %d\n", id, code_sz);
 
 	return false;
 }
 
-bool os_migration_tcb(
-	int id, 
-	unsigned int pc, 
-	unsigned int period, 
-	int deadline, 
-	unsigned int exec_time, 
-	unsigned waiting_msg
-)
+bool os_migration_tcb(int id, void *pc)
 {
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
 	tcb_set_pc(tcb, pc);
 
-	dmni_read(tcb->registers, HAL_MAX_REGISTERS);
-
-	/* Check if task has real time parameters */
-	if(period)
-		sched_real_time_task(tcb, period, deadline, exec_time);
-	else
-		sched_set_remaining_time(tcb, SCHED_MAX_TIME_SLICE);
-
-	sched_set_waiting_msg(tcb, waiting_msg);
+	dmni_read(tcb_get_regs(tcb), HAL_MAX_REGISTERS);
 
 	// printf("Received MIGRATION_TCB from task id %d\n", id);
 
 	return false;
 }
 
-bool os_migration_tl(int id, unsigned int tl_len, int source)
+bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source)
 {
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
-	dmni_read((unsigned int*)tcb->task_location, tl_len);
+	sched_t *sched = sched_emplace_back(tcb);
 
-	// printf("Received MIGRATION_TASK_LOCATION from task id %d with size %d\n", id, tl_len);
+	if(sched == NULL){
+		puts("FATAL: could not allocate sched");
+		while (true);
+	}
 
-	sched_release(tcb);
+	if(period)
+		sched_real_time_task(sched, period, deadline, exec_time);
+
+	sched_set_waiting_msg(sched, waiting_msg);
 
 	printf(
 		"Task id %d allocated by task migration at time %d from processor %x\n", 
-		tcb_get_id(tcb), 
+		id, 
 		MMR_TICK_COUNTER, 
 		source
 	);
 
-	tl_update_local(id, MMR_NI_CONFIG);
+	app_t *app = tcb_get_app(tcb);
+	app_update(app, id, MMR_NI_CONFIG);
 
-	int task_migrated[2] = {TASK_MIGRATED, tcb->id};
+	int task_migrated[] = {TASK_MIGRATED, tcb->id};
 	os_kernel_writepipe(
 		task_migrated, 
-		2*sizeof(int), 
-		tcb->mapper_task, 
-		tcb->mapper_address
+		sizeof(task_migrated), 
+		tl_get_task(&(tcb->mapper)), 
+		tl_get_addr(&(tcb->mapper))
 	);
 
 	return true;
+
 }
 
-bool os_migration_mr(int id, unsigned int mr_len)
+bool os_migration_tl(int id, size_t size, unsigned service)
 {
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
-	dmni_read(
-		(unsigned int*)tcb->message_request, 
-		mr_len*sizeof(message_request_t)/sizeof(unsigned int)
-	);
+	tl_t *vec = malloc(size*sizeof(tl_t));
+
+	if(vec == NULL){
+		puts("FATAL: could not allocate DAV/MR");
+		while(true);
+	}
+
+	dmni_read(vec, (size*sizeof(tl_t)) >> 2);
+	
+	list_t *list = NULL;
+
+	switch(service){
+		case MIGRATION_DATA_AV:
+			list = tcb_get_davs(tcb);
+			break;
+		case MIGRATION_MSG_REQUEST:
+			list = tcb_get_msgreqs(tcb);
+			break;
+		default:
+			break;
+	}
+
+	for(int i = 0; i < size; i++)
+		list_push_back(list, &(vec[i]));
 
 	// printf("Received MIGRATION_MESSAGE_REQUEST from task id %d with size %d\n", id, mr_len);
 
 	return false;
 }
 
-bool os_migration_data_av(int id , unsigned int data_av_len)
-{
-	tcb_t *tcb = tcb_search(id);
-
-	dmni_read(
-		(unsigned int*)data_av_get_buffer_tail(tcb), 
-		data_av_len*sizeof(data_av_t)/sizeof(unsigned int)
-	);
-
-	data_av_add_tail(tcb, data_av_len);
-
-	// printf("Received MIGRATION_DATA_AV from task id %d with size %d\n", id, data_av_len);
-
-	return false;
-}
-
 bool os_migration_pipe(int id, int cons_task, size_t size)
 {
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
 	opipe_t *opipe = tcb_create_opipe(tcb);
 
@@ -746,14 +778,14 @@ bool os_migration_pipe(int id, int cons_task, size_t size)
 	return false;
 }
 
-bool os_migration_stack(int id, unsigned int stack_len)
+bool os_migration_stack(int id, size_t size)
 {
 	// putsv("Id received ", id);
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
 	dmni_read(
-		(unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), 
-		stack_len >> 2
+		tcb_get_offset(tcb) + MMR_PAGE_SIZE - size, 
+		size >> 2
 	);
 
 	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
@@ -761,34 +793,73 @@ bool os_migration_stack(int id, unsigned int stack_len)
 	return false;
 }
 
-bool os_migration_heap(int id, unsigned int heap_len)
+bool os_migration_heap(int id, size_t heap_size)
 {
 	// putsv("Id received ", id);
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 
-	unsigned heap_start = tcb_get_heap_end(tcb);
+	void *heap_start = tcb_get_heap_end(tcb);
 
-	dmni_read((unsigned int*)(tcb_get_offset(tcb) + heap_start), heap_len >> 2);
-	tcb_set_brk(tcb, heap_start + heap_len);
+	tcb_set_brk(tcb, heap_start + heap_size);
+
+	/* Align */
+	heap_size = (heap_size + 3) & ~3;
+
+	dmni_read(
+		(void*)((unsigned)tcb_get_offset(tcb) + (unsigned)heap_start), 
+		heap_size >> 2
+	);
 
 	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, stack_len);
 
 	return false;
 }
 
-bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len)
+bool os_migration_data_bss(int id, size_t data_size, size_t bss_size)
 {
-	tcb_t *tcb = tcb_search(id);
+	tcb_t *tcb = tcb_find(id);
 	
-	tcb_set_data_length(tcb, data_len);
-	tcb_set_bss_length(tcb, bss_len);
+	tcb_set_data_size(tcb, data_size);
+	tcb_set_bss_size(tcb, bss_size);
 
-	tcb_set_brk(tcb, tcb_get_code_length(tcb) + data_len + bss_len);
+	size_t total_size = data_size + bss_size;
+
+	tcb_set_brk(tcb, (void*)(tcb_get_text_size(tcb) + total_size));
+
+	/* Align */
+	total_size = (total_size + 3) & ~3;
 
 	dmni_read(
-		(unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), 
-		(bss_len + data_len) >> 2
+		tcb_get_offset(tcb) + tcb_get_text_size(tcb), 
+		total_size >> 2
 	);
+
+	return false;
+}
+
+bool os_migration_app(int id, size_t task_cnt)
+{
+	app_t *app = app_find(id >> 8);
+
+	int *tmploc = malloc(task_cnt*sizeof(int));
+	if(tmploc == NULL){
+		puts("FATAL: Could not allocate memory for task location.");
+		while(true);
+	}
+
+	dmni_read(tmploc, task_cnt >> 2);
+
+	size_t current_size = app_get_task_cnt(app);
+	if(current_size == task_cnt){
+		/* App created but no location present. Obtain from migration */
+		app_set_location(app, task_cnt, tmploc);
+	} else {
+		/* App already present with locations. Migration can be outdated */
+
+		/* Dicard!!!! */
+		free(tmploc);
+		tmploc = NULL;
+	}
 
 	return false;
 }
@@ -807,32 +878,23 @@ bool os_announce_mon(enum MONITOR_TYPE type, int addr)
 
 bool os_abort_task(int id)
 {
-	tcb_t *task = tcb_search(id);
-	if(task){
+	tcb_t *tcb = tcb_find(id);
+	if(tcb != NULL){
 		printf("Task id %d aborted by application\n", id);
 
-		/* Send TASK_ABORTED */
-		tl_send_terminated(task);
-
-		/* Clear task from monitor tables */
-		llm_clear_table(task);
-
-		MMR_TASK_TERMINATED = id;
-
-		int mig_addr = tcb_get_migrate_addr(task);
+		int mig_addr = tcb_get_migrate_addr(tcb);
 		if(mig_addr != -1){
 			/* Task is migrating. Inform the destination processor of this */
 			tm_abort_task(id, mig_addr);
 		}
 
-		sched_clear(task);
+		tcb_remove(tcb);
 
-		tcb_clear(task);
-
-		return (sched_get_current() == task);
+		return (sched_get_current_tcb() == tcb);
 	} else {
 		/* Task already terminated or migrated from here */
-		int addr = tm_get_migrated_addr(id);
+		tl_t *tl = tm_find(id);
+		int addr = tl_get_addr(tl);
 		if(addr != -1){
 			tm_abort_task(id, addr);
 		}

@@ -13,12 +13,13 @@
 
 #pragma once
 
-#include "packet.h"
-#include "monitor.h"
-#include "broadcast.h"
-#include "task_control.h"
+#include <stdbool.h>
+#include <stddef.h>
 
-#define REPORT_INTERRUPTION 0x10000
+#include <monitor.h>
+
+#include "task_control.h"
+#include "broadcast.h"
 
 enum IRQ_FLAGS {
 	IRQ_PENDING_SERVICE = 0x01,
@@ -38,7 +39,7 @@ enum IRQ_FLAGS {
  * 
  * @return Pointer to the scheduled task
  */
-tcb_t *os_isr(unsigned int status);
+tcb_t *os_isr(unsigned status);
 
 /**
  * @brief Handles an interruption coming from a broadcast message
@@ -47,7 +48,7 @@ tcb_t *os_isr(unsigned int status);
  * 
  * @return True if the scheduler should be called
  */
-bool os_handle_broadcast(br_packet_t *packet);
+bool os_handle_broadcast(bcast_t *packet);
 
 /** 
  * @brief Handles the packet coming from the NoC.
@@ -112,7 +113,7 @@ bool os_task_allocation(
 	unsigned length, 
 	unsigned data_len, 
 	unsigned bss_len, 
-	unsigned entry_point, 
+	void *entry_point, 
 	int mapper_task, 
 	int mapper_addr
 );
@@ -126,11 +127,7 @@ bool os_task_allocation(
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_release(
-	int id, 
-	int task_number, 
-	int *task_location
-);
+bool os_task_release(int id, int task_number, int *task_location);
 
 /**
  * @brief Handles a task migration order
@@ -153,7 +150,7 @@ bool os_task_migration(int id, int addr);
  * 
  * @return False
  */
-bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper_addr);
+bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr);
 
 /**
  * @brief Handles the TCB received from migration
@@ -167,87 +164,83 @@ bool os_migration_code(int id, unsigned int code_sz, int mapper_task, int mapper
  *
  * @return False
  */
-bool os_migration_tcb(
-	int id, 
-	unsigned int pc, 
-	unsigned int period, 
-	int deadline, 
-	unsigned int exec_time, 
-	unsigned waiting_msg
-);
+bool os_migration_tcb(int id, void *pc);
 
 /**
- * @brief Handles the task location received from migration
+ * @brief Handles the scheduler received from migration
  * 
  * @param id ID of the task that has migrated
- * @param tl_len Number of entries in the task location
- * @param source Source PE of the task migration
- * 
- * @return True
+ * @param period Task period
+ * @param deadline Task deadline
+ * @param exec_time Task execution time
+ * @param waiting_msg Task waiting message status
+ * @param source Source PE
+ * @return true If should scheduled
+ * @return false If should not schedule
  */
-bool os_migration_tl(int id, unsigned int tl_len, int source);
+bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source);
 
 /**
- * @brief Handles the message request received from migration
+ * @brief Handles the task location received from migration (DATA_AV/MESSAGE_REQUEST)
  * 
  * @param id ID of the task that has migrated
- * @param mr_len Number of entries in the message request
+ * @param size Number of entries in the task location
+ * @param service Service that was received
  * 
- * @return False
+ * @return false
  */
-bool os_migration_mr(int id, unsigned int mr_len);
-
-/**
- * @brief Handles the data available received from migration
- * 
- * @param id ID of the task that has migrated
- * @param mr_len Number of entries in the data available
- * 
- * @return False
- */
-bool os_migration_data_av(int id , unsigned int data_av_len);
+bool os_migration_tl(int id, size_t size, unsigned service);
 
 /**
  * @brief Handles the pipe received from migration
  * 
  * @param id ID of the task that has migrated
  * @param cons_task ID of the consumer task of the message
- * @param msg_len Length of the message in pipe
+ * @param size Number of bytes of message
  * 
  * @return False
  */
-bool os_migration_pipe(int id, int cons_task, unsigned int msg_len);
+bool os_migration_pipe(int id, int cons_task, size_t size);
 
 /**
  * @brief Handles the stack received from migration
  * 
  * @param id ID of the task that has migrated
- * @param stack_len Length of the stack
+ * @param size size of the stack
  * 
  * @return False
  */
-bool os_migration_stack(int id, unsigned int stack_len);
+bool os_migration_stack(int id, size_t size);
 
 /**
  * @brief Handles the heap received from migration
  * 
  * @param id ID of the task that has migrated
- * @param heap_len Length of the heap
+ * @param heap_size Length of the heap
  * 
  * @return False
  */
-bool os_migration_heap(int id, unsigned int heap_len);
+bool os_migration_heap(int id, size_t heap_size);
 
 /**
  * @brief Handles the data and bss received from migration
  * 
  * @param id ID of the task that has migrated
- * @param data_len Length of the data section
- * @param bss_len Length of the bss section
+ * @param data_size Size of the data section
+ * @param bss_size Size of the bss section
  * 
  * @return False
  */
-bool os_migration_data_bss(int id, unsigned int data_len, unsigned int bss_len);
+bool os_migration_data_bss(int id, size_t data_size, size_t bss_size);
+
+/**
+ * @brief Handles the application data (task location) migrated
+ * 
+ * @param id ID of the migrated task
+ * @param task_cnt Number of tasks to receive
+ * @return false 
+ */
+bool os_migration_app(int id, size_t task_cnt);
 
 /**
  * @brief Clears a task from the monitoring DMNI LUT

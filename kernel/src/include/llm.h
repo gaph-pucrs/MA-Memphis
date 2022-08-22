@@ -11,8 +11,9 @@
  * @brief Declares the Low-Level Monitor for Management Application support.
  */
 
-#include "task_control.h"
-#include "monitor.h"
+#include <stdint.h>
+
+#include <monitor.h>
 
 typedef struct _observer {
 	int16_t addr;
@@ -35,16 +36,27 @@ void llm_set_observer(enum MONITOR_TYPE type, int addr);
 /**
  * @brief Clears the monitoring table of terminated/migrated task
  * 
- * @param task Pointer to the task to clear
+ * @param task_id ID of the task to clear
  */
-void llm_clear_table(tcb_t *task);
+void llm_clear_table(int task_id);
 
 /**
- * @brief Run the LLM procedure for RT tasks.
+ * @brief Check if monitoring type has monitor
  * 
- * @details
- * Grep the task status and sends to the configured observer task.
- * 
- * @param tasks TCB array
+ * @param mon_id ID of the monitoring type
+ * @return true If has monitor
+ * @return false If has no monitor
  */
-void llm_rt(tcb_t *tasks);
+bool llm_has_monitor(int mon_id);
+
+/**
+ * @brief Monitor real-time constraints
+ * 
+ * @param last_monitored Pointer to a last monitored time
+ * @param id ID of the monitored task
+ * @param slack_time Slack time of the monitored task
+ * @param remaining_exec_time Remaining execution time of the monitored task
+ * @return true If monitored, updating last_monitored
+ * @return false If should wait more time to monitor
+ */
+bool llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time);

@@ -11,25 +11,25 @@
  * @brief Implements the Low-Level Monitor for Management Application support.
  */
 
+#include "llm.h"
+
 #include <stdlib.h>
 
 #include <memphis.h>
+#include <services.h>
 
-#include "llm.h"
-
-#include "syscall.h"
-#include "broadcast.h"
-#include "monitor.h"
+#include "mmr.h"
 #include "interrupts.h"
+#include "broadcast.h"
 
-#include "services.h"
+static const unsigned LLM_MONITOR_INTERVAL_QOS = 50000;
 
-observer_t observers[MON_MAX];
+observer_t _observers[MON_MAX];
 
 void llm_init()
 {
 	for(int i = 0; i < MON_MAX; i++)
-		observers[i].addr = -1;
+		_observers[i].addr = -1;
 }
 
 void llm_set_observer(enum MONITOR_TYPE type, int addr)
@@ -41,46 +41,45 @@ void llm_set_observer(enum MONITOR_TYPE type, int addr)
 	uint8_t obs_y = addr & 0xFF;
 	uint16_t dist = abs(pe_x - obs_x) + abs(pe_y - obs_y);
 
-	if(observers[type].addr == -1 || observers[type].dist > dist){
-		observers[type].addr = addr;
-		observers[type].dist = dist;
+	if(_observers[type].addr == -1 || _observers[type].dist > dist){
+		_observers[type].addr = addr;
+		_observers[type].dist = dist;
 	}
 }
 
-void llm_clear_table(tcb_t *task)
+void llm_clear_table(int task_id)
 {
-	int id = task->id & 0xFFFF;
-	os_clear_mon_table(id);
+	os_clear_mon_table(task_id);
 
-	br_packet_t packet;
+	bcast_t packet;
 	packet.service = CLEAR_MON_TABLE;
 	packet.src_id = -1;
 
-	packet.payload = id;
+	packet.payload = task_id;
 
-	while(!br_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL));
+	while(!bcast_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL));
 }
 
-void llm_rt(tcb_t *tasks)
+bool llm_has_monitor(int mon_id)
 {
-	static unsigned last_rt[PKG_MAX_LOCAL_TASKS];
-	if(observers[MON_QOS].addr == -1)
-		return;
+	return (_observers[MON_QOS].addr != -1);
+}
 
+bool llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time)
+{
 	unsigned now = MMR_TICK_COUNTER;
 
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		int id = tasks[i].id;
-		if(id == -1 || (id >> 8) == 0 || tasks[i].scheduler.deadline == -1 || tasks[i].proc_to_migrate != -1)
-			continue; /* Don't send MA task status or non-RT tasks or non-existent tasks or tasks marked to migrate */
+	if(now - *last_monitored < LLM_MONITOR_INTERVAL_QOS)
+		return false;
 
-		if(!tasks[i].scheduler.waiting_msg && now - last_rt[i] >= PKG_MONITOR_INTERVAL_QOS/PKG_MONITOR_RATE_QOS){ /* Update X times faster than the real time observer */
-				br_packet_t packet;
-				packet.service = MONITOR;
-				packet.src_id = id;
-				packet.payload = tasks[i].scheduler.slack_time - tasks[i].scheduler.remaining_exec_time;
-				if(br_send(&packet, observers[MON_QOS].addr, MON_QOS))
-					last_rt[i] = now;
-		}
-	}
+	bcast_t packet;
+	packet.service = MONITOR;
+	packet.src_id = id;
+	packet.payload = slack_time - remaining_exec_time;
+	
+	if(!bcast_send(&packet, _observers[MON_QOS].addr, MON_QOS))
+		return false;
+	
+	*last_monitored = now;
+	return true;
 }
