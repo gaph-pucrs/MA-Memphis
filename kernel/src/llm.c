@@ -49,7 +49,7 @@ void llm_set_observer(enum MONITOR_TYPE type, int addr)
 
 void llm_clear_table(int task_id)
 {
-	os_clear_mon_table(task_id);
+	isr_clear_mon_table(task_id);
 
 	bcast_t packet;
 	packet.service = CLEAR_MON_TABLE;

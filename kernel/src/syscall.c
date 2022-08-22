@@ -32,7 +32,7 @@
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
 
-int os_syscall(
+int sys_syscall(
 	unsigned arg1, 
 	unsigned arg2, 
 	unsigned arg3, 
@@ -64,46 +64,46 @@ int os_syscall(
 	} else {
 		switch(number){
 			case SYS_writepipe:
-				ret = os_writepipe(current, (void*)arg1, arg2, arg3, arg4);
+				ret = sys_writepipe(current, (void*)arg1, arg2, arg3, arg4);
 				break;
 			case SYS_readpipe:
-				ret = os_readpipe(current, (void*)arg1, arg2, arg3, arg4);
+				ret = sys_readpipe(current, (void*)arg1, arg2, arg3, arg4);
 				break;
 			case SYS_gettick:
-				ret = os_get_tick();
+				ret = sys_get_tick();
 				break;
 			case SYS_realtime:
-				ret = os_realtime(current, arg1, arg2, arg3);
+				ret = sys_realtime(current, arg1, arg2, arg3);
 				break;
 			case SYS_getlocation:
-				ret = os_get_location();
+				ret = sys_get_location();
 				break;
 			case SYS_brall:
-				ret = os_br_send_all(current, arg1, arg2);
+				ret = sys_br_send_all(current, arg1, arg2);
 				break;
 			case SYS_brtgt:
-				ret = os_br_send_tgt(current, arg1, arg2, arg3);
+				ret = sys_br_send_tgt(current, arg1, arg2, arg3);
 				break;
 			case SYS_monptr:
-				ret = os_mon_ptr(current, (unsigned*)arg1, arg2);
+				ret = sys_mon_ptr(current, (unsigned*)arg1, arg2);
 				break;
 			case SYS_close:
-				ret = os_close(arg1);
+				ret = sys_close(arg1);
 				break;
 			case SYS_write:
-				ret = os_write(current, arg1, (char*)arg2, arg3);
+				ret = sys_write(current, arg1, (char*)arg2, arg3);
 				break;
 			case SYS_fstat:
-				ret = os_fstat(current, arg1, (struct stat*)arg2);
+				ret = sys_fstat(current, arg1, (struct stat*)arg2);
 				break;
 			case SYS_exit:
-				ret = os_exit(current, arg1);
+				ret = sys_exit(current, arg1);
 				break;
 			case SYS_getpid:
-				ret = os_getpid(current);
+				ret = sys_getpid(current);
 				break;
 			case SYS_brk:
-				ret = os_brk(current, (void*)arg1);
+				ret = sys_brk(current, (void*)arg1);
 				break;
 			default:
 				printf("ERROR: Unknown syscall %x\n", number);
@@ -118,7 +118,7 @@ int os_syscall(
 	return ret;
 }
 
-int os_exit(tcb_t *tcb, int status)
+int sys_exit(tcb_t *tcb, int status)
 {
 	printf("Task id %d terminated with status %d\n", tcb_get_id(tcb), status);
 
@@ -138,7 +138,7 @@ int os_exit(tcb_t *tcb, int status)
 	return 0;
 }
 
-int os_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
+int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 {
 	const int prod_task = tcb_get_id(tcb);
 
@@ -289,7 +289,7 @@ int os_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 				if(cons_task & MEMPHIS_KERNEL_MSG){
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
-					schedule_after_syscall = os_kernel_syscall(buf, size);
+					schedule_after_syscall = sys_kernel_syscall(buf, size);
 					return 0;
 				} else {
 					/* Insert a DATA_AV to consumer table */
@@ -346,7 +346,7 @@ int os_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 	return size;
 }
 
-int os_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
+int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 {
 	// puts("Calling readpipe");
 	ipipe_t *ipipe = tcb_get_ipipe(tcb);
@@ -506,12 +506,12 @@ int os_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 	return -EAGAIN;
 }
 
-unsigned int os_get_tick()	
+unsigned int sys_get_tick()	
 {	
 	return MMR_TICK_COUNTER;	
 }
 
-int os_realtime(tcb_t *tcb, unsigned period, int deadline, unsigned exec_time)
+int sys_realtime(tcb_t *tcb, unsigned period, int deadline, unsigned exec_time)
 {
 	sched_t *sched = tcb_get_sched(tcb);
 	sched_real_time_task(sched, period, deadline, exec_time);
@@ -521,13 +521,13 @@ int os_realtime(tcb_t *tcb, unsigned period, int deadline, unsigned exec_time)
 	return 0;
 }
 
-bool os_kernel_syscall(unsigned *message, int length)
+bool sys_kernel_syscall(unsigned *message, int length)
 {
 	/* Process it like a syscall */
 	switch(message[0]){
 		case TASK_RELEASE:
 			// putsv("will call release with ntasks=", message[4]);
-			return os_task_release(
+			return isr_task_release(
 				message[1], 
 				message[2], 
 				(int*)&message[3]
@@ -541,7 +541,7 @@ bool os_kernel_syscall(unsigned *message, int length)
 	}
 }
 
-bool os_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
+bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 {
 	/* Send data available only if target task hasn't received data available from this source */
 	bool send_data_av = (pmsg_find(cons_task) == NULL);
@@ -593,24 +593,24 @@ bool os_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 	return false;
 }
 
-bool os_release_peripheral()
+bool sys_release_peripheral()
 {
 	MMR_MEM_REG_PERIPHERALS = 1;
 	// puts("Peripherals released\n");
 	return false;
 }
 
-int os_get_location()
+int sys_get_location()
 {
 	return MMR_NI_CONFIG;
 }
 
-int os_getpid(tcb_t *tcb)
+int sys_getpid(tcb_t *tcb)
 {
 	return tcb_get_id(tcb);
 }
 
-int os_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc)
+int sys_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc)
 {
 	int prod_task = tcb_get_id(tcb);
 	
@@ -628,11 +628,11 @@ int os_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc)
 	}
 		
 	packet.src_addr = MMR_NI_CONFIG;
-	schedule_after_syscall = os_handle_broadcast(&packet);
+	schedule_after_syscall = isr_handle_broadcast(&packet);
 	return 0;
 }
 
-int os_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc)
+int sys_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc)
 {
 	int prod_task = tcb_get_id(tcb);
 	
@@ -646,7 +646,7 @@ int os_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc)
 
 	if(target == MMR_NI_CONFIG){
 		packet.src_addr = MMR_NI_CONFIG;
-		schedule_after_syscall = os_handle_broadcast(&packet);
+		schedule_after_syscall = isr_handle_broadcast(&packet);
 		return 0;
 	}
 
@@ -658,7 +658,7 @@ int os_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc)
 	return 0;
 }
 
-int os_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type)
+int sys_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type)
 {
 	if(tcb_get_id(tcb) >> 8 != 0)	/* AppID should be 0 */
 		return -EINVAL;
@@ -693,7 +693,7 @@ int os_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type)
 	return 0;
 }
 
-int os_brk(tcb_t *tcb, void *addr)
+int sys_brk(tcb_t *tcb, void *addr)
 {
 	// printf("brk(%u)\n", addr);
 	void *heap_end = tcb_get_heap_end(tcb);
@@ -724,7 +724,7 @@ int os_brk(tcb_t *tcb, void *addr)
 	return (int)addr;
 }
 
-int os_write(tcb_t *tcb, int file, char *buf, int nbytes)
+int sys_write(tcb_t *tcb, int file, char *buf, int nbytes)
 {
 	if(file != STDOUT_FILENO && file != STDERR_FILENO)
 		return -EBADF;
@@ -756,7 +756,7 @@ int os_write(tcb_t *tcb, int file, char *buf, int nbytes)
 	return rv;
 }
 
-int os_fstat(tcb_t *tcb, int file, struct stat *st)
+int sys_fstat(tcb_t *tcb, int file, struct stat *st)
 {
 	if(st == NULL){
 		printf("ERROR: st is null");
@@ -772,7 +772,7 @@ int os_fstat(tcb_t *tcb, int file, struct stat *st)
 	return ret;
 }
 
-int os_close(int file)
+int sys_close(int file)
 {
 	return -EBADF;
 }

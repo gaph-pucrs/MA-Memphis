@@ -124,7 +124,7 @@ bool tcb_check_stack(tcb_t *tcb)
 void _tcb_send_aborted(tcb_t *tcb)
 {
 	int task_aborted[] = {TASK_ABORTED, tcb->id};
-	os_kernel_writepipe(
+	sys_kernel_writepipe(
 		task_aborted, 
 		sizeof(task_aborted), 
 		tl_get_task(&(tcb->mapper)), 
@@ -167,7 +167,7 @@ opipe_t *tcb_get_opipe(tcb_t *tcb)
 bool _tcb_send_terminated(tcb_t *tcb)
 {
 	int task_terminated[] = {TASK_TERMINATED, tcb->id};
-	return os_kernel_writepipe(
+	return sys_kernel_writepipe(
 		task_terminated, 
 		sizeof(task_terminated),
 		tl_get_task(&(tcb->mapper)), 
@@ -224,7 +224,7 @@ list_t *tcb_get_davs(tcb_t *tcb)
 bool tcb_send_allocated(tcb_t *tcb)
 {
 	int task_allocated[] = {TASK_ALLOCATED, tcb->id};
-	return os_kernel_writepipe(
+	return sys_kernel_writepipe(
 		task_allocated, 
 		sizeof(task_allocated),
 		tl_get_task(&(tcb->mapper)), 

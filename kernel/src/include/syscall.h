@@ -36,7 +36,7 @@
  * @param number Syscall number
  * @return int 
  */
-int os_syscall(
+int sys_syscall(
 	unsigned arg1, 
 	unsigned arg2, 
 	unsigned arg3, 
@@ -55,7 +55,7 @@ int os_syscall(
  * 
  * @return 0 if exited, -EAGAIN if not
  */
-int os_exit(tcb_t *tcb, int status);
+int sys_exit(tcb_t *tcb, int status);
 
 /**
  * @brief Sends a message
@@ -72,7 +72,7 @@ int os_exit(tcb_t *tcb, int status);
  *         -EBADMSG on message protocol errors
  *         -EACCES on unauthorized targets
  */
-int os_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync);
+int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync);
 
 /**
  * @brief Receives a message
@@ -88,14 +88,14 @@ int os_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync);
  *         -EAGAIN if must retry (busy/waiting for interruption)
  *         -EBADMSG on message protocol errors
  */
-int os_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync);
+int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync);
 
 /**	
  * @brief Get the tick count	
  * 	
  * @return Value of tick count	
  */	
-unsigned int os_get_tick();
+unsigned int sys_get_tick();
 
 /**
  * @brief Configures a task real time
@@ -107,7 +107,7 @@ unsigned int os_get_tick();
  * 
  * @return 0.
  */
-int os_realtime(tcb_t *tcb, unsigned int period, int deadline, unsigned int exec_time);
+int sys_realtime(tcb_t *tcb, unsigned int period, int deadline, unsigned int exec_time);
 
 /**
  * @brief Calls a syscall from a received message (MESSAGE_DELIVERY)
@@ -117,7 +117,7 @@ int os_realtime(tcb_t *tcb, unsigned int period, int deadline, unsigned int exec
  * 
  * @return True if should schedule
  */
-bool os_kernel_syscall(unsigned *message, int length);
+bool sys_kernel_syscall(unsigned *message, int length);
 
 /**
  * @brief Sends a message delivery from kernel
@@ -129,28 +129,28 @@ bool os_kernel_syscall(unsigned *message, int length);
  * 
  * @return True if should schedule
  */
-bool os_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr);
+bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr);
 
 /**
  * @brief Releases peripherals connected to this PE
  * 
  * @return False
  */
-bool os_release_peripheral();
+bool sys_release_peripheral();
 
 /**
  * @brief Gets the net address.
  * 
  * @return Net address value.
  */
-int os_get_location();
+int sys_get_location();
 
 /**
  * @brief Gets the running complete task ID
  * 
  * @return Task ID (with application ID)
  */
-int os_getpid();
+int sys_getpid();
 
 /**
  * @brief Sends a message via broadcast
@@ -161,7 +161,7 @@ int os_getpid();
  * 
  * @return 0 if success. 1 if BrNoC is busy. 2 unauthorized.
  */
-int os_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc);
+int sys_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc);
 
 /**
  * @brief Sends a message via broadcast
@@ -173,7 +173,7 @@ int os_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc);
  * 
  * @return 0 if success. 1 if BrNoC is busy. 2 unauthorized.
  */
-int os_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc);
+int sys_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc);
 
 /**
  * @brief Sets the monitoring table pointer to a observer task
@@ -184,7 +184,7 @@ int os_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc);
  * 
  * @return 0 if success. 1 if unauthorized. 2 if wrong type.
  */
-int os_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type);
+int sys_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type);
 
 /**
  * @brief Sets the brk (heap end) of a task
@@ -194,7 +194,7 @@ int os_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type);
  * @return int Address of the new heap end if modified, previous heap end if
  * unmodified, and -1 if error
  */
-int os_brk(tcb_t *tcb, void *addr);
+int sys_brk(tcb_t *tcb, void *addr);
 
 /**
  * @brief Writes to a file
@@ -206,7 +206,7 @@ int os_brk(tcb_t *tcb, void *addr);
  * 
  * @return int Number of bytes written
  */
-int os_write(tcb_t *tcb, int file, char *buf, int nbytes);
+int sys_write(tcb_t *tcb, int file, char *buf, int nbytes);
 
 /**
  * @brief Get status of a file
@@ -217,7 +217,7 @@ int os_write(tcb_t *tcb, int file, char *buf, int nbytes);
  * 
  * @return int -1 if invalid file, 0 if valid
  */
-int os_fstat(tcb_t *tcb, int file, struct stat *st);
+int sys_fstat(tcb_t *tcb, int file, struct stat *st);
 
 /**
  * @brief Closes a file
@@ -228,4 +228,4 @@ int os_fstat(tcb_t *tcb, int file, struct stat *st);
  * 
  * @return int -EBADF
  */
-int os_close(int file);
+int sys_close(int file);

@@ -27,7 +27,7 @@
 #include "mmr.h"
 #include "llm.h"
 
-tcb_t *os_isr(unsigned status)
+tcb_t *isr_isr(unsigned status)
 {
 	sched_report_interruption();
 
@@ -53,7 +53,7 @@ tcb_t *os_isr(unsigned status)
 			// puts("Faking packet as pending service\n");
 			psvc_push_back(packet);
 		} else {
-			call_scheduler |= os_handle_broadcast(&bcast_packet);
+			call_scheduler |= isr_handle_broadcast(&bcast_packet);
 		}
 	} else if(status & IRQ_NOC){
 		packet_t *packet = malloc(sizeof(packet_t));
@@ -65,7 +65,7 @@ tcb_t *os_isr(unsigned status)
 		){
 			psvc_push_back(packet);
 		} else {
-			call_scheduler = os_handle_pkt(packet);
+			call_scheduler = isr_handle_pkt(packet);
 			free(packet);
 		}
 		
@@ -76,7 +76,7 @@ tcb_t *os_isr(unsigned status)
 
 		if(packet != NULL){
 			psvc_pop_front();
-			call_scheduler = os_handle_pkt(packet);
+			call_scheduler = isr_handle_pkt(packet);
 			free(packet);
 		}
 		
@@ -121,7 +121,7 @@ tcb_t *os_isr(unsigned status)
     return sched_get_current_tcb();
 }
 
-bool os_handle_broadcast(bcast_t *packet)
+bool isr_handle_broadcast(bcast_t *packet)
 {
 	// printf("Broadcast received %x\n", packet->service);
 	int16_t addr_field = packet->payload >> 16;
@@ -130,28 +130,28 @@ bool os_handle_broadcast(bcast_t *packet)
 	switch(packet->service){
 		case CLEAR_MON_TABLE:
 			/* Write to DMNI register the ID value */
-			return os_clear_mon_table(task_field);
+			return isr_clear_mon_table(task_field);
 		case ANNOUNCE_MONITOR:
-			return os_announce_mon(task_field, addr_field);
+			return isr_announce_mon(task_field, addr_field);
 		case RELEASE_PERIPHERAL:
-			return os_release_peripheral();
+			return sys_release_peripheral();
 		case TASK_MIGRATION:
-			return os_task_migration(task_field, addr_field);
+			return isr_task_migration(task_field, addr_field);
 		case DATA_AV:
 			// printf("Received DATA_AV via BrNoC with pre-cons %x and pre-prod %x\n", task_field, packet->src_id);
-			return os_data_available(
+			return isr_data_available(
 				bcast_convert_id(task_field, MMR_NI_CONFIG), 
 				bcast_convert_id(packet->src_id, addr_field), 
 				addr_field
 			);
 		case MESSAGE_REQUEST:
-			return os_message_request(
+			return isr_message_request(
 				bcast_convert_id(packet->src_id, addr_field), 
 				addr_field, 
 				bcast_convert_id(task_field, MMR_NI_CONFIG)
 			);
 		case ABORT_TASK:
-			return os_abort_task(task_field);
+			return isr_abort_task(task_field);
 		default:
 			printf(
 				"ERROR: unknown broadcast %x at time %d\n", 
@@ -162,33 +162,33 @@ bool os_handle_broadcast(bcast_t *packet)
 	}
 }
 
-bool os_handle_pkt(volatile packet_t *packet)
+bool isr_handle_pkt(volatile packet_t *packet)
 {
 	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:
-			return os_message_request(
+			return isr_message_request(
 				packet->consumer_task, 
 				packet->requesting_processor, 
 				packet->producer_task
 			);
 		case MESSAGE_DELIVERY:
 			// putsv("Packet length is ", packet->msg_length);
-			return os_message_delivery(
+			return isr_message_delivery(
 				packet->consumer_task, 
 				packet->producer_task, 
 				packet->insert_request, 
 				packet->msg_length
 			);
 		case DATA_AV:
-			return os_data_available(
+			return isr_data_available(
 				packet->consumer_task, 
 				packet->producer_task, 
 				packet->requesting_processor
 			);
 		case TASK_ALLOCATION:
 			/* Injector -> Kernel. No need to insert inside delivery */
-			return os_task_allocation(
+			return isr_task_allocation(
 				packet->task_ID, 
 				packet->code_size, 
 				packet->data_size, 
@@ -198,29 +198,29 @@ bool os_handle_pkt(volatile packet_t *packet)
 				packet->mapper_address
 			);
 		case TASK_MIGRATION:
-			return os_task_migration(
+			return isr_task_migration(
 				packet->task_ID, 
 				packet->allocated_processor
 			);
 		case MIGRATION_CODE:
-			return os_migration_code(
+			return isr_migration_code(
 				packet->task_ID, 
 				packet->code_size, 
 				packet->mapper_task, 
 				packet->mapper_address
 			);
 		case MIGRATION_TCB:
-			return os_migration_tcb(
+			return isr_migration_tcb(
 				packet->task_ID, 
 				(void*)packet->program_counter
 			);
 		case MIGRATION_TASK_LOCATION:
-			return os_migration_app(
+			return isr_migration_app(
 				packet->task_ID, 
 				packet->request_size
 			);
 		case MIGRATION_SCHED:
-			return os_migration_sched(
+			return isr_migration_sched(
 				packet->task_ID, 
 				packet->period, 
 				packet->deadline, 
@@ -230,26 +230,26 @@ bool os_handle_pkt(volatile packet_t *packet)
 			);
 		case MIGRATION_DATA_AV:
 		case MIGRATION_MSG_REQUEST:
-			return os_migration_tl(
+			return isr_migration_tl(
 				packet->task_ID, 
 				packet->request_size,
 				packet->service
 			);
 		case MIGRATION_PIPE:
-			return os_migration_pipe(
+			return isr_migration_pipe(
 				packet->task_ID, 
 				packet->consumer_task, 
 				packet->msg_length
 			);
 		case MIGRATION_STACK:
-			return os_migration_stack(
+			return isr_migration_stack(
 				packet->task_ID, 
 				packet->stack_size
 			);
 		case MIGRATION_HEAP:
-			return os_migration_heap(packet->task_ID, packet->heap_size);
+			return isr_migration_heap(packet->task_ID, packet->heap_size);
 		case MIGRATION_DATA_BSS:
-			return os_migration_data_bss(
+			return isr_migration_data_bss(
 				packet->task_ID, 
 				packet->data_size, 
 				packet->bss_size
@@ -260,7 +260,7 @@ bool os_handle_pkt(volatile packet_t *packet)
 	}
 }
 
-bool os_message_request(int cons_task, int cons_addr, int prod_task)
+bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 {
 	bool force_sched = false;
 
@@ -394,7 +394,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task)
 	return force_sched;
 }
 
-bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size)
+bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size)
 {
 	if(cons_task & MEMPHIS_KERNEL_MSG){
 		/* This message was directed to kernel */
@@ -403,7 +403,7 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 		dmni_read(rcvmsg, align_size >> 2);
 
 		/* Process the message like a syscall triggered from another PE */
-		int ret = os_kernel_syscall(rcvmsg, align_size >> 2);
+		int ret = sys_kernel_syscall(rcvmsg, align_size >> 2);
 
 		free(rcvmsg);
 
@@ -464,7 +464,7 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
 	}
 }
 
-bool os_data_available(int cons_task, int prod_task, int prod_addr)
+bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 {
 	// printf("DATA_AV from id %x addr %x to id %x\n", prod_task, prod_addr, cons_task);
 	if(cons_task & MEMPHIS_KERNEL_MSG){
@@ -518,7 +518,7 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr)
 	return false;
 }
 
-bool os_task_allocation(
+bool isr_task_allocation(
 	int id, 
 	size_t text_size, 
 	size_t data_size, 
@@ -582,7 +582,7 @@ bool os_task_allocation(
 	}
 }
 
-bool os_task_release(int id, int task_cnt, int *task_location)
+bool isr_task_release(int id, int task_cnt, int *task_location)
 {
 	/* Get task to release */
 	tcb_t *tcb = tcb_find(id);
@@ -616,7 +616,7 @@ bool os_task_release(int id, int task_cnt, int *task_location)
 	return sched_is_idle();
 }
 
-bool os_task_migration(int id, int addr)
+bool isr_task_migration(int id, int addr)
 {	
 	tcb_t *task = tcb_find(id);
 
@@ -649,7 +649,7 @@ bool os_task_migration(int id, int addr)
 	return false;
 }
 
-bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr)
+bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr)
 {
 	tcb_t *tcb = malloc(sizeof(tcb_t));
 
@@ -673,7 +673,7 @@ bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_add
 	return false;
 }
 
-bool os_migration_tcb(int id, void *pc)
+bool isr_migration_tcb(int id, void *pc)
 {
 	tcb_t *tcb = tcb_find(id);
 
@@ -686,7 +686,7 @@ bool os_migration_tcb(int id, void *pc)
 	return false;
 }
 
-bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source)
+bool isr_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source)
 {
 	tcb_t *tcb = tcb_find(id);
 
@@ -713,7 +713,7 @@ bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_tim
 	app_update(app, id, MMR_NI_CONFIG);
 
 	int task_migrated[] = {TASK_MIGRATED, tcb->id};
-	os_kernel_writepipe(
+	sys_kernel_writepipe(
 		task_migrated, 
 		sizeof(task_migrated), 
 		tl_get_task(&(tcb->mapper)), 
@@ -724,7 +724,7 @@ bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_tim
 
 }
 
-bool os_migration_tl(int id, size_t size, unsigned service)
+bool isr_migration_tl(int id, size_t size, unsigned service)
 {
 	tcb_t *tcb = tcb_find(id);
 
@@ -758,7 +758,7 @@ bool os_migration_tl(int id, size_t size, unsigned service)
 	return false;
 }
 
-bool os_migration_pipe(int id, int cons_task, size_t size)
+bool isr_migration_pipe(int id, int cons_task, size_t size)
 {
 	tcb_t *tcb = tcb_find(id);
 
@@ -778,7 +778,7 @@ bool os_migration_pipe(int id, int cons_task, size_t size)
 	return false;
 }
 
-bool os_migration_stack(int id, size_t size)
+bool isr_migration_stack(int id, size_t size)
 {
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_find(id);
@@ -793,7 +793,7 @@ bool os_migration_stack(int id, size_t size)
 	return false;
 }
 
-bool os_migration_heap(int id, size_t heap_size)
+bool isr_migration_heap(int id, size_t heap_size)
 {
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_find(id);
@@ -815,7 +815,7 @@ bool os_migration_heap(int id, size_t heap_size)
 	return false;
 }
 
-bool os_migration_data_bss(int id, size_t data_size, size_t bss_size)
+bool isr_migration_data_bss(int id, size_t data_size, size_t bss_size)
 {
 	tcb_t *tcb = tcb_find(id);
 	
@@ -837,7 +837,7 @@ bool os_migration_data_bss(int id, size_t data_size, size_t bss_size)
 	return false;
 }
 
-bool os_migration_app(int id, size_t task_cnt)
+bool isr_migration_app(int id, size_t task_cnt)
 {
 	app_t *app = app_find(id >> 8);
 
@@ -864,19 +864,19 @@ bool os_migration_app(int id, size_t task_cnt)
 	return false;
 }
 
-bool os_clear_mon_table(int task)
+bool isr_clear_mon_table(int task)
 {
 	MMR_DMNI_CLEAR_MONITOR = task;
 	return false;
 }
 
-bool os_announce_mon(enum MONITOR_TYPE type, int addr)
+bool isr_announce_mon(enum MONITOR_TYPE type, int addr)
 {
 	llm_set_observer(type, addr);
 	return false;
 }
 
-bool os_abort_task(int id)
+bool isr_abort_task(int id)
 {
 	tcb_t *tcb = tcb_find(id);
 	if(tcb != NULL){

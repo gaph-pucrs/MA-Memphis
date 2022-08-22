@@ -39,7 +39,7 @@ enum IRQ_FLAGS {
  * 
  * @return Pointer to the scheduled task
  */
-tcb_t *os_isr(unsigned status);
+tcb_t *isr_isr(unsigned status);
 
 /**
  * @brief Handles an interruption coming from a broadcast message
@@ -48,7 +48,7 @@ tcb_t *os_isr(unsigned status);
  * 
  * @return True if the scheduler should be called
  */
-bool os_handle_broadcast(bcast_t *packet);
+bool isr_handle_broadcast(bcast_t *packet);
 
 /** 
  * @brief Handles the packet coming from the NoC.
@@ -57,7 +57,7 @@ bool os_handle_broadcast(bcast_t *packet);
  * 
  * @return True if the scheduler should be called.
  */
-bool os_handle_pkt(volatile packet_t *packet);
+bool isr_handle_pkt(volatile packet_t *packet);
 
 /**
  * @brief Receive a message request and add to the proper task TCB
@@ -70,7 +70,7 @@ bool os_handle_pkt(volatile packet_t *packet);
  * 
  * @return True if the scheduler should be called.
  */
-bool os_message_request(int cons_task, int cons_addr, int prod_task);
+bool isr_message_request(int cons_task, int cons_addr, int prod_task);
 
 /**
  * @brief Receives a message from the NoC
@@ -82,7 +82,7 @@ bool os_message_request(int cons_task, int cons_addr, int prod_task);
  * 
  * @return True if the scheduler should be called
  */
-bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size);
+bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size);
 
 /**
  * @brief Handles a data available packet
@@ -93,7 +93,7 @@ bool os_message_delivery(int cons_task, int prod_task, int prod_addr, size_t siz
  * 
  * @return True if the scheduler should be called.
  */
-bool os_data_available(int cons_task, int prod_task, int prod_addr);
+bool isr_data_available(int cons_task, int prod_task, int prod_addr);
 
 /**
  * @brief Handles a task allocation packet
@@ -108,7 +108,7 @@ bool os_data_available(int cons_task, int prod_task, int prod_addr);
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_allocation(
+bool isr_task_allocation(
 	int id, 
 	unsigned length, 
 	unsigned data_len, 
@@ -127,7 +127,7 @@ bool os_task_allocation(
  * 
  * @return True if the scheduler should be called
  */
-bool os_task_release(int id, int task_number, int *task_location);
+bool isr_task_release(int id, int task_number, int *task_location);
 
 /**
  * @brief Handles a task migration order
@@ -138,7 +138,7 @@ bool os_task_release(int id, int task_number, int *task_location);
  * 
  * @return True if scheduler should be called
  */
-bool os_task_migration(int id, int addr);
+bool isr_task_migration(int id, int addr);
 
 /**
  * @brief Handles the code received from migration
@@ -150,7 +150,7 @@ bool os_task_migration(int id, int addr);
  * 
  * @return False
  */
-bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr);
+bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr);
 
 /**
  * @brief Handles the TCB received from migration
@@ -164,7 +164,7 @@ bool os_migration_code(int id, size_t text_size, int mapper_task, int mapper_add
  *
  * @return False
  */
-bool os_migration_tcb(int id, void *pc);
+bool isr_migration_tcb(int id, void *pc);
 
 /**
  * @brief Handles the scheduler received from migration
@@ -178,7 +178,7 @@ bool os_migration_tcb(int id, void *pc);
  * @return true If should scheduled
  * @return false If should not schedule
  */
-bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source);
+bool isr_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source);
 
 /**
  * @brief Handles the task location received from migration (DATA_AV/MESSAGE_REQUEST)
@@ -189,7 +189,7 @@ bool os_migration_sched(int id, unsigned period, int deadline, unsigned exec_tim
  * 
  * @return false
  */
-bool os_migration_tl(int id, size_t size, unsigned service);
+bool isr_migration_tl(int id, size_t size, unsigned service);
 
 /**
  * @brief Handles the pipe received from migration
@@ -200,7 +200,7 @@ bool os_migration_tl(int id, size_t size, unsigned service);
  * 
  * @return False
  */
-bool os_migration_pipe(int id, int cons_task, size_t size);
+bool isr_migration_pipe(int id, int cons_task, size_t size);
 
 /**
  * @brief Handles the stack received from migration
@@ -210,7 +210,7 @@ bool os_migration_pipe(int id, int cons_task, size_t size);
  * 
  * @return False
  */
-bool os_migration_stack(int id, size_t size);
+bool isr_migration_stack(int id, size_t size);
 
 /**
  * @brief Handles the heap received from migration
@@ -220,7 +220,7 @@ bool os_migration_stack(int id, size_t size);
  * 
  * @return False
  */
-bool os_migration_heap(int id, size_t heap_size);
+bool isr_migration_heap(int id, size_t heap_size);
 
 /**
  * @brief Handles the data and bss received from migration
@@ -231,7 +231,7 @@ bool os_migration_heap(int id, size_t heap_size);
  * 
  * @return False
  */
-bool os_migration_data_bss(int id, size_t data_size, size_t bss_size);
+bool isr_migration_data_bss(int id, size_t data_size, size_t bss_size);
 
 /**
  * @brief Handles the application data (task location) migrated
@@ -240,7 +240,7 @@ bool os_migration_data_bss(int id, size_t data_size, size_t bss_size);
  * @param task_cnt Number of tasks to receive
  * @return false 
  */
-bool os_migration_app(int id, size_t task_cnt);
+bool isr_migration_app(int id, size_t task_cnt);
 
 /**
  * @brief Clears a task from the monitoring DMNI LUT
@@ -249,7 +249,7 @@ bool os_migration_app(int id, size_t task_cnt);
  * 
  * @return False
  */
-bool os_clear_mon_table(int task);
+bool isr_clear_mon_table(int task);
 
 /**
  * @brief Registers an announced observer
@@ -259,7 +259,7 @@ bool os_clear_mon_table(int task);
  * 
  * @return False
  */
-bool os_announce_mon(enum MONITOR_TYPE type, int addr);
+bool isr_announce_mon(enum MONITOR_TYPE type, int addr);
 
 /**
  * @brief Aborts a task
@@ -268,4 +268,4 @@ bool os_announce_mon(enum MONITOR_TYPE type, int addr);
  * 
  * @return True if the current running task is the aborted
  */
-bool os_abort_task(int id);
+bool isr_abort_task(int id);

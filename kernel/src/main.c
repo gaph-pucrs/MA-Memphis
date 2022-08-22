@@ -30,8 +30,8 @@ int main()
 	app_init();
 	tcb_init();
 	sched_init();
-	pend_msg_init();
-	pend_svc_init();
+	pmsg_init();
+	psvc_init();
 	tm_init();
 	llm_init();
 
