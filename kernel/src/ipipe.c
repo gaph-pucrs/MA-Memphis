@@ -11,10 +11,11 @@
  * @brief This module defines the input pipe message structure.
  */
 
+#include "ipipe.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "ipipe.h"
 #include "dmni.h"
 
 void ipipe_init(ipipe_t *ipipe)
