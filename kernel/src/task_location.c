@@ -1,96 +1,126 @@
 /**
  * MA-Memphis
  * @file task_location.c
- *
- * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * 
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  * 
- * @date June 2016
+ * @date August 2022
  * 
- * @brief Identify where other tasks are allocated.
+ * @brief Controls task locations for messaging and mapping
  */
 
-#include <stddef.h>
-
 #include "task_location.h"
-#include "services.h"
-#include "packet.h"
-#include "syscall.h"
+
+#include <stdlib.h>
+
+#include <memphis.h>
+#include <services.h>
+
+#include "dmni.h"
 #include "broadcast.h"
-#include "stdio.h"
 
-void tl_init(tcb_t *tcb)
+bool _tl_find_fnc(void *data, void* cmpval)
 {
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++)
-		tcb->task_location[i] = -1;
+	tl_t *tl = (tl_t*)data;
+	int task = *((int*)cmpval);
+
+	return (tl->task == task);
 }
 
-bool tl_send_allocated(tcb_t *allocated_task)
+tl_t *tl_find(list_t *list, int task)
 {
-	int task_allocated[] = {TASK_ALLOCATED, allocated_task->id};
-	return os_kernel_writepipe(
-		task_allocated, 
-		sizeof(task_allocated),
-		allocated_task->mapper_task, 
-		allocated_task->mapper_address
-	);
+	list_entry_t *entry = list_find(list, &task, _tl_find_fnc);
+
+	if(entry == NULL)
+		return NULL;
+
+	return list_get_data(entry);
 }
 
-void tl_insert_update(tcb_t *tcb, int id, int addr)
+void tl_remove(list_t *list, tl_t *tl)
 {
-	tcb->task_location[id & 0x00FF] = addr;
+	list_entry_t *entry = list_find(list, tl, NULL);
+	list_remove(list, entry);
+
+	free(tl);
 }
 
-bool tl_send_terminated(tcb_t *tcb)
+tl_t *tl_emplace_back(list_t *list, int task, int addr)
 {
-	int task_terminated[] = {TASK_TERMINATED, tcb->id};
-	return os_kernel_writepipe(
-		task_terminated, 
-		sizeof(task_terminated),
-		tcb->mapper_task, 
-		tcb->mapper_address
-	);
+	tl_t *tl = malloc(sizeof(tl_t));
+	
+	if(tl == NULL)
+		return NULL;
+
+	tl->task = task;
+	tl->addr = addr;
+
+	list_push_back(list, tl);
+
+	return tl;
 }
 
-int tl_search(tcb_t *tcb, int task)
+int tl_get_task(tl_t *tl)
 {
-	return tcb->task_location[task & 0x00FF];
+	return tl->task;
 }
 
-unsigned int tl_get_len(tcb_t *tcb)
+int tl_get_addr(tl_t *tl)
 {
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
-		if(tcb->task_location[i] == -1)
-			return i;
+	return tl->addr;
+}
+
+void tl_send_dav(tl_t *dav, int cons_task, int cons_addr)
+{
+	if(cons_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
+
+		pkt_set_data_av(packet, cons_addr, dav->task, cons_task, dav->addr);
+
+		dmni_send(packet, NULL, 0, false);
+	} else {
+		bcast_t packet;
+
+		packet.service = DATA_AV;
+		packet.src_id = (dav->task & MEMPHIS_KERNEL_MSG) ? -1 : dav->task;
+		packet.payload = ((cons_task & MEMPHIS_KERNEL_MSG) ? -1 : cons_task) & 0xFFFF;
+		packet.payload |= dav->addr << 16;
+		// puts("Sending DATA_AV via BrNoC\n");
+		while(!bcast_send(&packet, cons_addr, BR_SVC_TGT));
 	}
-	return PKG_MAX_TASKS_APP;
 }
 
-int *tl_get_ptr(tcb_t *tcb)
+void tl_send_msgreq(tl_t *msgreq, int prod_task, int prod_addr)
 {
-	return tcb->task_location;
-}
+	if(prod_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
 
-void tl_update_local(int id, int addr)
-{
-	tcb_t *tcbs = tcb_get();
+		pkt_set_message_request(packet, prod_addr, msgreq->addr, prod_task, msgreq->task);
 
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if((tcbs[i].id & 0xFF00) == (id & 0xFF00)){
-			/* Task of the same app. Update. */
-			tl_insert_update(&(tcbs[i]), id, addr);
-		}
+		// puts("Sending MESSAGE_REQUEST via DMNI");
+
+		dmni_send(packet, NULL, 0, false);
+	} else {
+		bcast_t packet;
+
+		packet.service = MESSAGE_REQUEST;
+		packet.src_id = (msgreq->task & MEMPHIS_KERNEL_MSG) ? -1 : msgreq->task;
+		packet.payload = (
+				(prod_task & MEMPHIS_KERNEL_MSG) ? -1 : prod_task
+			) & 
+			0xFFFF;
+		packet.payload |= msgreq->addr << 16;
+		// puts("Sending MESSAGE_REQUEST via BrNoC");
+		while(!bcast_send(&packet, prod_addr, BR_SVC_TGT));
 	}
 }
 
-void tl_send_aborted(tcb_t *tcb)
+void tl_set(tl_t *tl, int task, int addr)
 {
-	int task_aborted[] = {TASK_ABORTED, tcb->id};
-	os_kernel_writepipe(
-		task_aborted, 
-		sizeof(task_aborted), 
-		tcb->mapper_task, 
-		tcb->mapper_address
-	);
+	tl->task = task;
+	tl->addr = addr;
 }
