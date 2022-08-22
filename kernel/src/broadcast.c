@@ -13,12 +13,14 @@
 
 #include "broadcast.h"
 
-#include "mmr.h"
-#include "memphis.h"
-#include "services.h"
-#include "stdio.h"
+#include <stdio.h>
 
-bool br_send(br_packet_t *packet, int16_t tgt_addr, uint8_t service)
+#include <memphis.h>
+#include <services.h>
+
+#include "mmr.h"
+
+bool bcast_send(bcast_t *packet, int16_t tgt_addr, uint8_t service)
 {
 	if(MMR_BR_LOCAL_BUSY)
 		return false;
@@ -33,7 +35,7 @@ bool br_send(br_packet_t *packet, int16_t tgt_addr, uint8_t service)
 	return true;
 }
 
-void br_read(br_packet_t *packet)
+void bcast_read(bcast_t *packet)
 {
 	packet->service = MMR_BR_READ_KSVC;
 
@@ -46,22 +48,22 @@ void br_read(br_packet_t *packet)
 	MMR_BR_POP = 1;
 }
 
-void br_fake_packet(br_packet_t *br_packet, packet_t *packet)
+void bcast_fake_packet(bcast_t *bcast_packet, packet_t *packet)
 {
-	packet->service = br_packet->service;
+	packet->service = bcast_packet->service;
 
-	int16_t id_field = br_packet->payload;
-	int16_t addr_field = br_packet->payload >> 16;
+	int16_t id_field = bcast_packet->payload;
+	int16_t addr_field = bcast_packet->payload >> 16;
 
 	switch(packet->service){
 		case DATA_AV:
-			packet->producer_task = br_convert_id(br_packet->src_id, addr_field);
-			packet->consumer_task = br_convert_id(id_field, MMR_NI_CONFIG);
+			packet->producer_task = bcast_convert_id(bcast_packet->src_id, addr_field);
+			packet->consumer_task = bcast_convert_id(id_field, MMR_NI_CONFIG);
 			packet->requesting_processor = addr_field;
 			break;
 		case MESSAGE_REQUEST:
-			packet->producer_task = br_convert_id(id_field, MMR_NI_CONFIG);
-			packet->consumer_task = br_convert_id(br_packet->src_id, addr_field);
+			packet->producer_task = bcast_convert_id(id_field, MMR_NI_CONFIG);
+			packet->consumer_task = bcast_convert_id(bcast_packet->src_id, addr_field);
 			packet->requesting_processor = addr_field;
 			break;
 		case TASK_MIGRATION:
@@ -74,7 +76,7 @@ void br_fake_packet(br_packet_t *br_packet, packet_t *packet)
 	}
 }
 
-int br_convert_id(int16_t id, int16_t addr)
+int bcast_convert_id(int16_t id, int16_t addr)
 {
 	return (id == -1) ? (MEMPHIS_KERNEL_MSG | (int)addr) : id;
 }

@@ -13,19 +13,19 @@
 
 #pragma once
 
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "packet.h"
 
-typedef struct _br_packet {
+typedef struct _bcast {
 	uint8_t service;
 
 	int16_t src_addr;
 	int16_t src_id;
 
 	uint32_t payload;
-} br_packet_t;
+} bcast_t;
 
 /**
  * @brief Sends a message via BrNoC
@@ -36,22 +36,22 @@ typedef struct _br_packet {
  * 
  * @return True if success. False if BrNoC is busy.
  */
-bool br_send(br_packet_t *packet, int16_t tgt_addr, uint8_t service);
+bool bcast_send(bcast_t *packet, int16_t tgt_addr, uint8_t service);
 
 /**
  * @brief Reads a packet via BrNoC
  * 
  * @param packet Pointer to packet to save
  */
-void br_read(br_packet_t *packet);
+void bcast_read(bcast_t *packet);
 
 /**
  * @brief Fakes a broadcast packet into a Hermes packet
  * 
- * @param br_packet Pointer to the BrNoC packet (source)
+ * @param bcast_packet Pointer to the BrNoC packet (source)
  * @param packet Pointer to the Hermes packet (target)
  */
-void br_fake_packet(br_packet_t *br_packet, packet_t *packet);
+void bcast_fake_packet(bcast_t *bcast_packet, packet_t *packet);
 
 /**
  * @brief Convert an ID into a 32 bit field with KERNEL flag
@@ -61,4 +61,4 @@ void br_fake_packet(br_packet_t *br_packet, packet_t *packet);
  * 
  * @return 32-bit ID
  */
-int br_convert_id(int16_t id, int16_t addr);
+int bcast_convert_id(int16_t id, int16_t addr);
