@@ -85,15 +85,6 @@ int opipe_get_cons_task(opipe_t *opipe);
 size_t opipe_transfer(opipe_t *opipe, void *dst, size_t size);
 
 /**
- * @brief Migrates the pipe
- * 
- * @param opipe Pointer to the pipe to migrate
- * @param target_addr Target migration address
- * @param task_id ID of the migrating task
- */
-void opipe_migrate(opipe_t *opipe, int target_addr, int task_id);
-
-/**
  * @brief Receives a migrated pipe
  * 
  * @param opipe Pointer to the pipe

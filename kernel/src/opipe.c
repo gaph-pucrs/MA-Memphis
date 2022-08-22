@@ -11,12 +11,12 @@
  * @brief This module defines the output pipe message structure.
  */
 
+#include "opipe.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "mmr.h"
-#include "opipe.h"
-#include "packet.h"
 #include "dmni.h"
 
 int opipe_push(opipe_t *opipe, void *msg, size_t size, int prod_task, int cons_task)
@@ -70,7 +70,7 @@ void opipe_send(opipe_t *opipe, int producer_task, int consumer_addr)
 
 	size_t align_size = (opipe->size + 3) & ~3;
 
-	dmni_send(packet, opipe->buf, align_size >> 2);
+	dmni_send(packet, opipe->buf, align_size >> 2, true);
 }
 
 int opipe_get_cons_task(opipe_t *opipe)
@@ -89,23 +89,6 @@ size_t opipe_transfer(opipe_t *opipe, void *dst, size_t size)
 	memcpy(dst, opipe->buf, opipe->size);
 
 	return opipe->size;
-}
-
-void opipe_migrate(opipe_t *opipe, int target_addr, int task_id)
-{
-	packet_t *packet = pkt_slot_get();
-
-	pkt_set_migration_pipe(
-		packet,
-		target_addr, 
-		task_id, 
-		opipe->consumer_task,
-		opipe->size
-	);
-
-	size_t align_size = (opipe->size + 3) & ~3;
-
-	dmni_send(packet, opipe->buf, align_size >> 2);
 }
 
 int opipe_receive(opipe_t *opipe, size_t size, int cons_task)
