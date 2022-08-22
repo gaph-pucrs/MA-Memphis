@@ -11,10 +11,14 @@
  * @brief Defines the DMNI functions for payload handling.
  */
 
+#include "dmni.h"
+
 #include <stdlib.h>
 
-#include "dmni.h"
 #include "mmr.h"
+
+static const unsigned DMNI_READ  = 0;
+static const unsigned DMNI_WRITE = 1;
 
 void dmni_read(void *payload_address, size_t payload_size)
 {
@@ -25,17 +29,19 @@ void dmni_read(void *payload_address, size_t payload_size)
 	while(MMR_DMNI_RECEIVE_ACTIVE);
 }
 
-void dmni_send(packet_t *packet, void *payload, size_t size)
+void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free)
 {
+	static bool free_outbound = false;
 	static void *outbound = NULL;
 
-	/* Wait for DMNI be released */
+	/* Wait for DMNI to be released */
 	while(MMR_DMNI_SEND_ACTIVE);
 
-	if(outbound != NULL)
+	if(free_outbound && outbound != NULL)
 		free(outbound);
 
 	outbound = payload;
+	free_outbound = should_free;
 
 	/* Program DMNI */
 	MMR_DMNI_SIZE = PKT_SIZE;

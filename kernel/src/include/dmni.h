@@ -13,12 +13,9 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <stdbool.h>
 
 #include "packet.h"
-
-static const unsigned DMNI_READ  = 0;
-static const unsigned DMNI_WRITE = 1;
 
 /**
  * @brief Abstracts the DMNI programming for read data from NoC and copy to memory.
@@ -32,7 +29,8 @@ void dmni_read(void *payload_address, size_t payload_size);
  * @brief Abstracts thte DMNI programming for writing data to NoC and copy from memory.
  * 
  * @param packet Pointer to the packet to send
- * @param payload Pointer to the payload to send. NULL if none
- * @param size Size of the payload to send in flits (32-bit). 0 if none
+ * @param payload Pointer to the payload to send, NULL if none
+ * @param size Size of the payload to send in flits (32-bit), 0 if none
+ * @param should_free True if should free the payload after the message is sent
  */
-void dmni_send(packet_t *packet, void *payload, size_t size);
+void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free);
