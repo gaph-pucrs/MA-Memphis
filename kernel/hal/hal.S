@@ -15,11 +15,12 @@
 .equ MMR_CLOCK_HOLD, 0x20000090
 .equ INTR_MASK, 0x80000000
 .equ ECALL_MASK, 0x00000008
+
 .equ MMR_ADDR, 0x20000000
 
 .equ MAX_REGISTERS, 30
 .equ PC_ADDR, MAX_REGISTERS*4
-.equ OFF_ADDR, (MAX_REGISTERS+1)*4
+.equ PAGE_ADDR, (MAX_REGISTERS+1)*4
 
 .equ mrar, 0x7C0
 
@@ -35,14 +36,14 @@ _start:
 	# Clear pending interrupts
 	csrw	mip, zero
 
-	# Enable MEI when unmasked (if MIE=1)
-	li		t0, 0x800
-	csrw	mie, t0
-
 	# Disable S-Mode int/exc handling
 	# Handle them in M-Mode
 	csrw	mideleg, zero
 	csrw	medeleg, zero
+
+	# Enable MEI when unmasked (if MIE=1)
+	li		t0, 0x800
+	csrw	mie, t0
 
 	.option push
     .option norelax
@@ -50,10 +51,11 @@ _start:
     .option pop
 
 	# Configure Syscall
-	la		t0,vector_entry		# Load the vector_entry address to t0
-	csrw	mtvec,t0			# Write vector_entry address to mtvec
+	la		t1,vector_entry		# Load the vector_entry address to t0
+	csrw	mtvec,t1			# Write vector_entry address to mtvec
 								# Last bit is 0, means DIRECT mode
-	li		sp,sp_addr	# Stack to top
+	li		t2, MMR_ADDR	 	# HW Address base
+	lw		sp, 0x648(t2)		# Stack to top
 
 	# newlib related
 	la a0, _edata
@@ -95,7 +97,8 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
     .option pop
 
 	# Load "current" to s0
-	lw		s0, current
+	lw		s0, _sched_current	# Get _sched_current
+	lw		s0, 0(s0)			# Get TCB
 
 	# If scheduled task was 'idle', no need to save minimum context
 	# And is obviously an interruption because idle cant call
@@ -191,7 +194,7 @@ isr_entry:
 	lw		t1, 0x20(t0)     # IRQ_STATUS
 	lw		t2, 0x10(t0)     # IRQ_MASK
 	and		a0, t1, t2		 # Function arg
-	jal		os_isr
+	jal		isr_isr
 	# The function returned the scheduled task pointer in a0
 
 	# Save kernel context
@@ -221,7 +224,8 @@ isr_entry:
 	csrw	mepc, t0
 
 	# Load offset from scheduled task
-	lw		t0, OFF_ADDR(a0)
+	lw		t0, PAGE_ADDR(a0)
+	lw		t0, 0(t0)
 	csrw	mrar, t0
 
 	# Continue to restore the remaining context
@@ -251,9 +255,10 @@ restore_minimum:
 	mret
 
 ecall_handler:
-	jal		 os_syscall
+	jal		 sys_syscall
 
-	lw		 t0, current	# Load current tcb to t0
+	lw		 t0, _sched_current	# Get _sched_current
+	lw		 t0, 0(t0)			# Get TCB
 	
 	lb		 t1, task_terminated
 	bnez	 t1, restore_complete # If the called syscall terminated the calling task, do not save its context
@@ -298,7 +303,8 @@ restore_complete:
 	lw		 t1, PC_ADDR(t0)
 	csrw	 mepc, t1			# Load task PC
 
-	lw		 t2, OFF_ADDR(t0)
+	lw		 t2, PAGE_ADDR(a0)
+	lw		 t2, 0(t2)
 	csrw	 mrar, t2			# Load task offset
 
 	lw		 ra,  0(t0)

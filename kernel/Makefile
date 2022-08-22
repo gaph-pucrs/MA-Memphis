@@ -14,9 +14,6 @@ HALDIR = hal
 LIBDIR = ../lib/src
 INCLIB = $(LIBDIR)/include
 
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
-
 CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB)
 LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections
 
@@ -36,7 +33,7 @@ $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJCOPY) $< $@ -O binary
 
-$(TARGET).elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
+$(TARGET).elf: $(CCOBJ) $(ASOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
 	@$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET).map -N -o $@
 
@@ -56,13 +53,10 @@ $(HALDIR)/%.o: $(HALDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../lib
-
 clean:
 	@printf "Cleaning up\n"
-	@rm -rf *.o
+	@rm -rf src/*.o
+	@rm -rf hal/*.o
 	@rm -rf *.bin
 	@rm -rf *.map
 	@rm -rf *.lst

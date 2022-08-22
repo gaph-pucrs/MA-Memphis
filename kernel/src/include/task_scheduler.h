@@ -64,8 +64,7 @@ typedef enum _sched_status {
  * @details Some of the values are only used for RT tasks
  */
 typedef struct _sched {
-	sched_status_t status;	//!< Task scheduling status
-	int waiting_msg;		//!< Signals when task is waiting a message from a producer task
+	tcb_t *tcb;	//<! Pointer to the TCB of the scheduling structure
 
 	unsigned exec_time;			//!< Task execution time in clock cycles
 	unsigned period;			//!< Task period in clock cycles
@@ -78,7 +77,8 @@ typedef struct _sched {
 	unsigned running_start_time;	//!< Task running start time in clock cycles
 	unsigned utilization;			//!< Task CPU utilization in percentage
 
-	tcb_t *tcb;	//<! Pointer to the TCB of the scheduling structure
+	sched_status_t status;		//!< Task scheduling status
+	sched_wait_t waiting_msg;	//!< Signals when task is waiting a message from a producer task
 } sched_t;
 
 /**
