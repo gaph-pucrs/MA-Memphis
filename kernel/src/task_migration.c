@@ -11,300 +11,294 @@
  * @brief Defines the task migration functions
  */
 
+#include "task_migration.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <memphis.h>
+#include <services.h>
 
-#include "task_migration.h"
-#include "services.h"
-#include "packet.h"
-#include "task_location.h"
 #include "broadcast.h"
 #include "dmni.h"
+#include "mmr.h"
 
-typedef struct _tm_ring_t {
-	migrated_task_t tasks[PKG_MAX_LOCAL_TASKS];
-	int tail;
-} tm_ring_t;
-
-tm_ring_t migrated_tasks;
+list_t _tms;
 
 void tm_init()
 {
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		migrated_tasks.tasks[i].task = -1;
-	}
-	migrated_tasks.tail = 0;
+	list_init(&_tms);
 }
 
-void tm_add(int task, int addr)
+tl_t *tm_find(int task)
 {
-	migrated_tasks.tasks[migrated_tasks.tail].task = task;
-	migrated_tasks.tasks[migrated_tasks.tail].addr = addr;
-	migrated_tasks.tail++;
-	migrated_tasks.tail %= PKG_MAX_LOCAL_TASKS;
+	return tl_find(&_tms, task);
 }
 
-int tm_get_migrated_addr(int task)
+tl_t *tm_emplace_back(int task, int addr)
 {
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(migrated_tasks.tasks[i].task == task)
-			return migrated_tasks.tasks[i].addr;
-	}
-	return -1;
+	tl_t *tl = malloc(sizeof(tl_t));
+
+	if(tl == NULL)
+		return NULL;
+
+	tl_set(tl, task, addr);
+
+	list_push_back(&_tms, tl);
+
+	return tl;
 }
 
 void tm_migrate(tcb_t *tcb)
 {
 	/* Get target address */
-	int migrate_addr = tcb_get_migrate_addr(tcb);
+	int addr = tcb_get_migrate_addr(tcb);
+	int id = tcb_get_id(tcb);
 
-	tm_add(tcb_get_id(tcb), migrate_addr);
+	tm_emplace_back(id, addr);
 
 	/* Update task location of tasks of the same app running locally */
-	tl_update_local(tcb_get_id(tcb), migrate_addr);
+	app_t *app = tcb_get_app(tcb);
 
-	/* Send base TCB info */
-	// puts("Sending migration TCB\n");
-	tm_send_tcb(tcb, migrate_addr);
-	/* Send message request array (only what is needed) */
-	// puts("Sending migration message request\n");
-	tm_send_mr(tcb, migrate_addr);
-	/* Send data available fifo */
-	// puts("Sending migration data available\n");
-	tm_send_data_av(tcb, migrate_addr);
-	
-	/* Send pipe */
-	// puts("Sending migration pipe\n");
-	opipe_t *opipe = tcb_get_opipe(tcb);
-
-	if(opipe != NULL){
-		// puts("Will send pipe migration\n");
-
-		opipe_migrate(opipe, migrate_addr, tcb_get_id(tcb));
-
-		tcb_destroy_opipe(tcb);
-	}
-
-	/* Send data and BSS */
-	// puts("Sending migration data and bss\n");
-	tm_send_data_bss(tcb, migrate_addr);
-	/* Send heap */
-	// puts("Sending migration heap");
-	tm_send_heap(tcb, migrate_addr);
-	/* Send stack */
-	// puts("Sending migration stack\n");
-	tm_send_stack(tcb, migrate_addr);	
 	/* Send task location array */
 	// puts("Sending migration task location\n");
-	tm_send_tl(tcb, migrate_addr);
+	tm_send_app(tcb, app, id, addr);
+	/* Send base TCB info */
+	// puts("Sending migration TCB\n");
+	tm_send_tcb(tcb, id, addr);
+	/* Send data available fifo */
+	// puts("Sending migration data available\n");
+	tm_send_tl(tcb, tcb_get_davs(tcb), MIGRATION_DATA_AV, id, addr);
+	/* Send message request array (only what is needed) */
+	// puts("Sending migration message request\n");
+	tm_send_tl(tcb, tcb_get_msgreqs(tcb), MIGRATION_MSG_REQUEST, id, addr);
+	/* Send pipe */
+	// puts("Sending migration pipe\n");
+	tm_send_opipe(tcb, id, addr);
+	/* Send data and BSS */
+	// puts("Sending migration data and bss\n");
+	tm_send_data_bss(tcb, id, addr);
+	/* Send heap */
+	// puts("Sending migration heap");
+	tm_send_heap(tcb, id, addr);
+	/* Send stack */
+	// puts("Sending migration stack\n");
+	tm_send_stack(tcb, id, addr);
+	/* Send scheduler data */
+	// puts("Sending migration scheduler");
+	sched_t *sched = tcb_get_sched(tcb);
+	tm_send_sched(tcb, sched, id, addr);
 	
 	/* Code (.text) is in another function */
 	printf(
 		"Task id %d migrated at time %d to processor %x\n", 
-		tcb_get_id(tcb), 
+		id, 
 		MMR_TICK_COUNTER, 
-		migrate_addr
+		addr
 	);
-
-	sched_clear(tcb);
-	tcb_clear(tcb);
+	
+	app_update(app, id, addr);
+	tcb_remove(tcb);
 }
 
-void tm_send_code(tcb_t *tcb)
+void tm_send_text(tcb_t *tcb)
 {
 	packet_t *packet = pkt_slot_get();
 
-	packet->header = tcb_get_migrate_addr(tcb);
-	packet->service = MIGRATION_CODE;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->code_size = tcb_get_code_length(tcb);
-	packet->mapper_task = tcb->mapper_task;
-	packet->mapper_address = tcb->mapper_address;
+	tl_t *mapper = tcb_get_mapper(tcb);
+	size_t text_size = tcb_get_text_size(tcb);
 
-	dmni_send(
+	pkt_set_migration_code(
 		packet, 
-		(unsigned int*)tcb_get_offset(tcb), 
-		tcb_get_code_length(tcb) >> 2
+		tcb_get_migrate_addr(tcb), 
+		tcb_get_id(tcb), 
+		text_size, 
+		tl_get_task(mapper), 
+		tl_get_addr(mapper)
 	);
+
+	/* Align */
+	text_size = (text_size + 3) & ~3;
+
+	dmni_send(packet, tcb_get_offset(tcb), text_size >> 2, false);
 }
 
-void tm_send_tcb(tcb_t *tcb, int addr)
+void tm_send_tcb(tcb_t *tcb, int id, int addr)
 {
 	/* Send TCB */
 	packet_t *packet = pkt_slot_get();
 
-	/* Task info */
-	packet->header = addr;
-	packet->service = MIGRATION_TCB;
-	packet->task_ID = tcb_get_id(tcb);
+	pkt_set_migration_tcb(
+		packet, 
+		addr, 
+		id, 
+		tcb_get_pc(tcb)
+	);
 
-	/* RT constraints */
-	packet->period = sched_get_period(tcb);
-	packet->deadline = sched_get_deadline(tcb);
-	packet->waiting_msg = sched_get_waiting_msg(tcb);
-	packet->execution_time = sched_get_exec_time(tcb);
-
-	/* Registers */
-	packet->program_counter = tcb_get_pc(tcb);
-
-	dmni_send(packet, tcb->registers, HAL_MAX_REGISTERS);
+	dmni_send(packet, tcb_get_regs(tcb), HAL_MAX_REGISTERS, false);
 }
 
-void tm_send_tl(tcb_t *tcb, int addr)
+void tm_send_app(tcb_t *tcb, app_t *app, int id, int addr)
+{
+	size_t task_cnt = app_get_task_cnt(app);
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_app(packet, addr, id, task_cnt);
+
+	dmni_send(packet, app_get_locations(app), task_cnt, false);
+}
+
+void tm_send_tl(tcb_t *tcb, list_t *list, unsigned service, int id, int addr)
+{
+	size_t size = list_get_size(list);
+
+	if(size == 0)
+		return;	/* No data available to migrate */
+
+	tl_t *vect = list_vectorize(list, sizeof(tl_t));
+	
+	if(vect == NULL){
+		puts("FATAL: could not allocate memory for TL vector");
+		while(1);
+	}
+
+	list_clear(list);
+	list = NULL;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_tl(packet, addr, service, id, size);
+
+	dmni_send(packet, vect, (size*sizeof(tl_t)) >> 2, true);
+}
+
+void tm_send_opipe(tcb_t *tcb, int id, int addr)
+{
+	opipe_t *opipe = tcb_get_opipe(tcb);
+
+	if(opipe == NULL)
+		return;
+	
+	// puts("Will send pipe migration\n");
+	packet_t *packet = pkt_slot_get();
+
+	size_t size;
+	void* buf = opipe_get_buf(opipe, &size);
+
+	pkt_set_migration_pipe(
+		packet,
+		addr, 
+		id, 
+		opipe_get_cons_task(opipe),
+		size
+	);
+
+	size_t align_size = (size + 3) & ~3;
+
+	dmni_send(packet, buf, align_size >> 2, true);
+
+	tcb_destroy_opipe(tcb);
+}
+
+void tm_send_stack(tcb_t *tcb, int id, int addr)
+{
+	/* Get the stack pointer */
+	size_t stack_size = MMR_PAGE_SIZE - tcb_get_sp(tcb);
+
+	if(stack_size == 0)
+		return;
+
+	/* Align */
+	stack_size = (stack_size + 3) & ~3;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_stack(packet, addr, id, stack_size);
+
+	dmni_send(
+		packet, 
+		tcb_get_offset(tcb) + MMR_PAGE_SIZE - stack_size, 
+		stack_size >> 2, 
+		false
+	);
+}
+
+void tm_send_heap(tcb_t *tcb, int id, int addr)
+{
+	/* Get the stack pointer */
+	void *heap_start = (void*)(
+		tcb_get_text_size(tcb) + 
+		tcb_get_data_size(tcb) + 
+		tcb_get_bss_size(tcb)
+	);
+	void *heap_end = tcb_get_heap_end(tcb);
+	size_t heap_size = heap_end - heap_start;
+
+	if(heap_size == 0)
+		return;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_heap(packet, addr, id, heap_size);
+
+	/* Align to 32 bits */
+	heap_size = (heap_size + 3) & ~3;
+
+	dmni_send(
+		packet, 
+		(void*)((unsigned)tcb_get_offset(tcb) + (unsigned)heap_start), 
+		heap_size >> 2,
+		false
+	);
+}
+
+void tm_send_data_bss(tcb_t *tcb, int id, int addr)
+{
+	size_t data_size = tcb_get_data_size(tcb);
+	size_t bss_size = tcb_get_bss_size(tcb);
+	size_t total_size = data_size + bss_size;
+
+	if(total_size == 0)
+		return;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_data_bss(packet, addr, id, data_size, bss_size);
+
+	total_size = (total_size + 3) & ~3;
+
+	dmni_send(
+		packet, 
+		tcb_get_offset(tcb) + tcb_get_text_size(tcb), 
+		total_size >> 2,
+		false
+	);
+}
+
+void tm_send_sched(tcb_t *tcb, sched_t *sched, int id, int addr)
 {
 	packet_t *packet = pkt_slot_get();
 
-	packet->header = addr;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->service = MIGRATION_TASK_LOCATION;
-	packet->request_size = tl_get_len(tcb);
+	pkt_set_migration_sched(
+		packet, 
+		addr, 
+		id, 
+		sched_get_period(sched), 
+		sched_get_deadline(sched), 
+		sched_get_waiting_msg(sched), 
+		sched_get_exec_time(sched)
+	);
 
-	dmni_send(packet, (unsigned int*)tl_get_ptr(tcb), packet->request_size);
-}
-
-void tm_send_mr(tcb_t *tcb, int addr)
-{
-	unsigned int mr_len = mr_defrag(tcb);
-
-	if(mr_len){
-		// puts("Will send message request");
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->service = MIGRATION_MSG_REQUEST;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->request_size = mr_len;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)tcb_get_mr(tcb), 
-			(mr_len*sizeof(message_request_t)) >> 2
-		);
-	}
-}
-
-void tm_send_data_av(tcb_t *tcb, int addr)
-{
-	unsigned int data_av_len = data_av_get_len_head_end(tcb);
-
-	if(data_av_len){
-		// puts("will send data_av migrate part 1\n");
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_DATA_AV;
-		packet->request_size = data_av_len;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)data_av_get_buffer_head(tcb), 
-			(data_av_len*sizeof(data_av_t)) >> 2
-		);
-	}
-
-	data_av_len = data_av_get_len_start_tail(tcb);
-
-	if(data_av_len){
-		// puts("will send data_av migrate part 2\n");
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_DATA_AV;
-		packet->request_size = data_av_len;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)data_av_get_buffer_start(tcb), 
-			(data_av_len*sizeof(data_av_t)) >> 2
-		);
-	}
-}
-
-void tm_send_stack(tcb_t *tcb, int addr)
-{
-	/* Get the stack pointer */
-	unsigned int stack_len = PKG_PAGE_SIZE - tcb_get_sp(tcb);
-
-	/* Align to 32 bits */
-	while(stack_len % 4)
-		stack_len++;
-
-	if(stack_len){
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->service = MIGRATION_STACK;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->stack_size = stack_len;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), 
-			stack_len >> 2
-		);
-	}
-}
-
-void tm_send_heap(tcb_t *tcb, int addr)
-{
-	/* Get the stack pointer */
-	unsigned int heap_start = 
-		tcb_get_code_length(tcb) + 
-		tcb_get_data_length(tcb) + 
-		tcb_get_bss_length(tcb);
-	unsigned int heap_len = tcb_get_heap_end(tcb) - heap_start;
-
-	/* Align to 32 bits */
-	while(heap_len % 4)
-		heap_len++;
-
-	if(heap_len){
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->service = MIGRATION_HEAP;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->heap_size = heap_len;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)(tcb_get_offset(tcb) + heap_start), 
-			heap_len >> 2
-		);
-	}
-}
-
-void tm_send_data_bss(tcb_t *tcb, int addr)
-{
-	unsigned data_size = tcb_get_data_length(tcb);
-	unsigned bss_size = tcb_get_bss_length(tcb);
-
-	if(data_size + bss_size){
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->service = MIGRATION_DATA_BSS;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->data_size = data_size;
-		packet->bss_size = bss_size;
-
-		dmni_send(
-			packet, 
-			(unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), 
-			(data_size + bss_size) >> 2
-		);
-	}
+	dmni_send(packet, NULL, 0, false);
 }
 
 void tm_abort_task(int id, int addr)
 {
-	br_packet_t packet;
+	bcast_t packet;
 
 	packet.service = ABORT_TASK;
 	packet.src_id = -1;
 	packet.payload = id;
-	while(!br_send(&packet, addr, BR_SVC_TGT));
+	while(!bcast_send(&packet, addr, BR_SVC_TGT));
 }
