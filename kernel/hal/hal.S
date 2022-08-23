@@ -98,12 +98,11 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
 
 	# Load "current" to s0
 	lw		s0, _sched_current	# Get _sched_current
-	lw		s0, 0(s0)			# Get TCB
-
 	# If scheduled task was 'idle', no need to save minimum context
 	# And is obviously an interruption because idle cant call
 	# When interrupting idle, there is no need to save context
 	bnez	s0, save_minimum
+
 	addi	sp, sp, 8	# Pop s0 and gp from stack
 	j 		isr_entry
 
@@ -111,6 +110,8 @@ save_minimum:
 	# Else, if running task, save caller registers
 	# Callee registers are saved by the ABI.
 	# Despite being a call, syscall needs to save everything (except a0, which will hold the return value)
+
+	lw		s0, 0(s0)			# Get TCB from scheduler pointer
 
 	sw		ra,  0(s0)
 	sw		t0, 12(s0)
@@ -224,9 +225,9 @@ isr_entry:
 	csrw	mepc, t0
 
 	# Load offset from scheduled task
-	lw		t0, PAGE_ADDR(a0)
-	lw		t0, 0(t0)
-	csrw	mrar, t0
+	lw		t1, PAGE_ADDR(a0)
+	lw		t1, 0(t1)
+	csrw	mrar, t1
 
 	# Continue to restore the remaining context
 restore_minimum:
@@ -258,8 +259,9 @@ ecall_handler:
 	jal		 sys_syscall
 
 	lw		 t0, _sched_current	# Get _sched_current
+	beqz	 t0, sched_is_null_after_ecall
 	lw		 t0, 0(t0)			# Get TCB
-	
+sched_is_null_after_ecall:
 	lb		 t1, task_terminated
 	bnez	 t1, restore_complete # If the called syscall terminated the calling task, do not save its context
 
