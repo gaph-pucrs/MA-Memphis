@@ -301,6 +301,18 @@ void PE::mem_mapped_registers(){
 		case BR_HAS_MESSAGE:
 			cpu_mem_data_read.write(!br_buf_empty.read());
 			break;
+		case MMR_PAGE_SIZE:
+			cpu_mem_data_read.write(PAGE_SIZE_BYTES);
+			break;
+		case MMR_MAX_LOCAL_TASKS:
+			cpu_mem_data_read.write(MEMORY_SIZE_BYTES/PAGE_SIZE_BYTES - 1);
+			break;
+		case MMR_N_PE_X:
+			cpu_mem_data_read.write(N_PE_X);
+			break;
+		case MMR_N_PE_Y:
+			cpu_mem_data_read.write(N_PE_Y);
+			break;
 		default:
 			cpu_mem_data_read.write(data_read_ram.read());
 		break;

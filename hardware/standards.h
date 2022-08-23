@@ -90,6 +90,11 @@ enum MONITOR_TABLES {
 #define BR_READ_KSVC			0x20000640
 #define BR_POP					0x20000644
 
+#define MMR_PAGE_SIZE			0x20000648
+#define MMR_MAX_LOCAL_TASKS		0x2000064C
+#define MMR_N_PE_X      		0x20000650
+#define MMR_N_PE_Y      		0x20000654
+
 #define SLACK_MONITOR_WINDOW 	50000
 
 //DMNI config code
