@@ -93,7 +93,8 @@ int app_get_address(app_t *app, int task)
 
 void app_update(app_t *app, int task, int addr)
 {
-	app->task_location[task & 0x00FF] = addr;
+	if(app->task_location != NULL)
+		app->task_location[task & 0x00FF] = addr;
 }
 
 void app_set_location(app_t *app, size_t task_cnt, int *task_location)

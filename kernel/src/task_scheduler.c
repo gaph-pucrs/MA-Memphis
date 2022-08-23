@@ -62,10 +62,13 @@ sched_t *sched_emplace_back(tcb_t *tcb)
 	if(sched == NULL)
 		return NULL;
 
-	list_push_back(&_scheds, sched);
+	if(list_push_back(&_scheds, sched) == NULL){
+		free(sched);
+		return NULL;
+	}
 
 	sched->status = SCHED_READY;
-	sched->waiting_msg = 0;
+	sched->waiting_msg = SCHED_WAIT_NO;
 
 	sched->exec_time = 0;
 	sched->period = 0;
@@ -104,7 +107,7 @@ void sched_remove(sched_t *sched)
 
 tcb_t *sched_get_current_tcb()
 {
-	return _sched_current->tcb;
+	return ((_sched_current != NULL) ? _sched_current->tcb : NULL);
 }
 
 void sched_update_slack_time()
@@ -119,7 +122,7 @@ bool sched_is_waiting_msgreq(sched_t *sched)
 
 bool sched_is_waiting_dav(sched_t *sched)
 {
-	return sched->waiting_msg == SCHED_WAIT_DATA_AV;
+	return (sched->waiting_msg == SCHED_WAIT_DATA_AV);
 }
 
 bool sched_is_waiting_delivery(sched_t *sched)
@@ -371,7 +374,7 @@ sched_t *_sched_lst(unsigned current_time)
 		if(
 			sched->deadline != SCHED_NO_DEADLINE && 
 			sched->status == SCHED_READY && 
-			!sched->waiting_msg
+			sched->waiting_msg == SCHED_WAIT_NO
 		){
 			if(scheduled == NULL || (sched->slack_time < scheduled->slack_time))
 				scheduled = sched;
@@ -391,7 +394,7 @@ sched_t *_sched_lst(unsigned current_time)
 		while(entry != NULL){
 			sched_t *sched = list_get_data(entry);
 
-			if(sched->status == SCHED_READY && sched->waiting_msg == 0){
+			if(sched->status == SCHED_READY && sched->waiting_msg == SCHED_WAIT_NO){
 				scheduled = sched;
 				break;
 			}
@@ -399,17 +402,19 @@ sched_t *_sched_lst(unsigned current_time)
 			entry = list_next(entry);
 		}
 
-		if(entry == NULL){
+		if(scheduled == NULL){
 			entry = list_front(&_scheds);
-			sched_t *sched = list_get_data(entry);
-			while(sched != _last_scheduled){
-				if(sched->status == SCHED_READY && sched->waiting_msg == 0){
+			while(entry != NULL){
+				sched_t *sched = list_get_data(entry);
+				if(sched == _last_scheduled)
+					break;
+
+				if(sched->status == SCHED_READY && sched->waiting_msg == SCHED_WAIT_NO){
 					scheduled = sched;
 					break;
 				}
-
+				
 				entry = list_next(entry);
-				sched = list_get_data(entry);
 			}
 		}
 	}
@@ -446,23 +451,18 @@ sched_t *_sched_lst(unsigned current_time)
 
 void sched_run()
 {
-	// puts("Scheduler called!\n");
+	// puts("Scheduler called!");
 	unsigned scheduler_call_time = MMR_TICK_COUNTER;
 
 	MMR_SCHEDULING_REPORT = REPORT_SCHEDULER;
 
 	_sched_current = _sched_lst(scheduler_call_time);
-	// printf("Scheduled TCB addr is %x\n", (unsigned)scheduled);
-
-
-	if(_sched_current != NULL){
-		MMR_SCHEDULING_REPORT = tcb_get_id(_sched_current->tcb);
-		// printf("Current TCB addr is %x\n", (unsigned)current);
-	} else {
-		/* Schedules the idle task */
-		last_idle_time = MMR_TICK_COUNTER;
-        MMR_SCHEDULING_REPORT = REPORT_IDLE;
-	}
+	
+	if(_sched_current != NULL)
+		sched_report(tcb_get_id(_sched_current->tcb));
+	else 
+		sched_update_idle_time();
+	
 
 	MMR_TIME_SLICE = time_slice;
 

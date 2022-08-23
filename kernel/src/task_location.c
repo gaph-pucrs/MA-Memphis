@@ -57,7 +57,10 @@ tl_t *tl_emplace_back(list_t *list, int task, int addr)
 	tl->task = task;
 	tl->addr = addr;
 
-	list_push_back(list, tl);
+	if(list_push_back(list, tl) == NULL){
+		free(tl);
+		return NULL;
+	}
 
 	return tl;
 }

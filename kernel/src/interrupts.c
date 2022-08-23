@@ -80,45 +80,39 @@ tcb_t *isr_isr(unsigned status)
 			free(packet);
 		}
 		
-	} else {
-		if(status & IRQ_SLACK_TIME){
-			/* Send a monitoring packet */
+	} else if((status & IRQ_SCHEDULER) && !sched_is_idle()){
 
-			/** @todo Send to whom? */
-			// sched_report_slack_time();
-			MMR_SLACK_TIME_MONITOR = 0;
-		}
+		tcb_t *current = sched_get_current_tcb();
 
-		/* Only check stack if scheduling interrupt and no message treated in this interrupt */
-		if((status & IRQ_SCHEDULER) && !sched_is_idle()){
-			tcb_t *current = sched_get_current_tcb();
+		if(tcb_check_stack(current)){
+			printf(
+				"Task id %d aborted due to stack overflow\n", 
+				tcb_get_id(current)
+			);
 
-			if(tcb_check_stack(current)){
-				tcb_t *current = sched_get_current_tcb();
-				printf(
-					"Task id %d aborted due to stack overflow\n", 
-					tcb_get_id(current)
-				);
-
-				tcb_abort_task(current);
-			}
+			tcb_abort_task(current);
 		}
 	}
 
-	call_scheduler |= status & IRQ_SCHEDULER;
+	call_scheduler |= (status & IRQ_SCHEDULER);
 
-	if(call_scheduler)
+	tcb_t *current;
+
+	if(call_scheduler){
 		sched_run();
-	
-	tcb_t *current = sched_get_current_tcb();
-
-	if(current == NULL)
-		sched_update_idle_time();
-	else
-		sched_report(tcb_get_id(current));	
+		current = sched_get_current_tcb();
+	} else {
+		current = sched_get_current_tcb();
+		if(current == NULL){
+			sched_update_idle_time();
+		} else {
+			int id = tcb_get_id(current);
+			sched_report(id);
+		}
+	}
 
     /* Runs the scheduled task */
-    return sched_get_current_tcb();
+    return current;
 }
 
 bool isr_handle_broadcast(bcast_t *packet)
@@ -492,11 +486,18 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 
 			/* Insert the packet to TCB */
 			list_t *davs = tcb_get_davs(cons_tcb);
-			tl_emplace_back(davs, prod_task, prod_addr);
+			tl_t *dav = tl_emplace_back(davs, prod_task, prod_addr);
+			if(dav == NULL){
+				puts("FATAL");
+				while(true);
+			}
+
+			// puts("INSERTED DATA_AV");
 
 			/* If the consumer task is waiting for a DATA_AV, release it */
 			sched_t *sched = tcb_get_sched(cons_tcb);
 			if(sched_is_waiting_dav(sched)){
+				// puts("RELEASING");
 				sched_release_wait(sched);
 				return sched_is_idle();
 			}
@@ -535,7 +536,11 @@ bool isr_task_allocation(
 		while(true);
 	}
 
-	tcb_push_back(tcb);
+	list_entry_t *entry = tcb_push_back(tcb);
+	if(entry == NULL){
+		puts("FATAL: could not allocate TCB");
+		while(true);
+	}
 
 	/* Initializes the TCB */
 	tcb_alloc(
@@ -550,16 +555,17 @@ bool isr_task_allocation(
 	);
 
 	printf(
-		"Task id %d allocated at %d with entry point %p\n", 
+		"Task id %d allocated at %d with entry point %p and offset %p\n", 
 		id, 
 		MMR_TICK_COUNTER, 
-		entry_point
+		entry_point,
+		tcb_get_offset(tcb)
 	);
 
 	/* Obtain the program code */
 	dmni_read(tcb_get_offset(tcb), (text_size + data_size) >> 2);
 
-	// printf("Code lenght: %x\n", length);
+	// printf("Text size: %x\n", text_size);
 	// printf("Mapper task: %d\n", mapper_task);
 	// printf("Mapper addr: %d\n", mapper_addr);
 

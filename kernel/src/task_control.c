@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <services.h>
 
@@ -63,12 +64,13 @@ void tcb_alloc(
 	void *entry_point
 )
 {
-	tcb->registers[HAL_REG_SP] = MMR_PAGE_SIZE - 2*sizeof(int);
+	memset(tcb->registers, 0, HAL_MAX_REGISTERS * sizeof(int));
+	tcb->registers[HAL_REG_SP] = MMR_PAGE_SIZE - (sizeof(int) << 1);
 	tcb->pc = entry_point;
 
-	page_t *page = page_acquire();
+	tcb->page = page_acquire();
 
-	if(page == NULL){
+	if(tcb->page == NULL){
 		puts("FATAL: no free pages found");
 		while(true);
 	}
@@ -86,19 +88,19 @@ void tcb_alloc(
 	list_init(&(tcb->data_avs));
 
 	int appid = id >> 8;
-	app_t *app = app_find(appid);
+	tcb->app = app_find(appid);
 
-	if(app == NULL){
+	if(tcb->app == NULL){
 		/* App is not present, create it */
-		app = app_emplace_back(appid);
+		tcb->app = app_emplace_back(appid);
 
-		if(app == NULL){
+		if(tcb->app == NULL){
 			puts("FATAL: could not allocate app");
 			while(true);
 		}
 	}
 
-	tcb->app = app;
+	app_refer(tcb->app);
 
 	/* Scheduler is created upon task release */
 	tcb->scheduler = NULL;

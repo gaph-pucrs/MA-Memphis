@@ -34,7 +34,6 @@ int main()
 	psvc_init();
 	tm_init();
 	llm_init();
-
 	pkt_init();
 
 	MMR_IRQ_MASK = (
