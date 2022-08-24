@@ -40,8 +40,7 @@ int main()
 		IRQ_BRNOC |
 		IRQ_SCHEDULER | 
 		IRQ_NOC | 
-		IRQ_PENDING_SERVICE | 
-		IRQ_SLACK_TIME
+		IRQ_PENDING_SERVICE
 	);
 	
 	return 0;

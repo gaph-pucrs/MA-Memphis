@@ -33,13 +33,13 @@
 #include "mmr.h"
 
 static const unsigned SCHED_MAX_TIME_SLICE = 16318;	//!< Standard time slice value for task execution
-static const unsigned SCHED_SLACK_TIME_WINDOW = 50000;
 static const unsigned REPORT_SCHEDULER = 0x40000;
 static const unsigned REPORT_IDLE = 0x80000;
 static const unsigned REPORT_INTERRUPTION = 0x10000;
 static const int SCHED_NO_DEADLINE = -1;	//!< A task that is best-effort have its deadline variable equal to -1
 
 sched_t *_sched_current = NULL;
+tcb_t *current = NULL;
 
 unsigned total_slack_time = 0;	//!< Store the total of the processor idle time
 unsigned cpu_utilization = 0;	//!< RT CPU utilization, only filled with RT constraints
@@ -107,7 +107,7 @@ void sched_remove(sched_t *sched)
 
 tcb_t *sched_get_current_tcb()
 {
-	return ((_sched_current != NULL) ? _sched_current->tcb : NULL);
+	return current;
 }
 
 void sched_update_slack_time()
@@ -133,19 +133,6 @@ bool sched_is_waiting_delivery(sched_t *sched)
 void sched_release_wait(sched_t *sched)
 {
 	sched->waiting_msg = SCHED_WAIT_NO;
-}
-
-void sched_report_slack_time()
-{
-	packet_t *packet = pkt_slot_get();
-
-	// packet->header = cluster_master_address;
-	packet->service = SLACK_TIME_REPORT;
-	packet->cpu_slack_time = ((total_slack_time*100) / SCHED_SLACK_TIME_WINDOW);
-
-	dmni_send(packet, NULL, 0, false);
-
-	total_slack_time = 0;
 }
 
 void sched_update_idle_time()
@@ -458,11 +445,13 @@ void sched_run()
 
 	_sched_current = _sched_lst(scheduler_call_time);
 	
-	if(_sched_current != NULL)
-		sched_report(tcb_get_id(_sched_current->tcb));
-	else 
+	if(_sched_current != NULL){
+		current = _sched_current->tcb;
+		sched_report(tcb_get_id(current));
+	} else {
+		current = NULL;
 		sched_update_idle_time();
-	
+	}
 
 	MMR_TIME_SLICE = time_slice;
 

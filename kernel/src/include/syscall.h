@@ -34,9 +34,9 @@
  * @param arg6 Argument in a5
  * @param arg7 Argument in a6
  * @param number Syscall number
- * @return int 
+ * @return tcb_t* Scheduled tcb 
  */
-int sys_syscall(
+tcb_t *sys_syscall(
 	unsigned arg1, 
 	unsigned arg2, 
 	unsigned arg3, 

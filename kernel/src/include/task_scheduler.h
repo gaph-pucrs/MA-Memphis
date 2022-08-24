@@ -155,11 +155,6 @@ bool sched_is_waiting_delivery(sched_t *sched);
 void sched_release_wait(sched_t *sched);
 
 /**
- * @brief Report the slack time
- */
-void sched_report_slack_time();
-
-/**
  * @brief Updates the scheduler idle counter
  */
 void sched_update_idle_time();

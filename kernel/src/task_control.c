@@ -392,3 +392,8 @@ tl_t *tcb_get_mapper(tcb_t *tcb)
 {
 	return &(tcb->mapper);
 }
+
+void tcb_set_ret(tcb_t *tcb, int ret)
+{
+	tcb->registers[HAL_REG_A0] = ret;
+}

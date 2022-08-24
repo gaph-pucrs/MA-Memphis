@@ -32,7 +32,7 @@
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
 
-int sys_syscall(
+tcb_t *sys_syscall(
 	unsigned arg1, 
 	unsigned arg2, 
 	unsigned arg3, 
@@ -43,7 +43,7 @@ int sys_syscall(
 	unsigned number
 )
 {
-	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
+	printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
 
 	int ret = 0;
 	schedule_after_syscall = false;
@@ -117,11 +117,16 @@ int sys_syscall(
 				break;
 		}
 	}
+	
+	if(!task_terminated)
+		tcb_set_ret(current, ret);
 
-	if(schedule_after_syscall)
+	if(schedule_after_syscall){
 		sched_run();
+		return sched_get_current_tcb();
+	}
 
-	return ret;
+	return current;
 }
 
 int sys_exit(tcb_t *tcb, int status)
@@ -382,7 +387,11 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 	} else {
 		/* Synced READ, must see what applications have data available for it */
 		list_t *davs = tcb_get_davs(tcb);
-		tl_t *dav = list_get_data(list_front(davs));
+		list_entry_t *front = list_front(davs);
+		tl_t *dav = NULL;
+		
+		if(front != NULL)
+			dav = list_get_data(front);
 		
 		if(dav == NULL){	/* No data available for requesting */
 			/* Block task and wait for DATA_AV packet */

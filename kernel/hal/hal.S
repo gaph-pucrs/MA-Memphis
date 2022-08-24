@@ -97,7 +97,7 @@ vector_entry:					# Set to mtvec.BASE and DIRECT
     .option pop
 
 	# Load "current" to s0
-	lw		s0, _sched_current	# Get _sched_current
+	lw		s0, current	# Get current
 	# If scheduled task was 'idle', no need to save minimum context
 	# And is obviously an interruption because idle cant call
 	# When interrupting idle, there is no need to save context
@@ -111,13 +111,11 @@ save_minimum:
 	# Callee registers are saved by the ABI.
 	# Despite being a call, syscall needs to save everything (except a0, which will hold the return value)
 
-	lw		s0, 0(s0)			# Get TCB from scheduler pointer
-
 	sw		ra,  0(s0)
 	sw		t0, 12(s0)
 	sw		t1, 16(s0)
 	sw		t2, 20(s0)
-	# a0 is modified by syscall
+	# a0 will be modified by syscall
 	sw		a1, 36(s0)
 	sw		a2, 40(s0)
 	sw		a3, 44(s0)
@@ -153,7 +151,6 @@ save_minimum:
 	jal hal_exception_handler
 	# It will return the next scheduled task
 
-	mv		 t0, a0
 	j restore_complete
 
 intr_handler:
@@ -165,11 +162,11 @@ intr_handler:
 
 	# sp is already saved
 
-	lw 		 t4,  4(sp)
-	sw		 t4,  8(s0) # Save gp that is in stack
+	lw 		 t0,  4(sp)
+	sw		 t0,  8(s0) # Save gp that is in stack
 
-	lw		 t5,  0(sp)
-	sw		 t5, 24(s0) # Save s0 that is in stack
+	lw		 t1,  0(sp)
+	sw		 t1, 24(s0) # Save s0 that is in stack
 
 	addi	 sp, sp, 8  # Pop s0 and gp from stack
 
@@ -186,8 +183,8 @@ intr_handler:
 	sw		s10, 96(s0)
 	sw		s11,100(s0)
 
-	csrr	 t6, mepc			# Load the PC
-	sw		 t6, PC_ADDR(s0)	# Save the PC to current
+	csrr	 t2, mepc			# Load the PC
+	sw		 t2, PC_ADDR(s0)	# Save the PC to current
 
 isr_entry:
 	# JUMP TO INTERRUPT SERVICE ROUTINE WITH ARGS
@@ -258,28 +255,23 @@ restore_minimum:
 ecall_handler:
 	jal		 sys_syscall
 
-	lw		 t0, _sched_current	# Get _sched_current
-	beqz	 t0, sched_is_null_after_ecall
-	lw		 t0, 0(t0)			# Get TCB
-sched_is_null_after_ecall:
-	lb		 t1, task_terminated
-	bnez	 t1, restore_complete # If the called syscall terminated the calling task, do not save its context
+	lb		 t0, task_terminated
+	bnez	 t0, restore_complete # If the called syscall terminated the calling task, do not save its context
 
-	beq		 t0, s0, ecall_return	# If scheduled the same TCB, simply return
+	beq		 a0, s0, ecall_return	# If scheduled the same TCB, simply return
 
 	# Otherwise it is needed to save the previous task (s0) context
 	# Caller registers and sp are already saved
 
-	lw 		 t2,  4(sp)
-	sw		 t2,  8(s0) # Save gp that is in stack
+	lw 		 t1,  4(sp)
+	sw		 t1,  8(s0) # Save gp that is in stack
 
-	lw		 t3,  0(sp)
-	sw		 t3, 24(s0) # Save s0 that is in stack
+	lw		 t2,  0(sp)
+	sw		 t2, 24(s0) # Save s0 that is in stack
 
 	addi	 sp, sp, 8  # Pop s0 and gp from stack
 
 	sw		 s1, 28(s0)
-	sw		 a0, 32(s0)	# ATTENTION: SAVE a0 TOO, BECAUSE IT HOLDS THE SYSCALL RETURN VALUE	
 	sw		 s2, 64(s0)
 	sw		 s3, 68(s0)
 	sw		 s4, 72(s0)
@@ -291,56 +283,56 @@ sched_is_null_after_ecall:
 	sw		s10, 96(s0)
 	sw		s11,100(s0)
 
-	csrr	 t4, mepc		# Task pc is in mepc
-	sw		 t4, PC_ADDR(s0)
+	csrr	 t3, mepc		# Task pc is in mepc
+	sw		 t3, PC_ADDR(s0)
 
 restore_complete:
 	csrw	 mscratch, sp	# Save kernel sp
 
 	# If the idle task was scheduled, no need to restore the context
-	beqz	 t0, idle_entry
+	beqz	 a0, idle_entry
 
 	# Otherwise, restore context of scheduled task
 	# We don't know if the scheduled task stopped on a call or intr, so restore everything
-	lw		 t1, PC_ADDR(t0)
-	csrw	 mepc, t1			# Load task PC
+	lw		 t0, PC_ADDR(a0)
+	csrw	 mepc, t0			# Load task PC
 
-	lw		 t2, PAGE_ADDR(a0)
-	lw		 t2, 0(t2)
-	csrw	 mrar, t2			# Load task offset
+	lw		 t1, PAGE_ADDR(a0)
+	lw		 t1, 0(t1)
+	csrw	 mrar, t1			# Load task offset
 
-	lw		 ra,  0(t0)
-	lw		 sp,  4(t0)
-	lw		 gp,  8(t0)
-	# t0 is being used
-	lw		 t1, 16(t0)
-	lw		 t2, 20(t0)
-	lw		 s0, 24(t0)
-	lw		 s1, 28(t0)
-	lw		 a0, 32(t0)
-	lw		 a1, 36(t0)
-	lw		 a2, 40(t0)
-	lw		 a3, 44(t0)
-	lw		 a4, 48(t0)
-	lw		 a5, 52(t0)
-	lw		 a6, 56(t0)
-	lw		 a7, 60(t0)
-	lw		 s2, 64(t0)
-	lw		 s3, 68(t0)
-	lw		 s4, 72(t0)
-	lw		 s5, 76(t0)
-	lw		 s6, 80(t0)
-	lw		 s7, 84(t0)
-	lw		 s8, 88(t0)
-    lw		 s9, 92(t0)
-	lw		s10, 96(t0)
-	lw		s11,100(t0)
-	lw		 t3,104(t0)
-	lw		 t4,108(t0)
-	lw		 t5,112(t0)
-	lw		 t6,116(t0)
+	lw		 ra,  0(a0)
+	lw		 sp,  4(a0)
+	lw		 gp,  8(a0)
+	lw		 t0, 12(a0)
+	lw		 t1, 16(a0)
+	lw		 t2, 20(a0)
+	lw		 s0, 24(a0)
+	lw		 s1, 28(a0)
+	# a0 is being used
+	lw		 a1, 36(a0)
+	lw		 a2, 40(a0)
+	lw		 a3, 44(a0)
+	lw		 a4, 48(a0)
+	lw		 a5, 52(a0)
+	lw		 a6, 56(a0)
+	lw		 a7, 60(a0)
+	lw		 s2, 64(a0)
+	lw		 s3, 68(a0)
+	lw		 s4, 72(a0)
+	lw		 s5, 76(a0)
+	lw		 s6, 80(a0)
+	lw		 s7, 84(a0)
+	lw		 s8, 88(a0)
+    lw		 s9, 92(a0)
+	lw		s10, 96(a0)
+	lw		s11,100(a0)
+	lw		 t3,104(a0)
+	lw		 t4,108(a0)
+	lw		 t5,112(a0)
+	lw		 t6,116(a0)
 
-	lw		 t0, 12(t0)
+	lw		 a0, 32(a0)
 	
 	mret
 
@@ -353,7 +345,7 @@ ecall_return:
 	lw		 t0, 12(s0)
 	lw		 t1, 16(s0)
 	lw		 t2, 20(s0)
-	# a0 has the return value
+	lw		 a0, 32(a0)
 	lw 		 a1, 36(s0)
 	lw		 a2, 40(s0)
 	lw		 a3, 44(s0)

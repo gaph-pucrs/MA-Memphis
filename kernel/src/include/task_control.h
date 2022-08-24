@@ -403,3 +403,11 @@ sched_t *tcb_get_sched(tcb_t *tcb);
  * @return tl_t* Pointer to the task location
  */
 tl_t *tcb_get_mapper(tcb_t *tcb);
+
+/**
+ * @brief Sets the return value of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param ret Return value
+ */
+void tcb_set_ret(tcb_t *tcb, int ret);

@@ -29,6 +29,7 @@
 
 tcb_t *isr_isr(unsigned status)
 {
+	// puts("INT");
 	sched_report_interruption();
 
 	if(sched_is_idle())
@@ -37,6 +38,7 @@ tcb_t *isr_isr(unsigned status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
+		puts("BR");
 		bcast_t bcast_packet;
 		bcast_read(&bcast_packet);
 
@@ -56,6 +58,7 @@ tcb_t *isr_isr(unsigned status)
 			call_scheduler |= isr_handle_broadcast(&bcast_packet);
 		}
 	} else if(status & IRQ_NOC){
+		// puts("NOC");
 		packet_t *packet = malloc(sizeof(packet_t));
 		dmni_read(packet, PKT_SIZE);
 
@@ -70,6 +73,7 @@ tcb_t *isr_isr(unsigned status)
 		}
 		
 	} else if(status & IRQ_PENDING_SERVICE){
+		// puts("PEND");
 		/* Pending packet. Handle it */
 
 		packet_t *packet = psvc_front();
@@ -80,11 +84,12 @@ tcb_t *isr_isr(unsigned status)
 			free(packet);
 		}
 		
-	} else if((status & IRQ_SCHEDULER) && !sched_is_idle()){
+	} else if(status & IRQ_SCHEDULER){
+		puts("SCHED");
 
 		tcb_t *current = sched_get_current_tcb();
 
-		if(tcb_check_stack(current)){
+		if(current != NULL && tcb_check_stack(current)){
 			printf(
 				"Task id %d aborted due to stack overflow\n", 
 				tcb_get_id(current)
@@ -465,8 +470,7 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 		/* This message was directed to kernel */
 		/* Kernel is always ready to receive. Send message request */
 		tl_t msgreq;
-		msgreq.task = cons_task;
-		msgreq.addr = MMR_NI_CONFIG;
+		tl_set(&msgreq, cons_task, MMR_NI_CONFIG);
 
 		tl_send_msgreq(&msgreq, prod_task, prod_addr);
 	} else {
@@ -497,7 +501,7 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 			/* If the consumer task is waiting for a DATA_AV, release it */
 			sched_t *sched = tcb_get_sched(cons_tcb);
 			if(sched_is_waiting_dav(sched)){
-				// puts("RELEASING");
+				puts("RELEASING");
 				sched_release_wait(sched);
 				return sched_is_idle();
 			}
@@ -509,8 +513,7 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 
 			/* Forward the message request to the migrated processor */
 			tl_t dav;
-			dav.task = prod_task;
-			dav.addr = prod_addr;
+			tl_set(&dav, prod_task, prod_addr);
 
 			tl_send_dav(&dav, cons_task, migrated_addr);
 		}
