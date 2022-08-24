@@ -345,7 +345,7 @@ ecall_return:
 	lw		 t0, 12(s0)
 	lw		 t1, 16(s0)
 	lw		 t2, 20(s0)
-	lw		 a0, 32(a0)
+	lw		 a0, 32(s0)
 	lw 		 a1, 36(s0)
 	lw		 a2, 40(s0)
 	lw		 a3, 44(s0)
