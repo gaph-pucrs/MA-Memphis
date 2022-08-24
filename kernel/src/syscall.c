@@ -43,7 +43,7 @@ tcb_t *sys_syscall(
 	unsigned number
 )
 {
-	printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
+	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
 
 	int ret = 0;
 	schedule_after_syscall = false;
@@ -118,9 +118,12 @@ tcb_t *sys_syscall(
 		}
 	}
 	
-	if(!task_terminated)
+	if(!task_terminated){
+		// printf("Setting return value %d\n", ret);
 		tcb_set_ret(current, ret);
+	}
 
+	schedule_after_syscall |= (MMR_IRQ_STATUS & MMR_IRQ_MASK & IRQ_SCHEDULER);
 	if(schedule_after_syscall){
 		sched_run();
 		return sched_get_current_tcb();

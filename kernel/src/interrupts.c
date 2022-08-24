@@ -38,7 +38,7 @@ tcb_t *isr_isr(unsigned status)
 	bool call_scheduler = false;
 	/* Check interrupt source */
 	if(status & IRQ_BRNOC){
-		puts("BR");
+		// puts("BR");
 		bcast_t bcast_packet;
 		bcast_read(&bcast_packet);
 
@@ -85,7 +85,7 @@ tcb_t *isr_isr(unsigned status)
 		}
 		
 	} else if(status & IRQ_SCHEDULER){
-		puts("SCHED");
+		// puts("SCHED");
 
 		tcb_t *current = sched_get_current_tcb();
 
@@ -501,7 +501,7 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 			/* If the consumer task is waiting for a DATA_AV, release it */
 			sched_t *sched = tcb_get_sched(cons_tcb);
 			if(sched_is_waiting_dav(sched)){
-				puts("RELEASING");
+				// puts("RELEASING");
 				sched_release_wait(sched);
 				return sched_is_idle();
 			}

@@ -47,9 +47,6 @@ tcb_t *hal_exception_handler(unsigned cause, unsigned value, unsigned pc)
 		case HAL_EXC_STORE_ACCS_FLT:
 			printf("ERROR: Store access fault at virtual address %x\n", value);
 			break;
-		// case HAL_EXC_ENV_CALL_FROM_U:
-		// 	printf("ERROR: Store access fault");
-		// 	break;
 		case HAL_EXC_ENV_CALL_FROM_S:
 			puts("ERROR: Environment call from S-mode\n");
 			break;
@@ -75,7 +72,8 @@ tcb_t *hal_exception_handler(unsigned cause, unsigned value, unsigned pc)
 		printf("Task id %d aborted with cause %d\n", tcb_get_id(current), cause);
 		tcb_abort_task(current);
 		sched_run();
+		return sched_get_current_tcb();
 	}
 
-	return sched_get_current_tcb();
+	return current;
 }

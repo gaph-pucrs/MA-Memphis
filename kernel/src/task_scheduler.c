@@ -38,7 +38,6 @@ static const unsigned REPORT_IDLE = 0x80000;
 static const unsigned REPORT_INTERRUPTION = 0x10000;
 static const int SCHED_NO_DEADLINE = -1;	//!< A task that is best-effort have its deadline variable equal to -1
 
-sched_t *_sched_current = NULL;
 tcb_t *current = NULL;
 
 unsigned total_slack_time = 0;	//!< Store the total of the processor idle time
@@ -89,7 +88,7 @@ sched_t *sched_emplace_back(tcb_t *tcb)
 
 bool sched_is_idle()
 {
-	return (_sched_current == NULL);
+	return (current == NULL);
 }
 
 void sched_remove(sched_t *sched)
@@ -393,8 +392,10 @@ sched_t *_sched_lst(unsigned current_time)
 			entry = list_front(&_scheds);
 			while(entry != NULL){
 				sched_t *sched = list_get_data(entry);
-				if(sched == _last_scheduled)
+				if(sched == _last_scheduled){
+					scheduled = sched;
 					break;
+				}
 
 				if(sched->status == SCHED_READY && sched->waiting_msg == SCHED_WAIT_NO){
 					scheduled = sched;
@@ -443,10 +444,10 @@ void sched_run()
 
 	MMR_SCHEDULING_REPORT = REPORT_SCHEDULER;
 
-	_sched_current = _sched_lst(scheduler_call_time);
+	sched_t *sched = _sched_lst(scheduler_call_time);
 	
-	if(_sched_current != NULL){
-		current = _sched_current->tcb;
+	if(sched != NULL){
+		current = sched->tcb;
 		sched_report(tcb_get_id(current));
 	} else {
 		current = NULL;
