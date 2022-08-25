@@ -23,8 +23,8 @@
 #include <stdio.h>
 
 #include <mutils/list.h>
-#include <services.h>
-#include <monitor.h>
+#include <memphis/services.h>
+#include <memphis/monitor.h>
 
 #include "interrupts.h"
 #include "task_control.h"

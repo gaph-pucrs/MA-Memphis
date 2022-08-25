@@ -19,7 +19,7 @@
 
 #include <sys/stat.h>
 
-#include <monitor.h>
+#include <memphis/monitor.h>
 
 #include "task_control.h"
 

@@ -12,10 +12,11 @@
  */
 
 #include <stdio.h>
+
 #include <memphis.h>
+#include <memphis/services.h>
 
 #include "migration.h"
-#include "services.h"
 
 int main()
 {

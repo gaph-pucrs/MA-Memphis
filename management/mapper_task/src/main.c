@@ -13,10 +13,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memphis.h>
+
 #include <errno.h>
 
-#include "services.h"
+#include <memphis.h>
+#include <memphis/services.h>
+
 #include "task_migration.h"
 
 const size_t MAX_SIZE = 128;

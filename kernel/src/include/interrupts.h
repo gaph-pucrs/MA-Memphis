@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <monitor.h>
+#include <memphis/monitor.h>
 
 #include "task_control.h"
 #include "broadcast.h"

@@ -16,7 +16,7 @@
 #include <stdio.h>
 
 #include <memphis.h>
-#include <services.h>
+#include <memphis/services.h>
 
 #include "mmr.h"
 

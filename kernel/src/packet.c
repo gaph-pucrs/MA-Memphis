@@ -18,7 +18,7 @@
 
 #include <stdbool.h>
 
-#include <services.h>
+#include <memphis/services.h>
 
 #include "mmr.h"
 

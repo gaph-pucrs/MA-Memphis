@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include <memphis.h>
-#include <services.h>
+#include <memphis/services.h>
 
 #include "broadcast.h"
 #include "dmni.h"

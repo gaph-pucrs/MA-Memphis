@@ -12,7 +12,7 @@
  */
 
 #include "memphis.h"
-#include "services.h"
+#include "memphis/services.h"
 
 #include "internal_syscall.h"
 

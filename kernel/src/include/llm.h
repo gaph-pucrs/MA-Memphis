@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#include <monitor.h>
+#include <memphis/monitor.h>
 
 typedef struct _observer {
 	int16_t addr;

@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <services.h>
+#include <memphis/services.h>
 
 #include "mmr.h"
 #include "llm.h"

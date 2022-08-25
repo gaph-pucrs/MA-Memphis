@@ -11,10 +11,10 @@
  * @brief Monitoring API using the BrNoC
  */
 
-#include "monitor.h"
+#include "memphis/monitor.h"
 
 #include "memphis.h"
-#include "services.h"
+#include "memphis/services.h"
 
 #include "internal_syscall.h"
 

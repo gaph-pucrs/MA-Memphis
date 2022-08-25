@@ -14,12 +14,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <memphis.h>
+#include <memphis/services.h>
+#include <memphis/oda.h>
 
 #include "mapper.h"
 #include "sliding_window.h"
-#include "services.h"
-#include "oda.h"
 
 void map_init(mapper_t *mapper)
 {

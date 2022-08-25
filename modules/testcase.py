@@ -83,7 +83,7 @@ class Testcase:
 		cfg.close()
 		
 	def __create_services(self):
-		services = open("{}/libmemphis/src/include/services.h".format(self.base_dir), "r")
+		services = open("{}/libmemphis/src/include/memphis/services.h".format(self.base_dir), "r")
 		cfg = open("{}/services.cfg".format(self.base_dir), "w")
 
 		for line in services:

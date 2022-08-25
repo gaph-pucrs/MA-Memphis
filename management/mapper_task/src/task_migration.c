@@ -15,9 +15,10 @@
 #include <stdio.h>
 #include <memphis.h>
 
+#include <memphis/services.h>
+
 #include "task_migration.h"
 #include "sliding_window.h"
-#include "services.h"
 
 void tm_migrate(mapper_t *mapper, int task_id)
 {

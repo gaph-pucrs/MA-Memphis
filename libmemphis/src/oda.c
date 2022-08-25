@@ -15,8 +15,8 @@
 
 #include "memphis.h"
 
-#include "oda.h"
-#include "services.h"
+#include "memphis/oda.h"
+#include "memphis/services.h"
 
 void oda_init(oda_t *oda)
 {

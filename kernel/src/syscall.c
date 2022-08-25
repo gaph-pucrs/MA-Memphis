@@ -21,7 +21,7 @@
 #include <errno.h>
 
 #include <memphis.h>
-#include <services.h>
+#include <memphis/services.h>
 
 #include "interrupts.h"
 #include "broadcast.h"
