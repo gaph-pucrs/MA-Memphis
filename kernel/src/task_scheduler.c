@@ -387,15 +387,14 @@ sched_t *_sched_lst(unsigned current_time)
 			entry = list_front(&_scheds);
 			while(entry != NULL){
 				sched_t *sched = list_get_data(entry);
-				if(sched == _last_scheduled){
-					scheduled = sched;
-					break;
-				}
 
 				if(sched->status == SCHED_READY && sched->waiting_msg == SCHED_WAIT_NO){
 					scheduled = sched;
 					break;
 				}
+
+				if(sched == _last_scheduled)
+					break;
 				
 				entry = list_next(entry);
 			}
@@ -450,9 +449,6 @@ void sched_run()
 	}
 
 	MMR_TIME_SLICE = time_slice;
-
-	/* Set the scheduler interrupt mask */
-	MMR_IRQ_MASK |= IRQ_SCHEDULER;
 }
 
 void sched_real_time_task(sched_t *sched, unsigned period, int deadline, unsigned execution_time)

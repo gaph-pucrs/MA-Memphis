@@ -360,13 +360,13 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 	// printf("ipipe is at addr %p\n", ipipe);
 	if(ipipe != NULL){
 		if(ipipe_is_read(ipipe)){
-		// puts("Returning from readpipe");
-		int ret = ipipe_get_size(ipipe);
-		tcb_destroy_ipipe(tcb);
-		return ret;
+			// puts("Returning from readpipe");
+			int ret = ipipe_get_size(ipipe);
+			tcb_destroy_ipipe(tcb);
+			return ret;
 		}
 
-		puts("******* SHOULD BE BLOCKED");
+		/* This should never happen, but is here just in case */
 		return -EAGAIN;
 	}
 
@@ -486,11 +486,6 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 		}
 	} else { /* Remote producer : Sends the message request */
 		// puts("Remote producer\n");
-		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-		if(MMR_DMNI_SEND_ACTIVE){
-			schedule_after_syscall = true;
-			return -EAGAIN;
-		}
 		
 		if(sync){
 			/* DATA_AV is processed, erase it */
@@ -509,6 +504,11 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 	/* Stores the message pointer to receive */
 	ipipe = tcb_create_ipipe(tcb);
+	
+	if(ipipe == NULL){
+		puts("FATAL");
+		while(true);
+	}
 	// printf("Allocated ipipe at %p\n", current->pipe_in);
 	ipipe_set(ipipe, buf, size);
 	// printf("Set ipipe to %p size %d\n", ipipe->buf, ipipe->size);
@@ -561,9 +561,6 @@ bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 	/* Send data available only if target task hasn't received data available from this source */
 	bool send_data_av = (pmsg_find(cons_task) == NULL);
 
-	/* Avoid overwriting pending messages */
-	while(MMR_DMNI_SEND_ACTIVE);
-
 	// printf("Kernel writing pending message to task %d with size %d\n", task, size);
 	/* Insert message in kernel output message buffer */
 	int result = pmsg_emplace_back(buf, size, cons_task);
@@ -580,6 +577,10 @@ bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 			cons_tcb = tcb_find(cons_task);
 			if(cons_tcb == NULL){
 				tl_t *tl = tm_find(cons_task);
+				if(tl == NULL){
+					puts("FATAL: task migrated not found");
+					while(true);
+				}
 				cons_addr = tl_get_addr(tl);
 			}
 		}

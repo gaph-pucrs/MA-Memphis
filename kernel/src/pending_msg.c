@@ -29,7 +29,7 @@ void pmsg_init()
 
 int pmsg_emplace_back(void *buf, size_t size, int cons_task)
 {
-	opipe_t *opipe = malloc(sizeof(opipe));
+	opipe_t *opipe = malloc(sizeof(opipe_t));
 
 	if(opipe == NULL)
 		return -1;

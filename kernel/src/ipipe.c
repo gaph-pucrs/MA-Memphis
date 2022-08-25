@@ -79,7 +79,6 @@ int ipipe_receive(ipipe_t *ipipe, void *offset, size_t size)
 
 		memcpy(real_ptr, tmpbuf, size);
 		free(tmpbuf);
-		tmpbuf = NULL;
 	} else {
 		/* Obtain message from DMNI */
 		dmni_read(real_ptr, align_size >> 2);

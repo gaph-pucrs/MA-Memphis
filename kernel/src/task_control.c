@@ -373,6 +373,10 @@ void tcb_set_sched(tcb_t *tcb, sched_t *sched)
 ipipe_t *tcb_create_ipipe(tcb_t *tcb)
 {
 	tcb->pipe_in = malloc(sizeof(ipipe_t));
+
+	if(tcb->pipe_in == NULL)
+		return NULL;
+
 	ipipe_init(tcb->pipe_in);
 	return tcb->pipe_in;
 }

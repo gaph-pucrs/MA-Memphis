@@ -65,11 +65,11 @@ typedef struct _sched {
 
 	unsigned exec_time;			//!< Task execution time in clock cycles
 	unsigned period;			//!< Task period in clock cycles
-	unsigned deadline;			//!< Task deadline in clock cycles, for BE task is set to -1
+	int		 deadline;			//!< Task deadline in clock cycles, for BE task is set to -1
 	unsigned last_monitored;	//!< Last tick that the RT task was monitored
 
 	unsigned ready_time;			//!< Time in clock cycles that task becomes ready
-	unsigned remaining_exec_time;	//!< Task remaining execution time in clock cycles
+	int		 remaining_exec_time;	//!< Task remaining execution time in clock cycles
 	unsigned slack_time;			//!< Task slack time in clock cycles
 	unsigned running_start_time;	//!< Task running start time in clock cycles
 	unsigned utilization;			//!< Task CPU utilization in percentage
