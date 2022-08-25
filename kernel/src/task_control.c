@@ -197,7 +197,7 @@ ipipe_t *tcb_get_ipipe(tcb_t *tcb)
 
 bool tcb_need_migration(tcb_t *tcb)
 {
-	return tcb->proc_to_migrate != -1;
+	return (tcb->proc_to_migrate != -1);
 }
 
 opipe_t *tcb_create_opipe(tcb_t *tcb)

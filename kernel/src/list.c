@@ -76,10 +76,10 @@ void list_remove(list_t *list, list_entry_t *entry)
     if(entry == list->tail)
         list->tail = entry->prev;
 
-    if(entry->prev)
+    if(entry->prev != NULL)
         entry->prev->next = entry->next;
 
-    if(entry->next)
+    if(entry->next != NULL)
         entry->next->prev = entry->prev;
 
     /* Remember to free dinamically allocated members of list entry */

@@ -195,7 +195,8 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 	tl_t *request = tl_find(msgreqs, cons_task);
 
 	if(request != NULL){	/* Message request found! */
-		if(request->addr == MMR_NI_CONFIG){ 
+		int req_addr = tl_get_addr(request);
+		if(req_addr == MMR_NI_CONFIG){ 
 			/* Local consumer */
 			if(cons_task & MEMPHIS_KERNEL_MSG){
 				/* Message directed to kernel. No TCB to write to */
@@ -229,16 +230,9 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 					size
 				);
 
-				if(result == -1){
-					puts(
-						"ERROR: destination pointer not found in ipipe"
-					);
-					return -EBADMSG;
-				}
-
 				if(result != size){
 					puts(
-						"ERROR: destination buffer not big enough to receive message"
+						"ERROR: faulty destination ipipe"
 					);
 					return -EBADMSG;
 				}
@@ -264,7 +258,7 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 
 			/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
 			/* Also, don't send a message if the previous is still in pipe */
-			if(MMR_DMNI_SEND_ACTIVE || tcb_get_opipe(tcb)){
+			if(MMR_DMNI_SEND_ACTIVE || tcb_get_opipe(tcb) != NULL){
 				schedule_after_syscall = true;
 				return -EAGAIN;
 			}
@@ -288,7 +282,7 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 			opipe_send(
 				opipe, 
 				prod_task, 
-				tl_get_addr(request)
+				req_addr
 			);
 
 			tcb_destroy_opipe(tcb);
@@ -296,7 +290,7 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 			/* Remove the message request from buffer */
 			tl_remove(msgreqs, request);
 		}
-	} else if(!tcb_get_opipe(tcb) && !MMR_DMNI_SEND_ACTIVE){	/* Pipe is free */
+	} else if(tcb_get_opipe(tcb) == NULL){	/* Pipe is free */
 		if(sync){
 			if(cons_addr == MMR_NI_CONFIG){
 				/* Local consumer */
@@ -345,14 +339,13 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 		}
 		// puts("Pushed to pipe!");
 	} else {
-		/* DMNI busy sending message or pipe full */
-		if(tcb_get_opipe(tcb)){
-			// puts("Request not found and pipe is full. Will wait until consumed!\n");
+		/* Pipe full */
+
+		puts("Request not found and pipe is full. Will wait until consumed!");
 			/* In this case, we must wait for a message request to release the pipe */
 			sched_t *sched = tcb_get_sched(tcb);
 			sched_set_wait_msgreq(sched);
 			schedule_after_syscall = 1;
-		} /* else: the DMNI is sending the older message. Must retry */
 		
 		return -EAGAIN;
 	}
@@ -365,11 +358,16 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 	// puts("Calling readpipe");
 	ipipe_t *ipipe = tcb_get_ipipe(tcb);
 	// printf("ipipe is at addr %p\n", ipipe);
-	if(ipipe != NULL && ipipe_is_read(ipipe)){
+	if(ipipe != NULL){
+		if(ipipe_is_read(ipipe)){
 		// puts("Returning from readpipe");
 		int ret = ipipe_get_size(ipipe);
 		tcb_destroy_ipipe(tcb);
 		return ret;
+		}
+
+		puts("******* SHOULD BE BLOCKED");
+		return -EAGAIN;
 	}
 
 	if(buf == NULL){
@@ -503,8 +501,7 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 		/* Send the message request through NoC */
 		tl_t msgreq;
-		msgreq.task = cons_task;
-		msgreq.addr = MMR_NI_CONFIG;
+		tl_set(&msgreq, cons_task, MMR_NI_CONFIG);
 
 		tl_send_msgreq(&msgreq, prod_task, prod_addr);
 		// puts("Sent request");
@@ -601,8 +598,7 @@ bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 		} else {
 			/* Send data available to the right processor */
 			tl_t dav;
-			dav.task = MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG;
-			dav.addr = MMR_NI_CONFIG;
+			tl_set(&dav, MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, MMR_NI_CONFIG);
 
 			tl_send_dav(&dav, cons_task, cons_addr);
 		}

@@ -116,7 +116,7 @@ void sched_update_slack_time()
 
 bool sched_is_waiting_msgreq(sched_t *sched)
 {
-	return sched->waiting_msg == SCHED_WAIT_REQUEST;
+	return (sched->waiting_msg == SCHED_WAIT_REQUEST);
 }
 
 bool sched_is_waiting_dav(sched_t *sched)
@@ -126,7 +126,7 @@ bool sched_is_waiting_dav(sched_t *sched)
 
 bool sched_is_waiting_delivery(sched_t *sched)
 {
-	return sched->waiting_msg == SCHED_WAIT_DELIVERY;
+	return (sched->waiting_msg == SCHED_WAIT_DELIVERY);
 }
 
 void sched_release_wait(sched_t *sched)
@@ -186,7 +186,7 @@ void _sched_dynamic_slice_time(sched_t *scheduled, unsigned time)
 			continue;
 		}
 
-		if(sched->status == SCHED_SLEEPING || sched->waiting_msg){
+		if(sched->status == SCHED_SLEEPING || sched->waiting_msg != SCHED_WAIT_NO){
 			unsigned end_period = sched->ready_time + sched->period;
 			if(closer_period == 0 || end_period < closer_period)
 				closer_period = end_period;
@@ -225,7 +225,7 @@ void _sched_idle_slice_time(unsigned time)
 			continue;
 		}
 
-		if(sched->status == SCHED_SLEEPING || sched->waiting_msg != 0){
+		if(sched->status == SCHED_SLEEPING || sched->waiting_msg != SCHED_WAIT_NO){
 			unsigned end_period = sched->ready_time + sched->period;
 			if(time_slice == 0 || end_period < time_slice)
 				time_slice = end_period;
@@ -260,14 +260,9 @@ void _sched_rt_update(unsigned current_time, unsigned schedule_overhead)
 		sched_t *sched = list_get_data(entry);
 
 		/* If the current task is a BEST EFFORT task then continue the loop */
-		if(
-			sched->deadline == SCHED_NO_DEADLINE || 
-			sched->status == SCHED_FREE || 
-			sched->status == SCHED_MIGRATING || 
-			sched->status == SCHED_BLOCKED
-		){
+		if(sched->deadline == SCHED_NO_DEADLINE){
 			/* If the current task is BEST EFFORT only set it status to READY */
-			if(sched->status == SCHED_RUNNING && !sched->waiting_msg)
+			if(sched->status == SCHED_RUNNING && sched->waiting_msg == SCHED_WAIT_NO)
 				sched->status = SCHED_READY;
 
 			entry = list_next(entry);
@@ -326,7 +321,7 @@ void _sched_rt_update(unsigned current_time, unsigned schedule_overhead)
 			int appid = id >> 8;
 			int mig_pe = tcb_get_migrate_addr(sched->tcb);
 			
-			if(appid != 0 && mig_pe != -1 && !sched->waiting_msg){
+			if(appid != 0 && mig_pe != -1 && sched->waiting_msg == SCHED_WAIT_NO){
 				llm_rt(
 					&(sched->last_monitored), 
 					id, 
@@ -478,8 +473,7 @@ void sched_real_time_task(sched_t *sched, unsigned period, int deadline, unsigne
 		sched->ready_time = ready_time;
 		sched->remaining_exec_time = execution_time;
 
-		if(sched->status != SCHED_MIGRATING)
-			sched->status = SCHED_READY;
+		sched->status = SCHED_READY;
 
 	} else {
 		cpu_utilization -= sched->utilization;

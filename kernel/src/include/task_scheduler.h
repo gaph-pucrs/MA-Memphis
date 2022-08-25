@@ -49,12 +49,9 @@ typedef enum _sched_wait {
  * @brief Task scheduling status.
  */
 typedef enum _sched_status {
-	SCHED_FREE = -1,
-	SCHED_READY = 0,		//!< Task is in ready to execute
-	SCHED_RUNNING = 2,	//!< Task is running in the CPU
-	SCHED_MIGRATING,		//!< Task is being migrated
-	SCHED_BLOCKED,		//!< Task is blocked waiting for the manager send a TASK_RELEASE packet
-	SCHED_SLEEPING		//!< Task already executed all its execution time and is sleeping until the end of period
+	SCHED_READY,	//!< Task is in ready to execute
+	SCHED_RUNNING,	//!< Task is running in the CPU
+	SCHED_SLEEPING	//!< Task already executed all its execution time and is sleeping until the end of period
 } sched_status_t;
 
 /**

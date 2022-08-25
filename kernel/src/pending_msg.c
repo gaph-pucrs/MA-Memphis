@@ -24,52 +24,57 @@ list_t _pmsgs;
 
 void pmsg_init()
 {
-    list_init(&_pmsgs);
+	list_init(&_pmsgs);
 }
 
 int pmsg_emplace_back(void *buf, size_t size, int cons_task)
 {
-    opipe_t *opipe = malloc(sizeof(opipe));
+	opipe_t *opipe = malloc(sizeof(opipe));
 
-    if(opipe == NULL)
-        return -1;
+	if(opipe == NULL)
+		return -1;
 
-    int result = opipe_push(
-        opipe, 
-        buf, 
-        size, 
-        MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, 
-        cons_task
-    );
+	int result = opipe_push(
+		opipe, 
+		buf, 
+		size, 
+		MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, 
+		cons_task
+	);
 
-    if(result != size)
-        return result;
+	if(result != size)
+		return result;
 
-    list_push_back(&_pmsgs, opipe);
+	if(list_push_back(&_pmsgs, opipe) == NULL)
+		return -1;
 
 	return size;
 }
 
 bool _pmsg_find_fnc(void *data, void *cmpval)
 {
-    opipe_t *opipe = (opipe_t*)data;
-    int cons_task = *((int*)cmpval);
+	opipe_t *opipe = (opipe_t*)data;
+	int cons_task = *((int*)cmpval);
 
-    return (opipe->consumer_task == cons_task);
+	return (opipe->consumer_task == cons_task);
 }
 
 opipe_t *pmsg_find(int cons_task)
 {
-    list_entry_t *entry = list_find(&_pmsgs, &cons_task, _pmsg_find_fnc);
+	list_entry_t *entry = list_find(&_pmsgs, &cons_task, _pmsg_find_fnc);
 
-    if(entry == NULL)
-        return NULL;
+	if(entry == NULL)
+		return NULL;
 
-    return list_get_data(entry);
+	return list_get_data(entry);
 }
 
 void pmsg_remove(opipe_t *pending)
 {
-    list_entry_t *entry = list_find(&_pmsgs, pending, NULL);
-    list_remove(&_pmsgs, entry);
+	list_entry_t *entry = list_find(&_pmsgs, pending, NULL);
+
+	if(entry == NULL)
+		return;
+	
+	list_remove(&_pmsgs, entry);
 }

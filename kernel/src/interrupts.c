@@ -285,8 +285,7 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 		if(pmsg_find(cons_task) != NULL){
 			/* Send data available to the right processor */
 			tl_t dav;
-			dav.task = MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG;
-			dav.addr = MMR_NI_CONFIG;
+			tl_set(&dav, MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, MMR_NI_CONFIG);
 
 			tl_send_dav(&dav, cons_task, cons_addr);
 		}

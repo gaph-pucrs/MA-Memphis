@@ -42,6 +42,10 @@ tl_t *tl_find(list_t *list, int task)
 void tl_remove(list_t *list, tl_t *tl)
 {
 	list_entry_t *entry = list_find(list, tl, NULL);
+	
+	if(entry == NULL)
+		return;
+	
 	list_remove(list, entry);
 
 	free(tl);
