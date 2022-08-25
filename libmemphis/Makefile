@@ -8,13 +8,16 @@ CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -std=c99 -Wall -I$(INCDIR)
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -std=c11 -fdata-sections -ffunction-sections -Wall -I$(INCDIR)
 
 SRCC = $(wildcard $(SRCDIR)/*.c)
 SRCS = $(wildcard $(SRCDIR)/*.S)
 OBJ = $(patsubst %.c, %.o, $(SRCC)) $(patsubst %.S, %.o, $(SRCS))
 
-all: $(OBJ)
+all: libmemphis.a
+
+libmemphis.a: $(OBJ)
+	@riscv64-elf-ar rcs $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${YELLOW}Compiling lib: %s ...${NC}\n" "$<"
@@ -25,6 +28,7 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.S
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 clean:
-	@rm $(SRCDIR)/*.o
+	@rm -f $(SRCDIR)/*.o
+	@rm -f *.a
 
 .PHONY: clean

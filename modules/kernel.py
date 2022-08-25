@@ -65,7 +65,7 @@ class Kernel:
 
 			definitions.define(name, hex(encoding | addr))
 
-		definitions.write(self.testcase_path+"/lib/src/include/kernel_definitions.h")
+		# definitions.write(self.testcase_path+"/lib/src/include/kernel_definitions.h")
 
 	def build(self):
 		NCPU = cpu_count()

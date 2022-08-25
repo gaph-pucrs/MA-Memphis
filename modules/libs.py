@@ -9,10 +9,15 @@ class Libs:
 		self.testcase_path = testcase_path
 
 	def copy(self):
-		copy_tree(self.platform_path+"/lib", self.testcase_path+"/lib", update=1)
+		copy_tree(self.platform_path+"/libmemphis", self.testcase_path+"/libmemphis", update=1)
+		copy_tree(self.platform_path+"/libmutils", self.testcase_path+"/libmutils", update=1)
 
 	def build(self):
 		NCPU = cpu_count()
-		make = run(["make", "-C", self.testcase_path+"/lib", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/libmemphis", "-j", str(NCPU)])
+		if make.returncode != 0:
+			raise Exception("Error building libraries.")
+
+		make = run(["make", "-C", self.testcase_path+"/libmutils", "-j", str(NCPU)])
 		if make.returncode != 0:
 			raise Exception("Error building libraries.")

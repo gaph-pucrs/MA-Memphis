@@ -7,19 +7,17 @@ SRC = $(wildcard $(SRCDIR)/*.c)
 TARGET = $(patsubst %.c, %.txt, $(SRC))
 ELFS = $(patsubst %.c, %.elf, $(SRC))
 
-INCLIB = ../../lib/src/include
+INCLIB = ../../libmemphis/src/include
 
 CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCLIB) --include id_tasks.h
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections
+LIBDIR = ../../libmemphis
+UTILDIR = ../../libmutils
 
-LIBDIR = ../../lib/src
-LIBSRCC = $(wildcard $(LIBDIR)/*.c)
-LIBSRCS = $(wildcard $(LIBDIR)/*.S)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRCC)) $(patsubst %.S, %.o, $(LIBSRCS))
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCLIB) --include id_tasks.h
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
 
 all: $(TARGET) $(ELFS)
 
@@ -33,15 +31,11 @@ $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 
 $(SRCDIR)/%.elf: $(SRCDIR)/%.o $(LIBOBJ)
 	@printf "${GREEN}Linking task: %s ...${NC}\n" "$<"
-	@$(CC) $(LDFLAGS) -o $@ $^
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${GREEN}Compiling task: %s ...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
-
-
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../../lib
 
 clean:
 	@printf "Cleaning up\n"

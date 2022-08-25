@@ -11,11 +11,13 @@ SRCDIR = src
 INCDIR = $(SRCDIR)/include
 HALDIR = hal
 
-LIBDIR = ../lib/src
-INCLIB = $(LIBDIR)/include
+LIBMEMPHISDIR = ../libmemphis/src
+LIBUTILSDIR = ../libmutils/src
+INCMEMPHIS = $(LIBMEMPHISDIR)/include
+INCMUTILS = $(LIBUTILSDIR)/include
 
-CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCDIR) -I$(HALDIR) -I$(INCLIB)
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections
+CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11 -I$(INCDIR) -I$(INCMEMPHIS) -I$(INCMUTILS) -I$(HALDIR)
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections -L../libmutils -lmutils
 
 CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
@@ -35,7 +37,7 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(CC) $(LDFLAGS) $^ -Wl,-Map=$(TARGET).map -N -o $@
+	@$(CC) $^ -Wl,-Map=$(TARGET).map -N -o $@ $(LDFLAGS)
 
 $(TARGET).lst: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
