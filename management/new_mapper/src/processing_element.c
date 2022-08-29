@@ -13,6 +13,8 @@
 
 #include "processing_element.h"
 
+#include <stdio.h>
+
 #include "task.h"
 
 void pe_init(pe_t *pe, size_t slots, int addr)
@@ -23,7 +25,7 @@ void pe_init(pe_t *pe, size_t slots, int addr)
 	list_init(&(pe->tasks));
 }
 
-int pe_add_pending(pe_t *pe)
+bool pe_add_pending(pe_t *pe)
 {
 	pe->pending_cnt++;
 	return (pe->pending_cnt > pe->slots);
@@ -32,6 +34,7 @@ int pe_add_pending(pe_t *pe)
 list_entry_t *pe_task_push_back(pe_t *pe, task_t *task)
 {
 	pe->pending_cnt--;
+	pe->slots--;
 	return list_push_back(&(pe->tasks), task);
 }
 
@@ -48,4 +51,19 @@ list_t *pe_get_mapped(pe_t *pe)
 int pe_get_addr(pe_t *pe)
 {
 	return pe->addr;
+}
+
+bool pe_task_remove(pe_t *pe, task_t *task)
+{
+	list_entry_t *entry = list_find(&(pe->tasks), task, NULL);
+	if(entry == NULL){
+		puts("TASK NOT FOUND");
+		return false;
+	}
+
+	bool ret = (pe->pending_cnt > pe->slots);
+
+	pe->slots++;
+
+	return ret;
 }

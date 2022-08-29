@@ -25,8 +25,9 @@ typedef struct _map {
 	unsigned appid_cnt;
 	size_t slots;
 	app_t *pending;
-	
 	pe_t *pes;
+	
+	list_t apps;
 } map_t;
 
 void map_init(map_t *mapper);
@@ -42,3 +43,7 @@ int map_xy_to_idx(int x, int y);
 void map_do(map_t *mapper, app_t *app);
 
 unsigned map_manhattan(int a, int b);
+
+void map_task_allocated(map_t *mapper, int id);
+
+void map_task_terminated(map_t *mapper, int id);

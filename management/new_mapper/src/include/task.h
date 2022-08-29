@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include <mutils/list.h>
 
 #include "processing_element.h"
@@ -29,6 +31,7 @@ typedef struct _task {
 	unsigned tag;
 
 	pe_t *pe;
+	pe_t *old_pe;
 
 	list_t preds;
 	list_t succs;
@@ -40,7 +43,7 @@ void task_init(task_t *task, int appid, int taskid, unsigned tag);
 
 int task_comm_push_back(task_t *vertex, task_t *succ);
 
-int task_set_pe(task_t *task, pe_t *pe);
+bool task_set_pe(task_t *task, pe_t *pe);
 
 pe_t *task_get_pe(task_t *task);
 
@@ -53,3 +56,7 @@ list_t *task_get_order(task_t *task, list_t *order);
 pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window);
 
 int task_get_id(task_t *task);
+
+void task_release(task_t *task);
+
+pe_t *task_destroy(task_t *task);

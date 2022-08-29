@@ -25,8 +25,8 @@ task_t *app_init(app_t *app, int id, int injector, size_t task_cnt, int *descrip
 	app->id = id;
 	app->injector = injector;
 	app->task_cnt = task_cnt;
-	app->failed_cnt = 0;
 	app->allocated_cnt = 0;
+	app->failed_cnt = 0;
 	app->has_static = false;
 	app->score = 0;
 
@@ -62,7 +62,7 @@ task_t *app_init(app_t *app, int id, int injector, size_t task_cnt, int *descrip
 	return app->tasks;
 }
 
-void app_set_failed(app_t *app, int failed_cnt)
+void app_set_failed(app_t *app, unsigned failed_cnt)
 {
 	app->failed_cnt = failed_cnt;
 }
@@ -182,4 +182,39 @@ void app_mapping_complete(app_t *app)
 int app_get_injector(app_t *app)
 {
 	return app->injector;
+}
+
+bool app_find_fnc(void *data, void *cmpval)
+{
+	app_t *app = (app_t*)data;
+	int appid = *((int*)cmpval);
+
+	return (app->id == appid);
+}
+
+size_t app_add_allocated(app_t *app)
+{
+	app->allocated_cnt++;
+	return app->allocated_cnt;
+}
+
+size_t app_rem_allocated(app_t *app)
+{
+	app->allocated_cnt--;
+	return app->allocated_cnt;
+}
+
+void app_destroy(app_t *app)
+{
+	free(app->tasks);
+}
+
+unsigned app_get_failed(app_t *app)
+{
+	return app->failed_cnt;
+}
+
+void app_rem_failed(app_t *app)
+{
+	app->failed_cnt--;
 }

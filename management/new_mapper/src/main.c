@@ -36,7 +36,14 @@ int main()
 			case NEW_APP:
 				map_new_app(&mapper, message[1], message[2], &message[3], &message[(message[2] << 1) + 3]);
 				break;
+			case TASK_ALLOCATED:
+				map_task_allocated(&mapper, message[1]);
+				break;
+			case TASK_TERMINATED:
+				map_task_terminated(&mapper, message[1]);
+				break;
 			default:
+				printf("Invalid service %x\n", message[0]);
 				break;
 		}
 	}

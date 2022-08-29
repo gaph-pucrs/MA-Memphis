@@ -23,10 +23,13 @@
 
 void map_init(map_t *mapper)
 {
-	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
-
 	mapper->appid_cnt = 0;
+
+	const size_t MAX_TASKS = memphis_get_max_tasks(&(mapper->slots));
+	
 	mapper->pending = NULL;
+
+	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
 	mapper->pes = malloc(N_PE * sizeof(pe_t));
 
 	if(mapper->pes == NULL){
@@ -34,9 +37,10 @@ void map_init(map_t *mapper)
 		return;
 	}
 
-	const size_t MAX_TASKS = memphis_get_max_tasks(&(mapper->slots));
 	for(int i = 0; i < N_PE; i++)
 		pe_init(&(mapper->pes[i]), MAX_TASKS, map_idx_to_coord(i));
+
+	list_init(&(mapper->apps));
 }
 
 void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, int *communication)
@@ -57,7 +61,7 @@ void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, 
 	}
 
 	/* Search for statically mapped tasks */
-	int failed_cnt = 0;
+	unsigned failed_cnt = 0;
 	bool has_static = false;
 	for(int i = 0; i < task_cnt; i++){
 		int pe_addr = descriptor[i * MAP_DESCR_ENTRY_LEN];
@@ -282,6 +286,7 @@ void map_do(map_t *mapper, app_t *app)
 	}
 
 	mapper->slots -= task_cnt;
+	list_push_back(&(mapper->apps), app);
 }
 
 unsigned map_manhattan(int a, int b)
@@ -295,4 +300,129 @@ unsigned map_manhattan(int a, int b)
 	int dist_y = abs(a_y - b_y);
 
 	return dist_x + dist_y;
+}
+
+void map_task_allocated(map_t *mapper, int id)
+{
+	printf("Received task allocated from id %d\n", id);
+
+	int appid = id >> 8;
+	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
+
+	if(entry == NULL){
+		puts("App not found");
+		return;
+	}
+
+	app_t *app = list_get_data(entry);
+
+	size_t alloc_cnt = app_add_allocated(app);
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
+	if(alloc_cnt != task_cnt)
+		return;
+
+	/* All tasks allocated, send task release */
+	printf("Sending TASK_RELEASE at time %d for app %d\n", memphis_get_tick(), appid);
+
+	/* Assemble and send task release */
+	const size_t msg_size = (task_cnt + 3) << 2;
+	int *out_msg = malloc(msg_size);
+
+	out_msg[0] = TASK_RELEASE;
+	// out_msg[1] = appid_shift | i;
+	out_msg[2] = task_cnt;
+
+	for(int i = 0; i < task_cnt; i++){
+		task_t *task = &(tasks[i]);
+
+		/* Mark task as running */
+		task_release(task);
+
+		pe_t *pe = task_get_pe(task);
+		int addr = pe_get_addr(pe);
+		out_msg[i + 3] = addr;
+	}
+
+	int appid_shift = appid << 8;
+	for(int i = 0; i < task_cnt; i++){
+		/* Tell kernel to populate the proper task by sending the ID */
+		out_msg[1] = appid_shift | i;
+
+		/* Send message directed to kernel at task address */
+		memphis_send_any(out_msg, msg_size, MEMPHIS_KERNEL_MSG | out_msg[i + 3]);
+	}
+
+	free(out_msg);
+	out_msg = NULL;
+
+	app_mapping_complete(app);
+	mapper->appid_cnt++;
+}
+
+void map_task_terminated(map_t *mapper, int id)
+{
+	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
+
+	int appid = id >> 8;
+	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
+
+	if(entry == NULL){
+		puts("App not found");
+		return;
+	}
+
+	app_t *app = list_get_data(entry);
+
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
+
+	const int taskid = id & 0xFF;
+	task_t *task = &(tasks[taskid]);
+
+	pe_t *pe = task_get_pe(task);
+	mapper->slots++;
+	if(pe_task_remove(pe, task) && mapper->pending != NULL)
+		app_rem_failed(mapper->pending);
+
+	pe_t *old_pe = task_destroy(task);
+	if(old_pe != NULL){
+		/* The task finished with a migration request on the fly */
+		mapper->slots++;
+		if(pe_task_remove(old_pe, task) && mapper->pending != NULL)
+			app_rem_failed(mapper->pending);
+	}
+
+	size_t alloc_cnt = app_rem_allocated(app);
+
+	/* All tasks terminated, terminate app */
+	if(alloc_cnt == 0){
+		printf("App %d terminated at time %d\n", app->id, memphis_get_tick());
+
+		app_destroy(app);
+		task = NULL;
+		tasks = NULL;
+		list_remove(&(mapper->apps), entry);
+
+		free(app);
+		app = NULL;
+	}
+
+	if(mapper->pending == NULL)
+		return;
+
+	/* There is a pending application which could not be allocated before */
+	app = mapper->pending;
+	tasks = app_get_tasks(app, &task_cnt);
+	if(mapper->slots < task_cnt)
+		return;
+
+	/* Able to map unless it was due to static mapping not available */
+	unsigned failed_cnt = app_get_failed(app);
+	if(failed_cnt != 0)
+		return;
+
+	/* Application is able to map (enough slots) and static mapping is OK */
+	map_do(mapper, app);
+	mapper->pending = NULL;
 }

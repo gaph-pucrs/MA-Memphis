@@ -11,6 +11,7 @@ void task_init(task_t *task, int appid, int taskid, unsigned tag)
 	task->tag = tag;
 
 	task->pe = NULL;
+	task->old_pe = NULL;
 	
 	list_init(&(task->preds));
 	list_init(&(task->succs));
@@ -26,7 +27,7 @@ int task_comm_push_back(task_t *vertex, task_t *succ)
 	return (succ_entry == NULL || pred_entry == NULL);
 }
 
-int task_set_pe(task_t *task, pe_t *pe)
+bool task_set_pe(task_t *task, pe_t *pe)
 {
 	task->pe = pe;
 	return pe_add_pending(pe);
@@ -141,4 +142,17 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 int task_get_id(task_t *task)
 {
 	return task->id;
+}
+
+void task_release(task_t *task)
+{
+	task->status = TASK_STATUS_RUNNING;
+}
+
+pe_t *task_destroy(task_t *task)
+{
+	list_destroy(&(task->preds));
+	list_destroy(&(task->succs));
+
+	return task->old_pe;
 }
