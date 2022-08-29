@@ -95,7 +95,7 @@ void MAInjector::ma_boot()
 				// std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
 
 				/* First task should be the mapper directly injected to the system with static mapping */
-				if(tasks[0].first.compare("mapper_task") != 0){
+				if(tasks[0].first.compare("new_mapper") != 0){
 					std::cout << "ERROR: first task must be 'mapper_task'" << std::endl;
 					ma_boot_state = BOOT_FINISHED;
 				}
@@ -225,8 +225,8 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 
 void MAInjector::ma_load()
 {
-	/* Message length is type_tag + static_map per task + 0 (no comm) per task + 2 header flits */
-	unsigned message_len = tasks.size()*3 + 2;
+	/* Message length is type_tag + static_map per task + 0 (no comm) per task + 3 header flits */
+	unsigned message_len = tasks.size()*3 + 3;
 
 	/* Memphis packet + message protocol (type + size) + task address */
 	unsigned packet_size = CONSTANT_PACKET_SIZE + message_len;
@@ -249,6 +249,7 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 
 	packet.push_back(NEW_APP);			/* Protocol: MA_ALLOCATION */
+	packet.push_back(MA_INJECTOR_ADDRESS);		/* Task injector */
 	packet.push_back(tasks.size());		/* Task count */
 
 	for(unsigned i = 0; i < tasks.size(); i++){

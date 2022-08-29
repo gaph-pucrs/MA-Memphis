@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 
+#include <memphis.h>
 #include <memphis/monitor.h>
 
 #include "task_control.h"
@@ -231,15 +232,11 @@ int sys_fstat(tcb_t *tcb, int file, struct stat *st);
 int sys_close(int file);
 
 /**
- * @brief Gets the number of PEs in the system
+ * @brief Gets the system context
  * 
- * @return int Number of PEs
- */
-int sys_get_nprocs();
-
-/**
- * @brief Gets the number of tasks a PE can hold
+ * @param tcb Pointer to the TCB
+ * @param ctx Pointer to the ctx
  * 
- * @return int Maximum local tasks
+ * @return int 0
  */
-int sys_get_max_tasks();
+int sys_get_ctx(tcb_t *tcb, mctx_t *ctx);

@@ -13,37 +13,35 @@
 
 #include "mapper.h"
 
-bool _initialized = false;
-size_t _PE_CNT;
-size_t _PE_X_CNT;
-size_t _PE_Y_CNT;
-size_t _PE_SLOTS;
-size_t _MC_SLOTS;
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <memphis.h>
+#include <memphis/services.h>
+
+#include "window.h"
 
 void map_init(map_t *mapper)
 {
+	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
+
 	mapper->appid_cnt = 0;
 	mapper->pending = NULL;
-
-	if(!_initialized){
-		puts("TODO: FATAL");
-		while(true);
-	}
-
-	mapper->pes = malloc(_pe_cnt * sizeof(pe_t));
+	mapper->pes = malloc(N_PE * sizeof(pe_t));
 
 	if(mapper->pes == NULL){
 		puts("FATAL: not enough memory");
 		return;
 	}
 
-	for(int i = 0; i < _pe_cnt; i++)
-		pe_init(&(mapper->pes[i]), map_idx_to_coord(i));
+	const size_t MAX_TASKS = memphis_get_max_tasks(&(mapper->slots));
+	for(int i = 0; i < N_PE; i++)
+		pe_init(&(mapper->pes[i]), MAX_TASKS, map_idx_to_coord(i));
 }
 
-void map_new_app(map_t *mapper, size_t task_cnt, int *descriptor, int *communication)
+void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, int *communication)
 {
-	printf("New app received at %d\n", memphis_get_tick());
+	printf("New app received at %u from %x\n", memphis_get_tick(), injector);
 
 	app_t *app = malloc(sizeof(app_t));
 
@@ -52,7 +50,7 @@ void map_new_app(map_t *mapper, size_t task_cnt, int *descriptor, int *communica
 		return;
 	}
 
-	task_t *tasks = app_init(app, mapper->appid_cnt, task_cnt, descriptor, communication);
+	task_t *tasks = app_init(app, mapper->appid_cnt, injector, task_cnt, descriptor, communication);
 	if(tasks == NULL){
 		puts("FATAL: not enough memory");
 		return;
@@ -87,17 +85,23 @@ void map_new_app(map_t *mapper, size_t task_cnt, int *descriptor, int *communica
 
 int map_coord_to_idx(int coord)
 {
-	return (coord >> 8) + (coord & 0xFF) * _PE_X_CNT;
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return (coord >> 8) + (coord & 0xFF) * PE_X_CNT;
 }
 
 int map_idx_to_coord(int idx)
 {
-	return ((idx % _PE_X_CNT) << 8) | (idx / _PE_X_CNT);
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return ((idx % PE_X_CNT) << 8) | (idx / PE_X_CNT);
 }
 
-int map_xy_to_id(int x, int y)
+int map_xy_to_idx(int x, int y)
 {
-	return x + y*_PE_Y_CNT;
+	size_t PE_Y_CNT;
+	memphis_get_nprocs(NULL, &PE_Y_CNT);
+	return x + y*PE_Y_CNT;
 }
 
 void map_do(map_t *mapper, app_t *app)
@@ -148,7 +152,8 @@ void map_do(map_t *mapper, app_t *app)
 		int wy = MAP_MIN_WY;
 
 		/* Pre-growth due to minimum size */
-		while(wx*wy*_PE_SLOTS < task_cnt){
+		size_t PE_SLOTS = memphis_get_max_tasks(NULL);
+		while(wx*wy*PE_SLOTS < task_cnt){
 			if(wy <= wx){
 				wy++;	/* Prefer to have y greater than x because window slides in x-axis */
 			} else {
@@ -156,11 +161,15 @@ void map_do(map_t *mapper, app_t *app)
 			}
 		}
 
-		if(wx > _PE_X_CNT)
-			wx = _PE_X_CNT;
+		size_t PE_X_CNT;
+		size_t PE_Y_CNT;
+		memphis_get_nprocs(&PE_X_CNT, &PE_Y_CNT);
 
-		if(wy > _PE_Y_CNT)
-			wy = _PE_Y_CNT;
+		if(wx > PE_X_CNT)
+			wx = PE_X_CNT;
+
+		if(wy > PE_Y_CNT)
+			wy = PE_Y_CNT;
 
 		wdo_t window;
 		if(static_cnt != 0){
@@ -169,17 +178,17 @@ void map_do(map_t *mapper, app_t *app)
 			wdo_from_center(&window, mapper->pes, task_cnt);
 		} else {
 			/* Set the window based on the last one selected */
-			static int last_x = _PE_X_CNT - MAP_MIN_WX;
-			static int last_y = _PE_Y_CNT - MAP_MIN_WY;
-
-			if(wx != MAP_MIN_WX || wy != MAP_MIN_WY){
-				last_x = _PE_X_CNT - wx;
-				last_y = _PE_Y_CNT - wy;
+			static bool initialized = false;
+			static int last_x;
+			static int last_y;
+			
+			if(wx != MAP_MIN_WX || wy != MAP_MIN_WY || !initialized){
+				last_x = PE_X_CNT - wx;
+				last_y = PE_Y_CNT - wy;
+				initialized = true;
 			}
 
 			wdo_init(&window, last_x, last_y, wx, wy);
-			wdo_slide(&window);
-
 			wdo_from_last(&window, mapper->pes, task_cnt);
 		}
 
@@ -203,7 +212,7 @@ void map_do(map_t *mapper, app_t *app)
 			task_t *task = list_get_data(entry);
 			pe_t *pe = task_get_pe(task);
 			if(pe == NULL){	/* Skip tasks already mapped */
-				pe_t *pe = task_map(task, pes, window);
+				pe_t *pe = task_map(task, mapper->pes, &window);
 
 				task_set_pe(task, pe);
 				pe_task_push_back(pe, task);
@@ -227,12 +236,7 @@ void map_do(map_t *mapper, app_t *app)
 		payload[i*2 + 1] = pe_get_addr(pe);
 	}
 
-	/**
-	 * @todo
-	 * How to identify injectors -> Embed address in NEW_APP message
-	 * and save in app_t
-	 */
-	memphis_send_any(out_msg, out_size, @todo);
+	memphis_send_any(out_msg, out_size, app_get_injector(app));
 
 	free(out_msg);
 	out_msg = NULL;
@@ -247,7 +251,8 @@ void map_do(map_t *mapper, app_t *app)
 		list_t *succs = task_get_succs(vertex);
 		list_entry_t *succ = list_front(succs);
 		while(succ != NULL){
-			pe_t *succ_pe = task_get_pe(succ);
+			task_t *succ_task = list_get_data(succ);
+			pe_t *succ_pe = task_get_pe(succ_task);
 			cost += map_manhattan(pe_get_addr(vertex_pe), pe_get_addr(succ_pe));
 			edges++;
 
@@ -259,7 +264,7 @@ void map_do(map_t *mapper, app_t *app)
 	float score = (edges > 0) ? ((float)cost / (float)edges) : 0; /* Careful with division by zero */
 	
 	/* Printf with 2 decimal places and avoid linking to float printf */
-	printf("Mapped with score %u.%u at %u", (int)score, (int)(score*100), memphis_get_tick());
+	printf("Mapped with score %u.%u at %u\n", (int)score, (int)(score*100 - (int)score*100), memphis_get_tick());
 
 	app_set_score(app, score);
 

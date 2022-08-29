@@ -15,6 +15,9 @@
 
 #include <mutils/list.h>
 
+#include "processing_element.h"
+#include "window.h"
+
 typedef enum _task_status {
 	TASK_STATUS_BLOCKED,
 	TASK_STATUS_RUNNING,
@@ -36,3 +39,17 @@ typedef struct _task {
 void task_init(task_t *task, int appid, int taskid, unsigned tag);
 
 int task_comm_push_back(task_t *vertex, task_t *succ);
+
+int task_set_pe(task_t *task, pe_t *pe);
+
+pe_t *task_get_pe(task_t *task);
+
+list_t *task_get_succs(task_t *task);
+
+list_t *task_get_preds(task_t *task);
+
+list_t *task_get_order(task_t *task, list_t *order);
+
+pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window);
+
+int task_get_id(task_t *task);

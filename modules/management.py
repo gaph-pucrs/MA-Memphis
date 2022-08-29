@@ -59,7 +59,7 @@ class Management:
 		for i in range(len(output_tasks)):
 			ids.add(output_tasks[i], sizes[i], task_ids[i])
 
-		if output_tasks[0] != "mapper_task":
+		if output_tasks[0] != "new_mapper":
 			raise Exception("Mapper task must be the first in the management list")
 
 		ids.write(self.testcase_path+"/management/id_tasks.h")

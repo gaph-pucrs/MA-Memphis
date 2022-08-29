@@ -1,12 +1,12 @@
 BLUE  =\033[0;34m
 NC   =\033[0m # No Color
 
-TARGET = mapper_task
+TARGET = new_mapper
 
 SRCDIR = src
 INCDIR = src/include
 INCLIB = ../../libmemphis/src/include
-INCMAN = ../
+INCUTILS = ../../libmutils/src/include
 
 CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
@@ -15,7 +15,7 @@ OBJCOPY = riscv64-elf-objcopy
 LIBDIR = ../../libmemphis
 UTILDIR = ../../libmutils
 
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h -DPKG_N_PE_X=2 -DPKG_MAX_TASKS_APP=10 -DPKG_N_PE=4 -DPKG_MAX_LOCAL_TASKS=1 -DAPP_INJECTOR=0xc0000101 -DMAINJECTOR=0xe0000000
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11  -I$(INCDIR) -I$(INCLIB) -I$(INCUTILS) -I../ --include id_tasks.h
 LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
 
 SRC = $(wildcard $(SRCDIR)/*.c)

@@ -15,6 +15,9 @@
 
 #include <mutils/list.h>
 
+/* Forward Declaration */
+typedef struct _task task_t;
+
 typedef struct _pe {
 	int addr;
 	unsigned slots;
@@ -22,4 +25,14 @@ typedef struct _pe {
 	list_t tasks;
 } pe_t;
 
-void pe_init(pe_t *pe, int addr);
+void pe_init(pe_t *pe, size_t slots, int addr);
+
+int pe_add_pending(pe_t *pe);
+
+list_entry_t *pe_task_push_back(pe_t *pe, task_t *task);
+
+unsigned pe_get_slots(pe_t *pe);
+
+list_t *pe_get_mapped(pe_t *pe);
+
+int pe_get_addr(pe_t *pe);

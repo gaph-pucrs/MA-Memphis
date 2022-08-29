@@ -11,14 +11,18 @@
  * @brief Main file of the MA-Memphis mapper
  */
 
+#include <stdio.h>
+
 #include <memphis.h>
 #include <memphis/services.h>
 
+#include "mapper.h"
+
+#define MSG_FLITS 128
+
 int main()
 {
-	const size_t MSG_FLITS = 128;
-	const size_t MSG_BYTES = MSG_FLITS << 2;
-
+	static const size_t MSG_BYTES = MSG_FLITS << 2;
 	printf("Mapper task started at time %u\n", memphis_get_tick());
 
 	static map_t mapper;
@@ -30,7 +34,7 @@ int main()
 
 		switch(message[0]){
 			case NEW_APP:
-				map_new_app(&mapper, message[1], &message[2], &message[(message[1] << 1) + 2]);
+				map_new_app(&mapper, message[1], message[2], &message[3], &message[(message[2] << 1) + 3]);
 				break;
 			default:
 				break;

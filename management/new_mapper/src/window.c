@@ -13,8 +13,12 @@
 
 #include "window.h"
 
-extern size_t _PE_X_CNT;
-extern size_t _PE_Y_CNT;
+#include <stdbool.h>
+
+#include <memphis.h>
+
+#include "mapper.h"
+#include "processing_element.h"
 
 void wdo_init(wdo_t *window, int x, int y, int wx, int wy)
 {
@@ -32,11 +36,15 @@ void wdo_from_center(wdo_t *window, pe_t *pes, int req_slots)
 	if(window->y < 0)
 		window->y = 0;
 
-	if(window->x + window->wx > _PE_X_CNT)
-		window->x = _PE_X_CNT - window->wx;
+	size_t PE_X_CNT;
+	size_t PE_Y_CNT;
+	memphis_get_nprocs(&PE_X_CNT, &PE_Y_CNT);
+
+	if(window->x + window->wx > PE_X_CNT)
+		window->x = PE_X_CNT - window->wx;
 	
-	if(window->y + window->wy > _PE_Y_CNT)
-		window->y = _PE_Y_CNT - window->wy;
+	if(window->y + window->wy > PE_Y_CNT)
+		window->y = PE_Y_CNT - window->wy;
 
 	while(!wdo_has_slots(window, pes, req_slots)){
 		/* Select window by changing W instead of sliding */		
@@ -46,15 +54,15 @@ void wdo_from_center(wdo_t *window, pe_t *pes, int req_slots)
 			window->wx++;
 		}
 
-		if(window->x + window->wx > _PE_X_CNT)
-			window->x = _PE_X_CNT - window->wx;
+		if(window->x + window->wx > PE_X_CNT)
+			window->x = PE_X_CNT - window->wx;
 		
-		if(window->y + window->wy > _PE_Y_CNT)
-			window->y = _PE_Y_CNT - window->wy;
+		if(window->y + window->wy > PE_Y_CNT)
+			window->y = PE_Y_CNT - window->wy;
 	}
 }
 
-bool wdo_has_pages(wdo_t *window, pe_t *pes, int req_slots)
+bool wdo_has_slots(wdo_t *window, pe_t *pes, int req_slots)
 {
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){
@@ -69,17 +77,21 @@ bool wdo_has_pages(wdo_t *window, pe_t *pes, int req_slots)
 
 void wdo_slide(wdo_t *window)
 {
-	if(window->x + window->wx < _PE_X_CNT){
+	size_t PE_X_CNT;
+	size_t PE_Y_CNT;
+	memphis_get_nprocs(&PE_X_CNT, &PE_Y_CNT);
+
+	if(window->x + window->wx < PE_X_CNT){
 		window->x += MAP_STRIDE;
 
-		if(window->x + window->wx > _PE_X_CNT)
-			window->x = _PE_X_CNT - window->wx;
-	} else if(window->y + window->wy < _PE_Y_CNT){
+		if(window->x + window->wx > PE_X_CNT)
+			window->x = PE_X_CNT - window->wx;
+	} else if(window->y + window->wy < PE_Y_CNT){
 		window->y += MAP_STRIDE;
 		window->x = 0;
 
-		if(window->y + window->wy > _PE_Y_CNT)
-			window->y = _PE_Y_CNT - window->wy;
+		if(window->y + window->wy > PE_Y_CNT)
+			window->y = PE_Y_CNT - window->wy;
 	} else {
 		window->x = 0;
 		window->y = 0;
@@ -88,11 +100,16 @@ void wdo_slide(wdo_t *window)
 
 void wdo_from_last(wdo_t *window, pe_t *pes, int req_slots)
 {
+	int last_x = window->x;
+	int last_y = window->y;
+
+	wdo_slide(window);
+	
 	while(true){
 		/* From last window to top right corner */
 		while(window->x > last_x || window->y > last_y){
 
-			if(wdo_has_pages(window, pes, req_slots)){
+			if(wdo_has_slots(window, pes, req_slots)){
 				last_x = window->x;
 				last_y = window->y;
 				return;
@@ -104,7 +121,7 @@ void wdo_from_last(wdo_t *window, pe_t *pes, int req_slots)
 		/* From bottom left corner to last window */
 		while(window->x < last_x || window->y < last_y){
 
-			if(wdo_has_pages(window, pes, req_slots)){
+			if(wdo_has_slots(window, pes, req_slots)){
 				last_x = window->x;
 				last_y = window->y;
 				return;
@@ -114,7 +131,7 @@ void wdo_from_last(wdo_t *window, pe_t *pes, int req_slots)
 		}
 
 		/* Exactly last window */
-		if(wdo_has_pages(window, pes, req_slots)){
+		if(wdo_has_slots(window, pes, req_slots)){
 			last_x = window->x;
 			last_y = window->y;
 			return;
@@ -126,8 +143,13 @@ void wdo_from_last(wdo_t *window, pe_t *pes, int req_slots)
 		} else {
 			window->wx++;
 		}
-		last_x = _PE_X_CNT - window->wx;
-		last_y = _PE_Y_CNT - window->wy;
+
+		size_t PE_X_CNT;
+		size_t PE_Y_CNT;
+		memphis_get_nprocs(&PE_X_CNT, &PE_Y_CNT);
+
+		last_x = PE_X_CNT - window->wx;
+		last_y = PE_Y_CNT - window->wy;
 		// printf("CS %dx%d\n", window->wx, window->wy);
 
 		window->x = last_x;

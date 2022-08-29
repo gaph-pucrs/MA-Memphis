@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <memphis.h>
 #include <memphis/services.h>
 
 #include "syscall.h"

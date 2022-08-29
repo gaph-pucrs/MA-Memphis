@@ -12,9 +12,15 @@
  */
 
 #include "memphis.h"
+
+#include <stdbool.h>
+
 #include "memphis/services.h"
 
 #include "internal_syscall.h"
+
+bool _initialized = false;
+mctx_t _ctx;
 
 int memphis_get_addr()
 {
@@ -121,12 +127,31 @@ int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc)
 	return ret;
 }
 
-int memphis_get_nprocs()
+size_t memphis_get_nprocs(size_t *x, size_t *y)
 {
-	return __internal_syscall(SYS_getnprocs, 0, 0, 0, 0, 0, 0, 0);
+	if(!_initialized){
+		__internal_syscall(SYS_getctx, 1, (long)&_ctx, 0, 0, 0, 0, 0);
+		_initialized = true;
+	}
+
+	if(x != NULL)
+		*x = _ctx.PE_X_CNT;
+
+	if(y != NULL)
+		*y = _ctx.PE_Y_CNT;
+
+	return _ctx.PE_CNT;
 }
 
-int memphis_get_max_tasks()
+size_t memphis_get_max_tasks(size_t *total)
 {
-	return __internal_syscall(SYS_getmaxtasks, 0, 0, 0, 0, 0, 0, 0);
+	if(!_initialized){
+		__internal_syscall(SYS_getctx, 1, (long)&_ctx, 0, 0, 0, 0, 0);
+		_initialized = true;
+	}
+
+	if(total != NULL)
+		*total = _ctx.MC_SLOTS;
+
+	return _ctx.PE_SLOTS;
 }

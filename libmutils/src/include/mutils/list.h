@@ -142,3 +142,12 @@ void *list_vectorize(list_t *list, size_t data_size);
  * @param list Pointer to the list
  */
 void list_clear(list_t *list);
+
+/**
+ * @brief Destroys all entries without clearing elements
+ * 
+ * @details This does not frees the list itself
+ * 
+ * @param list Pointer to the list
+ */
+void list_destroy(list_t *list);

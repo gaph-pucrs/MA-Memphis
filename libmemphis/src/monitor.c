@@ -20,8 +20,8 @@
 
 void monitor_init(volatile monitor_t *table)
 {
-	const int N_PE = memphis_get_nprocs();
-	const int N_TASKS = memphis_get_max_tasks();
+	const int N_PE = memphis_get_nprocs(NULL, NULL);
+	const int N_TASKS = memphis_get_max_tasks(NULL);
 
 	for(int n = 0; n < N_PE; n++){
 		for(int t = 0; t < N_TASKS; t++)

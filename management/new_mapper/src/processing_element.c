@@ -13,19 +13,19 @@
 
 #include "processing_element.h"
 
-extern unsigned _PE_SLOTS;
+#include "task.h"
 
-void pe_init(pe_t *pe, int addr)
+void pe_init(pe_t *pe, size_t slots, int addr)
 {
 	pe->addr = addr;
 	pe->pending_cnt = 0;
-	pe->slots = _PE_SLOTS;
+	pe->slots = slots;
 	list_init(&(pe->tasks));
 }
 
 int pe_add_pending(pe_t *pe)
 {
-	pe->pending_cnt++
+	pe->pending_cnt++;
 	return (pe->pending_cnt > pe->slots);
 }
 
@@ -38,4 +38,14 @@ list_entry_t *pe_task_push_back(pe_t *pe, task_t *task)
 unsigned pe_get_slots(pe_t *pe)
 {
 	return pe->slots;
+}
+
+list_t *pe_get_mapped(pe_t *pe)
+{
+	return &(pe->tasks);
+}
+
+int pe_get_addr(pe_t *pe)
+{
+	return pe->addr;
 }

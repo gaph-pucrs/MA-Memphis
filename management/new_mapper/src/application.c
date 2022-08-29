@@ -13,11 +13,17 @@
 
 #include "application.h"
 
+#include <stdlib.h>
+
+#include <memphis.h>
+#include <memphis/services.h>
+
 #include "mapper.h"
 
-task_t *app_init(app_t *app, int id, size_t task_cnt, int *descriptor, int *communication)
+task_t *app_init(app_t *app, int id, int injector, size_t task_cnt, int *descriptor, int *communication)
 {
 	app->id = id;
+	app->injector = injector;
 	app->task_cnt = task_cnt;
 	app->failed_cnt = 0;
 	app->allocated_cnt = 0;
@@ -127,13 +133,13 @@ list_t *app_get_order(app_t *app)
 	}
 
 	/* Solve one or more cyclic dependencies */
-	if(list_get_size(order) == task_cnt)
+	if(list_get_size(order) == TASK_CNT)
 		return order;
 	
 	/* Solve one or more cyclic dependencies */
-	for(int i = 0; i < task_cnt; i++){
+	for(int i = 0; i < TASK_CNT; i++){
 		task_t *task = &(app->tasks[i]);
-		if(list_find(order, task) != NULL)
+		if(list_find(order, task, NULL) != NULL)
 			continue;
 
 		list_entry_t *pushed = list_push_back(order, task);
@@ -167,8 +173,13 @@ unsigned app_allocated(app_t *app)
 void app_mapping_complete(app_t *app)
 {
 	int out_msg = APP_MAPPING_COMPLETE;
-	memphis_send_any(&out_msg, 4, @todo);
+	memphis_send_any(&out_msg, 4, app->injector);
 
 	if(app->id == 0)
 		memphis_br_send_all(0, RELEASE_PERIPHERAL);
+}
+
+int app_get_injector(app_t *app)
+{
+	return app->injector;
 }

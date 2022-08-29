@@ -1,5 +1,10 @@
 #include "task.h"
 
+#include <memphis.h>
+
+#include "mapper.h"
+#include "window.h"
+
 void task_init(task_t *task, int appid, int taskid, unsigned tag)
 {
 	task->id = (appid << 8) | taskid;
@@ -32,17 +37,22 @@ pe_t *task_get_pe(task_t *task)
 	return task->pe;
 }
 
+list_t *task_get_succs(task_t *task)
+{
+	return &(task->succs);
+}
+
 list_t *task_get_preds(task_t *task)
 {
-	return task->preds;
+	return &(task->preds);
 }
 
 list_t *task_get_order(task_t *task, list_t *order)
 {
-	list_entry_t *succ = list_front(task->succs);
+	list_entry_t *succ = list_front(&(task->succs));
 	while(succ != NULL){
 		task_t *succ_task = list_get_data(succ);
-		if(list_find(order, succ_task) == NULL){
+		if(list_find(order, succ_task, NULL) == NULL){
 			list_entry_t *pushed = list_push_back(order, succ_task);
 			if(pushed == NULL){
 				/**
@@ -65,10 +75,10 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 	pe_t *sel = NULL;
 	pe_t *old = task->pe;	/* Current mapped PE */
 	
+	size_t PE_SLOTS = memphis_get_max_tasks(NULL);
 	for(int x = window->x; x < window->x + window->wx; x++){
 		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
-			int seq = x + y*_PE_X_CNT;
-			pe_t *pe = &(pes[seq]);
+			pe_t *pe = &(pes[map_xy_to_idx(x, y)]);
 			
 			int is_old_pe = (pe == old);
 			int free_slots = pe_get_slots(pe) + is_old_pe;	/* Add a free page in the current mapped */
@@ -82,7 +92,7 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 			list_entry_t *entry = list_front(mapped);
 			while(entry != NULL){
 				task_t *mapped = list_get_data(entry);
-				if(mapped && mapped->id >> 8 == app->id)
+				if(mapped && mapped->id >> 8 == appid)
 					same_app_allocated++;
 
 				entry = list_next(entry);
@@ -91,7 +101,7 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 
 			unsigned c = 0;
 			/* 1st: Keep tasks from different apps apart from each other */
-			c += (_PE_SLOTS - (free_slots + same_app_allocated)) << 2;
+			c += (PE_SLOTS - (free_slots + same_app_allocated)) << 2;
 
 			/* 2nd: Keep tasks from the same app apart */
 			c += same_app_allocated << 1;
@@ -101,7 +111,7 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 			while(entry != NULL){
 				task_t *succ = list_get_data(entry);
 				if(succ->pe != NULL)
-					c += map_manhattan(pe_get_addr(pe), pe_get_addr(pred->pe));
+					c += map_manhattan(pe_get_addr(pe), pe_get_addr(succ->pe));
 
 				entry = list_next(entry);
 			}
@@ -126,4 +136,9 @@ pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
 	}
 
 	return sel;
+}
+
+int task_get_id(task_t *task)
+{
+	return task->id;
 }

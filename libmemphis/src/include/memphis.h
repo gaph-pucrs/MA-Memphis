@@ -31,9 +31,20 @@ enum _syscall {
 	SYS_brall,
 	SYS_monptr,
 	SYS_brtgt,
-	SYS_getnprocs,
-	SYS_getmaxtasks
+	SYS_getctx
 };
+
+/**
+ * @brief Struct for storing the Memphis kernel context
+ * 
+ */
+typedef struct _mctx {
+	size_t PE_CNT;
+	size_t PE_X_CNT;
+	size_t PE_Y_CNT;
+	size_t PE_SLOTS;
+	size_t MC_SLOTS;
+} mctx_t;
 
 /**
  * @brief Gets the PE address of the runnning task
@@ -139,13 +150,18 @@ int memphis_br_send_tgt(uint32_t payload, uint16_t target, uint8_t ksvc);
 /**
  * @brief Gets the number of processors in the system
  * 
- * @return int Number of processors
+ * @param x Variable to store X processors
+ * @param y Variable to store Y processors
+ * 
+ * @return size_t Total number of processors
  */
-int memphis_get_nprocs();
+size_t memphis_get_nprocs(size_t *x, size_t *y);
 
 /**
  * @brief Gets the maximum local tasks
  * 
- * @return int Number of maximum local tasks
+ * @param total Variable to store maximum tasks of the system
+ * 
+ * @return size_t Number of maximum local tasks
  */
-int memphis_get_max_tasks();
+size_t memphis_get_max_tasks(size_t *total);

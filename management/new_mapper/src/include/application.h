@@ -17,6 +17,7 @@
 
 typedef struct _app {
 	int id;
+	int injector;
 	unsigned failed_cnt;
 	unsigned allocated_cnt;
 	size_t task_cnt;
@@ -25,3 +26,23 @@ typedef struct _app {
 	float score;
 	bool has_static;
 } app_t;
+
+task_t *app_init(app_t *app, int id, int injector, size_t task_cnt, int *descriptor, int *communication);
+
+void app_set_failed(app_t *app, int failed_cnt);
+
+void app_set_has_static(app_t *app, bool has_static);
+
+bool app_has_static(app_t *app);
+
+task_t *app_get_tasks(app_t *app, size_t *task_cnt);
+
+list_t *app_get_order(app_t *app);
+
+void app_set_score(app_t *app, float score);
+
+unsigned app_allocated(app_t *app);
+
+void app_mapping_complete(app_t *app);
+
+int app_get_injector(app_t *app);

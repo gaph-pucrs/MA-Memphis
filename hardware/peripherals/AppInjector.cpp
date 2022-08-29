@@ -28,7 +28,7 @@ AppInjector::AppInjector(sc_module_name _name, std::string _path) :
 	std::ifstream ma_boot_info(path+"/ma_start.txt");
 	std::string line;
 	std::getline(ma_boot_info, line);
-	if(line.compare("mapper_task") != 0){
+	if(line.compare("new_mapper") != 0){
 		std::cout << "AppInjector: ERROR: first task must be 'mapper_task'" << std::endl;
 		monitor_state = MONITOR_IDLE;
 	} else {
@@ -195,6 +195,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 		packet.push_back(0);
 
 		packet.push_back(NEW_APP);				/* Protocol: NEW_APP */
+		packet.push_back(APP_INJECTOR_ADDRESS);
 
 		std::string line;
 		std::getline(repository, line);			/* Task cnt */
@@ -214,8 +215,8 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 
 		static_mapping.clear();
 
-		/* Base length is 2 flits per task + 2 header flits */
-		unsigned message_len = task_cnt * 2 + 2;
+		/* Base length is 2 flits per task + 3 header flits */
+		unsigned message_len = task_cnt * 2 + 3;
 
 		for(unsigned i = 0; i < task_cnt; i++){
 			int successor = 0;

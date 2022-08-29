@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <memphis.h>
 #include <memphis/services.h>
 
 #include "interrupts.h"
@@ -87,11 +86,8 @@ tcb_t *sys_syscall(
 			case SYS_monptr:
 				ret = sys_mon_ptr(current, (unsigned*)arg1, arg2);
 				break;
-			case SYS_getnprocs:
-				ret = sys_get_nprocs();
-				break;
-			case SYS_getmaxtasks:
-				ret = sys_get_max_tasks();
+			case SYS_getctx:
+				ret = sys_get_ctx(current, (mctx_t*)arg1);
 				break;
 			case SYS_close:
 				ret = sys_close(arg1);
@@ -792,12 +788,14 @@ int sys_close(int file)
 	return -EBADF;
 }
 
-int sys_get_nprocs()
+int sys_get_ctx(tcb_t *tcb, mctx_t *ctx)
 {
-	return MMR_N_PE_X*MMR_N_PE_Y;
-}
+	mctx_t *real_ptr = (mctx_t*)((unsigned)tcb_get_offset(tcb) | (unsigned)ctx);
+	real_ptr->PE_X_CNT = MMR_N_PE_X;
+	real_ptr->PE_Y_CNT = MMR_N_PE_Y;
+	real_ptr->PE_CNT = real_ptr->PE_X_CNT * real_ptr->PE_Y_CNT;
+	real_ptr->PE_SLOTS = MMR_MAX_LOCAL_TASKS;
+	real_ptr->MC_SLOTS = real_ptr->PE_SLOTS * real_ptr->PE_CNT;
 
-int sys_get_max_tasks()
-{
-	return MMR_MAX_LOCAL_TASKS;
+	return 0;
 }

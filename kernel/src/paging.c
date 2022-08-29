@@ -1,3 +1,16 @@
+/**
+ * MA-Memphis
+ * @file paging.c
+ *
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (https://pucrs.br/)
+ * 
+ * @date August 2022
+ *
+ * @brief Memphis paging control
+ */
+
 #include "paging.h"
 
 #include <stddef.h>
