@@ -38,6 +38,11 @@ pe_t *task_get_pe(task_t *task)
 	return task->pe;
 }
 
+pe_t *task_get_old_pe(task_t *task)
+{
+	return task->old_pe;
+}
+
 list_t *task_get_succs(task_t *task)
 {
 	return &(task->succs);
@@ -154,5 +159,17 @@ pe_t *task_destroy(task_t *task)
 	list_destroy(&(task->preds));
 	list_destroy(&(task->succs));
 
+	task->status = TASK_STATUS_TERMINATED;
+
 	return task->old_pe;
+}
+
+bool task_is_allocated(task_t *task)
+{
+	return (task->status != TASK_STATUS_TERMINATED);
+}
+
+bool task_is_migrating(task_t *task)
+{
+	return (task->status == TASK_STATUS_MIGRATING);
 }

@@ -23,7 +23,8 @@
 typedef enum _task_status {
 	TASK_STATUS_BLOCKED,
 	TASK_STATUS_RUNNING,
-	TASK_STATUS_MIGRATING
+	TASK_STATUS_MIGRATING,
+	TASK_STATUS_TERMINATED
 } task_status_t;
 
 typedef struct _task {
@@ -47,6 +48,8 @@ bool task_set_pe(task_t *task, pe_t *pe);
 
 pe_t *task_get_pe(task_t *task);
 
+pe_t *task_get_old_pe(task_t *task);
+
 list_t *task_get_succs(task_t *task);
 
 list_t *task_get_preds(task_t *task);
@@ -60,3 +63,7 @@ int task_get_id(task_t *task);
 void task_release(task_t *task);
 
 pe_t *task_destroy(task_t *task);
+
+bool task_is_allocated(task_t *task);
+
+bool task_is_migrating(task_t *task);

@@ -218,3 +218,8 @@ void app_rem_failed(app_t *app)
 {
 	app->failed_cnt--;
 }
+
+int app_get_id(app_t *app)
+{
+	return app->id;
+}

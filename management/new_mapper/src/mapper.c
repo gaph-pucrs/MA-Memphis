@@ -43,72 +43,7 @@ void map_init(map_t *mapper)
 	list_init(&(mapper->apps));
 }
 
-void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, int *communication)
-{
-	printf("New app received at %u from %x\n", memphis_get_tick(), injector);
-
-	app_t *app = malloc(sizeof(app_t));
-
-	if(app == NULL){
-		puts("FATAL: not enough memory");
-		return;
-	}
-
-	task_t *tasks = app_init(app, mapper->appid_cnt, injector, task_cnt, descriptor, communication);
-	if(tasks == NULL){
-		puts("FATAL: not enough memory");
-		return;
-	}
-
-	/* Search for statically mapped tasks */
-	unsigned failed_cnt = 0;
-	bool has_static = false;
-	for(int i = 0; i < task_cnt; i++){
-		int pe_addr = descriptor[i * MAP_DESCR_ENTRY_LEN];
-		if(pe_addr != -1){
-			int pe_idx = map_coord_to_idx(pe_addr);
-			failed_cnt += task_set_pe(&tasks[i], &(mapper->pes[pe_idx]));
-			has_static = true;
-		}
-	}
-
-	app_set_has_static(app, has_static);
-
-	/* Check if it will be mapped now or later */
-	if(task_cnt > mapper->slots || failed_cnt > 0){
-		puts("No available slots");
-
-		app_set_failed(app, failed_cnt);
-		mapper->pending = app;
-		return;
-	}
-
-	/* Finally do the mapping */
-	map_do(mapper, app);
-}
-
-int map_coord_to_idx(int coord)
-{
-	size_t PE_X_CNT;
-	memphis_get_nprocs(&PE_X_CNT, NULL);
-	return (coord >> 8) + (coord & 0xFF) * PE_X_CNT;
-}
-
-int map_idx_to_coord(int idx)
-{
-	size_t PE_X_CNT;
-	memphis_get_nprocs(&PE_X_CNT, NULL);
-	return ((idx % PE_X_CNT) << 8) | (idx / PE_X_CNT);
-}
-
-int map_xy_to_idx(int x, int y)
-{
-	size_t PE_Y_CNT;
-	memphis_get_nprocs(NULL, &PE_Y_CNT);
-	return x + y*PE_Y_CNT;
-}
-
-void map_do(map_t *mapper, app_t *app)
+void _map_do(map_t *mapper, app_t *app)
 {
 	size_t task_cnt;
 	task_t *tasks = app_get_tasks(app, &task_cnt);
@@ -289,6 +224,71 @@ void map_do(map_t *mapper, app_t *app)
 	list_push_back(&(mapper->apps), app);
 }
 
+void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, int *communication)
+{
+	printf("New app received at %u from %x\n", memphis_get_tick(), injector);
+
+	app_t *app = malloc(sizeof(app_t));
+
+	if(app == NULL){
+		puts("FATAL: not enough memory");
+		return;
+	}
+
+	task_t *tasks = app_init(app, mapper->appid_cnt, injector, task_cnt, descriptor, communication);
+	if(tasks == NULL){
+		puts("FATAL: not enough memory");
+		return;
+	}
+
+	/* Search for statically mapped tasks */
+	unsigned failed_cnt = 0;
+	bool has_static = false;
+	for(int i = 0; i < task_cnt; i++){
+		int pe_addr = descriptor[i * MAP_DESCR_ENTRY_LEN];
+		if(pe_addr != -1){
+			int pe_idx = map_coord_to_idx(pe_addr);
+			failed_cnt += task_set_pe(&tasks[i], &(mapper->pes[pe_idx]));
+			has_static = true;
+		}
+	}
+
+	app_set_has_static(app, has_static);
+
+	/* Check if it will be mapped now or later */
+	if(task_cnt > mapper->slots || failed_cnt > 0){
+		puts("No available slots");
+
+		app_set_failed(app, failed_cnt);
+		mapper->pending = app;
+		return;
+	}
+
+	/* Finally do the mapping */
+	_map_do(mapper, app);
+}
+
+int map_coord_to_idx(int coord)
+{
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return (coord >> 8) + (coord & 0xFF) * PE_X_CNT;
+}
+
+int map_idx_to_coord(int idx)
+{
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return ((idx % PE_X_CNT) << 8) | (idx / PE_X_CNT);
+}
+
+int map_xy_to_idx(int x, int y)
+{
+	size_t PE_Y_CNT;
+	memphis_get_nprocs(NULL, &PE_Y_CNT);
+	return x + y*PE_Y_CNT;
+}
+
 unsigned map_manhattan(int a, int b)
 {
 	int a_x = a >> 8;
@@ -360,16 +360,14 @@ void map_task_allocated(map_t *mapper, int id)
 	mapper->appid_cnt++;
 }
 
-void map_task_terminated(map_t *mapper, int id)
+app_t *_map_terminate_task(map_t *mapper, int id)
 {
-	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
-
 	int appid = id >> 8;
 	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
 
 	if(entry == NULL){
 		puts("App not found");
-		return;
+		return NULL;
 	}
 
 	app_t *app = list_get_data(entry);
@@ -378,7 +376,7 @@ void map_task_terminated(map_t *mapper, int id)
 	task_t *tasks = app_get_tasks(app, &task_cnt);
 
 	const int taskid = id & 0xFF;
-	task_t *task = &(tasks[taskid]);
+	task_t *task = &tasks[taskid];
 
 	pe_t *pe = task_get_pe(task);
 	mapper->slots++;
@@ -393,36 +391,84 @@ void map_task_terminated(map_t *mapper, int id)
 			app_rem_failed(mapper->pending);
 	}
 
-	size_t alloc_cnt = app_rem_allocated(app);
+	return app;
+}
 
-	/* All tasks terminated, terminate app */
-	if(alloc_cnt == 0){
-		printf("App %d terminated at time %d\n", app->id, memphis_get_tick());
+void _map_terminate_app(map_t *mapper, app_t *app)
+{
+	printf("App %d terminated at time %d\n", app_get_id(app), memphis_get_tick());
+	app_destroy(app);
+	list_entry_t *entry = list_find(&(mapper->apps), app, NULL);
+	list_remove(&(mapper->apps), entry);
+	free(app);
+}
 
-		app_destroy(app);
-		task = NULL;
-		tasks = NULL;
-		list_remove(&(mapper->apps), entry);
-
-		free(app);
-		app = NULL;
-	}
-
-	if(mapper->pending == NULL)
-		return;
-
+void _map_verify_pending(map_t *mapper)
+{
 	/* There is a pending application which could not be allocated before */
-	app = mapper->pending;
-	tasks = app_get_tasks(app, &task_cnt);
+	size_t task_cnt;
+	app_get_tasks(mapper->pending, &task_cnt);
 	if(mapper->slots < task_cnt)
 		return;
 
 	/* Able to map unless it was due to static mapping not available */
-	unsigned failed_cnt = app_get_failed(app);
+	unsigned failed_cnt = app_get_failed(mapper->pending);
 	if(failed_cnt != 0)
 		return;
 
 	/* Application is able to map (enough slots) and static mapping is OK */
-	map_do(mapper, app);
+	_map_do(mapper, mapper->pending);
 	mapper->pending = NULL;
+}
+
+void map_task_terminated(map_t *mapper, int id)
+{
+	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_terminate_task(mapper, id);
+
+	size_t alloc_cnt = app_rem_allocated(app);
+
+	/* All tasks terminated, terminate app */
+	if(alloc_cnt == 0){
+		_map_terminate_app(mapper, app);
+		app = NULL;
+	}
+
+	if(mapper->pending != NULL)
+		_map_verify_pending(mapper);
+}
+
+void map_task_aborted(map_t *mapper, int id)
+{
+	printf("Received task aborted from id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_terminate_task(mapper, id);
+
+	size_t alloc_cnt = app_rem_allocated(app);
+
+	/* All tasks terminated, terminate app */
+	if(alloc_cnt == 0){
+		_map_terminate_app(mapper, app);
+		app = NULL;
+	} else {
+		/* There are tasks still running */
+		int appid_shift = app_get_id(app) << 8;
+		size_t task_cnt;
+		task_t *tasks = app_get_tasks(app, &task_cnt);
+
+		for(int i = 0; i < task_cnt; i++){
+			task_t *task = &tasks[i];
+			if(task_is_allocated(task)){
+				/* Task is running and needs to be aborted */
+				pe_t *pe = task_is_migrating(task) ? task_get_old_pe(task) : task_get_pe(task);
+				int addr = pe_get_addr(pe);
+				uint32_t payload = appid_shift | i;
+				memphis_br_send_tgt(payload, addr, ABORT_TASK);
+			}
+		}
+	}
+
+	if(mapper->pending != NULL)
+		_map_verify_pending(mapper);
 }

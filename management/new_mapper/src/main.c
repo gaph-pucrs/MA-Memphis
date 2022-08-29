@@ -42,6 +42,9 @@ int main()
 			case TASK_TERMINATED:
 				map_task_terminated(&mapper, message[1]);
 				break;
+			case TASK_ABORTED:
+				map_task_aborted(&mapper, message[1]);
+				break;
 			default:
 				printf("Invalid service %x\n", message[0]);
 				break;

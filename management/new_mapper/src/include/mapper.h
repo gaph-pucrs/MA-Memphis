@@ -40,10 +40,10 @@ int map_idx_to_coord(int idx);
 
 int map_xy_to_idx(int x, int y);
 
-void map_do(map_t *mapper, app_t *app);
-
 unsigned map_manhattan(int a, int b);
 
 void map_task_allocated(map_t *mapper, int id);
 
 void map_task_terminated(map_t *mapper, int id);
+
+void map_task_aborted(map_t *mapper, int id);

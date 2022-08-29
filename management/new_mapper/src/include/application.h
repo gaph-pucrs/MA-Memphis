@@ -60,3 +60,5 @@ void app_destroy(app_t *app);
 unsigned app_get_failed(app_t *app);
 
 void app_rem_failed(app_t *app);
+
+int app_get_id(app_t *app);
