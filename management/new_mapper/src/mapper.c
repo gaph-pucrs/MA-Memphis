@@ -360,6 +360,22 @@ void map_task_allocated(map_t *mapper, int id)
 	mapper->appid_cnt++;
 }
 
+void _map_release_resources(map_t *mapper, task_t *task)
+{
+	pe_t *pe = task_get_pe(task);
+	mapper->slots++;
+	if(pe_task_remove(pe, task) && mapper->pending != NULL)
+		app_rem_failed(mapper->pending);
+
+	pe_t *old_pe = task_destroy(task);
+	if(old_pe != NULL){
+		/* The task finished with a migration request on the fly */
+		mapper->slots++;
+		if(pe_task_remove(old_pe, task) && mapper->pending != NULL)
+			app_rem_failed(mapper->pending);
+	}
+}
+
 app_t *_map_terminate_task(map_t *mapper, int id)
 {
 	int appid = id >> 8;
@@ -378,18 +394,7 @@ app_t *_map_terminate_task(map_t *mapper, int id)
 	const int taskid = id & 0xFF;
 	task_t *task = &tasks[taskid];
 
-	pe_t *pe = task_get_pe(task);
-	mapper->slots++;
-	if(pe_task_remove(pe, task) && mapper->pending != NULL)
-		app_rem_failed(mapper->pending);
-
-	pe_t *old_pe = task_destroy(task);
-	if(old_pe != NULL){
-		/* The task finished with a migration request on the fly */
-		mapper->slots++;
-		if(pe_task_remove(old_pe, task) && mapper->pending != NULL)
-			app_rem_failed(mapper->pending);
-	}
+	_map_release_resources(mapper, task);
 
 	return app;
 }
@@ -430,10 +435,8 @@ void map_task_terminated(map_t *mapper, int id)
 	size_t alloc_cnt = app_rem_allocated(app);
 
 	/* All tasks terminated, terminate app */
-	if(alloc_cnt == 0){
+	if(alloc_cnt == 0)
 		_map_terminate_app(mapper, app);
-		app = NULL;
-	}
 
 	if(mapper->pending != NULL)
 		_map_verify_pending(mapper);
@@ -448,10 +451,7 @@ void map_task_aborted(map_t *mapper, int id)
 	size_t alloc_cnt = app_rem_allocated(app);
 
 	/* All tasks terminated, terminate app */
-	if(alloc_cnt == 0){
-		_map_terminate_app(mapper, app);
-		app = NULL;
-	} else {
+	if(alloc_cnt != 0){
 		/* There are tasks still running */
 		int appid_shift = app_get_id(app) << 8;
 		size_t task_cnt;
@@ -465,9 +465,14 @@ void map_task_aborted(map_t *mapper, int id)
 				int addr = pe_get_addr(pe);
 				uint32_t payload = appid_shift | i;
 				memphis_br_send_tgt(payload, addr, ABORT_TASK);
+
+				/* End task */
+				_map_release_resources(mapper, task);
 			}
 		}
 	}
+
+	_map_terminate_app(mapper, app);
 
 	if(mapper->pending != NULL)
 		_map_verify_pending(mapper);
