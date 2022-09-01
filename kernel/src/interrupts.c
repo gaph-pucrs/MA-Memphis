@@ -328,7 +328,7 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 				tl_emplace_back(msgreqs, cons_task, cons_addr);
 			} else {	/* Message found */
 				if(cons_addr == MMR_NI_CONFIG){
-					/* Message Request came from NoC but the producer migrated to this address */
+					/* Message Request came from NoC but the consumer migrated to this address */
 					/* Writes to the consumer page address */
 					tcb_t *cons_tcb = tcb_find(cons_task);
 					

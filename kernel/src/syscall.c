@@ -190,9 +190,10 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 	list_t *msgreqs = tcb_get_msgreqs(tcb);
 	tl_t *request = tl_find(msgreqs, cons_task);
 
-	if(request != NULL){	/* Message request found! */
+	if(request != NULL){
+		/* Message request found! */
 		int req_addr = tl_get_addr(request);
-		if(req_addr == MMR_NI_CONFIG){ 
+		if(req_addr == MMR_NI_CONFIG){
 			/* Local consumer */
 			if(cons_task & MEMPHIS_KERNEL_MSG){
 				/* Message directed to kernel. No TCB to write to */
@@ -233,9 +234,6 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 					return -EBADMSG;
 				}
 
-				/* Remove the input pipe from TCB */
-				tcb_destroy_ipipe(cons_tcb);
-
 				/* Remove the message request from buffer */
 				tl_remove(msgreqs, request);
 
@@ -243,6 +241,11 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 				sched_t *sched = tcb_get_sched(cons_tcb);
 				sched_release_wait(sched);
 
+				/**
+				 * @todo
+				 * This will produce an error.
+				 * Let the task schedule and let the scheduler migrate
+				 */
 				if(tcb_need_migration(cons_tcb)){
 					tm_migrate(cons_tcb);
 					schedule_after_syscall = 1;
@@ -286,7 +289,8 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 			/* Remove the message request from buffer */
 			tl_remove(msgreqs, request);
 		}
-	} else if(tcb_get_opipe(tcb) == NULL){	/* Pipe is free */
+	} else if(tcb_get_opipe(tcb) == NULL){
+		/* Pipe is free */
 		if(sync){
 			if(cons_addr == MMR_NI_CONFIG){
 				/* Local consumer */
@@ -337,11 +341,11 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 	} else {
 		/* Pipe full */
 
-		puts("Request not found and pipe is full. Will wait until consumed!");
-			/* In this case, we must wait for a message request to release the pipe */
-			sched_t *sched = tcb_get_sched(tcb);
-			sched_set_wait_msgreq(sched);
-			schedule_after_syscall = 1;
+		// puts("Request not found and pipe is full. Will wait until consumed!");
+		/* In this case, we must wait for a message request to release the pipe */
+		sched_t *sched = tcb_get_sched(tcb);
+		sched_set_wait_msgreq(sched);
+		schedule_after_syscall = 1;
 		
 		return -EAGAIN;
 	}
@@ -403,7 +407,8 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 		// printf("Readpipe: received DATA_AV from task %x with address %x\n", prod_task, prod_addr);
 	}
 
-	if(prod_addr == MMR_NI_CONFIG){	/* Local producer */
+	if(prod_addr == MMR_NI_CONFIG){
+		/* Local producer */
 		if(prod_task & MEMPHIS_KERNEL_MSG){
 			// puts("Received DATA_AV from LOCAL Kernel!\n");
 			/* Message from Kernel. No request needed */
@@ -438,7 +443,6 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 			return size;
 		} else {
-			// puts("Local producer\n");
 			/* Get the producer TCB */
 			tcb_t *prod_tcb = tcb_find(prod_task);
 
@@ -448,7 +452,7 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 			}
 
 			/* Searches if the message is in PIPE (local producer) */
-			opipe_t *opipe = tcb_get_opipe(tcb);
+			opipe_t *opipe = tcb_get_opipe(prod_tcb);
 
 			if(opipe == NULL || opipe_get_cons_task(opipe) != cons_task){
 				/* Stores the request into the message request table */
@@ -472,9 +476,8 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 				if(sched_is_waiting_msgreq(sched)){
 					sched_release_wait(sched);
-					if(tcb_has_called_exit(prod_tcb)){
+					if(tcb_has_called_exit(prod_tcb))
 						tcb_terminate(prod_tcb);
-					}
 				}
 
 				return result;
