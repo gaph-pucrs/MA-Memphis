@@ -42,11 +42,10 @@ def simulate(debugger_path, scenario_folder, time_limit, nogui):
 		raise Exception("Time limit of {} should be positive.".format(time_limit))
 
 	try:
-		remove("{}/debug/scheduling_report.txt".format(scenario_folder))
-		remove("{}/debug/traffic_router.txt".format(scenario_folder))
 		remove_tree("{}/log".format(scenario_folder))
 		makedirs("{}/log".format(scenario_folder))
-		makedirs("{}/debug".format(scenario_folder))
+		open("{}/debug/scheduling_report.txt", 'w').close()
+		open("{}/debug/traffic_router.txt", 'w').close()
 	except:
 		pass
 
