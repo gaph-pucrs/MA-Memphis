@@ -25,15 +25,15 @@
 
 //index of slaves (slave names)
 int Slave[MAX_SLAVES] = {aes_slave1,aes_slave2,aes_slave3,aes_slave4,aes_slave5,aes_slave6,aes_slave7,aes_slave8};
-message_t msg;
+unsigned char msg[AES_BLOCK_SIZE];
 
 /*************************** MAIN PROGRAM ***************************/
 
 int main()
 {
 	volatile int x, y, i,j;
-	int plain_msg[MSG_LENGHT];
-	int cipher_msg[MSG_LENGHT];
+	unsigned char plain_msg[MSG_LENGHT];
+	unsigned char cipher_msg[MSG_LENGHT];
 #ifdef debug_comunication_on
 	int decipher_msg[MSG_LENGHT];
 #endif
@@ -80,14 +80,12 @@ int main()
 	// Send number of block and operation mode and ID
 	// to each Slave_PE
 	for(x=0; x < MAX_SLAVES; x++){
-		msg.length = sizeof(aux_msg)/4;
 		aux_msg[0] = CIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
 		aux_msg[2] = x+1;
 		if(x >= NUMBER_OF_SLAVES) // zero messages to Slave not used
 			aux_msg[0] = END_TASK;
-		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
-		memphis_send(&msg, Slave[x]);  
+		memphis_send(aux_msg, sizeof(aux_msg), Slave[x]);  
 	}
 
 	// Send blocks to Cipher and 
@@ -96,20 +94,18 @@ int main()
 		// send a block to Slave_PE encrypt
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = AES_BLOCK_SIZE;
-				__builtin_memcpy(msg.payload, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				memphis_send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				memphis_send(&plain_msg[(x+y)*AES_BLOCK_SIZE], AES_BLOCK_SIZE, Slave[(x+y) % NUMBER_OF_SLAVES]);
 			}
 		}
 	
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				memphis_receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				memphis_receive(msg, AES_BLOCK_SIZE, Slave[(x+y) % NUMBER_OF_SLAVES]);
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
-					cipher_msg[i] = msg.payload[j];
+					cipher_msg[i] = msg[j];
 					j++;
 				}
 				j = 0;
@@ -136,11 +132,9 @@ int main()
 	// Send number of block and operation mode
 	// to each Slave_PE
 	for(x=0; x < NUMBER_OF_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
 		aux_msg[0] = DECIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
-		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
-		memphis_send(&msg, Slave[x]);  
+		memphis_send(aux_msg, sizeof(aux_msg), Slave[x]);  
 	}
 
 	// Send blocks to Cipher and 
@@ -149,15 +143,13 @@ int main()
 		// send each block to a Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = AES_BLOCK_SIZE;
-				__builtin_memcpy(msg.payload, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				memphis_send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);   
+				memphis_send(&cipher_msg[(x+y)*AES_BLOCK_SIZE], AES_BLOCK_SIZE, Slave[(x+y) % NUMBER_OF_SLAVES]);   
 			} 
 		}
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				memphis_receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				memphis_receive(msg, AES_BLOCK_SIZE, Slave[(x+y) % NUMBER_OF_SLAVES]);
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
@@ -180,11 +172,9 @@ int main()
 	//  End tasks still running
 	//  End Applicattion
 	for(x=0; x < NUMBER_OF_SLAVES; x++){
-		msg.length = sizeof(aux_msg)/4;
 		aux_msg[0] = END_TASK;
 		aux_msg[1] = 0;
-		__builtin_memcpy(msg.payload, aux_msg, sizeof(aux_msg));
-		memphis_send(&msg, Slave[x]);  
+		memphis_send(aux_msg, sizeof(aux_msg), Slave[x]);  
 	}
 	printf("task AES finished at %d\n", memphis_get_tick());
 
