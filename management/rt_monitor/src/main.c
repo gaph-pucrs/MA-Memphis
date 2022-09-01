@@ -13,15 +13,14 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-
-#include <memphis.h>
-#include <monitor.h>
+#include <stdlib.h>
 #include <errno.h>
 
-#include "rt.h"
-#include "services.h"
+#include <memphis.h>
+#include <memphis/monitor.h>
+#include <memphis/services.h>
 
-MONITOR_TABLE(qos_table);
+#include "rt.h"
 
 int main()
 {
@@ -32,31 +31,35 @@ int main()
 	oda_request_service(&decider, ODA_DECIDE | D_QOS);
 
 	while(true){
-		message_t msg;
-		memphis_receive_any(&msg);
-		if(msg.payload[0] == SERVICE_PROVIDER && oda_service_provider(&decider, msg.payload[1], msg.payload[2]))
+		int msg[3];
+		memphis_receive_any(msg, sizeof(msg));
+		if(msg[0] == SERVICE_PROVIDER && oda_service_provider(&decider, msg[1], msg[2]))
 			break;
 	}
 	// printf("Received service provider %d\n", decider.id);
 
-	monitor_init(qos_table);
+	size_t slots;
+	mon_t *qos_table = mon_create(&slots);
 
-	if(monitor_set_dmni(qos_table, MON_QOS) != 0){
-		puts("ERROR: Unable to set DMNI table. Exiting.");
+	if(qos_table == NULL){
+		puts("FATAL: not enough memory for QOS table");
 		exit(errno);
 	}
 
-	monitor_announce(MON_QOS);
+	if(mon_set_dmni(qos_table, MON_QOS) != 0){
+		puts("FATAL: Unable to set DMNI table. Exiting.");
+		exit(errno);
+	}
+
+	mon_announce(MON_QOS);
 
 	while(true){
-		memphis_real_time(PKG_MONITOR_INTERVAL_QOS, PKG_MONITOR_INTERVAL_QOS, 0);	/* Repeat this task every ms */
-		for(int n = 0; n < PKG_N_PE; n++){
-			for(int t = 0; t < PKG_MAX_LOCAL_TASKS; t++){
-				if(qos_table[n][t].task != -1){
-					// printf("Task %X has timing of %X\n", qos_table[n][t].task, (int)qos_table[n][t].value);
-					rt_check(&decider, qos_table[n][t].task, qos_table[n][t].value);
-					qos_table[n][t].task = -1;
-				}
+		memphis_real_time(MON_INTERVAL_QOS, MON_INTERVAL_QOS, 0);	/* Repeat this task every ms */
+		for(int i = 0; i < slots; i++){
+			if(qos_table[i].task != -1){
+				// printf("Task %X has timing of %X\n", qos_table[n][t].task, (int)qos_table[n][t].value);
+				rt_check(&decider, qos_table[i].task, qos_table[i].value);
+				qos_table[i].task = -1;
 			}
 		}
 	}

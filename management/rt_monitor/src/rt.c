@@ -11,11 +11,12 @@
  * @brief Real-time observer functions
  */
 
-#include <memphis.h>
+#include "rt.h"
+
 #include <stdio.h>
 
-#include "rt.h"
-#include "services.h"
+#include <memphis.h>
+#include <memphis/services.h>
 
 void rt_check(oda_t *decider, int id, int rt_diff)
 {
@@ -24,12 +25,12 @@ void rt_check(oda_t *decider, int id, int rt_diff)
 		printf("Deadline violation detected in task %d\n", id);
 
 		if(oda_is_enabled(decider)){
-			message_t msg;
-			msg.payload[0] = OBSERVE_PACKET;
-			msg.payload[1] = id;
-			msg.payload[2] = rt_diff; /* Quantify deadline miss */
-			msg.length = 3;
-			memphis_send_any(&msg, decider->id);
+			int msg[] = {
+				OBSERVE_PACKET,
+				id,
+				rt_diff
+			};
+			memphis_send_any(msg, sizeof(msg), decider->id);
 		}
 	}
 }

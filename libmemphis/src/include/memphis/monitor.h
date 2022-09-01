@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define MON_INTERVAL_QOS 50000
+
 enum MONITOR_TYPE {
 	MON_QOS,
 	MON_PWR,
@@ -25,17 +27,17 @@ enum MONITOR_TYPE {
 	MON_MAX
 };
 
-typedef struct _monitor {
+typedef struct _mon {
 	int task;	/* In reality 2 bytes, but lets avoid padding problems */
 	int value;
-} monitor_t;
+} mon_t;
 
 /**
  * @brief Initializes the monitoring table
  * 
  * @param table Table to initialize
  */
-void monitor_init(volatile monitor_t *table);
+mon_t *mon_create();
 
 /**
  * @brief Sets the pointer to the monitor table in the monitoring infrastructure
@@ -46,11 +48,11 @@ void monitor_init(volatile monitor_t *table);
  * @return 0 on success
  * 		   -1 on failure and sets errno
  */
-int monitor_set_dmni(volatile monitor_t *table, enum MONITOR_TYPE type);
+int mon_set_dmni(mon_t *table, enum MONITOR_TYPE type);
 
 /**
  * @brief Broadcast this task as a monitor
  * 
  * @param type Type of monitoring offered by this task
  */
-void monitor_announce(enum MONITOR_TYPE type);
+void mon_announce(enum MONITOR_TYPE type);

@@ -13,28 +13,34 @@
 
 #include "memphis/monitor.h"
 
+#include <stdlib.h>
+
 #include "memphis.h"
 #include "memphis/services.h"
 
 #include "internal_syscall.h"
 
-void monitor_init(volatile monitor_t *table)
+mon_t *mon_create(size_t *slots)
 {
-	const int N_PE = memphis_get_nprocs(NULL, NULL);
-	const int N_TASKS = memphis_get_max_tasks(NULL);
+	memphis_get_max_tasks(slots);
 
-	for(int n = 0; n < N_PE; n++){
-		for(int t = 0; t < N_TASKS; t++)
-			table[n*N_TASKS + t].task = -1;
-	}
+	mon_t *table = malloc(sizeof(mon_t) * (*slots));
+
+	if(table == NULL)
+		return NULL;
+
+	for(int i = 0; i < *slots; i++)
+			table[i].task = -1;
+
+	return table;
 }
 
-int monitor_set_dmni(volatile monitor_t *table, enum MONITOR_TYPE type)
+int mon_set_dmni(mon_t *table, enum MONITOR_TYPE type)
 {
 	return syscall_errno(SYS_monptr, 2, (long)table, type, 0, 0, 0, 0);
 }
 
-void monitor_announce(enum MONITOR_TYPE type)
+void mon_announce(enum MONITOR_TYPE type)
 {
 	int16_t addr = memphis_get_addr();
 	uint32_t payload = (addr << 16) | type;

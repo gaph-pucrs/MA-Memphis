@@ -5,25 +5,22 @@ TARGET = rt_monitor
 
 SRCDIR = src
 INCDIR = src/include
-INCLIB = ../../lib/src/include
-INCMAN = ../
+INCLIB = ../../libmemphis/src/include
+INCUTILS = ../../libmutils/src/include
 
 CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections
+LIBDIR = ../../libmemphis
+UTILDIR = ../../libmutils
 
-LIBDIR = ../../lib/src
-INCLIB = $(LIBDIR)/include
-
-LIBSRCC = $(wildcard $(LIBDIR)/*.c)
-LIBSRCS = $(wildcard $(LIBDIR)/*.S)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRCC)) $(patsubst %.S, %.o, $(LIBSRCS))
+CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11  -I$(INCDIR) -I$(INCLIB) -I$(INCUTILS) -I../ --include id_tasks.h
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
+
 
 all: $(TARGET).txt $(TARGET).lst
 
@@ -37,7 +34,7 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf: $(OBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
-	@$(CC) $(LDFLAGS) -Wl,-Map=$(TARGET).map -o $@ $^
+	@$(CC) -Wl,-Map=$(TARGET).map -o $@ $^ $(LDFLAGS)
 
 $(TARGET).lst: $(TARGET).elf
 	@printf "${BLUE}Listing task: %s ...${NC}\n" "$(TARGET)"
@@ -47,17 +44,12 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../../lib
-
 clean:
-	@rm $(TARGET).elf
-	@rm $(TARGET).txt
-	@rm $(TARGET).map
-	@rm $(TARGET).lst
-	@rm $(TARGET).bin
-	@rm $(TARGET)_debug.map
-	@rm $(TARGET)_debug.elf
-	@rm $(SRCDIR)/*.o
+	@rm -f $(SRCDIR)/*.o
+	@rm -f $(TARGET).bin
+	@rm -f $(TARGET).elf
+	@rm -f $(TARGET).lst
+	@rm -f $(TARGET).map
+	@rm -f $(TARGET).txt
 
 .PHONY: clean
