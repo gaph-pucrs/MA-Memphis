@@ -30,7 +30,7 @@ void rt_check(oda_t *decider, int id, int rt_diff)
 				id,
 				rt_diff
 			};
-			memphis_send_any(msg, sizeof(msg), decider->id);
+			memphis_send_any(msg, sizeof(msg), oda_get_id(decider));
 		}
 	}
 }

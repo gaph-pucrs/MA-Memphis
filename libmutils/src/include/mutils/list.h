@@ -94,6 +94,14 @@ void list_remove(list_t *list, list_entry_t *entry);
 list_entry_t *list_front(list_t *list);
 
 /**
+ * @brief Gets the last element of the list
+ * 
+ * @param list Pointer to the list structure
+ * @return list_entry_t* Pointer to the last list entry
+ */
+list_entry_t *list_back(list_t *list);
+
+/**
  * @brief Gets the next entry of a list
  * 
  * @param entry Pointer to an entry

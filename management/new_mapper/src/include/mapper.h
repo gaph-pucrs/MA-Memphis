@@ -47,3 +47,5 @@ void map_task_allocated(map_t *mapper, int id);
 void map_task_terminated(map_t *mapper, int id);
 
 void map_task_aborted(map_t *mapper, int id);
+
+void map_request_service(map_t *mapper, int address, unsigned tag, int requester);

@@ -67,3 +67,5 @@ pe_t *task_destroy(task_t *task);
 bool task_is_allocated(task_t *task);
 
 bool task_is_migrating(task_t *task);
+
+unsigned task_get_tag(task_t *task);

@@ -51,3 +51,8 @@ bool oda_service_provider(oda_t *oda, int type_tag, int id)
 	oda->id = id;
 	return true;
 }
+
+int oda_get_id(oda_t *oda)
+{
+	return oda->id;
+}

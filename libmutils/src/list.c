@@ -94,6 +94,11 @@ list_entry_t *list_front(list_t *list)
 	return list->head;
 }
 
+list_entry_t *list_back(list_t *list)
+{
+	return list->tail;
+}
+
 list_entry_t *list_next(list_entry_t *entry)
 {
 	return entry->next;

@@ -477,3 +477,36 @@ void map_task_aborted(map_t *mapper, int id)
 	if(mapper->pending != NULL)
 		_map_verify_pending(mapper);
 }
+
+void map_request_service(map_t *mapper, int address, unsigned tag, int requester)
+{
+	int oda = -1;
+	unsigned distance = -1;
+
+	/* Search all Management tasks */
+	list_entry_t *entry = list_front(&(mapper->apps));
+	app_t *ma = list_get_data(entry);
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(ma, &task_cnt);
+
+	for(int i = 0; i < task_cnt; i++){
+		task_t *task = &(tasks[i]);
+		if((task_get_tag(task) & tag) != tag)
+			continue;
+
+		pe_t *pe = task_get_pe(task);
+		unsigned d = map_manhattan(address, pe_get_addr(pe));
+		if(d < distance){
+			distance = d;
+			oda = i;
+		}
+	}
+	
+	int out_msg[] = {
+		SERVICE_PROVIDER, 
+		tag, 
+		oda
+	};
+	
+	memphis_send_any(out_msg, sizeof(out_msg), requester);
+}

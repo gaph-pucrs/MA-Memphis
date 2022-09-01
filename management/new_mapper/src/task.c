@@ -173,3 +173,8 @@ bool task_is_migrating(task_t *task)
 {
 	return (task->status == TASK_STATUS_MIGRATING);
 }
+
+unsigned task_get_tag(task_t *task)
+{
+	return task->tag;
+}

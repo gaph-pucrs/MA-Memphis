@@ -67,3 +67,11 @@ bool oda_is_enabled(oda_t *oda);
  * @return True if the tag is correct and the actuator ID is set
  */
 bool oda_service_provider(oda_t *oda, int type_tag, int id);
+
+/**
+ * @brief Gets the ID of the ODA task
+ * 
+ * @param oda Pointer to the ODA structure
+ * @return int ID of the task
+ */
+int oda_get_id(oda_t *oda);
