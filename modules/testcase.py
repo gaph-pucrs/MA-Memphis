@@ -25,7 +25,7 @@ class Testcase:
 		yaml = safe_load(open(self.base, "r"))
 
 		self.libs = Libs(self.platform_path, self.base_dir)
-		self.kernel = Kernel(yaml["sw"], yaml["hw"], self.platform_path, self.base_dir)
+		self.kernel = Kernel(yaml["hw"], self.platform_path, self.base_dir)
 		self.hardware = Hardware(yaml["hw"], self.platform_path, self.base_dir)
 
 		self.PKG_N_PE_X = yaml["hw"]["mpsoc_dimension"][0]
