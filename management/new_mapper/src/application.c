@@ -223,3 +223,11 @@ int app_get_id(app_t *app)
 {
 	return app->id;
 }
+
+task_t *app_get_task(app_t *app, int taskid)
+{
+	if(taskid >= app->task_cnt)
+		return NULL;
+
+	return &(app->tasks[taskid]);
+}

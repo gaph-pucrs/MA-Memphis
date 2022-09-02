@@ -302,19 +302,27 @@ unsigned map_manhattan(int a, int b)
 	return dist_x + dist_y;
 }
 
+app_t *_map_find_app(map_t *mapper, int appid)
+{
+	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
+
+	if(entry == NULL)
+		return NULL;
+
+	return list_get_data(entry);
+}
+
 void map_task_allocated(map_t *mapper, int id)
 {
 	printf("Received task allocated from id %d\n", id);
 
-	int appid = id >> 8;
-	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
 
-	if(entry == NULL){
-		puts("App not found");
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
 		return;
 	}
-
-	app_t *app = list_get_data(entry);
 
 	size_t alloc_cnt = app_add_allocated(app);
 	size_t task_cnt;
@@ -344,7 +352,7 @@ void map_task_allocated(map_t *mapper, int id)
 		out_msg[i + 3] = addr;
 	}
 
-	int appid_shift = appid << 8;
+	const int appid_shift = appid << 8;
 	for(int i = 0; i < task_cnt; i++){
 		/* Tell kernel to populate the proper task by sending the ID */
 		out_msg[1] = appid_shift | i;
@@ -378,21 +386,16 @@ void _map_release_resources(map_t *mapper, task_t *task)
 
 app_t *_map_terminate_task(map_t *mapper, int id)
 {
-	int appid = id >> 8;
-	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
-
-	if(entry == NULL){
-		puts("App not found");
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
+	
+	if(app == NULL)
 		return NULL;
-	}
 
-	app_t *app = list_get_data(entry);
+	task_t *task = app_get_task(app, id & 0xFF);
 
-	size_t task_cnt;
-	task_t *tasks = app_get_tasks(app, &task_cnt);
-
-	const int taskid = id & 0xFF;
-	task_t *task = &tasks[taskid];
+	if(task == NULL)
+		return NULL;
 
 	_map_release_resources(mapper, task);
 
@@ -432,6 +435,11 @@ void map_task_terminated(map_t *mapper, int id)
 
 	app_t *app = _map_terminate_task(mapper, id);
 
+	if(app == NULL){
+		puts("WARNING: task no found. Ignoring.");
+		return;
+	}
+
 	size_t alloc_cnt = app_rem_allocated(app);
 
 	/* All tasks terminated, terminate app */
@@ -447,6 +455,11 @@ void map_task_aborted(map_t *mapper, int id)
 	printf("Received task aborted from id %d at time %d\n", id, memphis_get_tick());
 
 	app_t *app = _map_terminate_task(mapper, id);
+
+	if(app == NULL){
+		puts("WARNING: task no found. Ignoring.");
+		return;
+	}
 
 	size_t alloc_cnt = app_rem_allocated(app);
 
@@ -510,4 +523,81 @@ void map_request_service(map_t *mapper, int address, unsigned tag, int requester
 	};
 	
 	memphis_send_any(out_msg, sizeof(out_msg), requester);
+}
+
+void map_migration_map(map_t *mapper, int id)
+{
+	printf("Received migration request to task id %d at time %d\n", id, memphis_get_tick());
+
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
+	
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
+		return;
+	}
+
+	const int taskid = id & 0xFF;
+	task_t *task = app_get_task(app, taskid);
+
+	if(task == NULL){
+		puts("WARNING: Task not found. Ignoring.");
+		return;
+	}
+
+	if(task_is_migrating(task)){
+		puts("WARNING: Task is already migrating. Ignoring.");
+		return;
+	}
+
+	pe_t *old_pe = task_get_pe(task);
+	// unsigned then = memphis_get_tick();
+
+	/* Compute the window center */
+	unsigned center_x = 0;
+	unsigned center_y = 0;
+
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
+	
+	if(task_cnt > 1){
+		for(int i = 0; i < task_cnt; i++){
+			if(i == taskid)
+				continue;	/* Disregard the task to migrate */
+
+			pe_t *pe = task_get_pe(&(tasks[i]));
+			const int addr = pe_get_addr(pe);
+			center_x += (addr >> 8);
+			center_y += (addr & 0xFF);
+		}
+		center_x /= (task_cnt - 1);
+		center_y /= (task_cnt - 1);
+	}
+
+	/* Temporarily release current processor */
+	pe_task_remove(old_pe, task);
+	
+	/* Get window from this center (able to grow) */
+	wdo_t window;
+	wdo_init(&window, center_x - MAP_MIN_WX/2, center_y - MAP_MIN_WX/2, MAP_MIN_WX, MAP_MIN_WX);
+	wdo_from_center(&window, mapper->pes, 1);
+
+	/* Reallocate resource */
+
+	/* Map to the specific window */
+	
+
+	// unsigned now = memphis_get_tick(); 
+	// printf("Ticks of mapping task for migration = %d\n", now-then);
+
+	/* Check if migrating to current pe */
+
+	printf("Migrating task to address %d\n", task->processor->addr);
+
+	/* Allocate on target pe */
+
+	/* Migrate the task */
+
+	/* Send migration order to kernel at old pe */
+	
 }

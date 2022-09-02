@@ -56,10 +56,10 @@ int pe_get_addr(pe_t *pe)
 bool pe_task_remove(pe_t *pe, task_t *task)
 {
 	list_entry_t *entry = list_find(&(pe->tasks), task, NULL);
-	if(entry == NULL){
-		puts("TASK NOT FOUND");
+	if(entry == NULL)
 		return false;
-	}
+
+	list_remove(&(pe->tasks), entry);
 
 	bool ret = (pe->pending_cnt > pe->slots);
 
