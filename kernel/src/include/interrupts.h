@@ -157,14 +157,11 @@ bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_ad
  * 
  * @param id ID of the task that has migrated
  * @param pc Address of the program counter
- * @param period Period of a RT task
- * @param deadline Deadline of a RT task
- * @param exec_time Execution time of a RT task
- * @param waiting_msg Waiting message status
+ * @param received Number of bytes of the last received message
  *
  * @return False
  */
-bool isr_migration_tcb(int id, void *pc);
+bool isr_migration_tcb(int id, void *pc, unsigned received);
 
 /**
  * @brief Handles the scheduler received from migration

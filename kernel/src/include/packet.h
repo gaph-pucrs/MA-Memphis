@@ -31,7 +31,7 @@ typedef struct _packet {
 	
 	union {
 		unsigned producer_task;
-		unsigned task_ID;			
+		unsigned task_ID;
 	};
 
 	union {
@@ -67,13 +67,11 @@ typedef struct _packet {
 
 	union {
 		unsigned bss_size;
-		unsigned cpu_slack_time;
 		unsigned request_size;
 	};
 
 	union {
 		unsigned program_counter;
-		unsigned utilization;
 	};
 
 } packet_t;
@@ -156,8 +154,9 @@ void pkt_set_migration_code(packet_t *packet, int addr, int task, size_t text_si
  * @param addr Migration address
  * @param id ID of the migrated task
  * @param pc Current PC of the migrated task
+ * @param received Number of bytes received in the last message
  */
-void pkt_set_migration_tcb(packet_t *packet, int addr, int id, void* pc);
+void pkt_set_migration_tcb(packet_t *packet, int addr, int id, void* pc, unsigned received);
 
 /**
  * @brief Sets a packet to a migration task location format

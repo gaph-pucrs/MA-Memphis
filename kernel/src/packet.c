@@ -107,12 +107,13 @@ void pkt_set_migration_code(packet_t *packet, int addr, int task, size_t text_si
 	packet->mapper_address = mapper_addr;
 }
 
-void pkt_set_migration_tcb(packet_t *packet, int addr, int id, void* pc)
+void pkt_set_migration_tcb(packet_t *packet, int addr, int id, void* pc, unsigned received)
 {
 	packet->header = addr;
 	packet->service = MIGRATION_TCB;
 	packet->task_ID = id;
 	packet->program_counter = (unsigned)pc;
+	packet->waiting_msg = received;
 }
 
 void pkt_set_migration_tl(packet_t *packet, int addr, unsigned service, int id, size_t size)

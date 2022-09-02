@@ -89,3 +89,9 @@ int ipipe_receive(ipipe_t *ipipe, void *offset, size_t size)
 
 	return size;
 }
+
+void ipipe_set_read(ipipe_t *ipipe, unsigned received)
+{
+	ipipe->read = true;
+	ipipe->size = received;
+}

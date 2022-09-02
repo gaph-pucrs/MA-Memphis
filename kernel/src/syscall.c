@@ -241,11 +241,6 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 				sched_t *sched = tcb_get_sched(cons_tcb);
 				sched_release_wait(sched);
 
-				/**
-				 * @todo
-				 * This will produce an error.
-				 * Let the task schedule and let the scheduler migrate
-				 */
 				if(tcb_need_migration(cons_tcb)){
 					tm_migrate(cons_tcb);
 					schedule_after_syscall = 1;

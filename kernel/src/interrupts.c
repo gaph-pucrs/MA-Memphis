@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <memphis/services.h>
 
@@ -210,7 +211,8 @@ bool isr_handle_pkt(volatile packet_t *packet)
 		case MIGRATION_TCB:
 			return isr_migration_tcb(
 				packet->task_ID, 
-				(void*)packet->program_counter
+				(void*)packet->program_counter,
+				packet->waiting_msg
 			);
 		case MIGRATION_TASK_LOCATION:
 			return isr_migration_app(
@@ -665,30 +667,48 @@ bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_ad
 		while(true);
 	}
 
-	tcb_push_back(tcb);
+	list_entry_t *entry = tcb_push_back(tcb);
+	if(entry == NULL){
+		puts("FATAL: could not allocate TCB");
+		while(true);
+	}
 
 	/* Initializes the TCB */
-	tcb_alloc_migrated(tcb, id, text_size, mapper_task, mapper_addr);
+	tcb_alloc(tcb, id, text_size, 0, 0, mapper_task, mapper_addr, 0);
 
 	text_size = (text_size + 3) & ~3;
 
 	/* Obtain the program code */
 	dmni_read(tcb_get_offset(tcb), text_size >> 2);
 
-	printf("Received MIGRATION_CODE from task id %d with size %d\n", id, text_size);
+	// printf("Received MIGRATION_CODE from task id %d with size %d to store at offset %p\n", id, text_size, tcb_get_offset(tcb));
 
 	return false;
 }
 
-bool isr_migration_tcb(int id, void *pc)
+bool isr_migration_tcb(int id, void *pc, unsigned received)
 {
 	tcb_t *tcb = tcb_find(id);
 
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
+
 	tcb_set_pc(tcb, pc);
+
+	if(received != 0){
+		ipipe_t *ipipe = tcb_create_ipipe(tcb);
+		if(ipipe == NULL){
+			puts("FATAL: not enough memory");
+			return false;
+		}
+		ipipe_set_read(ipipe, received);
+	}
 
 	dmni_read(tcb_get_regs(tcb), HAL_MAX_REGISTERS);
 
-	printf("Received MIGRATION_TCB from task id %d\n", id);
+	// printf("Received MIGRATION_TCB from task id %d\n", id);
 
 	return false;
 }
@@ -696,6 +716,11 @@ bool isr_migration_tcb(int id, void *pc)
 bool isr_migration_sched(int id, unsigned period, int deadline, unsigned exec_time, unsigned waiting_msg, int source)
 {
 	tcb_t *tcb = tcb_find(id);
+
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
 
 	sched_t *sched = sched_emplace_back(tcb);
 
@@ -735,6 +760,11 @@ bool isr_migration_tl(int id, size_t size, unsigned service)
 {
 	tcb_t *tcb = tcb_find(id);
 
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
+
 	tl_t *vec = malloc(size*sizeof(tl_t));
 
 	if(vec == NULL){
@@ -760,7 +790,7 @@ bool isr_migration_tl(int id, size_t size, unsigned service)
 	for(int i = 0; i < size; i++)
 		list_push_back(list, &(vec[i]));
 
-	printf("Received tl (MREG/DAV) from task id %d with size %d\n", id, size);
+	// printf("Received tl (MREQ/DAV) from task id %d with size %d\n", id, size);
 
 	return false;
 }
@@ -769,18 +799,26 @@ bool isr_migration_pipe(int id, int cons_task, size_t size)
 {
 	tcb_t *tcb = tcb_find(id);
 
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
+
 	opipe_t *opipe = tcb_create_opipe(tcb);
+
+	if(opipe == NULL){
+		puts("ERROR: not enough memory for opipe");
+		return -ENOMEM;
+	}
 
 	int result = opipe_receive(opipe, size, cons_task);
 
 	if(result != size){
-		puts("ERROR: not enough memory for pipe migration");
-		/**
-		 * @todo Abort task
-		 */
+		puts("FATAL: not enough memory for pipe migration");
+		while(true);
 	}
 
-	printf("Received MIGRATION_PIPE from task id %d with size %d\n", id, size);
+	// printf("Received MIGRATION_PIPE from task id %d with size %d\n", id, size);
 
 	return false;
 }
@@ -790,12 +828,17 @@ bool isr_migration_stack(int id, size_t size)
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_find(id);
 
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
+
 	dmni_read(
 		tcb_get_offset(tcb) + MMR_PAGE_SIZE - size, 
 		size >> 2
 	);
 
-	printf("Received MIGRATION_STACK from task id %d with size %d\n", id, size);
+	// printf("Received MIGRATION_STACK from task id %d with size %d\n", id, size);
 
 	return false;
 }
@@ -804,6 +847,11 @@ bool isr_migration_heap(int id, size_t heap_size)
 {
 	// putsv("Id received ", id);
 	tcb_t *tcb = tcb_find(id);
+
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
 
 	void *heap_start = tcb_get_heap_end(tcb);
 
@@ -817,7 +865,7 @@ bool isr_migration_heap(int id, size_t heap_size)
 		heap_size >> 2
 	);
 
-	printf("Received MIGRATION_HEAP from task id %d with size %d\n", id, heap_size);
+	// printf("Received MIGRATION_HEAP from task id %d with size %d\n", id, heap_size);
 
 	return false;
 }
@@ -825,6 +873,11 @@ bool isr_migration_heap(int id, size_t heap_size)
 bool isr_migration_data_bss(int id, size_t data_size, size_t bss_size)
 {
 	tcb_t *tcb = tcb_find(id);
+
+	if(tcb == NULL){
+		puts("FATAL: TCB not found");
+		return false;
+	}
 	
 	tcb_set_data_size(tcb, data_size);
 	tcb_set_bss_size(tcb, bss_size);
@@ -841,7 +894,7 @@ bool isr_migration_data_bss(int id, size_t data_size, size_t bss_size)
 		total_size >> 2
 	);
 
-	printf("Received MIGRATION_DATA_BSS from task id %d with size %d\n", id, total_size);
+	// printf("Received MIGRATION_DATA_BSS from task id %d with size %d\n", id, total_size);
 
 	return false;
 }
@@ -850,13 +903,18 @@ bool isr_migration_app(int id, size_t task_cnt)
 {
 	app_t *app = app_find(id >> 8);
 
+	if(app == NULL){
+		puts("FATAL: App not found.");
+		while(true);
+	}
+
 	int *tmploc = malloc(task_cnt*sizeof(int));
 	if(tmploc == NULL){
 		puts("FATAL: Could not allocate memory for task location.");
 		while(true);
 	}
 
-	dmni_read(tmploc, task_cnt << 2);
+	dmni_read(tmploc, task_cnt);
 
 	size_t current_size = app_get_task_cnt(app);
 	if(current_size == task_cnt){
@@ -870,7 +928,7 @@ bool isr_migration_app(int id, size_t task_cnt)
 		tmploc = NULL;
 	}
 
-	printf("Received MIGRATION_APP from task id %d with size %d\n", id, task_cnt);
+	// printf("Received MIGRATION_APP from task id %d with size %d\n", id, task_cnt);
 
 	return false;
 }

@@ -205,17 +205,6 @@ list_t *tcb_get_davs(tcb_t *tcb);
 bool tcb_send_allocated(tcb_t *tcb);
 
 /**
- * @brief Clears the TCB to allocate a migrated task
- * 
- * @param tcb Pointer to the TCB
- * @param id ID of the task
- * @param text_size Size of the code section
- * @param mapper_task ID of the mapper task
- * @param mapper_addr Address of the mapper task
- */
-void tcb_alloc_migrated(tcb_t *tcb, int id, size_t text_size, int mapper_task, int mapper_addr);
-
-/**
  * @brief Gets the offset of a task
  * 
  * @param tcb Pointer to the TCB

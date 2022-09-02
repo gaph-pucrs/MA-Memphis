@@ -234,52 +234,6 @@ bool tcb_send_allocated(tcb_t *tcb)
 	);
 }
 
-void tcb_alloc_migrated(tcb_t *tcb, int id, size_t text_size, int mapper_task, int mapper_addr)
-{
-	page_t *page = page_acquire();
-
-	if(page == NULL){
-		puts("FATAL: no free pages found");
-		while(true);
-	}
-
-	tcb->id = id;
-	tcb->text_size = text_size;
-	tcb->data_size = 0;
-	tcb->bss_size = 0;
-	tcb->heap_end = (void*)text_size;
-	tcb->proc_to_migrate = -1;
-	
-	tl_set(&(tcb->mapper), mapper_task, mapper_addr);
-	list_init(&(tcb->message_requests));
-	list_init(&(tcb->data_avs));
-
-	int appid = id >> 8;
-	app_t *app = app_find(appid);
-
-	if(app == NULL){
-		/* App is not present, create it */
-		app = app_emplace_back(appid);
-
-		if(app == NULL){
-			puts("FATAL: could not allocate app");
-			while(true);
-		}
-	}
-
-	app_refer(app);
-
-	tcb->app = app;
-
-	/* Scheduler is created upon task release */
-	tcb->scheduler = NULL;
-
-	tcb->pipe_in = NULL;
-	tcb->pipe_out = NULL;
-
-	tcb->called_exit = false;
-}
-
 void *tcb_get_offset(tcb_t *tcb)
 {
 	return page_get_offset(tcb->page);

@@ -80,3 +80,11 @@ size_t ipipe_transfer(ipipe_t *ipipe, void *offset, void *src, size_t size);
  * @return int 
  */
 int ipipe_receive(ipipe_t *pipe, void *offset, size_t size);
+
+/**
+ * @brief Sets an ipipe as received
+ * 
+ * @param ipipe Pointer to the ipipe
+ * @param received Number of bytes received
+ */
+void ipipe_set_read(ipipe_t *ipipe, unsigned received);

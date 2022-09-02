@@ -122,11 +122,10 @@ void tm_send_data_bss(tcb_t *tcb, int id, int addr);
  * @brief Migrates the scheduling information
  * 
  * @param tcb Pointer to the TCB
- * @param sched Pointer to the scheduler
  * @param id ID of the task
  * @param addr Address to migrate
  */
-void tm_send_sched(tcb_t *tcb, sched_t *sched, int id, int addr);
+void tm_send_sched(tcb_t *tcb, int id, int addr);
 
 /**
  * @brief Sends a message to abort a migrating task

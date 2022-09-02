@@ -57,37 +57,34 @@ void tm_migrate(tcb_t *tcb)
 
 	tm_emplace_back(id, addr);
 
-	/* Update task location of tasks of the same app running locally */
-	app_t *app = tcb_get_app(tcb);
-
-	/* Send task location array */
-	puts("Sending migration app (task location)");
-	tm_send_app(tcb, app, id, addr);
 	/* Send base TCB info */
-	puts("Sending migration TCB");
+	// puts("Sending migration TCB");
 	tm_send_tcb(tcb, id, addr);
+	/* Send task location array */
+	// puts("Sending migration app (task location)");
+	app_t *app = tcb_get_app(tcb);
+	tm_send_app(tcb, app, id, addr);
 	/* Send data available fifo */
-	puts("Sending migration task location (DATA_AV)");
+	// puts("Sending migration task location (DATA_AV)");
 	tm_send_tl(tcb, tcb_get_davs(tcb), MIGRATION_DATA_AV, id, addr);
 	/* Send message request array (only what is needed) */
-	puts("Sending migration task location (MESSAGE_REQUEST)");
+	// puts("Sending migration task location (MESSAGE_REQUEST)");
 	tm_send_tl(tcb, tcb_get_msgreqs(tcb), MIGRATION_MSG_REQUEST, id, addr);
 	/* Send pipe */
-	puts("Sending migration pipe");
+	// puts("Sending migration pipe");
 	tm_send_opipe(tcb, id, addr);
 	/* Send data and BSS */
-	puts("Sending migration data and bss");
+	// puts("Sending migration data and bss");
 	tm_send_data_bss(tcb, id, addr);
 	/* Send heap */
-	puts("Sending migration heap");
+	// puts("Sending migration heap");
 	tm_send_heap(tcb, id, addr);
 	/* Send stack */
-	puts("Sending migration stack");
+	// puts("Sending migration stack");
 	tm_send_stack(tcb, id, addr);
 	/* Send scheduler data */
-	puts("Sending migration scheduler");
-	sched_t *sched = tcb_get_sched(tcb);
-	tm_send_sched(tcb, sched, id, addr);
+	// puts("Sending migration scheduler");
+	tm_send_sched(tcb, id, addr);
 	
 	/* Code (.text) is in another function */
 	printf(
@@ -97,6 +94,7 @@ void tm_migrate(tcb_t *tcb)
 		addr
 	);
 	
+	/* Update task location of tasks of the same app running locally */
 	app_update(app, id, addr);
 	tcb_remove(tcb);
 }
@@ -128,11 +126,19 @@ void tm_send_tcb(tcb_t *tcb, int id, int addr)
 	/* Send TCB */
 	packet_t *packet = pkt_slot_get();
 
+	unsigned received = 0;
+	ipipe_t *ipipe = tcb_get_ipipe(tcb);
+	if(ipipe != NULL){
+		received = ipipe_get_size(ipipe);
+		tcb_destroy_ipipe(tcb);
+	}
+
 	pkt_set_migration_tcb(
 		packet, 
 		addr, 
 		id, 
-		tcb_get_pc(tcb)
+		tcb_get_pc(tcb),
+		received
 	);
 
 	dmni_send(packet, tcb_get_regs(tcb), HAL_MAX_REGISTERS, false);
@@ -146,7 +152,7 @@ void tm_send_app(tcb_t *tcb, app_t *app, int id, int addr)
 
 	pkt_set_migration_app(packet, addr, id, task_cnt);
 
-	dmni_send(packet, app_get_locations(app), task_cnt << 2, false);
+	dmni_send(packet, app_get_locations(app), task_cnt, false);
 }
 
 void tm_send_tl(tcb_t *tcb, list_t *list, unsigned service, int id, int addr)
@@ -276,10 +282,11 @@ void tm_send_data_bss(tcb_t *tcb, int id, int addr)
 	);
 }
 
-void tm_send_sched(tcb_t *tcb, sched_t *sched, int id, int addr)
+void tm_send_sched(tcb_t *tcb, int id, int addr)
 {
 	packet_t *packet = pkt_slot_get();
 
+	sched_t *sched = tcb_get_sched(tcb);
 	pkt_set_migration_sched(
 		packet, 
 		addr, 
