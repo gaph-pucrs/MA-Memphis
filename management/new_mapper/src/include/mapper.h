@@ -51,3 +51,5 @@ void map_task_aborted(map_t *mapper, int id);
 void map_request_service(map_t *mapper, int address, unsigned tag, int requester);
 
 void map_migration_map(map_t *mapper, int id);
+
+void map_task_migrated(map_t *mapper, int id);

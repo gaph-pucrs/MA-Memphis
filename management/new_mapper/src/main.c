@@ -51,6 +51,9 @@ int main()
 			case TASK_MIGRATION_MAP:
 				map_migration_map(&mapper, message[1]);
 				break;
+			case TASK_MIGRATED:
+				map_task_migrated(&mapper, message[1]);
+				break;
 			default:
 				printf("Invalid service %x\n", message[0]);
 				break;

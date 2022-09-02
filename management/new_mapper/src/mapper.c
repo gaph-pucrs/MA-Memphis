@@ -615,3 +615,28 @@ void map_migration_map(map_t *mapper, int id)
 	payload |= (id & 0xFFFF);
 	memphis_br_send_tgt(payload, pe_get_addr(old_pe), TASK_MIGRATION);
 }
+
+void map_task_migrated(map_t *mapper, int id)
+{
+	printf("Received migration completed to task id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_find_app(mapper, id >> 8);
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
+		return;
+	}
+
+	task_t *task = app_get_task(app, id & 0xFF);
+	if(task == NULL){
+		puts("WARNING: Task not found. Ignoring.");
+		return;
+	}
+
+	/* Free old processor resources */
+	pe_t *old_pe = task_get_old_pe(task);
+	pe_task_remove(old_pe, task);
+	mapper->slots++;
+
+	/* Mark as migration finished */
+	task_release(task);
+}

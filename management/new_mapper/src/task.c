@@ -152,6 +152,7 @@ int task_get_id(task_t *task)
 void task_release(task_t *task)
 {
 	task->status = TASK_STATUS_RUNNING;
+	task->old_pe = NULL;
 }
 
 pe_t *task_destroy(task_t *task)
