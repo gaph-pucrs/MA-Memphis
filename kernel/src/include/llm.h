@@ -52,11 +52,11 @@ bool llm_has_monitor(int mon_id);
 /**
  * @brief Monitor real-time constraints
  * 
- * @param last_monitored Pointer to a last monitored time
+ * @param last_monitored Pointer to last monitored time
  * @param id ID of the monitored task
  * @param slack_time Slack time of the monitored task
  * @param remaining_exec_time Remaining execution time of the monitored task
  * @return true If monitored, updating last_monitored
  * @return false If should wait more time to monitor
  */
-bool llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time);
+void llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time);

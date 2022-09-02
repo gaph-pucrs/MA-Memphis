@@ -68,6 +68,7 @@ sched_t *sched_emplace_back(tcb_t *tcb)
 
 	sched->status = SCHED_READY;
 	sched->waiting_msg = SCHED_WAIT_NO;
+	sched->last_monitored = 0;
 
 	sched->exec_time = 0;
 	sched->period = 0;
@@ -327,7 +328,7 @@ void _sched_rt_update(unsigned current_time, unsigned schedule_overhead)
 					id, 
 					sched->slack_time, 
 					sched->remaining_exec_time
-				);				
+				);
 			}
 		}
 

@@ -35,7 +35,7 @@ void oda_request_service(oda_t *oda, int type_tag)
 		getpid()
 	};
 
-	memphis_send_any(&msg, sizeof(msg), 0);	/* Standard mapper task is ID 0 */
+	memphis_send_any(msg, sizeof(msg), 0);	/* Standard mapper task is ID 0 */
 }
 
 bool oda_is_enabled(oda_t *oda)

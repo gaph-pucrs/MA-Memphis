@@ -16,7 +16,7 @@ LIBDIR = ../../libmemphis
 UTILDIR = ../../libmutils
 
 CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11  -I$(INCDIR) -I$(INCLIB) -I$(INCUTILS) -I../ --include id_tasks.h
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -u _getpid -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))

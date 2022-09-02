@@ -29,8 +29,8 @@ mon_t *mon_create(size_t *slots)
 	if(table == NULL)
 		return NULL;
 
-	for(int i = 0; i < *slots; i++)
-			table[i].task = -1;
+	for(int i = 0; i < (*slots); i++)
+		table[i].task = -1;
 
 	return table;
 }

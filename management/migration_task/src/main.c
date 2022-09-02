@@ -39,7 +39,6 @@ int main()
 		memphis_receive_any(msg, sizeof(msg));
 		switch(msg[0]){
 			case OBSERVE_PACKET:
-				// Echo("Hello, received observe packet\n");
 				mt_check_rt(&tasks, &actuator, msg[1], msg[2]);
 				break;
 			case SERVICE_PROVIDER:

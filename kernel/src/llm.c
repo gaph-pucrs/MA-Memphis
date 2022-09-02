@@ -16,13 +16,12 @@
 #include <stdlib.h>
 
 #include <memphis.h>
+#include <memphis/monitor.h>
 #include <memphis/services.h>
 
 #include "mmr.h"
 #include "interrupts.h"
 #include "broadcast.h"
-
-static const unsigned LLM_MONITOR_INTERVAL_QOS = 50000;
 
 observer_t _observers[MON_MAX];
 
@@ -65,21 +64,18 @@ bool llm_has_monitor(int mon_id)
 	return (_observers[MON_QOS].addr != -1);
 }
 
-bool llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time)
+void llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time)
 {
 	unsigned now = MMR_TICK_COUNTER;
 
-	if(now - *last_monitored < LLM_MONITOR_INTERVAL_QOS)
-		return false;
+	if(now - (*last_monitored) < MON_INTERVAL_QOS)
+		return;
 
 	bcast_t packet;
 	packet.service = MONITOR;
 	packet.src_id = id;
 	packet.payload = slack_time - remaining_exec_time;
 	
-	if(!bcast_send(&packet, _observers[MON_QOS].addr, MON_QOS))
-		return false;
-	
-	*last_monitored = now;
-	return true;
+	if(bcast_send(&packet, _observers[MON_QOS].addr, MON_QOS))
+		*last_monitored = now;
 }

@@ -482,6 +482,7 @@ void map_request_service(map_t *mapper, int address, unsigned tag, int requester
 {
 	int oda = -1;
 	unsigned distance = -1;
+	// printf("Task %d @%d is requesting for tag %u\n", requester, address, tag);
 
 	/* Search all Management tasks */
 	list_entry_t *entry = list_front(&(mapper->apps));
