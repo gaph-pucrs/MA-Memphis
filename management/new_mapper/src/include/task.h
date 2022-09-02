@@ -69,3 +69,5 @@ bool task_is_allocated(task_t *task);
 bool task_is_migrating(task_t *task);
 
 unsigned task_get_tag(task_t *task);
+
+list_entry_t *task_migrate(task_t *task, pe_t *pe);

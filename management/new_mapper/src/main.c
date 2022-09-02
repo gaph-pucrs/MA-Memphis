@@ -49,7 +49,7 @@ int main()
 				map_request_service(&mapper, message[1], message[2], message[3]);
 				break;
 			case TASK_MIGRATION_MAP:
-				map_migration_map(&mapper, in_msg[1]);
+				map_migration_map(&mapper, message[1]);
 				break;
 			default:
 				printf("Invalid service %x\n", message[0]);

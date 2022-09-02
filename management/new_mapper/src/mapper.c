@@ -203,7 +203,7 @@ void _map_do(map_t *mapper, app_t *app)
 	float score = (edges > 0) ? ((float)cost / (float)edges) : 0; /* Careful with division by zero */
 	
 	/* Printf with 2 decimal places and avoid linking to float printf */
-	printf("Mapped with score %u.%u at %u\n", (int)score, (int)(score*100 - (int)score*100), memphis_get_tick());
+	printf("Mapped with score %u.%u at %u\n", (int)score, (int)((int)(score*100.0) - ((int)score)*100), memphis_get_tick());
 
 	app_set_score(app, score);
 
@@ -583,21 +583,35 @@ void map_migration_map(map_t *mapper, int id)
 	wdo_from_center(&window, mapper->pes, 1);
 
 	/* Reallocate resource */
+	task_set_pe(task, old_pe);			/* Needed because PE push back changes pending mappings */
+	pe_task_push_back(old_pe, task);
 
 	/* Map to the specific window */
-	
+	pe_t *pe = task_map(task, mapper->pes, &window);
 
 	// unsigned now = memphis_get_tick(); 
 	// printf("Ticks of mapping task for migration = %d\n", now-then);
 
 	/* Check if migrating to current pe */
+	if(pe == old_pe){
+		puts("WARNING: Task is in the same PE as the target. Will not migrate.");
+		return;
+	}
 
-	printf("Migrating task to address %d\n", task->processor->addr);
+	const int addr = pe_get_addr(pe);
+	printf("Migrating task to address %d\n", addr);
 
 	/* Allocate on target pe */
+	list_entry_t *entry = task_migrate(task, pe);
+	if(entry == NULL){
+		puts("ERROR: not enough memory");
+		return;
+	}
+	mapper->slots--;
 
 	/* Migrate the task */
-
-	/* Send migration order to kernel at old pe */
-	
+	uint32_t payload = 0;
+	payload |= (addr << 16);
+	payload |= (id & 0xFFFF);
+	memphis_br_send_tgt(payload, pe_get_addr(old_pe), TASK_MIGRATION);
 }

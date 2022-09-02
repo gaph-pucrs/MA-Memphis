@@ -178,3 +178,12 @@ unsigned task_get_tag(task_t *task)
 {
 	return task->tag;
 }
+
+list_entry_t *task_migrate(task_t *task, pe_t *pe)
+{
+	task->old_pe = task->pe;
+	task->pe = pe;
+	task->status = TASK_STATUS_MIGRATING;
+	pe_add_pending(pe);
+	return pe_task_push_back(pe, task);
+}

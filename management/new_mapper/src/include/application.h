@@ -62,3 +62,5 @@ unsigned app_get_failed(app_t *app);
 void app_rem_failed(app_t *app);
 
 int app_get_id(app_t *app);
+
+task_t *app_get_task(app_t *app, int taskid);
