@@ -57,7 +57,7 @@ int main()
 		memphis_real_time(MON_INTERVAL_QOS, MON_INTERVAL_QOS, 0);	/* Repeat this task every ms */
 		for(int i = 0; i < slots; i++){
 			if(qos_table[i].task != -1){
-				// printf("Task %X has timing of %X\n", qos_table[n][t].task, (int)qos_table[n][t].value);
+				// printf("Task %X has timing of %d\n", qos_table[i].task, qos_table[i].value);
 				rt_check(&decider, qos_table[i].task, qos_table[i].value);
 				qos_table[i].task = -1;
 			}

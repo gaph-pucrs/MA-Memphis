@@ -20,7 +20,6 @@
 
 void rt_check(oda_t *decider, int id, int rt_diff)
 {
-	// Echo("Waiting = "); Echo(itoa(waiting_msg)); Echo("Slack = "); Echo(itoa(slack_time)); Echo(" Exec = "); Echo(itoa(exec_time)); Echo(" Remaining = "); Echo(itoa(remaining_time));
 	if(rt_diff < 0){
 		printf("Deadline violation detected in task %d\n", id);
 

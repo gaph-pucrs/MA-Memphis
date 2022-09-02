@@ -292,14 +292,21 @@ void _sched_rt_update(unsigned current_time, unsigned schedule_overhead)
 				sched->status = SCHED_READY;
 			}
 
-			/* Check deadline miss */
-			// if(!tasks[i].scheduler.waiting_msg && !tasks[i].scheduler.slack_time && tasks[i].scheduler.remaining_exec_time > (tasks[i].scheduler.execution_time/10)){
-			// 	putsv("#### -------->>>  Deadline miss at task ", tasks[i].id);
-			// 	// putsvsv("P = ", tasks[i].scheduler.period, "; D = ", tasks[i].scheduler.deadline);
-			// 	// putsvsv("; ET = ", tasks[i].scheduler.execution_time, "; RT = ", tasks[i].scheduler.remaining_exec_time);
-			// 	// putsv("; S = ", tasks[i].scheduler.slack_time);
-			// 	// puts("\n");
-			// }
+			/* Monitor RT task after update */
+			if(should_monitor){
+				int id = tcb_get_id(sched->tcb);
+				int appid = id >> 8;
+				int mig_pe = tcb_get_migrate_addr(sched->tcb);
+				
+				if(appid != 0 && mig_pe == -1 && sched->waiting_msg == SCHED_WAIT_NO){
+					llm_rt(
+						&(sched->last_monitored), 
+						id, 
+						sched->slack_time, 
+						sched->remaining_exec_time
+					);
+				}
+			}
 		}
 
 		/* Below this region, the task chosen is a valid real-time task */
@@ -308,29 +315,13 @@ void _sched_rt_update(unsigned current_time, unsigned schedule_overhead)
 			sched->ready_time += sched->period;
 			sched->remaining_exec_time = sched->exec_time;
 
-			/* Fim do período -- pronto para executar */
+			/* End of period -- ready to run */
 			sched->status = SCHED_READY;
 		}
 
 		/* For all real-time task that are not SLEEPING, the slack time must be updated at each scheduler call */
 		if(sched->status != SCHED_SLEEPING)
 			_sched_update_task_slack_time(sched, current_time);
-
-		/* Monitor RT task after update */
-		if(should_monitor){
-			int id = tcb_get_id(sched->tcb);
-			int appid = id >> 8;
-			int mig_pe = tcb_get_migrate_addr(sched->tcb);
-			
-			if(appid != 0 && mig_pe != -1 && sched->waiting_msg == SCHED_WAIT_NO){
-				llm_rt(
-					&(sched->last_monitored), 
-					id, 
-					sched->slack_time, 
-					sched->remaining_exec_time
-				);
-			}
-		}
 
 		entry = list_next(entry);
 	}
