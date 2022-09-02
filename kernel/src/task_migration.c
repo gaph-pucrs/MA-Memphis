@@ -61,31 +61,31 @@ void tm_migrate(tcb_t *tcb)
 	app_t *app = tcb_get_app(tcb);
 
 	/* Send task location array */
-	// puts("Sending migration task location\n");
+	puts("Sending migration app (task location)");
 	tm_send_app(tcb, app, id, addr);
 	/* Send base TCB info */
-	// puts("Sending migration TCB\n");
+	puts("Sending migration TCB");
 	tm_send_tcb(tcb, id, addr);
 	/* Send data available fifo */
-	// puts("Sending migration data available\n");
+	puts("Sending migration task location (DATA_AV)");
 	tm_send_tl(tcb, tcb_get_davs(tcb), MIGRATION_DATA_AV, id, addr);
 	/* Send message request array (only what is needed) */
-	// puts("Sending migration message request\n");
+	puts("Sending migration task location (MESSAGE_REQUEST)");
 	tm_send_tl(tcb, tcb_get_msgreqs(tcb), MIGRATION_MSG_REQUEST, id, addr);
 	/* Send pipe */
-	// puts("Sending migration pipe\n");
+	puts("Sending migration pipe");
 	tm_send_opipe(tcb, id, addr);
 	/* Send data and BSS */
-	// puts("Sending migration data and bss\n");
+	puts("Sending migration data and bss");
 	tm_send_data_bss(tcb, id, addr);
 	/* Send heap */
-	// puts("Sending migration heap");
+	puts("Sending migration heap");
 	tm_send_heap(tcb, id, addr);
 	/* Send stack */
-	// puts("Sending migration stack\n");
+	puts("Sending migration stack");
 	tm_send_stack(tcb, id, addr);
 	/* Send scheduler data */
-	// puts("Sending migration scheduler");
+	puts("Sending migration scheduler");
 	sched_t *sched = tcb_get_sched(tcb);
 	tm_send_sched(tcb, sched, id, addr);
 	
@@ -146,7 +146,7 @@ void tm_send_app(tcb_t *tcb, app_t *app, int id, int addr)
 
 	pkt_set_migration_app(packet, addr, id, task_cnt);
 
-	dmni_send(packet, app_get_locations(app), task_cnt, false);
+	dmni_send(packet, app_get_locations(app), task_cnt << 2, false);
 }
 
 void tm_send_tl(tcb_t *tcb, list_t *list, unsigned service, int id, int addr)
