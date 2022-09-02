@@ -71,10 +71,6 @@ class Management:
 			if make.returncode != 0:
 				raise Exception("Error build MA task {}.".format(task))
 
-	def check_count(self, max_tasks_app):
-		if len(self.tasks) > max_tasks_app:
-			raise Exception("Number of management tasks exceeds the maximum allowed (max_tasks_app).")
-
 	def check_size(self, page_size, stack_size):
 		self.text_sizes = {}
 		self.data_sizes = {}
