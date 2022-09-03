@@ -49,8 +49,10 @@ void tm_migrate(tcb_t *tcb);
  * @brief Migrates the code section of the task
  * 
  * @param tcb Pointer to the TCB
+ * @param id ID of the TCB
+ * @param addr Address of the TCB
  */
-void tm_send_text(tcb_t *tcb);
+void tm_send_text(tcb_t *tcb, int id, int addr);
 
 /**
  * @brief Migrates the TCB

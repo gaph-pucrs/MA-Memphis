@@ -173,7 +173,17 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 		cons_task &= 0x000000FF;
 
 		app_t *app = tcb_get_app(tcb);
+		if(app == NULL){
+			puts("ERROR: app not found");
+			return -EINVAL;
+		}
+
 		cons_addr = app_get_address(app, cons_task);
+		if(cons_addr == -1){
+			puts("ERROR: task not found");
+			return -EINVAL;
+		}
+
 		cons_task |= (prod_task & 0x0000FF00);
 	}
 
@@ -362,6 +372,7 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 		}
 
 		/* This should never happen, but is here just in case */
+		puts("ERROR: ipipe is not null but was not read");
 		return -EAGAIN;
 	}
 
@@ -374,10 +385,22 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 	int prod_addr;
 	if(!sync){	/* Not synced READ must define the producer */
-		prod_task |= (cons_task & 0xFF00);
+		prod_task &= 0x000000FF;
 
 		app_t *app = tcb_get_app(tcb);
+		if(app == NULL){
+			puts("ERROR: app not found");
+			return -EINVAL;
+		}
+
 		prod_addr = app_get_address(app, prod_task);
+		if(prod_addr == -1){
+			puts("ERROR: task not found");
+			return -EINVAL;
+		}
+
+		prod_task |= (cons_task & 0xFF00);
+
 		// printf("Trying to read from task %x at address %x\n", prod_task, prod_addr);
 		// printf("Readpipe: trying to read from task %x with address %x\n", prod_task, prod_addr);
 	} else {

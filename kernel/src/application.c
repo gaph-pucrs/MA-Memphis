@@ -88,7 +88,10 @@ void app_derefer(app_t *app)
 
 int app_get_address(app_t *app, int task)
 {
-	return app->task_location[task & 0x00FF];
+	if(task > app->task_cnt || app->task_location == NULL)
+		return -1;
+
+	return app->task_location[task];
 }
 
 void app_update(app_t *app, int task, int addr)
@@ -99,8 +102,7 @@ void app_update(app_t *app, int task, int addr)
 
 void app_set_location(app_t *app, size_t task_cnt, int *task_location)
 {
-	if(app->task_location == NULL)
-		free(app->task_location);
+	free(app->task_location);
 
 	app->task_location = task_location;
 	app->task_cnt = task_cnt;

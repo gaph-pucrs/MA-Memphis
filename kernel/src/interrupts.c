@@ -297,7 +297,6 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 		tcb_t *prod_tcb = tcb_find(prod_task);
 
 		if(prod_tcb == NULL){
-			// puts("Producer NOT found. Will resend the request and update location");
 			/* Task is not here. Probably migrated. */
 			tl_t *mig = tm_find(prod_task);
 
@@ -307,7 +306,7 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 			}
 
 			int migrated_addr = tl_get_addr(mig);
-			// printf("Migrated address is %d\n", migrated_addr);
+			// printf("Forwarding MR to address %d\n", migrated_addr);
 
 			/* Forward the message request to the migrated processor */
 			tl_t msgreq;
@@ -346,6 +345,11 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 					}
 
 					ipipe_t *ipipe = tcb_get_ipipe(cons_tcb);
+
+					if(ipipe == NULL){
+						puts("FATAL: ipipe not present");
+						while(true);
+					}
 
 					size_t buf_size;
 					void *src = opipe_get_buf(opipe, &buf_size);
@@ -427,11 +431,14 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 		}
 
 		/* Update task location in case of migration */			
-		if(!(prod_task & 0xFFFF0000) && ((prod_task >> 8) == (cons_task >> 8))){
-			/* Only update if message came from another task of the same app */
-			app_t *app = tcb_get_app(cons_tcb);
-			app_update(app, prod_task, prod_addr);
-		}
+		if(
+				((cons_task & 0xFFFF0000) == 0) && 
+				((cons_task >> 8) == (prod_task >> 8))
+			){
+				/* Only update if message came from another task of the same app */
+				app_t *app = tcb_get_app(prod_tcb);
+				app_update(app, cons_task, cons_addr);
+			}
 		/* No need to check if task migrated here. Once REQUEST is emitted a task cannot migrate */
 
 		ipipe_t *ipipe = tcb_get_ipipe(cons_tcb);
@@ -632,36 +639,41 @@ bool isr_task_release(int id, int task_cnt, int *task_location)
 }
 
 bool isr_task_migration(int id, int addr)
-{	
+{
 	tcb_t *task = tcb_find(id);
 
-	if(task && !tcb_has_called_exit(task)){
-		if(!tcb_need_migration(task)){
-			printf("Trying to migrate task %d to address %d\n", id, addr);
-			tcb_set_migrate_addr(task, addr);
-
-			tm_send_text(task);
-
-			// llm_clear_table(id);
-
-			sched_t *sched = tcb_get_sched(task);
-			if(!sched_is_waiting_delivery(sched)){
-				tm_migrate(task);
-				return true;
-			}
-		} else {
-			printf(
-				"ERROR: task %x proc_to_migrate already assigned to %x when tried to assign %x\n", 
-				id, 
-				task->proc_to_migrate, 
-				addr
-			);
-		}
-	} else {
+	if(task == NULL || tcb_has_called_exit(task)){
 		printf("Tried to migrate task %x but it already terminated\n", id);
+		return false;
 	}
 
-	return false;
+	int old_addr = tcb_get_migrate_addr(task);
+	if(old_addr != -1){
+		printf(
+			"ERROR: task %x PE already assigned to %x when tried to assign %x\n", 
+			id, 
+			old_addr, 
+			addr
+		);
+
+		return false;
+	}
+
+	printf("Trying to migrate task %d to address %d\n", id, addr);
+
+	llm_clear_table(id);
+
+	tcb_set_migrate_addr(task, addr);
+
+	/* Send constant .text section */
+	tm_send_text(task, id, addr);
+
+	sched_t *sched = tcb_get_sched(task);
+	if(sched_is_waiting_delivery(sched))
+		return false;
+
+	tm_migrate(task);
+	return true;
 }
 
 bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_addr)
@@ -923,7 +935,7 @@ bool isr_migration_app(int id, size_t task_cnt)
 	dmni_read(tmploc, task_cnt);
 
 	size_t current_size = app_get_task_cnt(app);
-	if(current_size != task_cnt){
+	if(current_size == 0){
 		/* App created but no location present. Obtain from migration */
 		app_set_location(app, task_cnt, tmploc);
 	} else {

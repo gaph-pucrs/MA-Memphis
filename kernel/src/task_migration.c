@@ -99,7 +99,7 @@ void tm_migrate(tcb_t *tcb)
 	tcb_remove(tcb);
 }
 
-void tm_send_text(tcb_t *tcb)
+void tm_send_text(tcb_t *tcb, int id, int addr)
 {
 	packet_t *packet = pkt_slot_get();
 
@@ -108,8 +108,8 @@ void tm_send_text(tcb_t *tcb)
 
 	pkt_set_migration_code(
 		packet, 
-		tcb_get_migrate_addr(tcb), 
-		tcb_get_id(tcb), 
+		addr, 
+		id, 
 		text_size, 
 		tl_get_task(mapper), 
 		tl_get_addr(mapper)
