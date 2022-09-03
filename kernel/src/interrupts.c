@@ -297,9 +297,15 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 		tcb_t *prod_tcb = tcb_find(prod_task);
 
 		if(prod_tcb == NULL){
-			// puts("Producer NOT found. Will resend the request and update location\n");
+			// puts("Producer NOT found. Will resend the request and update location");
 			/* Task is not here. Probably migrated. */
 			tl_t *mig = tm_find(prod_task);
+
+			if(mig == NULL){
+				puts("ERROR: Task migrated not found in db.");
+				return false;
+			}
+
 			int migrated_addr = tl_get_addr(mig);
 			// printf("Migrated address is %d\n", migrated_addr);
 
@@ -790,7 +796,7 @@ bool isr_migration_tl(int id, size_t size, unsigned service)
 	for(int i = 0; i < size; i++)
 		list_push_back(list, &(vec[i]));
 
-	// printf("Received tl (MREQ/DAV) from task id %d with size %d\n", id, size);
+	// printf("Received tl %d from task id %d with size %d\n", service, id, size);
 
 	return false;
 }
@@ -917,7 +923,7 @@ bool isr_migration_app(int id, size_t task_cnt)
 	dmni_read(tmploc, task_cnt);
 
 	size_t current_size = app_get_task_cnt(app);
-	if(current_size == task_cnt){
+	if(current_size != task_cnt){
 		/* App created but no location present. Obtain from migration */
 		app_set_location(app, task_cnt, tmploc);
 	} else {
