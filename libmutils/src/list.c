@@ -25,6 +25,9 @@ void list_init(list_t *list)
 
 list_entry_t *list_find(list_t *list, void *cmpval, bool (*find_fnc)(void*, void*))
 {
+	if(list == NULL)
+		return NULL;
+		
 	list_entry_t *current = list->head;
 	while(current != NULL){
 		if(
@@ -41,11 +44,17 @@ list_entry_t *list_find(list_t *list, void *cmpval, bool (*find_fnc)(void*, void
 
 void *list_get_data(list_entry_t *entry)
 {
+	if(entry == NULL)
+		return NULL;
+
 	return entry->data;
 }
 
 list_entry_t *list_push_back(list_t *list, void *data)
 {
+	if(list == NULL)
+		return NULL;
+
 	list_entry_t *entry = malloc(sizeof(list_entry_t));
 
 	if(entry == NULL)
@@ -70,6 +79,9 @@ list_entry_t *list_push_back(list_t *list, void *data)
 
 void list_remove(list_t *list, list_entry_t *entry)
 {
+	if(list == NULL || entry == NULL)
+		return;
+
 	if(entry == list->head)
 		list->head = entry->next;
 
@@ -91,22 +103,37 @@ void list_remove(list_t *list, list_entry_t *entry)
 
 list_entry_t *list_front(list_t *list)
 {
+	if(list == NULL)
+		return NULL;
+
 	return list->head;
 }
 
 list_entry_t *list_back(list_t *list)
 {
+	if(list == NULL)
+		return NULL;
+
 	return list->tail;
 }
 
 list_entry_t *list_next(list_entry_t *entry)
 {
+	if(entry == NULL)
+		return NULL;
+
 	return entry->next;
 }
 
 void list_pop_front(list_t *list)
 {
+	if(list == NULL)
+		return;
+
 	list_entry_t *entry = list->head;
+
+	if(entry == NULL)
+		return;
 
 	list->head = entry->next;
 
@@ -120,26 +147,40 @@ void list_pop_front(list_t *list)
 
 bool list_empty(list_t *list)
 {
+	if(list == NULL)
+		return true;
+
 	return (list->head == NULL);
 }
 
 size_t list_get_size(list_t *list)
 {
+	if(list == NULL)
+		return 0;
+
 	return list->size;
 }
 
 void *list_vectorize(list_t *list, size_t data_size)
 {
+	if(list == NULL || list->size == 0)
+		return NULL;
+
 	list_entry_t *entry = list->head;
 
-	void *vector = malloc(list->size*data_size);
+	if(entry == NULL)
+		return NULL;
+
+	void *vector = malloc((list->size) * data_size);
 
 	if(vector == NULL)
 		return NULL;
+	
+	void *ptr = vector;
 
 	while(entry != NULL){
-		memcpy(vector, entry->data, data_size);
-		vector += data_size;
+		memcpy(ptr, entry->data, data_size);
+		ptr += data_size;
 		entry = entry->next;
 	}
 
@@ -148,6 +189,9 @@ void *list_vectorize(list_t *list, size_t data_size)
 
 void list_clear(list_t *list)
 {
+	if(list == NULL)
+		return;
+
 	list_entry_t *entry = list->head;
 
 	while(entry != NULL){

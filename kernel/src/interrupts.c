@@ -432,13 +432,13 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 
 		/* Update task location in case of migration */			
 		if(
-				((cons_task & 0xFFFF0000) == 0) && 
-				((cons_task >> 8) == (prod_task >> 8))
-			){
-				/* Only update if message came from another task of the same app */
-				app_t *app = tcb_get_app(prod_tcb);
-				app_update(app, cons_task, cons_addr);
-			}
+			((cons_task & 0xFFFF0000) == 0) && 
+			((cons_task >> 8) == (prod_task >> 8))
+		){
+			/* Only update if message came from another task of the same app */
+			app_t *app = tcb_get_app(cons_tcb);
+			app_update(app, prod_task, prod_addr);
+		}
 		/* No need to check if task migrated here. Once REQUEST is emitted a task cannot migrate */
 
 		ipipe_t *ipipe = tcb_get_ipipe(cons_tcb);
@@ -465,7 +465,6 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 		/* Release task to execute */
 		sched_t *sched = tcb_get_sched(cons_tcb);
 		sched_release_wait(sched);
-		// puts("Consumer released");
 
 		if(tcb_need_migration(cons_tcb)){
 			tm_migrate(cons_tcb);
@@ -522,12 +521,17 @@ bool isr_data_available(int cons_task, int prod_task, int prod_addr)
 		} else {
 			/* Task migrated? Forward. */
 			tl_t *mig = tm_find(cons_task);
+
+			if(mig == NULL){
+				puts("ERROR: Task migrated not found in db.");
+				return false;
+			}
+
 			int migrated_addr = tl_get_addr(mig);
 
 			/* Forward the message request to the migrated processor */
 			tl_t dav;
 			tl_set(&dav, prod_task, prod_addr);
-
 			tl_send_dav(&dav, cons_task, migrated_addr);
 		}
 	}
@@ -747,7 +751,7 @@ bool isr_migration_sched(int id, unsigned period, int deadline, unsigned exec_ti
 		while (true);
 	}
 
-	if(period)
+	if(period != 0)
 		sched_real_time_task(sched, period, deadline, exec_time);
 
 	sched_set_waiting_msg(sched, waiting_msg);
@@ -762,12 +766,13 @@ bool isr_migration_sched(int id, unsigned period, int deadline, unsigned exec_ti
 	app_t *app = tcb_get_app(tcb);
 	app_update(app, id, MMR_NI_CONFIG);
 
-	int task_migrated[] = {TASK_MIGRATED, tcb->id};
+	tl_t *mapper = tcb_get_mapper(tcb);
+	int task_migrated[] = {TASK_MIGRATED, id};
 	sys_kernel_writepipe(
 		task_migrated, 
 		sizeof(task_migrated), 
-		tl_get_task(&(tcb->mapper)), 
-		tl_get_addr(&(tcb->mapper))
+		tl_get_task(mapper), 
+		tl_get_addr(mapper)
 	);
 
 	return true;
@@ -805,8 +810,17 @@ bool isr_migration_tl(int id, size_t size, unsigned service)
 			break;
 	}
 
-	for(int i = 0; i < size; i++)
-		list_push_back(list, &(vec[i]));
+	if(list == NULL){
+		puts("ERROR: Invalid service");
+		return false;
+	}
+
+	for(int i = 0; i < size; i++){
+		if(list_push_back(list, &(vec[i])) == NULL){
+			puts("ERROR: not enough memory");
+			return false;
+		}
+	}
 
 	// printf("Received tl %d from task id %d with size %d\n", service, id, size);
 
@@ -879,7 +893,7 @@ bool isr_migration_heap(int id, size_t heap_size)
 	heap_size = (heap_size + 3) & ~3;
 
 	dmni_read(
-		(void*)((unsigned)tcb_get_offset(tcb) + (unsigned)heap_start), 
+		tcb_get_offset(tcb) + (unsigned)heap_start, 
 		heap_size >> 2
 	);
 

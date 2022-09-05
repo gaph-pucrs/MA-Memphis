@@ -44,7 +44,12 @@ tl_t *tm_emplace_back(int task, int addr)
 
 	tl_set(tl, task, addr);
 
-	list_push_back(&_tms, tl);
+	list_entry_t *entry = list_push_back(&_tms, tl);
+
+	if(entry == NULL){
+		free(tl);
+		return NULL;
+	}
 
 	return tl;
 }
@@ -55,7 +60,11 @@ void tm_migrate(tcb_t *tcb)
 	int addr = tcb_get_migrate_addr(tcb);
 	int id = tcb_get_id(tcb);
 
-	tm_emplace_back(id, addr);
+	tl_t *tm = tm_emplace_back(id, addr);
+	if(tm == NULL){
+		puts("WARNING: not enough memory, not migrating.");
+		return;
+	}
 
 	/* Send base TCB info */
 	// puts("Sending migration TCB");
@@ -253,7 +262,7 @@ void tm_send_heap(tcb_t *tcb, int id, int addr)
 
 	dmni_send(
 		packet, 
-		(void*)((unsigned)tcb_get_offset(tcb) + (unsigned)heap_start), 
+		tcb_get_offset(tcb) + (unsigned)heap_start, 
 		heap_size >> 2,
 		false
 	);

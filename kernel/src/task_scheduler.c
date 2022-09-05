@@ -100,7 +100,8 @@ void sched_remove(sched_t *sched)
 	}
 
 	list_entry_t *entry = list_find(&_scheds, sched, NULL);
-	list_remove(&_scheds, entry);
+	if(entry != NULL)
+		list_remove(&_scheds, entry);
 
 	free(sched);
 }

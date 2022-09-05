@@ -154,7 +154,8 @@ void tcb_remove(tcb_t *tcb)
 	sched_remove(tcb->scheduler);
 
 	list_entry_t *entry = list_find(&_tcbs, tcb, NULL);
-	list_remove(&_tcbs, entry);
+	if(entry != NULL)
+		list_remove(&_tcbs, entry);
 
 	MMR_TASK_TERMINATED = tcb->id;
 

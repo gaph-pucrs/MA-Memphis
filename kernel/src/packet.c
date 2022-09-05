@@ -73,8 +73,8 @@ void pkt_set_message_delivery(packet_t *packet, int consumer_addr, int producer_
 void pkt_set_migration_pipe(packet_t *packet, int addr, int producer_task, int consumer_task, int size)
 {
 	packet->header = addr;
-	packet->task_ID = producer_task;
 	packet->service = MIGRATION_PIPE;
+	packet->task_ID = producer_task;
 	packet->consumer_task = consumer_task;
 	packet->msg_length = size;
 }
