@@ -49,9 +49,11 @@
 //int putchar(int value);
 //int puts(const char *string);
 
-#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <memphis.h>
+
 #include "audio_video_def.h"
 
 /* common sampling rate for sound cards on IBM/PC */
@@ -59,33 +61,33 @@
 
 /* COMPLEX STRUCTURE */
 typedef struct {
-    float real, imag;
+	float real, imag;
 } COMPLEX;
 
 /* G722 C code */
 
 void upzero(int dlt,int *dlti,int *bli)
 {
-    int i,wd2,wd3;
+	int i,wd2,wd3;
 /*if dlt is zero, then no sum into bli */
-    if(dlt == 0) {
-      for(i = 0 ; i < 6 ; i++) {
-        bli[i] = (int)((255L*bli[i]) >> 8L); /* leak factor of 255/256 */
-      }
-    }
-    else {
-      for(i = 0 ; i < 6 ; i++) {
-        if((long)dlt*dlti[i] >= 0) wd2 = 128; else wd2 = -128;
-        wd3 = (int)((255L*bli[i]) >> 8L);    /* leak factor of 255/256 */
-        bli[i] = wd2 + wd3;
-      }
-    }
+	if(dlt == 0) {
+	  for(i = 0 ; i < 6 ; i++) {
+		bli[i] = (int)((255L*bli[i]) >> 8L); /* leak factor of 255/256 */
+	  }
+	}
+	else {
+	  for(i = 0 ; i < 6 ; i++) {
+		if((long)dlt*dlti[i] >= 0) wd2 = 128; else wd2 = -128;
+		wd3 = (int)((255L*bli[i]) >> 8L);    /* leak factor of 255/256 */
+		bli[i] = wd2 + wd3;
+	  }
+	}
 /* implement delay line for dlt */
-    dlti[5] = dlti[4];
-    dlti[4] = dlti[3];
-    dlti[3] = dlti[2];
-    dlti[1] = dlti[0];
-    dlti[0] = dlt;
+	dlti[5] = dlti[4];
+	dlti[4] = dlti[3];
+	dlti[3] = dlti[2];
+	dlti[1] = dlti[0];
+	dlti[0] = dlt;
 }
 
 /* variables for transimit quadrature mirror filter here */
@@ -94,7 +96,7 @@ int tqmf[24];
 /* QMF filter coefficients:
 scaled by a factor of 4 compared to G722 CCITT recomendation */
 int h[24] = {
-    12,   -44,   -44,   212,    48,  -624,   128,  1448,
+	12,   -44,   -44,   212,    48,  -624,   128,  1448,
   -840, -3220,  3804, 15504, 15504,  3804, -3220,  -840,
   1448,   128,  -624,    48,   212,   -44,   -44,    12
 };
@@ -114,7 +116,7 @@ int xs,xd;
 int il,szl,spl,sl,el;
 
 int qq4_code4_table[16] = {
-     0,  -20456,  -12896,   -8968,   -6288,   -4240,   -2584,   -1200,
+	 0,  -20456,  -12896,   -8968,   -6288,   -4240,   -2584,   -1200,
  20456,   12896,    8968,    6288,    4240,    2584,    1200,       0
 };
 
@@ -176,19 +178,19 @@ int         detl;
 /* quantization table 31 long to make quantl look-up easier,
 last entry is for mil=30 case when wd is max */
 int quant26bt_pos[31] = {
-    61,    60,    59,    58,    57,    56,    55,    54,
-    53,    52,    51,    50,    49,    48,    47,    46,
-    45,    44,    43,    42,    41,    40,    39,    38,
-    37,    36,    35,    34,    33,    32,    32
+	61,    60,    59,    58,    57,    56,    55,    54,
+	53,    52,    51,    50,    49,    48,    47,    46,
+	45,    44,    43,    42,    41,    40,    39,    38,
+	37,    36,    35,    34,    33,    32,    32
 };
 
 /* quantization table 31 long to make quantl look-up easier,
 last entry is for mil=30 case when wd is max */
 int quant26bt_neg[31] = {
-    63,    62,    31,    30,    29,    28,    27,    26,
-    25,    24,    23,    22,    21,    20,    19,    18,
-    17,    16,    15,    14,    13,    12,    11,    10,
-     9,     8,     7,     6,     5,     4,     4
+	63,    62,    31,    30,    29,    28,    27,    26,
+	25,    24,    23,    22,    21,    20,    19,    18,
+	17,    16,    15,    14,    13,    12,    11,    10,
+	 9,     8,     7,     6,     5,     4,     4
 };
 
 
@@ -256,35 +258,35 @@ int     dec_ph1,dec_ph2;
 
 void reset()
 {
-    int i;
+	int i;
 
-    detl = dec_detl = 32;   /* reset to min scale factor */
-    deth = dec_deth = 8;
-    nbl = al1 = al2 = plt1 = plt2 = rlt1 = rlt2 = 0;
-    nbh = ah1 = ah2 = ph1 = ph2 = rh1 = rh2 = 0;
-    dec_nbl = dec_al1 = dec_al2 = dec_plt1 = dec_plt2 = dec_rlt1 = dec_rlt2 = 0;
-    dec_nbh = dec_ah1 = dec_ah2 = dec_ph1 = dec_ph2 = dec_rh1 = dec_rh2 = 0;
+	detl = dec_detl = 32;   /* reset to min scale factor */
+	deth = dec_deth = 8;
+	nbl = al1 = al2 = plt1 = plt2 = rlt1 = rlt2 = 0;
+	nbh = ah1 = ah2 = ph1 = ph2 = rh1 = rh2 = 0;
+	dec_nbl = dec_al1 = dec_al2 = dec_plt1 = dec_plt2 = dec_rlt1 = dec_rlt2 = 0;
+	dec_nbh = dec_ah1 = dec_ah2 = dec_ph1 = dec_ph2 = dec_rh1 = dec_rh2 = 0;
 
-    for(i = 0 ; i < 6 ; i++) {
-        delay_dltx[i] = 0;
-        delay_dhx[i] = 0;
-        dec_del_dltx[i] = 0;
-        dec_del_dhx[i] = 0;
-    }
+	for(i = 0 ; i < 6 ; i++) {
+		delay_dltx[i] = 0;
+		delay_dhx[i] = 0;
+		dec_del_dltx[i] = 0;
+		dec_del_dhx[i] = 0;
+	}
 
-    for(i = 0 ; i < 6 ; i++) {
-        delay_bpl[i] = 0;
-        delay_bph[i] = 0;
-        dec_del_bpl[i] = 0;
-        dec_del_bph[i] = 0;
-    }
+	for(i = 0 ; i < 6 ; i++) {
+		delay_bpl[i] = 0;
+		delay_bph[i] = 0;
+		dec_del_bpl[i] = 0;
+		dec_del_bph[i] = 0;
+	}
 
-    for(i = 0 ; i < 23 ; i++) tqmf[i] = 0;
+	for(i = 0 ; i < 23 ; i++) tqmf[i] = 0;
 
-    for(i = 0 ; i < 11 ; i++) {
-        accumc[i] = 0;
-        accumd[i] = 0;
-    }
+	for(i = 0 ; i < 11 ; i++) {
+		accumc[i] = 0;
+		accumd[i] = 0;
+	}
 }
 
 /* filtez - compute predictor output signal (zero section) */
@@ -292,13 +294,13 @@ void reset()
 
 int filtez(int *bpl,int *dlt)
 {
-    int i;
-    long int zl;
-    zl = (long)(*bpl++) * (*dlt++);
-    for(i = 1 ; i < 6 ; i++)
-        zl += (long)(*bpl++) * (*dlt++);
+	int i;
+	long int zl;
+	zl = (long)(*bpl++) * (*dlt++);
+	for(i = 1 ; i < 6 ; i++)
+		zl += (long)(*bpl++) * (*dlt++);
 
-    return((int)(zl >> 14));   /* x2 here */
+	return((int)(zl >> 14));   /* x2 here */
 }
 
 /* filtep - compute predictor output signal (pole section) */
@@ -306,31 +308,31 @@ int filtez(int *bpl,int *dlt)
 
 int filtep(int rlt1,int al1,int rlt2,int al2)
 {
-    long int pl,pl2;
-    pl = 2*rlt1;
-    pl = (long)al1*pl;
-    pl2 = 2*rlt2;
-    pl += (long)al2*pl2;
-    return((int)(pl >> 15));
+	long int pl,pl2;
+	pl = 2*rlt1;
+	pl = (long)al1*pl;
+	pl2 = 2*rlt2;
+	pl += (long)al2*pl2;
+	return((int)(pl >> 15));
 }
 
 /* quantl - quantize the difference signal in the lower sub-band */
 int quantl(int el,int detl)
 {
-    int ril,mil;
-    long int wd,decis;
+	int ril,mil;
+	long int wd,decis;
 
 /* abs of difference signal */
-    wd = abs(el);
+	wd = abs(el);
 /* determine mil based on decision levels and detl gain */
-    for(mil = 0 ; mil < 30 ; mil++) {
-        decis = (decis_levl[mil]*(long)detl) >> 15L;
-        if(wd <= decis) break;
-    }
+	for(mil = 0 ; mil < 30 ; mil++) {
+		decis = (decis_levl[mil]*(long)detl) >> 15L;
+		if(wd <= decis) break;
+	}
 /* if mil=30 then wd is less than all decision levels */
-    if(el >= 0) ril = quant26bt_pos[mil];
-    else ril = quant26bt_neg[mil];
-    return(ril);
+	if(el >= 0) ril = quant26bt_pos[mil];
+	else ril = quant26bt_neg[mil];
+	return(ril);
 }
 
 /* invqxl is either invqbl or invqal depending on parameters passed */
@@ -338,9 +340,9 @@ int quantl(int el,int detl)
 
 int invqxl(int il,int detl,int *code_table,int mode)
 {
-    long int dlt;
-    dlt = (long)detl*code_table[il >> (mode-1)];
-    return((int)(dlt >> 15));
+	long int dlt;
+	dlt = (long)detl*code_table[il >> (mode-1)];
+	return((int)(dlt >> 15));
 }
 
 /* logscl - update log quantizer scale factor in lower sub-band */
@@ -348,23 +350,23 @@ int invqxl(int il,int detl,int *code_table,int mode)
 
 int logscl(int il,int nbl)
 {
-    long int wd;
-    wd = ((long)nbl * 127L) >> 7L;   /* leak factor 127/128 */
-    nbl = (int)wd + wl_code_table[il >> 2];
-    if(nbl < 0) nbl = 0;
-    if(nbl > 18432) nbl = 18432;
-    return(nbl);
+	long int wd;
+	wd = ((long)nbl * 127L) >> 7L;   /* leak factor 127/128 */
+	nbl = (int)wd + wl_code_table[il >> 2];
+	if(nbl < 0) nbl = 0;
+	if(nbl > 18432) nbl = 18432;
+	return(nbl);
 }
 
 /* scalel: compute quantizer scale factor in lower or upper sub-band*/
 
 int scalel(int nbl,int shift_constant)
 {
-    int wd1,wd2,wd3;
-    wd1 = (nbl >> 6) & 31;
-    wd2 = nbl >> 11;
-    wd3 = ilb_table[wd1] >> (shift_constant + 1 - wd2);
-    return(wd3 << 3);
+	int wd1,wd2,wd3;
+	wd1 = (nbl >> 6) & 31;
+	wd2 = nbl >> 11;
+	wd3 = ilb_table[wd1] >> (shift_constant + 1 - wd2);
+	return(wd3 << 3);
 }
 
 /* upzero - inputs: dlt, dlti[0-5], bli[0-5], outputs: updated bli[0-5] */
@@ -376,23 +378,23 @@ int scalel(int nbl,int shift_constant)
 
 int uppol2(int al1,int al2,int plt,int plt1,int plt2)
 {
-    long int wd2,wd4;
-    int apl2;
-    wd2 = 4L*(long)al1;
-    if((long)plt*plt1 >= 0L) wd2 = -wd2;    /* check same sign */
-    wd2 = wd2 >> 7;                  /* gain of 1/128 */
-    if((long)plt*plt2 >= 0L) {
-        wd4 = wd2 + 128;             /* same sign case */
-    }
-    else {
-        wd4 = wd2 - 128;
-    }
-    apl2 = wd4 + (127L*(long)al2 >> 7L);  /* leak factor of 127/128 */
+	long int wd2,wd4;
+	int apl2;
+	wd2 = 4L*(long)al1;
+	if((long)plt*plt1 >= 0L) wd2 = -wd2;    /* check same sign */
+	wd2 = wd2 >> 7;                  /* gain of 1/128 */
+	if((long)plt*plt2 >= 0L) {
+		wd4 = wd2 + 128;             /* same sign case */
+	}
+	else {
+		wd4 = wd2 - 128;
+	}
+	apl2 = wd4 + (127L*(long)al2 >> 7L);  /* leak factor of 127/128 */
 
 /* apl2 is limited to +-.75 */
-    if(apl2 > 12288) apl2 = 12288;
-    if(apl2 < -12288) apl2 = -12288;
-    return(apl2);
+	if(apl2 > 12288) apl2 = 12288;
+	if(apl2 < -12288) apl2 = -12288;
+	return(apl2);
 }
 
 /* uppol1 - update first predictor coefficient (pole section) */
@@ -400,20 +402,20 @@ int uppol2(int al1,int al2,int plt,int plt1,int plt2)
 
 int uppol1(int al1,int apl2,int plt,int plt1)
 {
-    long int wd2;
-    int wd3,apl1;
-    wd2 = ((long)al1*255L) >> 8L;   /* leak factor of 255/256 */
-    if((long)plt*plt1 >= 0L) {
-        apl1 = (int)wd2 + 192;      /* same sign case */
-    }
-    else {
-        apl1 = (int)wd2 - 192;
-    }
+	long int wd2;
+	int wd3,apl1;
+	wd2 = ((long)al1*255L) >> 8L;   /* leak factor of 255/256 */
+	if((long)plt*plt1 >= 0L) {
+		apl1 = (int)wd2 + 192;      /* same sign case */
+	}
+	else {
+		apl1 = (int)wd2 - 192;
+	}
 /* note: wd3= .9375-.75 is always positive */
-    wd3 = 15360 - apl2;             /* limit value */
-    if(apl1 > wd3) apl1 = wd3;
-    if(apl1 < -wd3) apl1 = -wd3;
-    return(apl1);
+	wd3 = 15360 - apl2;             /* limit value */
+	if(apl1 > wd3) apl1 = wd3;
+	if(apl1 < -wd3) apl1 = -wd3;
+	return(apl1);
 }
 
 /* INVQAH: inverse adaptive quantizer for the higher sub-band */
@@ -421,9 +423,9 @@ int uppol1(int al1,int apl2,int plt,int plt1)
 
 int invqah(int ih,int deth)
 {
-    long int rdh;
-    rdh = ((long)deth*qq2_code2_table[ih]) >> 15L ;
-    return((int)(rdh ));
+	long int rdh;
+	rdh = ((long)deth*qq2_code2_table[ih]) >> 15L ;
+	return((int)(rdh ));
 }
 
 /* logsch - update log quantizer scale factor in higher sub-band */
@@ -431,183 +433,175 @@ int invqah(int ih,int deth)
 
 int logsch(int ih,int nbh)
 {
-    int wd;
-    wd = ((long)nbh * 127L) >> 7L;       /* leak factor 127/128 */
-    nbh = wd + wh_code_table[ih];
-    if(nbh < 0) nbh = 0;
-    if(nbh > 22528) nbh = 22528;
-    return(nbh);
+	int wd;
+	wd = ((long)nbh * 127L) >> 7L;       /* leak factor 127/128 */
+	nbh = wd + wh_code_table[ih];
+	if(nbh < 0) nbh = 0;
+	if(nbh > 22528) nbh = 22528;
+	return(nbh);
 }
 
 /* decode function, result in xout1 and xout2 */
 void decode(int input)
 {
-    int i;
-    long int xa1,xa2;    /* qmf accumulators */
-    int *h_ptr,*ac_ptr,*ac_ptr1,*ad_ptr,*ad_ptr1;
+	int i;
+	long int xa1,xa2;    /* qmf accumulators */
+	int *h_ptr,*ac_ptr,*ac_ptr1,*ad_ptr,*ad_ptr1;
 
 /* split transmitted word from input into ilr and ih */
-    ilr = input & 0x3f;
-    ih = input >> 6;
+	ilr = input & 0x3f;
+	ih = input >> 6;
 
 /* LOWER SUB_BAND DECODER */
 
 /* filtez: compute predictor output for zero section */
-    dec_szl = filtez(dec_del_bpl,dec_del_dltx);
+	dec_szl = filtez(dec_del_bpl,dec_del_dltx);
 
 /* filtep: compute predictor output signal for pole section */
-    dec_spl = filtep(dec_rlt1,dec_al1,dec_rlt2,dec_al2);
+	dec_spl = filtep(dec_rlt1,dec_al1,dec_rlt2,dec_al2);
 
-    dec_sl = dec_spl + dec_szl;
+	dec_sl = dec_spl + dec_szl;
 
 /* invqxl: compute quantized difference signal for adaptive predic */
-    dec_dlt = ((long)dec_detl*qq4_code4_table[ilr >> 2]) >> 15;
+	dec_dlt = ((long)dec_detl*qq4_code4_table[ilr >> 2]) >> 15;
 
 /* invqxl: compute quantized difference signal for decoder output */
-    dl = ((long)dec_detl*qq6_code6_table[il]) >> 15;
+	dl = ((long)dec_detl*qq6_code6_table[il]) >> 15;
 
-    rl = dl + dec_sl;
+	rl = dl + dec_sl;
 
 /* logscl: quantizer scale factor adaptation in the lower sub-band */
-    dec_nbl = logscl(ilr,dec_nbl);
+	dec_nbl = logscl(ilr,dec_nbl);
 
 /* scalel: computes quantizer scale factor in the lower sub band */
-    dec_detl = scalel(dec_nbl,8);
+	dec_detl = scalel(dec_nbl,8);
 
 /* parrec - add pole predictor output to quantized diff. signal */
 /* for partially reconstructed signal */
-    dec_plt = dec_dlt + dec_szl;
+	dec_plt = dec_dlt + dec_szl;
 
 /* upzero: update zero section predictor coefficients */
-    upzero(dec_dlt,dec_del_dltx,dec_del_bpl);
+	upzero(dec_dlt,dec_del_dltx,dec_del_bpl);
 
 /* uppol2: update second predictor coefficient apl2 and delay it as al2 */
-    dec_al2 = uppol2(dec_al1,dec_al2,dec_plt,dec_plt1,dec_plt2);
+	dec_al2 = uppol2(dec_al1,dec_al2,dec_plt,dec_plt1,dec_plt2);
 
 /* uppol1: update first predictor coef. (pole setion) */
-    dec_al1 = uppol1(dec_al1,dec_al2,dec_plt,dec_plt1);
+	dec_al1 = uppol1(dec_al1,dec_al2,dec_plt,dec_plt1);
 
 /* recons : compute recontructed signal for adaptive predictor */
-    dec_rlt = dec_sl + dec_dlt;
+	dec_rlt = dec_sl + dec_dlt;
 
 /* done with lower sub band decoder, implement delays for next time */
-    dec_rlt2 = dec_rlt1;
-    dec_rlt1 = dec_rlt;
-    dec_plt2 = dec_plt1;
-    dec_plt1 = dec_plt;
+	dec_rlt2 = dec_rlt1;
+	dec_rlt1 = dec_rlt;
+	dec_plt2 = dec_plt1;
+	dec_plt1 = dec_plt;
 
 /* HIGH SUB-BAND DECODER */
 
 /* filtez: compute predictor output for zero section */
-    dec_szh = filtez(dec_del_bph,dec_del_dhx);
+	dec_szh = filtez(dec_del_bph,dec_del_dhx);
 
 /* filtep: compute predictor output signal for pole section */
-    dec_sph = filtep(dec_rh1,dec_ah1,dec_rh2,dec_ah2);
+	dec_sph = filtep(dec_rh1,dec_ah1,dec_rh2,dec_ah2);
 
 /* predic:compute the predictor output value in the higher sub_band decoder */
-    dec_sh = dec_sph + dec_szh;
+	dec_sh = dec_sph + dec_szh;
 
 /* invqah: in-place compute the quantized difference signal */
-    dec_dh = ((long)dec_deth*qq2_code2_table[ih]) >> 15L ;
+	dec_dh = ((long)dec_deth*qq2_code2_table[ih]) >> 15L ;
 
 /* logsch: update logarithmic quantizer scale factor in hi sub band */
-    dec_nbh = logsch(ih,dec_nbh);
+	dec_nbh = logsch(ih,dec_nbh);
 
 /* scalel: compute the quantizer scale factor in the higher sub band */
-    dec_deth = scalel(dec_nbh,10);
+	dec_deth = scalel(dec_nbh,10);
 
 /* parrec: compute partially recontructed signal */
-    dec_ph = dec_dh + dec_szh;
+	dec_ph = dec_dh + dec_szh;
 
 /* upzero: update zero section predictor coefficients */
-    upzero(dec_dh,dec_del_dhx,dec_del_bph);
+	upzero(dec_dh,dec_del_dhx,dec_del_bph);
 
 /* uppol2: update second predictor coefficient aph2 and delay it as ah2 */
-    dec_ah2 = uppol2(dec_ah1,dec_ah2,dec_ph,dec_ph1,dec_ph2);
+	dec_ah2 = uppol2(dec_ah1,dec_ah2,dec_ph,dec_ph1,dec_ph2);
 
 /* uppol1: update first predictor coef. (pole setion) */
-    dec_ah1 = uppol1(dec_ah1,dec_ah2,dec_ph,dec_ph1);
+	dec_ah1 = uppol1(dec_ah1,dec_ah2,dec_ph,dec_ph1);
 
 /* recons : compute recontructed signal for adaptive predictor */
-    rh = dec_sh + dec_dh;
+	rh = dec_sh + dec_dh;
 
 /* done with high band decode, implementing delays for next time here */
-    dec_rh2 = dec_rh1;
-    dec_rh1 = rh;
-    dec_ph2 = dec_ph1;
-    dec_ph1 = dec_ph;
+	dec_rh2 = dec_rh1;
+	dec_rh1 = rh;
+	dec_ph2 = dec_ph1;
+	dec_ph1 = dec_ph;
 
 /* end of higher sub_band decoder */
 
 /* end with receive quadrature mirror filters */
-    xd = rl - rh;
-    xs = rl + rh;
+	xd = rl - rh;
+	xs = rl + rh;
 
 /* receive quadrature mirror filters implemented here */
-    h_ptr = h;
-    ac_ptr = accumc;
-    ad_ptr = accumd;
-    xa1 = (long)xd * (*h_ptr++);
-    xa2 = (long)xs * (*h_ptr++);
+	h_ptr = h;
+	ac_ptr = accumc;
+	ad_ptr = accumd;
+	xa1 = (long)xd * (*h_ptr++);
+	xa2 = (long)xs * (*h_ptr++);
 /* main multiply accumulate loop for samples and coefficients */
-    for(i = 0 ; i < 10 ; i++) {
-        xa1 += (long)(*ac_ptr++) * (*h_ptr++);
-        xa2 += (long)(*ad_ptr++) * (*h_ptr++);
-    }
+	for(i = 0 ; i < 10 ; i++) {
+		xa1 += (long)(*ac_ptr++) * (*h_ptr++);
+		xa2 += (long)(*ad_ptr++) * (*h_ptr++);
+	}
 /* final mult/accumulate */
-    xa1 += (long)(*ac_ptr) * (*h_ptr++);
-    xa2 += (long)(*ad_ptr) * (*h_ptr++);
+	xa1 += (long)(*ac_ptr) * (*h_ptr++);
+	xa2 += (long)(*ad_ptr) * (*h_ptr++);
 
 /* scale by 2^14 */
-    xout1 = xa1 >> 14;
-    xout2 = xa2 >> 14;
+	xout1 = xa1 >> 14;
+	xout2 = xa2 >> 14;
 
 /* update delay lines */
-    ac_ptr1 = ac_ptr - 1;
-    ad_ptr1 = ad_ptr - 1;
-    for(i = 0 ; i < 10 ; i++) {
-        *ac_ptr-- = *ac_ptr1--;
-        *ad_ptr-- = *ad_ptr1--;
-    }
-    *ac_ptr = xd;
-    *ad_ptr = xs;
+	ac_ptr1 = ac_ptr - 1;
+	ad_ptr1 = ad_ptr - 1;
+	for(i = 0 ; i < 10 ; i++) {
+		*ac_ptr-- = *ac_ptr1--;
+		*ad_ptr-- = *ad_ptr1--;
+	}
+	*ac_ptr = xd;
+	*ad_ptr = xs;
 }
 
 
-int main() {
-	int i, k;
-	unsigned int * compressed_adpcm;
-	// int result[COMPRESSED_SAMPLES*2];	/* Compression factor: 2 */
-	message_t received_msg;
-	message_t send_msg;
+int main()
+{
+	static int message[COMPRESSED_SAMPLES];
+	static int out[COMPRESSED_SAMPLES * 2];
 
-	puts("ADPCM Decoder - start\n");
+	puts("ADPCM Decoder - start");
 
-    reset();
+	reset();
 
-    memphis_real_time(AUDIO_VIDEO_PERIOD, ADPCM_DEC_deadline, ADPCM_DEC_exe_time);
+	memphis_real_time(AUDIO_VIDEO_PERIOD, ADPCM_DEC_deadline, ADPCM_DEC_exe_time);
 
-	for(k=0; k<FRAMES; k++ ) {
-
-
-		memphis_receive(&received_msg, split);
-		compressed_adpcm = received_msg.payload;
+	for(int k = 0; k < FRAMES; k++){
+		memphis_receive(message, sizeof(message), split);
 
 		/* Decodes the samples */
-		for(i = 0 ; i < COMPRESSED_SAMPLES*2 ; i += 2) {
-			decode(compressed_adpcm[i/2]);
-			send_msg.payload[i] = xout1;
-			send_msg.payload[i+1] = xout2;
+		for(int i = 0; i < COMPRESSED_SAMPLES*2; i += 2){
+			decode(message[i/2]);
+			out[i] = xout1;
+			out[i + 1] = xout2;
 		}
 
-		send_msg.length = COMPRESSED_SAMPLES;
-
 		/* Sends the adpcm uncompressed stream */
-		memphis_send(&send_msg, FIR);
-        
+		memphis_send(out, sizeof(out), FIR);
 	}
 
-    puts("ADPCM Decoder - end\n");
+	puts("ADPCM Decoder - end");
 
-    return 0;
+	return 0;
 }

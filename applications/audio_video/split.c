@@ -28,36 +28,22 @@ unsigned int vlc_array[128] = { // array containing the compressed data stream
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-message_t msg_video, msg1;
-message_t compresssed_adpcm;
+int main()
+{
+	static int message[COMPRESSED_SAMPLES];
 
-int main() {
-
-	int i;
-	// char str[20];
-	// int compressed_adpcm[COMPRESSED_SAMPLES];
-
-	puts("Task SPLIT start:  \n");
+	puts("Task SPLIT start");
 
 	/* Generates the compressed adpcm stream */
-	for (i = 0; i < COMPRESSED_SAMPLES; i += 2)
-		compresssed_adpcm.payload[i] = i % 256;
+	for(int i = 0; i < COMPRESSED_SAMPLES; i += 2)
+		message[i] = i % 256;
 
-	compresssed_adpcm.length = COMPRESSED_SAMPLES;
-
-	for (i = 0; i < 128; i++)
-		msg1.payload[i] = vlc_array[i];
-	msg1.length = 128;
-
-	for (i = 0; i < FRAMES; i++) {
-
-		memphis_send(&compresssed_adpcm, adpcm_dec);
-
-		memphis_send(&msg1, ivlc);
-
+	for(int i = 0; i < FRAMES; i++){
+		memphis_send(message, COMPRESSED_SAMPLES, adpcm_dec);
+		memphis_send(vlc_array, sizeof(vlc_array), ivlc);
 	}
 
-	puts("End Task SPLIT\n");
+	puts("End Task SPLIT");
 
 	return 0;
 }
