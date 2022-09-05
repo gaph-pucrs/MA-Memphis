@@ -1,44 +1,33 @@
-#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <memphis.h>
+
 #include "dtw.h"
 
-message_t msg;
+int main()
+{
+	static int test[SIZE][SIZE];
+	static int pattern[SIZE][SIZE];
 
-int main(){
+	memphis_receive(test, sizeof(test), recognizer);
 
-	int test[SIZE][SIZE];
-	int pattern[SIZE][SIZE];
-	int result, j;
+	printf("Task P%d INIT\n", getpid() & 0xFF);
 
-	memphis_receive(&msg, recognizer);
+	for(int j = 0; j < PATTERN_PER_TASK; j++){
+		memphis_receive(pattern, sizeof(pattern), bank);
 
-	puts("Task P4 INIT\n");
+		//puts("Task P1 received pattern from bank\n");
 
-	__builtin_memcpy(test, msg.payload, sizeof(test));
-
-	for(j=0; j<PATTERN_PER_TASK; j++){
-
-		memset(msg.payload,0, sizeof(int)*msg.length);
-
-		memphis_receive(&msg, bank);
-
-		//puts("Task P4 received pattern from bank\n");
-
-		__builtin_memcpy(pattern, msg.payload, sizeof(pattern));
-
-		result = dynamicTimeWarping(test, pattern);
+		int result = dynamicTimeWarping(test, pattern);
 		printf("R = %d\n", result);
 
-		msg.length = 1;
-
-		msg.payload[0] = result;
-
-		memphis_send(&msg, recognizer);
+		memphis_send(&result, sizeof(result), recognizer);
 	}
 
-	printf("Task P4 FINISHED AT %d\n", memphis_get_tick());
+	printf("Task FINISHED AT %d\n", memphis_get_tick());
 
 	return 0;
 }
