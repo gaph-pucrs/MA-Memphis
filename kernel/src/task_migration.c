@@ -127,7 +127,8 @@ void tm_send_text(tcb_t *tcb, int id, int addr)
 	/* Align */
 	text_size = (text_size + 3) & ~3;
 
-	dmni_send(packet, tcb_get_offset(tcb), text_size >> 2, false);
+	void *offset = tcb_get_offset(tcb);
+	dmni_send(packet, offset, text_size >> 2, false);
 }
 
 void tm_send_tcb(tcb_t *tcb, int id, int addr)

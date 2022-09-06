@@ -37,7 +37,7 @@ void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free)
 	/* Wait for DMNI to be released */
 	while(MMR_DMNI_SEND_ACTIVE);
 
-	if(free_outbound && outbound != NULL)
+	if(free_outbound)
 		free(outbound);
 
 	outbound = payload;

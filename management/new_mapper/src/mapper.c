@@ -540,7 +540,7 @@ void map_migration_map(map_t *mapper, int id)
 	const int taskid = id & 0xFF;
 	task_t *task = app_get_task(app, taskid);
 
-	if(task == NULL){
+	if(task == NULL || !task_is_allocated(task)){
 		puts("WARNING: Task not found. Ignoring.");
 		return;
 	}

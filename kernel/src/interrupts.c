@@ -701,7 +701,8 @@ bool isr_migration_code(int id, size_t text_size, int mapper_task, int mapper_ad
 	text_size = (text_size + 3) & ~3;
 
 	/* Obtain the program code */
-	dmni_read(tcb_get_offset(tcb), text_size >> 2);
+	void *offset = tcb_get_offset(tcb);
+	dmni_read(offset, text_size >> 2);
 
 	// printf("Received MIGRATION_CODE from task id %d with size %d to store at offset %p\n", id, text_size, tcb_get_offset(tcb));
 
