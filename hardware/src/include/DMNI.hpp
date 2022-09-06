@@ -107,10 +107,10 @@ private:
 
 	regmetadeflit address_router;
 
-	sc_signal<dmni_state>	DMNI_Send, DMNI_Receive;
-	sc_signal<state_noc>	SR;
-	sc_signal<BR_RCV_STATE>	br_rcv_state;
-	arbiter_state			ARB;
+	sc_signal<dmni_state>	 DMNI_Send, DMNI_Receive;
+	sc_signal<state_noc>	 SR;
+	sc_signal<BR_RCV_STATE>	 br_rcv_state;
+	sc_signal<arbiter_state> ARB;
 
 	sc_signal<sc_uint<32>>	buffer[BUFFER_SIZE];
 	sc_signal<bool >		is_header[BUFFER_SIZE];
@@ -146,8 +146,8 @@ private:
 	sc_signal<uint8_t>		noc_byte_we;
 	sc_signal<uint32_t>		noc_data_write;
 
-	arbiter_state			last_arb;
-	uint8_t					timer;
+	sc_signal<arbiter_state> last_arb;
+	sc_signal<uint8_t>  	 timer;
 	int16_t					mon_table[N_PE][TASK_PER_PE];
 
 	void config();

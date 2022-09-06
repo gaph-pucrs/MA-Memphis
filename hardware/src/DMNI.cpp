@@ -64,6 +64,7 @@ void DMNI::arbiter()
 	if(reset.read() == 1){
 		write_enable = false;
 		read_enable = false;
+		br_rcv_enable = false;
 		last_arb = SEND;
 		timer = 0;
 
@@ -79,15 +80,12 @@ void DMNI::arbiter()
 				{
 					if(DMNI_Receive == COPY_TO_MEM){
 						ARB = RECEIVE;
-						last_arb = ARB;
 						write_enable = true;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
-						last_arb = ARB;
 						br_rcv_enable = true;
 					} else if(send_active){
 						ARB = SEND;
-						last_arb = ARB;
 						read_enable = true;
 					}
 					break;
@@ -96,15 +94,12 @@ void DMNI::arbiter()
 				{
 					if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
-						last_arb = ARB;
 						br_rcv_enable = true;
 					} else if(send_active){
 						ARB = SEND;
-						last_arb = ARB;
 						read_enable = true;
 					} else if(DMNI_Receive == COPY_TO_MEM){
 						ARB = RECEIVE;
-						last_arb = ARB;
 						write_enable = true;
 					}
 					break;
@@ -113,15 +108,12 @@ void DMNI::arbiter()
 				{
 					if(send_active){
 						ARB = SEND;
-						last_arb = ARB;
 						read_enable = true;
 					} else if(DMNI_Receive == COPY_TO_MEM){
 						ARB = RECEIVE;
-						last_arb = ARB;
 						write_enable = true;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
-						last_arb = ARB;
 						br_rcv_enable = true;
 					}
 					break;
@@ -136,9 +128,10 @@ void DMNI::arbiter()
 			if(DMNI_Send == END || (timer >= DMNI_TIMER && receive_active)){
 				timer = 0;
 				ARB = ROUND;
+				last_arb = SEND;
 				read_enable = false;
 			} else {
-				timer++;
+				timer = timer + 1;
 			}
 			break;
 		}
@@ -147,9 +140,10 @@ void DMNI::arbiter()
 			if(DMNI_Receive == END || (timer >= DMNI_TIMER && send_active)){
 				timer = 0;
 				ARB = ROUND;
+				last_arb = RECEIVE;
 				write_enable = false;
 			} else {
-				timer++;
+				timer = timer + 1;
 			}
 			break;
 		}
@@ -157,6 +151,7 @@ void DMNI::arbiter()
 		{
 			if(br_rcv_state == BR_RCV_END){
 				ARB = ROUND;
+				last_arb = BR_RECEIVE;
 				br_rcv_enable = false;
 			}
 			break;
