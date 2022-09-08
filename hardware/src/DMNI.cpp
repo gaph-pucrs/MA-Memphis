@@ -78,7 +78,7 @@ void DMNI::arbiter()
 			switch(last_arb){
 				case SEND:
 				{
-					if(DMNI_Receive == COPY_TO_MEM){
+					if(DMNI_Receive == IDLE){
 						ARB = RECEIVE;
 						write_enable = true;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
@@ -98,7 +98,7 @@ void DMNI::arbiter()
 					} else if(send_active){
 						ARB = SEND;
 						read_enable = true;
-					} else if(DMNI_Receive == COPY_TO_MEM){
+					} else if(DMNI_Receive == IDLE){
 						ARB = RECEIVE;
 						write_enable = true;
 					}
@@ -109,7 +109,7 @@ void DMNI::arbiter()
 					if(send_active){
 						ARB = SEND;
 						read_enable = true;
-					} else if(DMNI_Receive == COPY_TO_MEM){
+					} else if(DMNI_Receive == IDLE){
 						ARB = RECEIVE;
 						write_enable = true;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
@@ -286,41 +286,87 @@ void DMNI::receive()
 		}
 	}
 
+	// unsigned raddr = recv_address.read();
+	// unsigned value = buffer[first.read()].read();
+	// unsigned be = noc_byte_we.read();
+	// unsigned we = write_enable.read();
+	// unsigned rav = read_av.read();
+
+	// if(noc_byte_we.read() == 0xF)
+	// 	std::cout << "Copy " << std::hex << noc_data_write.read() << " to " << recv_address.read() << std::endl;
+
 	//Write to memory
 	switch (DMNI_Receive.read()) {
-
 		case WAIT:
-
-			if (start.read() == 1 && operation.read() == 1){
+			if(start.read() == 1 && operation.read() == 1){
 				recv_address.write(address.read() - WORD_SIZE);
-				recv_size.write(size.read() - 1);
+				recv_size.write(size.read());
+
 				if (is_header[first.read()] == 1 && intr_counter_temp > 0){
 					intr_counter_temp = intr_counter_temp - 1;
 				}
 				receive_active.write(1);
-				DMNI_Receive.write(COPY_TO_MEM);
+
+				DMNI_Receive.write(WAIT_DATA);
+
+				// if(read_av.read()){
+				// 	noc_data_write.write(buffer[first.read()].read());
+				// 	first.write(first.read() + 1);
+				// 	add_buffer.write(0);
+				// 	recv_size.write(size.read() - 1);
+					
+				// 	DMNI_Receive.write(IDLE);
+				// } else {
+				// 	DMNI_Receive.write(WAIT_DATA);
+				// 	recv_size.write(size.read());
+				// }
 			}
-		break;
-
-		case COPY_TO_MEM:
-
-			if (write_enable.read() == 1 && read_av.read() == 1){
-				noc_byte_we.write(0xF);
-
+			break;
+		case WAIT_DATA:
+			noc_byte_we.write(0);
+			if(read_av.read()){
 				noc_data_write.write(buffer[first.read()].read());
 				first.write(first.read() + 1);
 				add_buffer.write(0);
-				recv_address.write(recv_address.read() + WORD_SIZE);
 				recv_size.write(recv_size.read() - 1);
+				DMNI_Receive.write(IDLE);
 
+				recv_address.write(recv_address.read() + WORD_SIZE);
+
+				// if(write_enable.read()){
+					// DMNI_Receive.write(IDLE);
+				// } else {
+				// 	noc_byte_we.write(0xF);
+				// 	DMNI_Receive.write(COPY_TO_MEM);
+				// }
+			}
+			break;
+		case IDLE:
+			if(write_enable.read()){
+				noc_byte_we.write(0xF);
 				if (recv_size.read() == 0){
 					DMNI_Receive.write(END);
+				} else {
+					DMNI_Receive.write(WAIT_DATA);
 				}
-			} else {
-				noc_byte_we.write(0);
 			}
-
-		break;
+		// case COPY_TO_MEM:
+			// if (recv_size.read() == 0){
+			// 	DMNI_Receive.write(END);
+			// } else if(write_enable.read() == 1 && read_av.read() == 1){
+			// 	noc_data_write.write(buffer[first.read()].read());
+			// 	first.write(first.read() + 1);
+			// 	add_buffer.write(0);
+			// 	recv_address.write(recv_address.read() + WORD_SIZE);
+			// 	recv_size.write(recv_size.read() - 1);
+			// } else if(write_enable.read()){
+			// 	DMNI_Receive.write(WAIT_DATA);
+			// } else if(read_av.read()){
+			// 	DMNI_Receive.write(IDLE);
+			// } else {
+			// 	std::cout << "ERRO" << std::endl;
+			// }
+			break;
 		case END:
 			receive_active.write(0);
 			noc_byte_we.write(0);

@@ -125,6 +125,10 @@ void ram::write_b() {
 	wbe = (unsigned char)wbe_b.read();
 	address = (unsigned int)address_b.read();
 
+	if(address == 0x20480 / 4){
+		std::cout << "VAL = " << data_write_b.read() << "; BE=" << (int)wbe << std::endl;
+	}
+
 
 	if ( wbe != 0 && address < RAM_SIZE) {
 		data = ram_data[address];

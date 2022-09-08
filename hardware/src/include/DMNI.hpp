@@ -83,6 +83,8 @@ private:
 		LOAD, 
 		COPY_FROM_MEM, 
 		COPY_TO_MEM, 
+		WAIT_DATA, 
+		IDLE,
 		END
 	};
 
