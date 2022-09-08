@@ -10,7 +10,7 @@ PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
 CXX = g++
-CXXFLAGS = -Wall -O0 -g -fpermissive $(INCLUDE) --include definitions.h `pkg-config --cflags systemc`
+CXXFLAGS = -Wall -O3 -fpermissive $(INCLUDE) --include definitions.h `pkg-config --cflags systemc`
 LDFLAGS = `pkg-config --libs systemc`
 
 SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)

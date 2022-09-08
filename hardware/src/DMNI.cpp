@@ -286,14 +286,8 @@ void DMNI::receive()
 		}
 	}
 
-	// unsigned raddr = recv_address.read();
-	// unsigned value = buffer[first.read()].read();
-	// unsigned be = noc_byte_we.read();
-	// unsigned we = write_enable.read();
-	// unsigned rav = read_av.read();
-
 	// if(noc_byte_we.read() == 0xF)
-	// 	std::cout << "Copy " << std::hex << noc_data_write.read() << " to " << recv_address.read() << std::endl;
+		// std::cout << "Copy " << std::hex << noc_data_write.read() << " to " << recv_address.read() << std::endl;
 
 	//Write to memory
 	switch (DMNI_Receive.read()) {
@@ -308,64 +302,40 @@ void DMNI::receive()
 				receive_active.write(1);
 
 				DMNI_Receive.write(WAIT_DATA);
-
-				// if(read_av.read()){
-				// 	noc_data_write.write(buffer[first.read()].read());
-				// 	first.write(first.read() + 1);
-				// 	add_buffer.write(0);
-				// 	recv_size.write(size.read() - 1);
-					
-				// 	DMNI_Receive.write(IDLE);
-				// } else {
-				// 	DMNI_Receive.write(WAIT_DATA);
-				// 	recv_size.write(size.read());
-				// }
 			}
 			break;
 		case WAIT_DATA:
 			noc_byte_we.write(0);
 			if(read_av.read()){
 				noc_data_write.write(buffer[first.read()].read());
-				first.write(first.read() + 1);
-				add_buffer.write(0);
-				recv_size.write(recv_size.read() - 1);
-				DMNI_Receive.write(IDLE);
-
 				recv_address.write(recv_address.read() + WORD_SIZE);
 
+				add_buffer.write(0);
+				first.write(first.read() + 1);
+				recv_size.write(recv_size.read() - 1);
+
 				// if(write_enable.read()){
-					// DMNI_Receive.write(IDLE);
-				// } else {
 				// 	noc_byte_we.write(0xF);
-				// 	DMNI_Receive.write(COPY_TO_MEM);
+				// 	if(recv_size.read() == 1)
+				// 		DMNI_Receive.write(END);
+				// } else {
+					DMNI_Receive.write(IDLE);
 				// }
 			}
 			break;
 		case IDLE:
 			if(write_enable.read()){
 				noc_byte_we.write(0xF);
-				if (recv_size.read() == 0){
+				if(recv_size.read() == 0){
 					DMNI_Receive.write(END);
 				} else {
+					/**
+					 * @todo
+					 * Optimize here to receive next flit
+					 */
 					DMNI_Receive.write(WAIT_DATA);
 				}
 			}
-		// case COPY_TO_MEM:
-			// if (recv_size.read() == 0){
-			// 	DMNI_Receive.write(END);
-			// } else if(write_enable.read() == 1 && read_av.read() == 1){
-			// 	noc_data_write.write(buffer[first.read()].read());
-			// 	first.write(first.read() + 1);
-			// 	add_buffer.write(0);
-			// 	recv_address.write(recv_address.read() + WORD_SIZE);
-			// 	recv_size.write(recv_size.read() - 1);
-			// } else if(write_enable.read()){
-			// 	DMNI_Receive.write(WAIT_DATA);
-			// } else if(read_av.read()){
-			// 	DMNI_Receive.write(IDLE);
-			// } else {
-			// 	std::cout << "ERRO" << std::endl;
-			// }
 			break;
 		case END:
 			receive_active.write(0);
@@ -373,8 +343,7 @@ void DMNI::receive()
 			recv_address.write(0);
 			recv_size.write(0);
 			DMNI_Receive.write(WAIT);
-		break;
-
+			break;
 		default:
 			break;
 	}
