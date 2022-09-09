@@ -42,17 +42,16 @@ DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
 	sensitive << slot_available;
 
 	SC_METHOD(mem_address_update);
-	sensitive << read_enable;
-	sensitive << write_enable;
 	sensitive << recv_address;
 	sensitive << send_address;
-	sensitive << br_rcv_enable;
 	sensitive << br_mem_addr;
 	sensitive << br_mem_data;
 	sensitive << br_byte_we;
 	sensitive << noc_byte_we;
 	sensitive << noc_data_write;
 	sensitive << br_payload;
+	sensitive << ARB;
+	sensitive << last_arb;
 
 	SC_METHOD(br_receive);
 	sensitive << clock.pos();
@@ -195,19 +194,17 @@ void DMNI::config()
 
 void DMNI::mem_address_update()
 {
-	if (read_enable.read() == 1){
+	if(ARB == SEND || (ARB == ROUND && last_arb == SEND)){
 		mem_address.write(send_address.read());
-	} else if(write_enable){
+		mem_byte_we.write(0);
+	} else if(ARB == RECEIVE || (ARB == ROUND && last_arb == RECEIVE)){
 		mem_address.write(recv_address.read());
 		mem_data_write.write(noc_data_write.read());
 		mem_byte_we.write(noc_byte_we.read());
-	} else if(br_rcv_enable){
+	} else if(ARB == BR_RECEIVE || (ARB == ROUND && last_arb == BR_RECEIVE)){
 		mem_address.write(br_mem_addr.read());
 		mem_data_write.write(br_mem_data.read());
 		mem_byte_we.write(br_byte_we.read());
-	} else {
-		/* Avoid writing when no operation is occurring */
-		mem_byte_we.write(0);
 	}
 }
 
