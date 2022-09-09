@@ -67,6 +67,7 @@ void DMNI::arbiter()
 		br_rcv_enable = false;
 		last_arb = SEND;
 		timer = 0;
+		halt_send = 0;
 
 		ARB = ROUND;
 		return;
@@ -78,9 +79,10 @@ void DMNI::arbiter()
 			switch(last_arb){
 				case SEND:
 				{
-					if(DMNI_Receive == IDLE){
+					if(receive_active){
 						ARB = RECEIVE;
 						write_enable = true;
+						halt_send = 0;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
 						br_rcv_enable = true;
@@ -98,9 +100,10 @@ void DMNI::arbiter()
 					} else if(send_active){
 						ARB = SEND;
 						read_enable = true;
-					} else if(DMNI_Receive == IDLE){
+					} else if(receive_active){
 						ARB = RECEIVE;
 						write_enable = true;
+						halt_send = 0;
 					}
 					break;
 				}
@@ -109,9 +112,10 @@ void DMNI::arbiter()
 					if(send_active){
 						ARB = SEND;
 						read_enable = true;
-					} else if(DMNI_Receive == IDLE){
+					} else if(receive_active){
 						ARB = RECEIVE;
 						write_enable = true;
+						halt_send = 0;
 					} else if(br_req_mon && !br_ack_mon && monitor_ptrs[br_mon_svc] != 0){
 						ARB = BR_RECEIVE;
 						br_rcv_enable = true;
@@ -137,11 +141,13 @@ void DMNI::arbiter()
 		}
 		case RECEIVE:
 		{
-			if(DMNI_Receive == END || (timer >= DMNI_TIMER && send_active)){
+			if(DMNI_Receive == END || halt_send){
 				timer = 0;
 				ARB = ROUND;
 				last_arb = RECEIVE;
 				write_enable = false;
+			} else if(timer >= DMNI_TIMER && send_active){
+				halt_send = 1;
 			} else {
 				timer = timer + 1;
 			}
@@ -195,19 +201,16 @@ void DMNI::config()
 
 void DMNI::mem_address_update()
 {
-	if (read_enable.read() == 1){
+	if(read_enable){
 		mem_address.write(send_address.read());
-	} else if(write_enable){
-		mem_address.write(recv_address.read());
-		mem_data_write.write(noc_data_write.read());
-		mem_byte_we.write(noc_byte_we.read());
 	} else if(br_rcv_enable){
 		mem_address.write(br_mem_addr.read());
 		mem_data_write.write(br_mem_data.read());
 		mem_byte_we.write(br_byte_we.read());
 	} else {
-		/* Avoid writing when no operation is occurring */
-		mem_byte_we.write(0);
+		mem_address.write(recv_address.read());
+		mem_data_write.write(noc_data_write.read());
+		mem_byte_we.write(noc_byte_we.read());
 	}
 }
 
@@ -286,9 +289,6 @@ void DMNI::receive()
 		}
 	}
 
-	// if(noc_byte_we.read() == 0xF)
-		// std::cout << "Copy " << std::hex << noc_data_write.read() << " to " << recv_address.read() << std::endl;
-
 	//Write to memory
 	switch (DMNI_Receive.read()) {
 		case WAIT:
@@ -314,27 +314,22 @@ void DMNI::receive()
 				first.write(first.read() + 1);
 				recv_size.write(recv_size.read() - 1);
 
-				// if(write_enable.read()){
-				// 	noc_byte_we.write(0xF);
-				// 	if(recv_size.read() == 1)
-				// 		DMNI_Receive.write(END);
-				// } else {
+				if(write_enable.read() && !halt_send){
+					noc_byte_we.write(0xF);
+					if(recv_size.read() == 1)
+						DMNI_Receive.write(END);
+				} else {
 					DMNI_Receive.write(IDLE);
-				// }
+				}
 			}
 			break;
 		case IDLE:
-			if(write_enable.read()){
+			if(write_enable.read() && !halt_send){
 				noc_byte_we.write(0xF);
-				if(recv_size.read() == 0){
+				if(recv_size.read() == 0)
 					DMNI_Receive.write(END);
-				} else {
-					/**
-					 * @todo
-					 * Optimize here to receive next flit
-					 */
+				else
 					DMNI_Receive.write(WAIT_DATA);
-				}
 			}
 			break;
 		case END:

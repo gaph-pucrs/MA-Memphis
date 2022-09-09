@@ -138,6 +138,7 @@ private:
 	sc_signal<bool>			slot_available;
 	sc_signal<bool>			write_enable;
 	sc_signal<bool>			read_enable;
+	sc_signal<bool>			halt_send;
 
 	sc_signal<uint32_t>		monitor_ptrs[MON_TABLE_MAX];
 	sc_signal<bool>			br_rcv_enable;
