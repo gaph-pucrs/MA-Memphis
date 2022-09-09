@@ -6,6 +6,9 @@
 #define MAXPROCESSORS			   64		//The amount of processor
 #define NPROC 						5
 
+#define MSG_LEN 	(NUM_NODES*(NUM_NODES-1)/2)
+#define MSG_SIZE	(MSG_LEN << 2)
+
 int PROCESSORS;
 int pthread_n_workers;
 int paths;
@@ -34,63 +37,84 @@ int main(int argc, char *argv[])
 
 
 void startThreads(void) {
-	int i, j;
-	message_t msg;
+	static int msg[MSG_LEN];
 
 	/* SEND nodes_tasks[NUM_NODES*(NUM_NODES-1)/2][2] */
-	msg.length = NUM_NODES*(NUM_NODES-1)/2;
 	// Send X of nodes_tasks
-	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
-	{
-		msg.payload[i] = nodes_tasks[i][0];
+	for(int i = 0; i < MSG_LEN; i++){
+		msg[i] = nodes_tasks[i][0];
 	}
-	memphis_send(&msg, dijkstra_0);
-	memphis_send(&msg, dijkstra_1);
-	memphis_send(&msg, dijkstra_2);
-	memphis_send(&msg, dijkstra_3);
-	memphis_send(&msg, dijkstra_4);
+
+	memphis_send(msg, MSG_SIZE, dijkstra_0);
+	puts("Sent X nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_1);
+	puts("Sent X nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_2);
+	puts("Sent X nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_3);
+	puts("Sent X nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_4);
+	puts("Sent X nodes_tasks");
 
 	// Send Y of nodes_tasks
-	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
-		msg.payload[i] = nodes_tasks[i][1];
-	memphis_send(&msg, dijkstra_0);
-	memphis_send(&msg, dijkstra_1);
-	memphis_send(&msg, dijkstra_2);
-	memphis_send(&msg, dijkstra_3);
-	memphis_send(&msg, dijkstra_4);
+	for(int i = 0; i < MSG_LEN; i++)
+		msg[i] = nodes_tasks[i][1];
+
+	memphis_send(msg, MSG_SIZE, dijkstra_0);
+	puts("Sent Y nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_1);
+	puts("Sent Y nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_2);
+	puts("Sent Y nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_3);
+	puts("Sent Y nodes_tasks");
+	memphis_send(msg, MSG_SIZE, dijkstra_4);
+	puts("Sent Y nodes_tasks");
 
 	/* SEND tasks[MAXPROCESSORS][2] */
-	msg.length = MAXPROCESSORS;
 	// Send X of tasks
-	for (i=0; i<MAXPROCESSORS; i++)
-		msg.payload[i] = tasks[i][0];
-	memphis_send(&msg, dijkstra_0);
-	memphis_send(&msg, dijkstra_1);
-	memphis_send(&msg, dijkstra_2);
-	memphis_send(&msg, dijkstra_3);
-	memphis_send(&msg, dijkstra_4);
+	for(int i = 0; i < MAXPROCESSORS; i++)
+		msg[i] = tasks[i][0];
+
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_0);
+	puts("Sent X tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_1);
+	puts("Sent X tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_2);
+	puts("Sent X tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_3);
+	puts("Sent X tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_4);
+	puts("Sent X tasks");
 
 	// Send Y of tasks
-	for (i=0; i<MAXPROCESSORS; i++)
-		msg.payload[i] = tasks[i][1];
-	memphis_send(&msg, dijkstra_0);
-	memphis_send(&msg, dijkstra_1);
-	memphis_send(&msg, dijkstra_2);
-	memphis_send(&msg, dijkstra_3);
-	memphis_send(&msg, dijkstra_4);
+	for(int i = 0; i < MAXPROCESSORS; i++)
+		msg[i] = tasks[i][1];
+
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_0);
+	puts("Sent Y tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_1);
+	puts("Sent Y tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_2);
+	puts("Sent Y tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_3);
+	puts("Sent Y tasks");
+	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_4);
+	puts("Sent Y tasks");
 
 	/* SEND AdjMatrix[NUM_NODES][NUM_NODES] */
-	msg.length = NUM_NODES;
-	for (i=0; i<NUM_NODES; i++) {
-		for (j=0; j<NUM_NODES; j++) {
-			msg.payload[j] = AdjMatrix[j][i];
+	for(int i = 0; i < NUM_NODES; i++){
+		for(int j = 0; j < NUM_NODES; j++){
+			msg[j] = AdjMatrix[j][i];
 		}
-		memphis_send(&msg, dijkstra_0);
-		memphis_send(&msg, dijkstra_1);
-		memphis_send(&msg, dijkstra_2);
-		memphis_send(&msg, dijkstra_3);
-		memphis_send(&msg, dijkstra_4);
+		memphis_send(msg, NUM_NODES << 2, dijkstra_0);
+		memphis_send(msg, NUM_NODES << 2, dijkstra_1);
+		memphis_send(msg, NUM_NODES << 2, dijkstra_2);
+		memphis_send(msg, NUM_NODES << 2, dijkstra_3);
+		memphis_send(msg, NUM_NODES << 2, dijkstra_4);
 	}
+
+	puts("Sent AdjMatrix");
 }
 
 void divide_task_group(int task) {

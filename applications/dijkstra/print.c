@@ -50,47 +50,46 @@ int execute() {
 	// int tasks = NUM_NODES*(NUM_NODES-1)/2;
 	int end_task[5] = {0, 0, 0, 0, 0};
 
-	message_t msg;
-	msg.length = 33;
+	static int msg[33];
 	while (1) {
 
 		if(end_task[0] != -1)
 		{
-			memphis_receive(&msg, dijkstra_0);
+			memphis_receive(msg, 33 << 2, dijkstra_0);
 			for (k=0; k<33; k++)
-				result[k] = msg.payload[k];
+				result[k] = msg[k];
 			//if(result[0] == -1) end_task[0] = -1;
 			ProcessMessage();
 		}
 		if(end_task[1] != -1)
 		{
-			memphis_receive(&msg, dijkstra_1);
+			memphis_receive(msg, 33 << 2, dijkstra_1);
 			for (k=0; k<33; k++)
-				result[k] = msg.payload[k];
+				result[k] = msg[k];
 			//if(result[0] == -1) end_task[1] = -1;
 			ProcessMessage();
 		}
 		if(end_task[2] != -1)
 		{
-			memphis_receive(&msg, dijkstra_2);
+			memphis_receive(msg, 33 << 2, dijkstra_2);
 			for (k=0; k<33; k++)
-				result[k] = msg.payload[k];
+				result[k] = msg[k];
 			//if(result[0] == -1) end_task[2] = -1;
 			ProcessMessage();
 		}
 		if(end_task[3] != -1)
 		{
-			memphis_receive(&msg, dijkstra_3);
+			memphis_receive(msg, 33 << 2, dijkstra_3);
 			for (k=0; k<33; k++)
-				result[k] = msg.payload[k];
+				result[k] = msg[k];
 			//if(result[0] == -1) end_task[3] = -1;
 			ProcessMessage();
 		}
 		if(end_task[4] != -1)
 		{
-			memphis_receive(&msg, dijkstra_4);
+			memphis_receive(msg, 33 << 2, dijkstra_4);
 			for (k=0; k<33; k++)
-				result[k] = msg.payload[k];
+				result[k] = msg[k];
 			//if(result[0] == -1) end_task[4] = -1;
 			ProcessMessage();
 		}

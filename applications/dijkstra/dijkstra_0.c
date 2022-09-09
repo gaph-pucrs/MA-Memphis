@@ -1,11 +1,17 @@
-#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+
+#include <memphis.h>
+
 #include "dijkstra.h"
 
 #define NONE                       9999		//Maximum
 #define MAXPROCESSORS			   64		//The amount of processor
 #define NUM_NODES                  16		//16 for small input; 160 for large input; 30 for medium input;
+
+#define MSG_LEN 	NUM_NODES*(NUM_NODES-1)/2
+#define MSG_SIZE	MSG_LEN << 2
 
 struct _NODE{
 	int iDist;
@@ -39,51 +45,46 @@ void sendResult(int myID,int chStart, int chEnd);
 
 int main(int argc, char *argv[])
 {
-	int i, j;
-	message_t msg;
+	int msg[MSG_LEN];
 	int rank = 0;
 
 	qtdEnvios = 0;
 
-	msg.length = NUM_NODES*(NUM_NODES-1)/2;
-	memphis_receive(&msg, divider);
-	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
-		nodes_tasks[i][0] = msg.payload[i];
+	memphis_receive(msg, MSG_SIZE, divider);
+	for(int i = 0; i < (NUM_NODES*(NUM_NODES-1)/2); i++)
+		nodes_tasks[i][0] = msg[i];
 
-	memphis_receive(&msg, divider);
-	for (i=0; i<(NUM_NODES*(NUM_NODES-1)/2); i++)
-		nodes_tasks[i][1] = msg.payload[i];
+	memphis_receive(msg, MSG_SIZE, divider);
+	for(int i = 0; i < (NUM_NODES*(NUM_NODES-1)/2); i++)
+		nodes_tasks[i][1] = msg[i];
 
 
-	msg.length = MAXPROCESSORS;
-	memphis_receive(&msg, divider);
+	memphis_receive(msg, MAXPROCESSORS << 2, divider);
 	/*Echo("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO msg.msg[i]");
 	Echo(itoa(msg.msg[0]));
 	Echo("\n");*/
-	for (i=0; i<MAXPROCESSORS; i++) {
-		tasks[i][0] = msg.payload[i];
+	for(int i = 0; i < MAXPROCESSORS; i++){
+		tasks[i][0] = msg[i];
 		/*Echo("\n pppppppppppppppppppppp tasks[i][0]");
 		Echo(itoa(tasks[i][0]));
 		Echo("\n");*/
 	}
 
-	memphis_receive(&msg, divider);
+	memphis_receive(msg, MAXPROCESSORS << 2, divider);
 	/*Echo("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO msg.msg[i]");
 	Echo(itoa(msg.msg[0]));
 	Echo("\n");*/
-	for (i=0; i<MAXPROCESSORS; i++) {
-		tasks[i][1] = msg.payload[i];
+	for(int i = 0; i < MAXPROCESSORS; i++){
+		tasks[i][1] = msg[i];
 		/*Echo("\n pppppppppppppppppppppp tasks[i][1]");
 		Echo(itoa(tasks[i][1]));
 		Echo("\n");*/
 	}
 
-
-	msg.length = NUM_NODES;
-	for (i=0; i<NUM_NODES; i++) {
-		memphis_receive(&msg, divider);
-		for (j=0; j<NUM_NODES; j++)
-			AdjMatrix[j][i] = msg.payload[j];
+	for(int i = 0; i < NUM_NODES; i++){
+		memphis_receive(msg, NUM_NODES << 2, divider);
+		for(int j = 0; j < NUM_NODES; j++)
+			AdjMatrix[j][i] = msg[j];
 	}
 
 	/*for(i=0; i<NUM_NODES; i++) {
@@ -97,11 +98,10 @@ int main(int argc, char *argv[])
 
 	//dijkstra(rank);
 
-	int x,v;
 	int chStart, chEnd;
 	int u =-1;
 
-	for(x=tasks[rank][0]; x<tasks[rank][1]; x++){
+	for(int x = tasks[rank][0]; x < tasks[rank][1]; x++){
 		chStart = nodes_tasks[x][0];	//Start node
 		chEnd = nodes_tasks[x][1];		//End node
 		u=-1;
@@ -112,14 +112,14 @@ int main(int argc, char *argv[])
 		uVertex[rank].iNID=NONE;
 		g_qCount[rank] = 0;
 		u=-1;
-		for (v=0; v<NUM_NODES; v++) {
+		for(int v = 0; v < NUM_NODES; v++){
 			rgnNodes[rank][v].iDist =  AdjMatrix[chStart][v];
 			rgnNodes[rank][v].iPrev = NONE;
 			rgnNodes[rank][v].iCatched = 0;
 		}
 		//Start working
 		while (qcount(rank) < NUM_NODES-1){
-			for (i=0; i<NUM_NODES; i++) {
+			for(int i = 0; i < NUM_NODES; i++){
 				if(rgnNodes[rank][i].iCatched==0 && rgnNodes[rank][i].iDist<uVertex[rank].iDist && rgnNodes[rank][i].iDist!=0){
 					uVertex[rank].iDist=rgnNodes[rank][i].iDist;
 					uVertex[rank].iNID=i;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 				u=uVertex[rank].iNID;
 				g_qCount[rank]++;
 			}
-			for (v=0; v<NUM_NODES; v++) {
+			for(int v = 0; v < NUM_NODES; v++){
 				if(v==u){
 					rgnNodes[rank][v].iCatched = 1;
 					continue;
@@ -149,13 +149,11 @@ int main(int argc, char *argv[])
 	}
 
 	//Message msg;
-	msg.length = 33;
-	msg.payload[0] = -1;
-	memphis_send(&msg, print);
-	puts("finaliza\n");
+	msg[0] = -1;
+	memphis_send(msg, 33 << 2, print);
 
 	//printf("%d", memphis_get_teck());
-	puts("Dijkstra_0 finished.");
+	printf("Dijkstra_%d finished.\n", getpid());
 
 
 
@@ -192,12 +190,11 @@ void sendResult(int myID,int chStart, int chEnd){
 	resultSend[2] = rgnNodes[myID][chEnd].iDist;
 	sendPath(rgnNodes[myID], chEnd);
 
-	message_t msg;
-	msg.length = 33;
+	int msg[33];
 
 	for(k=0; k<33; k++)
-		msg.payload[k] = resultSend[k];
-	memphis_send(&msg, print);
+		msg[k] = resultSend[k];
+	memphis_send(msg, 33 << 2, print);
 }
 
 void dijkstra(int myID) {
