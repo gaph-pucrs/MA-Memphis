@@ -73,8 +73,8 @@ void pmsg_remove(opipe_t *pending)
 {
 	list_entry_t *entry = list_find(&_pmsgs, pending, NULL);
 
-	if(entry == NULL)
-		return;
-	
-	list_remove(&_pmsgs, entry);
+	if(entry != NULL)
+		list_remove(&_pmsgs, entry);
+
+	free(pending);
 }
