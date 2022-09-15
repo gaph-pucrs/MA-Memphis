@@ -51,6 +51,11 @@ tcb_t *isr_isr(unsigned status)
 		){
 			/* Fake a packet as a pending service */
 			packet_t *packet = malloc(sizeof(packet_t));
+			if(packet == NULL){
+				puts("FATAL: could not allocate memory.");
+				while(1);
+			}
+
 			bcast_fake_packet(&bcast_packet, packet);
 			// puts("Faking packet as pending service\n");
 			psvc_push_back(packet);
@@ -60,6 +65,11 @@ tcb_t *isr_isr(unsigned status)
 	} else if(status & IRQ_NOC){
 		// puts("NOC");
 		packet_t *packet = malloc(sizeof(packet_t));
+		if(packet == NULL){
+			puts("FATAL: could not allocate memory.");
+			while(1);
+		}
+
 		dmni_read(packet, PKT_SIZE);
 
 		if(
@@ -78,11 +88,14 @@ tcb_t *isr_isr(unsigned status)
 
 		packet_t *packet = psvc_front();
 
-		if(packet != NULL){
-			psvc_pop_front();
-			call_scheduler = isr_handle_pkt(packet);
-			free(packet);
+		if(packet == NULL){
+			puts("FATAL: Pending interrupt but no packet.");
+			while(1);
 		}
+
+		psvc_pop_front();
+		call_scheduler = isr_handle_pkt(packet);
+		free(packet);
 		
 	} else if(status & IRQ_SCHEDULER){
 		// puts("SCHED");
@@ -272,14 +285,13 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 		opipe_t *opipe = pmsg_find(cons_task);
 		
 		if(opipe == NULL){
-			puts(
-				"ERROR: Kernel received request but message not found. Use memphis_receive_any!"
-			);
+			printf("FATAL: task %d @%x requested but %x has no message.\n", cons_task, cons_addr, prod_task);
 			while(1);
 		}
 
 		/* Send it like a MESSAGE_DELIVERY */
 		opipe_send(opipe, prod_task, cons_addr);
+
 		pmsg_remove(opipe);
 
 		/* If still pending messages to requesting task, also send a data available */
