@@ -137,9 +137,12 @@ void list_pop_front(list_t *list)
 
 	list->head = entry->next;
 
+	if(entry == list->tail)
+		list->tail = NULL;
+
 	if(entry->next != NULL)
 		entry->next->prev = NULL;
-	
+
 	free(entry);
 
 	list->size--;
