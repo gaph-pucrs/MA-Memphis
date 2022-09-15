@@ -88,7 +88,7 @@ void app_derefer(app_t *app)
 
 int app_get_address(app_t *app, int task)
 {
-	if(task > app->task_cnt || app->task_location == NULL)
+	if(task >= app->task_cnt || app->task_location == NULL)
 		return -1;
 
 	return app->task_location[task];
