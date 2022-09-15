@@ -262,7 +262,14 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 
 			/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
 			/* Also, don't send a message if the previous is still in pipe */
-			if(MMR_DMNI_SEND_ACTIVE || tcb_get_opipe(tcb) != NULL){
+			if(tcb_get_opipe(tcb) != NULL){
+				sched_t *sched = tcb_get_sched(tcb);
+				sched_set_wait_msgreq(sched);
+				schedule_after_syscall = true;
+				return -EAGAIN;
+			}
+
+			if(MMR_DMNI_SEND_ACTIVE){
 				schedule_after_syscall = true;
 				return -EAGAIN;
 			}
@@ -325,9 +332,8 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 			} else {
 				/* Send DATA_AV to consumer PE */
 				tl_t dav;
-				dav.task = prod_task;
-				dav.addr = MMR_NI_CONFIG;
-
+				tl_set(&dav, prod_task, MMR_NI_CONFIG);
+				
 				tl_send_dav(&dav, cons_task, cons_addr);
 			}
 		}
