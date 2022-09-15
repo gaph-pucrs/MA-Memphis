@@ -46,30 +46,20 @@ void startThreads(void) {
 	}
 
 	memphis_send(msg, MSG_SIZE, dijkstra_0);
-	puts("Sent X nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_1);
-	puts("Sent X nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_2);
-	puts("Sent X nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_3);
-	puts("Sent X nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_4);
-	puts("Sent X nodes_tasks");
 
 	// Send Y of nodes_tasks
 	for(int i = 0; i < MSG_LEN; i++)
 		msg[i] = nodes_tasks[i][1];
 
 	memphis_send(msg, MSG_SIZE, dijkstra_0);
-	puts("Sent Y nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_1);
-	puts("Sent Y nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_2);
-	puts("Sent Y nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_3);
-	puts("Sent Y nodes_tasks");
 	memphis_send(msg, MSG_SIZE, dijkstra_4);
-	puts("Sent Y nodes_tasks");
 
 	/* SEND tasks[MAXPROCESSORS][2] */
 	// Send X of tasks
@@ -77,30 +67,20 @@ void startThreads(void) {
 		msg[i] = tasks[i][0];
 
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_0);
-	puts("Sent X tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_1);
-	puts("Sent X tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_2);
-	puts("Sent X tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_3);
-	puts("Sent X tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_4);
-	puts("Sent X tasks");
 
 	// Send Y of tasks
 	for(int i = 0; i < MAXPROCESSORS; i++)
 		msg[i] = tasks[i][1];
 
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_0);
-	puts("Sent Y tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_1);
-	puts("Sent Y tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_2);
-	puts("Sent Y tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_3);
-	puts("Sent Y tasks");
 	memphis_send(msg, MAXPROCESSORS << 2, dijkstra_4);
-	puts("Sent Y tasks");
 
 	/* SEND AdjMatrix[NUM_NODES][NUM_NODES] */
 	for(int i = 0; i < NUM_NODES; i++){
@@ -114,7 +94,6 @@ void startThreads(void) {
 		memphis_send(msg, NUM_NODES << 2, dijkstra_4);
 	}
 
-	puts("Sent AdjMatrix");
 }
 
 void divide_task_group(int task) {

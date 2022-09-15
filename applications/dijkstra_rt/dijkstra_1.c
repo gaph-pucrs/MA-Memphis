@@ -52,21 +52,15 @@ int main(int argc, char *argv[])
 
 	memphis_receive(msg, MSG_SIZE, divider);
 
-	puts("Received X nodes_tasks");
-
 	for(int i = 0; i < (NUM_NODES*(NUM_NODES-1)/2); i++)
 		nodes_tasks[i][0] = msg[i];
 
 	memphis_receive(msg, MSG_SIZE, divider);
 
-	puts("Received Y nodes_tasks");
-
 	for(int i = 0; i < (NUM_NODES*(NUM_NODES-1)/2); i++)
 		nodes_tasks[i][1] = msg[i];
 
 	memphis_receive(msg, MAXPROCESSORS << 2, divider);
-
-	puts("Received X tasks");
 
 	/*Echo("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO msg.msg[i]");
 	Echo(itoa(msg.msg[0]));
@@ -79,8 +73,6 @@ int main(int argc, char *argv[])
 	}
 
 	memphis_receive(msg, MAXPROCESSORS << 2, divider);
-
-	puts("Received Y tasks");
 
 	/*Echo("\n OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO msg.msg[i]");
 	Echo(itoa(msg.msg[0]));
@@ -97,8 +89,6 @@ int main(int argc, char *argv[])
 		for(int j = 0; j < NUM_NODES; j++)
 			AdjMatrix[j][i] = msg[j];
 	}
-
-	puts("Received AdjMatrix");
 
 	/*for(i=0; i<NUM_NODES; i++) {
 		Echo(" D1: ");
