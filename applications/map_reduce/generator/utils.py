@@ -58,9 +58,9 @@ int arr[{vector_size}] = {{\n"""
 
     h_end = f"""}};
 
-int sum(unsigned int arr[], int n)
+int sum(int arr[], int n)
 {{
-    unsigned int sum = 0;
+    int sum = 0;
   
     for (int i = 0; i < n; i++)
     sum += arr[i];
@@ -79,30 +79,30 @@ def write_master(tasks):
     master = f"""#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "map_reduce_std.h"
 
-message_t msg;
-message_t msg1;
 
 int main()
 {{
     int div_number = ARRAY_LEN/NUMBER_OF_TASKS;
+    int *msg = (int*)malloc(div_number*sizeof(int));
+    int *msg1 = (int*)malloc(div_number*sizeof(int));
     unsigned int sum_cum = 0;
     int values_to_sent = (ARRAY_LEN/NUMBER_OF_TASKS)*NUMBER_OF_TASKS;
     int missing_values = ARRAY_LEN-values_to_sent;
     int values_to_stay = missing_values+div_number;
-    unsigned int arr_malloc[values_to_stay];
+    int *arr_malloc = (int*)malloc(values_to_stay*sizeof(int));
 
     printf("Fatiando e enviando...\\n");
 
     for(int j=0; j<values_to_sent; j+=div_number) {{
         if((j/div_number)+1 < NUMBER_OF_TASKS) {{
-            __builtin_memcpy(msg.payload, arr + j, div_number*sizeof(int));
-            msg.length = div_number;
-            memphis_send(&msg, (j/div_number)+1);
+            memcpy(msg, arr + j, div_number*sizeof(int));
+            memphis_send(msg, div_number*sizeof(int), (j/div_number)+1);
         }}
         else {{
-            __builtin_memcpy(arr_malloc, arr + j, values_to_stay*sizeof(int));
+            memcpy(arr_malloc, arr + j, values_to_stay*sizeof(int));
         }}
     }}
 
@@ -114,11 +114,11 @@ int main()
 
     for i in range(int(math.log2(tasks))):
         if 2**i < 10:
-            master += f"""    memphis_receive(&msg1, worker0{2**i});
-    sum_cum += sum(msg1.payload, div_number);\n"""
+            master += f"""    memphis_receive(msg1, sizeof(msg1), worker0{2**i});
+    sum_cum += sum(msg1, div_number);\n"""
         else:
-            master += f"""    memphis_receive(&msg1, worker{2**i});
-    sum_cum += sum(msg1.payload, div_number);\n"""
+            master += f"""    memphis_receive(msg1, sizeof(msg1), worker{2**i});
+    sum_cum += sum(msg1, div_number);\n"""
 
     master_end = f"""\n    printf("Soma acumulada:  %d\\n", sum_cum);
 
@@ -136,8 +136,8 @@ def write_workers(id_, tasks):
 #include <unistd.h>
 #include "map_reduce_std.h"
 
-message_t msg;
-message_t msg1;
+#define MAX_MESSAGE_SIZE 128
+int msg[256];
 
 int main()
 {{
@@ -145,16 +145,15 @@ int main()
 
     printf("Worker%d\\n", getpid()-255-1);
 
-    memphis_receive(&msg, master);
+    unsigned received_bytes = memphis_receive(msg, sizeof(msg), master);
 
     printf("Recebeu\\n");
 	
-    sum_cum += sum(msg.payload, msg.length);
+    sum_cum += sum(msg, received_bytes/sizeof(int));
 \n"""
     
     if id_%2 != 0:
-        worker += f"""    msg1.payload[0]=sum_cum;
-    msg1.length = 1;\n"""
+        worker += f"""    int result =sum_cum;\n"""
         if id_ -1 == 0:
             target = "master"
         else:
@@ -162,24 +161,24 @@ int main()
                 target = f"worker0{id_-1}"
             else:
                 target = f"worker{id_-1}"
-        worker += f"""    memphis_send(&msg1, {target});
+        worker += f"""    memphis_send(&result, sizeof(result), {target});
     
     printf("Enviou\\n");
 
     return 0;
 }}"""
     else:
+        worker += f"""    int result_rcv;"""
         to_receive, to_send = get_targets(id_, tasks)
         for i in to_receive:
             if i < 10:
-                worker += f"""    memphis_receive(&msg1, worker0{i});
-        sum_cum += sum(msg1.payload, msg.length);\n"""
+                worker += f"""    memphis_receive(&result_rcv, sizeof(result_rcv), worker0{i});
+        sum_cum += sum(&result_rcv, 1);\n"""
             else:
-                worker += f"""    memphis_receive(&msg1, worker{i});
-    sum_cum += sum(msg1.payload, msg.length);\n"""
+                worker += f"""    memphis_receive(&result_rcv, sizeof(result_rcv) worker{i});
+    sum_cum += sum(&result_rcv, 1);\n"""
 
-        worker += f"""\n    msg1.payload[0]=sum_cum;
-    msg1.length = 1;\n"""
+        worker += f"""\n    int result = sum_cum;\n"""
 
         if to_send == 0:
             target = "master"
@@ -188,7 +187,7 @@ int main()
                 target = f"worker0{to_send}"
             else:
                 target = f"worker{to_send}"
-        worker += f"""    memphis_send(&msg1, {target});
+        worker += f"""    memphis_send(&result, sizeof(result), {target});
     
     printf("Enviou\\n");
 

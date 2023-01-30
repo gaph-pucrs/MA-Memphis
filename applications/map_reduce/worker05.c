@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include "map_reduce_std.h"
 
-message_t msg;
-message_t msg1;
+#define MAX_MESSAGE_SIZE 128
+int msg[256];
 
 int main()
 {
@@ -13,15 +13,14 @@ int main()
 
     printf("Worker%d\n", getpid()-255-1);
 
-    memphis_receive(&msg, master);
+    unsigned received_bytes = memphis_receive(msg, sizeof(msg), master);
 
     printf("Recebeu\n");
 	
-    sum_cum += sum(msg.payload, msg.length);
+    sum_cum += sum(msg, received_bytes/sizeof(int));
 
-    msg1.payload[0]=sum_cum;
-    msg1.length = 1;
-    memphis_send(&msg1, worker04);
+    int result =sum_cum;
+    memphis_send(&result, sizeof(result), worker04);
     
     printf("Enviou\n");
 
