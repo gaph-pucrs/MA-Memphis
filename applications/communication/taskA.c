@@ -14,8 +14,8 @@ int main()
 		msg[i] = i;
 
 	for(int i = 0; i < SYNTHETIC_ITERATIONS; i++){
-		memphis_send(&msg, sizeof(msg), taskB);
-		memphis_send(&msg, sizeof(msg), taskC);
+		memphis_send(msg, sizeof(msg), taskB);
+		memphis_send(msg, sizeof(msg), taskC);
 	}
 
     printf("Synthetic task A finished at %u\n", memphis_get_tick());
