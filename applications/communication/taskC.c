@@ -3,22 +3,19 @@
 #include <stdio.h>
 #include "syn_std.h"
 
-message_t msg;
+#define MSG_LENGTH 128
+
+int msg[MSG_LENGTH];
 
 int main()
 {
+	printf("Synthetic task C started at %u\n", memphis_get_tick());
 	
-	int i;
+	for(int i = 0; i < SYNTHETIC_ITERATIONS; i++){
+		memphis_receive(&msg, sizeof(msg), taskA);
+		memphis_send(&msg, sizeof(msg), taskD);
+	}
 
-    printf("synthetic task C started at %u\n", memphis_get_tick());
-
-for(i=0;i<SYNTHETIC_ITERATIONS;i++){
-	memphis_receive(&msg,taskA);
-	memphis_send(&msg,taskD);
-}
-
-    printf("%u\n", memphis_get_tick());
-    puts("synthetic task C finished.\n");
+    printf("Synthetic task C finished at %u\n", memphis_get_tick());
 	return 0;
 }
-
