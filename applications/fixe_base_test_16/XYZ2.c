@@ -80,7 +80,7 @@ int mult(int a, int b)
 
 
 
-message_t msg1,msg2;
+int msg1[size], msg2[3];
 
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970
@@ -120,20 +120,19 @@ int main()
 	// int i;
 	puts("start XYZ 2\n");
 
-    memphis_receive(&msg1,P2);
+    memphis_receive(msg1, sizeof(msg1), P2);
 
-    msg2.length=3;
-
-    msg2.payload[0]=sommeXYZ((int*)msg1.payload,tabrefX);
-    msg2.payload[1]=sommeXYZ((int*)msg1.payload,tabrefY);
-    msg2.payload[2]=sommeXYZ((int*)msg1.payload,tabrefZ);
+	printf("Received MSG1\n");
+    msg2[0]=sommeXYZ(msg1, tabrefX);
+    msg2[1]=sommeXYZ(msg1, tabrefY);
+    msg2[2]=sommeXYZ(msg1, tabrefZ);
     // Echo("XYZ :");
     // for(i=0;i<3;i++)
     //      Echo(fixetoa(msg2.payload[i]));
 
-    memphis_send(&msg2,LAB2);
-    memphis_send(&msg2,DXYZ);
-    memphis_send(&msg2,RGB2);
+    memphis_send(msg2, sizeof(msg2), LAB2);
+    memphis_send(msg2, sizeof(msg2), DXYZ);
+    memphis_send(msg2, sizeof(msg2), RGB2);
 
     puts("Communication XYZ 2 finished.\n");
 

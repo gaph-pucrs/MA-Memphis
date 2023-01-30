@@ -178,7 +178,7 @@ int pow_fixed(int x,int y)
 }
 
 
-message_t msg1,msg2;
+int msg1[3], msg2[3];
 
 
 int main()
@@ -188,12 +188,12 @@ int main()
 	int i;
 	int distance=0;
 
-    memphis_receive(&msg1,RGB1);
-    memphis_receive(&msg2,RGB2);
+    memphis_receive(msg1, sizeof(msg1), RGB1);
+    memphis_receive(msg2, sizeof(msg2), RGB2);
 
     for (i=0;i<3;i++)
     {
-        distance= add(pow_fixed(sub(msg1.payload[i],msg2.payload[i]),20000),distance);
+        distance= add(pow_fixed(sub(msg1[i],msg2[i]),20000),distance);
     }
 
    	distance=sqrt_fixed(distance);

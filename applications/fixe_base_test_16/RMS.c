@@ -165,7 +165,7 @@ int sqrt_fixed(int x)
 
 
 
-message_t msg1,msg2;
+int msg1[size], msg2[size];
 
 
 int main()
@@ -176,14 +176,14 @@ int main()
 	int sum;
 	int dis_rms;
 
-	memphis_receive(&msg1,P1);
-    memphis_receive(&msg2,P2);
+	memphis_receive(msg1, sizeof(msg1), P1);
+    memphis_receive(msg2, sizeof(msg2), P2);
 
 
 /*calcul distance RMS*/
     sum=0;
     for(i=0;i<size;i++)
-		sum=add(mult(sub(msg1.payload[i],msg2.payload[i]),sub(msg1.payload[i],msg2.payload[i])),sum);
+		sum=add(mult(sub(msg1[i],msg2[i]),sub(msg1[i],msg2[i])),sum);
 
     dis_rms= div_fixed(sqrt_fixed(sum),size_val);
     printf("distance RMS: %d\n", dis_rms);

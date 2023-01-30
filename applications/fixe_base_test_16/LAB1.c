@@ -174,7 +174,7 @@ int	racine(int val,int expo)
 
 
 
-message_t msg1;
+int msg1[3];
 
 void lab(int* sum,int* LAB)
 {
@@ -231,19 +231,13 @@ int main()
 {
 	puts("start LAB1\n");
 
-	int i;
 	int LAB[3]={0,0,0};
 
-	memphis_receive(&msg1,XYZ1);
+	memphis_receive(msg1, sizeof(msg1), XYZ1);
 
-    lab((int*)msg1.payload,LAB);
+    lab(msg1, LAB);
 
-    for (i=0;i<3;i++)
-    {
-        msg1.payload[i]=LAB[i];
-    }
-
-    memphis_send(&msg1,DLAB);
+    memphis_send(LAB, sizeof(LAB), DLAB);
 
     puts("Communication LAB1 finished.\n");
 

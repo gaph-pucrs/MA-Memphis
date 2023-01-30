@@ -164,7 +164,7 @@ int sqrt_fixed(int x)
 }
 
 
-message_t msg1,msg2;
+int msg1[size],msg2[size];
 
 
 int main()
@@ -175,17 +175,17 @@ int main()
 	int sum_Es,sum_Me,sum_EM;
 	int gfc;
 
-	memphis_receive(&msg1,P1);
-	memphis_receive(&msg2,P2);
+	memphis_receive(msg1, sizeof(msg1), P1);
+	memphis_receive(msg2, sizeof(msg2), P2);
 	
 	sum_Es=0;
     sum_Me=0;
     sum_EM=0;
     for (i=0;i<size;i++)
     {
-          sum_Es=add(mult(msg1.payload[i],msg1.payload[i]),sum_Es);
-          sum_Me=add(mult(msg2.payload[i],msg2.payload[i]),sum_Me);
-          sum_EM=add(mult(msg1.payload[i],msg2.payload[i]),sum_EM);
+          sum_Es=add(mult(msg1[i],msg1[i]),sum_Es);
+          sum_Me=add(mult(msg2[i],msg2[i]),sum_Me);
+          sum_EM=add(mult(msg1[i],msg2[i]),sum_EM);
     }
 
     if (sum_EM<0)

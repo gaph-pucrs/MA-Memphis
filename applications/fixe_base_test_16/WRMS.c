@@ -164,7 +164,7 @@ int sqrt_fixed(int x)
 }
 
 
-message_t msg1,msg2;
+int msg1[size],msg2[size];
 
 
 
@@ -176,15 +176,15 @@ int main()
 	int sum;
 	int dis_wrms;
 
-	memphis_receive(&msg1,P1);
-    memphis_receive(&msg2,P2);
+	memphis_receive(msg1, sizeof(msg1), P1);
+    memphis_receive(msg2, sizeof(msg2), P2);
 
 	/*calcul distance WRMS*/
     sum=0;
     for(i=0;i<size;i++)
     {
         // Echo(itoa(i));
-	    sum=add(div_fixed(mult(sub(msg1.payload[i],msg2.payload[i]),sub(msg1.payload[i],msg2.payload[i])),mult(sqrt_fixed(msg1.payload[i]),sqrt_fixed(msg2.payload[i]))),sum);
+	    sum=add(div_fixed(mult(sub(msg1[i],msg2[i]),sub(msg1[i],msg2[i])),mult(sqrt_fixed(msg1[i]),sqrt_fixed(msg2[i]))),sum);
     }
 
 	dis_wrms=sqrt_fixed(div_fixed(sum,size_val));

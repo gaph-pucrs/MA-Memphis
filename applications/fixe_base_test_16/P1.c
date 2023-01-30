@@ -152,7 +152,6 @@ int div_fixed(int a, int b)
 }
 
 
-message_t msg1,msg2;
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970,
 					489960,489960,489950,489950,489940,489940,489930,489930};*/
@@ -190,21 +189,18 @@ int main()
 {
 	puts("start Processeur 1\n");
 
-    int moyenne[size],i;
+    int moyenne[size];
 
 
 	calcul_moyenne(moyenne);
 
-	msg1.length=size;
-	for(i=0;i<size;i++)
-		 msg1.payload[i]=moyenne[i];
 
 	printf("Valeur de la moyenne: %d\n", moyenne[0]);
 
-	memphis_send(&msg1,RMS);
-	memphis_send(&msg1,WRMS);
-	memphis_send(&msg1,GFC);
-	memphis_send(&msg1,XYZ1);
+	memphis_send(moyenne, sizeof(moyenne), RMS);
+	memphis_send(moyenne, sizeof(moyenne), WRMS);
+	memphis_send(moyenne, sizeof(moyenne), GFC);
+	memphis_send(moyenne, sizeof(moyenne), XYZ1);
 
 	puts("Communication Processeur 1 finished.\n");
 
