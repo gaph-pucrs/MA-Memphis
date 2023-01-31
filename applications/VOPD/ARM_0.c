@@ -5,13 +5,12 @@
 int main()
 {
 
-message_t msg;
+int msg[128];
 int j;
 
-	for(j=0;j<128;j++) msg.payload[j]=j;
+	for(j=0;j<128;j++) msg[j]=j;
 
-	msg.length=128;
-	memphis_send(&msg,IDCT2_0);
+	memphis_send(msg, sizeof(msg), IDCT2_0);
 	
 	return 0;
 
