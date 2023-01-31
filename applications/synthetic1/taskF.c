@@ -4,7 +4,7 @@
 
 #include "../synthetic1/syn_std.h"
 
-message_t msg;
+int msg[30];
 
 int main()
 {
@@ -16,9 +16,9 @@ int main()
 
 for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	
-		memphis_receive(&msg,taskE);
+		memphis_receive(msg, sizeof(msg), taskE);
 		for(t=0;t<1000;t++);
-		memphis_receive(&msg,taskD);
+		memphis_receive(msg, sizeof(msg), taskD);
 
 	}
 

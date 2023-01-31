@@ -4,7 +4,7 @@
 
 #include "../synthetic1/syn_std.h"
 
-message_t msg;
+int msg[30];
 
 int main()
 {
@@ -19,12 +19,11 @@ int main()
 	{
 		for(t=0;t<1000;t++);
 
-		msg.length = 30;
 		for(j=0;j<30;j++)
 		{
-			msg.payload[j]=i;
+			msg[j]=i;
 		}
-		memphis_send(&msg,taskC);
+		memphis_send(msg, sizeof(msg), taskC);
 	}
 
     //printf("%d\n", memphis_get_tick());
