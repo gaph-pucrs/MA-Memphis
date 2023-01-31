@@ -164,6 +164,8 @@ bool isr_handle_broadcast(bcast_t *packet)
 			);
 		case ABORT_TASK:
 			return isr_abort_task(task_field);
+		case APP_TERMINATED:
+			return isr_app_terminated(task_field);
 		default:
 			printf(
 				"ERROR: unknown broadcast %x at time %d\n", 
@@ -1014,4 +1016,10 @@ bool isr_abort_task(int id)
 		}
 		return false;
 	}
+}
+
+bool isr_app_terminated(int id)
+{
+	tm_clear_app(id);
+	return false;
 }

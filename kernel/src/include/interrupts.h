@@ -266,3 +266,12 @@ bool isr_announce_mon(enum MONITOR_TYPE type, int addr);
  * @return True if the current running task is the aborted
  */
 bool isr_abort_task(int id);
+
+/**
+ * @brief Clears application migration data
+ * 
+ * @param id ID of the application
+ * 
+ * @return False
+ */
+bool isr_app_terminated(int id);

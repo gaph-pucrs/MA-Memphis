@@ -405,6 +405,7 @@ app_t *_map_terminate_task(map_t *mapper, int id)
 void _map_terminate_app(map_t *mapper, app_t *app)
 {
 	printf("App %d terminated at time %d\n", app_get_id(app), memphis_get_tick());
+	app_terminated(app);	/* Broadcast app termination to clear migration table */
 	app_destroy(app);
 	list_entry_t *entry = list_find(&(mapper->apps), app, NULL);
 	list_remove(&(mapper->apps), entry);

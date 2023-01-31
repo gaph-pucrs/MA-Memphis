@@ -231,3 +231,8 @@ task_t *app_get_task(app_t *app, int taskid)
 
 	return &(app->tasks[taskid]);
 }
+
+void app_terminated(app_t *app)
+{
+	memphis_br_send_all(app->id, APP_TERMINATED);
+}

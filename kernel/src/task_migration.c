@@ -319,3 +319,23 @@ void tm_abort_task(int id, int addr)
 	packet.payload = id;
 	while(!bcast_send(&packet, addr, BR_SVC_TGT));
 }
+
+bool _tm_find_app_fnc(void *data, void* cmpval)
+{
+	tl_t *tl = (tl_t*)data;
+	int app_id = *((int*)cmpval);
+
+	return (((tl->task >> 8) & 0xFF) == app_id);
+}
+
+void tm_clear_app(int id)
+{
+	list_entry_t *entry = list_find(&_tms, &id, _tm_find_app_fnc);
+	while(entry != NULL){
+		tl_t *tl = list_get_data(entry);
+		// printf("************* Removed task %d from migration\n", tl->task);
+		list_remove(&_tms, entry);
+		free(tl);
+		entry = list_find(&_tms, &id, _tm_find_app_fnc);
+	}
+}

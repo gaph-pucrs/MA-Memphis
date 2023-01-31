@@ -136,3 +136,10 @@ void tm_send_sched(tcb_t *tcb, int id, int addr);
  * @param addr Address of the migration destination
  */
 void tm_abort_task(int id, int addr);
+
+/**
+ * @brief Clears all entries corresponding to an application
+ * 
+ * @param id Application ID
+ */
+void tm_clear_app(int id);
