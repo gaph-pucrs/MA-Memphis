@@ -1,7 +1,7 @@
 BLUE  =\033[0;34m
 NC   =\033[0m # No Color
 
-TARGET = new_mapper
+TARGET = mapper_task
 
 SRCDIR = src
 INCDIR = src/include

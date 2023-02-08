@@ -28,7 +28,7 @@ AppInjector::AppInjector(sc_module_name _name, std::string _path) :
 	std::ifstream ma_boot_info(path+"/ma_start.txt");
 	std::string line;
 	std::getline(ma_boot_info, line);
-	if(line.compare("new_mapper") != 0){
+	if(line.compare("mapper_task") != 0){
 		std::cout << "AppInjector: ERROR: first task must be 'mapper_task'" << std::endl;
 		monitor_state = MONITOR_IDLE;
 	} else {

@@ -95,7 +95,7 @@ void MAInjector::ma_boot()
 				// std::cout << "MA boot task count: " << ma_boot_task_cnt << std::endl;
 
 				/* First task should be the mapper directly injected to the system with static mapping */
-				if(tasks[0].first.compare("new_mapper") != 0){
+				if(tasks[0].first.compare("mapper_task") != 0){
 					std::cout << "ERROR: first task must be 'mapper_task'" << std::endl;
 					ma_boot_state = BOOT_FINISHED;
 				}
