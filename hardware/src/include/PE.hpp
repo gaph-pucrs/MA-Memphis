@@ -16,6 +16,7 @@
 #include <systemc>
 
 #include "RiscV.hpp"
+#include "FlitSniffer.hpp"
 #include "DMNI.hpp"
 #include "router_cc.h"
 #include "ram.h"
@@ -67,7 +68,7 @@ SC_MODULE(PE) {
 	PE(sc_module_name name_, regaddress address_ = 0x00, std::string path_ = "");
 	
 private:
-
+	std::vector<FlitSniffer*>	sniffers;
 	sc_signal<bool> 		clock_hold;
   	sc_signal<bool>  		credit_signal[NPORT - 1];
 	bool 					clock_aux;

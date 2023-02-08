@@ -13,6 +13,9 @@
 
 #include "PE.hpp"
 
+/* Comment to disable flit sniffer and enhance performance */
+#define FLIT_SNIFFER
+
 PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
 	sc_module(name_), 
 	cpu("cpu", address_),
@@ -90,6 +93,26 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_address(br_dmni_addr);
 	dmni.br_payload(br_payload_out_local);
 	dmni.clear_task(br_dmni_clear);
+
+#ifdef FLIT_SNIFFER
+	for(int i = 0; i < LOCAL; i++){
+		sniffers.push_back(new FlitSniffer(string("sniffer"+to_string(i)).c_str(), address_, i, path_));
+		sniffers[i]->clock_i(clock);
+		sniffers[i]->reset_i(reset);
+		sniffers[i]->timer_i(tick_counter);
+		sniffers[i]->rx_i(rx[i]);
+		sniffers[i]->credit_o_i(credit_signal[i]);
+		sniffers[i]->data_i(data_in[i]);
+	}
+
+	sniffers.push_back(new FlitSniffer(string("sniffer"+to_string(LOCAL)).c_str(), address_, LOCAL, path_));
+	sniffers[LOCAL]->clock_i(clock);
+	sniffers[LOCAL]->reset_i(reset);
+	sniffers[LOCAL]->timer_i(tick_counter);
+	sniffers[LOCAL]->rx_i(rx_ni);
+	sniffers[LOCAL]->credit_o_i(credit_o_ni);
+	sniffers[LOCAL]->data_i(data_in_ni);
+#endif
 
 	router = new router_cc("router",router_address, path);
 	router->clock(clock);
