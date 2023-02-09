@@ -13,9 +13,6 @@
 
 #include "PE.hpp"
 
-/* Comment to disable flit sniffer and enhance performance */
-#define FLIT_SNIFFER
-
 PE::PE(sc_module_name name_, regaddress address_, std::string path_) : 
 	sc_module(name_), 
 	cpu("cpu", address_),

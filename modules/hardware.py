@@ -2,6 +2,7 @@
 from distutils.dir_util import copy_tree
 from subprocess import run
 from multiprocessing import cpu_count
+from os import environ
 
 class Hardware:
 	def __init__(self, hw, platform_path, testcase_path):
@@ -56,9 +57,17 @@ class Hardware:
 			return 4
 		return 5
 
-	def build(self):
+	def build(self, options):
 		NCPU = cpu_count()
-		make = run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)])
+		CFLAGS = ""
+  
+		for option in options:
+			CFLAGS = CFLAGS + "-D"+str(list(option.keys())[0])+"="+str(list(option.values())[0])+" "
+  
+		make_env = environ.copy()
+		make_env["CFLAGS"] = CFLAGS
+
+		make = run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)], env=make_env)
 		if make.returncode != 0:
 			raise Exception("Error building hardware.")
 

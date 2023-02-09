@@ -24,11 +24,11 @@ $(TARGET): $(OBJ)
 	
 $(SRCDIR)/%.o: $(SRCDIR)/%.cpp
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CXXFLAGS)
+	@$(CXX) -c $< -o $@ $(CFLAGS) $(CXXFLAGS)
 	
 $(PERDIR)/%.o: $(PERDIR)/%.cpp
 	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CXXFLAGS)
+	@$(CXX) -c $< -o $@ $(CFLAGS) $(CXXFLAGS)
 
 clean:
 	@printf "Cleaning up\n"
