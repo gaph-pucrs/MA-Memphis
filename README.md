@@ -56,8 +56,6 @@ MA-Memphis separates the _testcase_ from the _scenario_.
 A testcase contains a description of the hardware and operating system of the platform.
 Create a new yaml file (here the example name will be example_testcase.yaml) in the sandbox folder containing:
 ```yaml
-sw:                         # Operating System properties
-  max_tasks_app: 10         # Maximum number of tasks per application allowed
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
   stack_size: 1024          # Size reserved for the stack (in bytes)
@@ -70,10 +68,11 @@ hw:                         # Hardware properties
     - name: MAINJECTOR      # Mandatory MA Injector peripheral
       pe: 0,0               # is connected at border PE 0,0
       port: S               # Connected at port SOUTH. Note to use a border port.
-
+  options:                  # Optional list of definitions to be passed to hardware build
+    - FLIT_SNIFFER: 1       # Add this line to enable detailed flit report
 ```
 
-**WARNING:** The VHDL model supported by Memphis is still not validated with MA-Memphis.
+**WARNING:** The VHDL model supported by Memphis is still not entirely validated with MA-Memphis.
 
 The scenario contains a description of the applications that will be evaluated in the platform.
 Create a yaml file (in this example we will use the name example_scenario.yaml) that contains:
