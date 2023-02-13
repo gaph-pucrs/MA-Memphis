@@ -12,6 +12,11 @@ class Hardware:
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
 
+		try:
+			self.options = hw["options"]
+		except:
+			self.options = {}
+
 		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1) # 1 page for kernel
 
 		self.PKG_N_PE = self.PKG_N_PE_X * self.PKG_N_PE_Y
@@ -57,11 +62,11 @@ class Hardware:
 			return 4
 		return 5
 
-	def build(self, options):
+	def build(self):
 		NCPU = cpu_count()
 		CFLAGS = ""
   
-		for option in options:
+		for option in self.options:
 			CFLAGS = CFLAGS + "-D"+str(list(option.keys())[0])+"="+str(list(option.values())[0])+" "
   
 		make_env = environ.copy()

@@ -30,11 +30,6 @@ class Testcase:
 
 		self.PKG_N_PE_X = yaml["hw"]["mpsoc_dimension"][0]
 		self.PKG_N_PE_Y = yaml["hw"]["mpsoc_dimension"][1]
-  
-		try:
-			self.hw_options = yaml["hw"]["options"]
-		except:
-			self.hw_options = {}
 		
 	def copy(self):
 		# If testcase has been updated, delete to rebuild everything
@@ -58,7 +53,7 @@ class Testcase:
 		
 		self.kernel.build()
 
-		self.hardware.build(self.hw_options)
+		self.hardware.build()
 
 		self.kernel.check_size()
 
