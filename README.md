@@ -68,7 +68,7 @@ hw:                         # Hardware properties
     - name: MAINJECTOR      # Mandatory MA Injector peripheral
       pe: 0,0               # is connected at border PE 0,0
       port: S               # Connected at port SOUTH. Note to use a border port.
-  options:                  # Optional list of definitions to be passed to hardware build
+  definitions:              # Optional list of definitions to be passed to hardware build
     - FLIT_SNIFFER: 1       # Add this line to enable detailed flit report
 ```
 
@@ -90,6 +90,9 @@ apps:                       # Application properties
     start_time_ms: 5        # Application start time. When absent is 0. Should be manually sorted.
     static_mapping:         # Optional static mapping
       prod: [1,1]           # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
+    definitions:            # Optional list of definitions to be passed to application build
+      - PROD_CONS_MSG_SIZE: 64
+      - PROD_CONS_ITERATIONS: 100
 ```
 
 After creating the description of the testcase and the scenario, the testcase should be generated:
