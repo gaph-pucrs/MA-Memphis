@@ -1946,7 +1946,7 @@ bool RiscV::csr_helper(uint16_t addr, bool rw, Register* &csr, uint32_t &wmask_a
 
 	switch(addr){
 	case CSR::Address::MISA:
-		csr = &mstatus;
+		csr = &misa;
 		wmask_and = 0x3C000000;	// Only write to empty field.
 		wmask_or  = 0x40141100; // 32-bit MSU
 		break;
