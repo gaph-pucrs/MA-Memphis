@@ -13,9 +13,9 @@ class Hardware:
 		self.peripherals			= hw["Peripherals"]
 
 		try:
-			self.options = hw["options"]
+			self.definitions = hw["definitions"]
 		except:
-			self.options = {}
+			self.definitions = {}
 
 		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1) # 1 page for kernel
 
@@ -66,8 +66,8 @@ class Hardware:
 		NCPU = cpu_count()
 		CFLAGS = ""
   
-		for option in self.options:
-			CFLAGS = CFLAGS + "-D"+str(list(option.keys())[0])+"="+str(list(option.values())[0])+" "
+		for definition in self.definitions:
+			CFLAGS = CFLAGS + "-D"+str(list(definition.keys())[0])+"="+str(list(definition.values())[0])+" "
   
 		make_env = environ.copy()
 		make_env["CFLAGS"] = CFLAGS
