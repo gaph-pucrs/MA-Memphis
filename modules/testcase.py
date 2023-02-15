@@ -3,11 +3,10 @@ from os.path import exists
 from filecmp import cmp
 from os import makedirs
 from shutil import copyfile
-from distutils.dir_util import copy_tree, remove_tree
+from distutils.dir_util import remove_tree
 from yaml import safe_load
 from libs import Libs
 from kernel import Kernel
-from management import Management
 from hardware import Hardware
 
 class Testcase:
@@ -36,7 +35,6 @@ class Testcase:
 		if self.__is_obsolete():
 			remove_tree(self.base_dir)
 
-		makedirs(self.base_dir+"/applications", exist_ok=True)
 		makedirs(self.base_dir+"/management", exist_ok=True)
 		copyfile(self.base, self.file)
 
@@ -50,6 +48,7 @@ class Testcase:
 
 	def build(self):
 		self.libs.build()
+		self.libs.install()
 		
 		self.kernel.build()
 

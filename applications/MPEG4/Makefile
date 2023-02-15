@@ -7,17 +7,12 @@ SRC = $(wildcard $(SRCDIR)/*.c)
 TARGET = $(patsubst %.c, %.txt, $(SRC))
 ELFS = $(patsubst %.c, %.elf, $(SRC))
 
-INCLIB = ../../libmemphis/src/include
-
 CC = riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-LIBDIR = ../../libmemphis
-UTILDIR = ../../libmutils
-
-CFLAGS	= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99 -I$(INCLIB) --include id_tasks.h
-LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -Wl,-Ttext=0,--gc-sections -u _getpid -L$(LIBDIR) -L$(UTILDIR) -lmemphis -lmutils
+CFLAGS	+= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99
+LDFLAGS += -march=rv32im -mabi=ilp32 -Wl,--gc-sections -lmemphis -lmutils
 
 all: $(TARGET) $(ELFS)
 

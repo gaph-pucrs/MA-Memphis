@@ -31,4 +31,10 @@ clean:
 	@rm -f $(SRCDIR)/*.o
 	@rm -f *.a
 
+install: libmemphis.a
+	@mkdir -p ../include
+	@mkdir -p ../lib
+	@cp -r $(INCDIR)/* ../include
+	@cp libmemphis.a ../lib/libmemphis.a
+
 .PHONY: clean

@@ -31,4 +31,10 @@ clean:
 	@rm -f $(SRCDIR)/*.o
 	@rm -f *.a
 
+install: libmutils.a
+	@mkdir -p ../include
+	@mkdir -p ../lib
+	@cp -r $(INCDIR)/* ../include
+	@cp libmutils.a ../lib/libmutils.a
+
 .PHONY: clean
