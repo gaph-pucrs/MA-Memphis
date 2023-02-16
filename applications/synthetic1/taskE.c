@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../synthetic1/syn_std.h"
+#include "syn_std.h"
 
 int msg[30];
 
