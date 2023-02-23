@@ -133,53 +133,55 @@ void Memphis::pes_interconnection()
 {
 	for(int y = 0; y < N_PE_Y; y++){
 		for(int x = 0; x < N_PE_X; x++){
+			int seq_addr = y*N_PE_X + x;
+
 			if(y != N_PE_Y - 1){
-				credit_i[y*N_PE_X + x][NORTH].write(credit_o[y*N_PE_X + x + N_PE_X][SOUTH].read());
- 				data_in [y*N_PE_X + x][NORTH].write(data_out[y*N_PE_X + x + N_PE_X][SOUTH].read());
- 				rx      [y*N_PE_X + x][NORTH].write(tx      [y*N_PE_X + x + N_PE_X][SOUTH].read());
-			} else if(io_port[y*N_PE_X + x] != NORTH){
+				credit_i[seq_addr][NORTH].write(credit_o[seq_addr + N_PE_X][SOUTH].read());
+ 				data_in [seq_addr][NORTH].write(data_out[seq_addr + N_PE_X][SOUTH].read());
+ 				rx      [seq_addr][NORTH].write(tx      [seq_addr + N_PE_X][SOUTH].read());
+			} else if(io_port[seq_addr] != NORTH){
 				/* Ground signals */
-				credit_i[y*N_PE_X + x][NORTH].write(0);
-				data_in [y*N_PE_X + x][NORTH].write(0);
-				rx      [y*N_PE_X + x][NORTH].write(0);
+				credit_i[seq_addr][NORTH].write(0);
+				data_in [seq_addr][NORTH].write(0);
+				rx      [seq_addr][NORTH].write(0);
 			}
 
 			if(y != 0){
-				credit_i[y*N_PE_X + x][SOUTH].write(credit_o[y*N_PE_X + x - N_PE_X][NORTH].read());
-				data_in [y*N_PE_X + x][SOUTH].write(data_out[y*N_PE_X + x - N_PE_X][NORTH].read());
-				rx      [y*N_PE_X + x][SOUTH].write(tx      [y*N_PE_X + x - N_PE_X][NORTH].read());
-			} else if(io_port[y*N_PE_X + x] != SOUTH){
+				credit_i[seq_addr][SOUTH].write(credit_o[seq_addr - N_PE_X][NORTH].read());
+				data_in [seq_addr][SOUTH].write(data_out[seq_addr - N_PE_X][NORTH].read());
+				rx      [seq_addr][SOUTH].write(tx      [seq_addr - N_PE_X][NORTH].read());
+			} else if(io_port[seq_addr] != SOUTH){
 				/* Ground signals */
-				credit_i[y*N_PE_X + x][SOUTH].write(0);
-				data_in [y*N_PE_X + x][SOUTH].write(0);
-				rx      [y*N_PE_X + x][SOUTH].write(0);
+				credit_i[seq_addr][SOUTH].write(0);
+				data_in [seq_addr][SOUTH].write(0);
+				rx      [seq_addr][SOUTH].write(0);
 			}
 
 			if(x != N_PE_X - 1){
-				credit_i[y*N_PE_X + x][EAST].write(credit_o[y*N_PE_X + x + 1][WEST].read());
- 				data_in [y*N_PE_X + x][EAST].write(data_out[y*N_PE_X + x + 1][WEST].read());
- 				rx      [y*N_PE_X + x][EAST].write(tx      [y*N_PE_X + x + 1][WEST].read());
-			} else if(io_port[y*N_PE_X + x] != EAST){//If the port in not connected to an IO then:
+				credit_i[seq_addr][EAST].write(credit_o[seq_addr + 1][WEST].read());
+ 				data_in [seq_addr][EAST].write(data_out[seq_addr + 1][WEST].read());
+ 				rx      [seq_addr][EAST].write(tx      [seq_addr + 1][WEST].read());
+			} else if(io_port[seq_addr] != EAST){//If the port in not connected to an IO then:
 				/* Ground signals */
-				credit_i[y*N_PE_X + x][EAST].write(0);
-				data_in [y*N_PE_X + x][EAST].write(0);
-				rx      [y*N_PE_X + x][EAST].write(0);
+				credit_i[seq_addr][EAST].write(0);
+				data_in [seq_addr][EAST].write(0);
+				rx      [seq_addr][EAST].write(0);
 			}
 
 			if(x != 0){
-				credit_i[y*N_PE_X + x][WEST].write(credit_o[y*N_PE_X + x - 1][EAST].read());
-				data_in [y*N_PE_X + x][WEST].write(data_out[y*N_PE_X + x - 1][EAST].read());
-				rx      [y*N_PE_X + x][WEST].write(tx      [y*N_PE_X + x - 1][EAST].read());
-			} else if(io_port[y*N_PE_X + x] != WEST){
+				credit_i[seq_addr][WEST].write(credit_o[seq_addr - 1][EAST].read());
+				data_in [seq_addr][WEST].write(data_out[seq_addr - 1][EAST].read());
+				rx      [seq_addr][WEST].write(tx      [seq_addr - 1][EAST].read());
+			} else if(io_port[seq_addr] != WEST){
 				/* Ground signals */
-				credit_i[y*N_PE_X + x][WEST].write(0);
-				data_in [y*N_PE_X + x][WEST].write(0);
-				rx      [y*N_PE_X + x][WEST].write(0);
+				credit_i[seq_addr][WEST].write(0);
+				data_in [seq_addr][WEST].write(0);
+				rx      [seq_addr][WEST].write(0);
  			}
 
 			//--IO Wiring (Memphis <-> AppInjector) ----------------------
-			if(y*N_PE_X + x == APP_INJECTOR && io_port[y*N_PE_X + x] != NPORT) {
-				int p = io_port[y*N_PE_X + x];
+			if(seq_addr == APP_INJECTOR && io_port[seq_addr] != NPORT) {
+				int p = io_port[seq_addr];
 				memphis_app_injector_tx.write(tx[APP_INJECTOR][p].read());
 				memphis_app_injector_data_out.write(data_out[APP_INJECTOR][p].read());
 				credit_i[APP_INJECTOR][p].write(memphis_app_injector_credit_i.read());
@@ -190,8 +192,8 @@ void Memphis::pes_interconnection()
 			}
 
 			//--IO Wiring (Memphis <-> MAInjector) ----------------------
-			if (y*N_PE_X + x == MAINJECTOR && io_port[y*N_PE_X + x] != NPORT) {
-				int p = io_port[y*N_PE_X + x];
+			if (seq_addr == MAINJECTOR && io_port[seq_addr] != NPORT) {
+				int p = io_port[seq_addr];
 				memphis_ma_injector_tx.write(tx[MAINJECTOR][p].read());
 				memphis_ma_injector_data_out.write(data_out[MAINJECTOR][p].read());
 				credit_i[MAINJECTOR][p].write(memphis_ma_injector_credit_i.read());
