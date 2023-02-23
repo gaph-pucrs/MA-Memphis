@@ -80,7 +80,7 @@ class HardwareDefinitions:
 		io_pe = 0
 
 		for pe in range(n_pe):
-			if pe == io_list[io_pe][0]:
+			if io_pe < len(io_list) and pe == io_list[io_pe][0]:
 				self.lines.append(str(io_list[io_pe][1])+",")
 				io_pe = io_pe + 1
 			else:
