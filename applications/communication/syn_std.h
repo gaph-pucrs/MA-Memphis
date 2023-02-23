@@ -8,8 +8,9 @@
 #ifndef SYN_STD_H_
 #define SYN_STD_H_
 
-
-#define SYNTHETIC_ITERATIONS	500
+#ifndef SYNTHETIC_ITERATIONS
+	#define SYNTHETIC_ITERATIONS	500
+#endif
 
 
 #endif /* SYN_STD_H_ */
