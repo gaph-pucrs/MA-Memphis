@@ -717,7 +717,7 @@ void PE::clock_stop(){
 
 void PE::update_credit()
 {
-	int seq_addr = (int)x_address * N_PE_X + (int)y_address;
+	int seq_addr = y_address*N_PE_X + x_address;
 
 	/* First column, has WEST port connected to peripherals */
 	if(x_address == 0){
