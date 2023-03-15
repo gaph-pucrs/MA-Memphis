@@ -66,7 +66,7 @@ void _map_do(map_t *mapper, app_t *app)
 					 * @todo
 					 * Destroy app
 					 * Destroy tasks
-					 * Unnalocate pending
+					 * Deallocate pending
 					 */
 					return;
 				}
