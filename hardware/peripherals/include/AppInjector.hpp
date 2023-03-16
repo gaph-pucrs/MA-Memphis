@@ -29,6 +29,7 @@
 #define DATA_AV					0x00000031
 #define APP_MAPPING_COMPLETE	0x00000034
 #define TASK_ALLOCATION			0x00000040
+#define REQUEST_FINISH			0x00000071
 
 #define APP_INJECTOR_ADDRESS (0x80000000 | (io_port[APP_INJECTOR] << 29) | ((APP_INJECTOR % N_PE_X) << 8) | (APP_INJECTOR / N_PE_X))
 
@@ -76,7 +77,8 @@ private:
 		MONITOR_WAIT_TIME, 
 		MONITOR_SEND_NEW_APP,
 		MONITOR_SEND_TASK,
-		MONITOR_MAP
+		MONITOR_MAP,
+		MONITOR_SEND_FINISH
 	};
 
 	sc_signal<bool> sig_credit_out;
@@ -94,6 +96,7 @@ private:
 
 	void app_descriptor_loader(std::string name, unsigned task_cnt, std::vector<int>& static_mapping);
 	void task_allocation_loader(unsigned id, unsigned addr, unsigned mapper_id, unsigned mapper_addr);
+	void request_finish();
 	std::string get_app_repo_path(unsigned app_id);
 
 	void monitor_new_app();
