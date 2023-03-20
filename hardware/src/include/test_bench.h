@@ -225,7 +225,7 @@ int sc_main(int argc, char *argv[]){
 	sc_start();
 	auto now = chrono::high_resolution_clock::now();
 	auto diff = now - then;
-	cout << "Simulation time: " << (float) ((tb.MPSoC->pe[0]->tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
+	cout << endl << "Simulation time: " << (float) ((tb.MPSoC->pe[0]->tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
 	cout << "Wall time: " << chrono::duration_cast<chrono::duration<double>>(diff).count() << "s" << endl;
   	return 0;
 }
