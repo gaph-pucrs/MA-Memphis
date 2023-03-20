@@ -81,8 +81,8 @@ public:
 	BrLiteRouter(sc_module_name _name, uint16_t _address, std::string _path);
 
 private:
-	static const uint8_t CAM_SIZE = 8;
-	static const uint16_t CLEAR_INTERVAL = 150;
+	static const uint8_t CAM_SIZE = 16;
+	static const uint16_t CLEAR_INTERVAL = 200;
 
 	typedef struct _table {
 		sc_signal<bool>		used;
