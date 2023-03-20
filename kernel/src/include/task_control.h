@@ -400,3 +400,18 @@ tl_t *tcb_get_mapper(tcb_t *tcb);
  * @param ret Return value
  */
 void tcb_set_ret(tcb_t *tcb, int ret);
+
+/**
+ * @brief Gets the number of tasks in the PE
+ * 
+ * @return size_t Number of tasks
+ */
+size_t tcb_size();
+
+/**
+ * @brief Destroy all management task TCBs, leaving only the requester
+ * 
+ * @param requester TCB of the action requester
+ * @return int 0 if success, EFAULT if destroyed a non-management TCB
+ */
+int tcb_destroy_management(tcb_t *requester);

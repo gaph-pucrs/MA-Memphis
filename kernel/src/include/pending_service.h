@@ -42,3 +42,11 @@ packet_t *psvc_front();
  * @brief Removes the first element from the FIFO
  */
 void psvc_pop_front();
+
+/**
+ * @brief Checks if there are no more pending services
+ * 
+ * @return true No more pending services
+ * @return false Has pending services
+ */
+bool psvc_empty();

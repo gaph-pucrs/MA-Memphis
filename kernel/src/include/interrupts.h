@@ -275,3 +275,13 @@ bool isr_abort_task(int id);
  * @return False
  */
 bool isr_app_terminated(int id);
+
+/**
+ * @brief Asks to halt the PE
+ * 
+ * @param task Mapper task ID that requested the halt
+ * @param addr Address of the mapper task
+ * 
+ * @return false 
+ */
+bool isr_halt_pe(int task, int addr);

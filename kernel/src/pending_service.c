@@ -49,3 +49,8 @@ void psvc_pop_front()
 	if(list_empty(&_psvcs))
 		MMR_PENDING_SERVICE_INTR = 0;
 }
+
+bool psvc_empty()
+{
+	return list_empty(&_psvcs);
+}

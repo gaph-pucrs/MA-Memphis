@@ -25,6 +25,7 @@
 #include "interrupts.h"
 #include "broadcast.h"
 #include "pending_msg.h"
+#include "pending_service.h"
 #include "task_migration.h"
 #include "mmr.h"
 
@@ -88,6 +89,9 @@ tcb_t *sys_syscall(
 				break;
 			case SYS_getctx:
 				ret = sys_get_ctx(current, (mctx_t*)arg1);
+				break;
+			case SYS_halt:
+				ret = sys_end_simulation(current);
 				break;
 			case SYS_close:
 				ret = sys_close(arg1);
@@ -824,5 +828,50 @@ int sys_get_ctx(tcb_t *tcb, mctx_t *ctx)
 	real_ptr->PE_SLOTS = MMR_MAX_LOCAL_TASKS;
 	real_ptr->MC_SLOTS = real_ptr->PE_SLOTS * real_ptr->PE_CNT;
 
+	return 0;
+}
+
+int sys_halt(tl_t *tl)
+{
+	/* Check if there are migrated tasks in the list and halt later */
+	if(!(tm_empty() && psvc_empty())){
+		puts("DEBUG: Not halting now due to task migration");
+		return EAGAIN;
+	}
+
+	tcb_t *tcb = tcb_find(tl_get_task(tl));
+	if(tcb != NULL && tcb_size() > 1){
+		/* Check if error or if it has other management tasks */
+		int ret = tcb_destroy_management(tcb);
+		if(ret == EFAULT)
+			puts("WARN: possible memory leak in non-destroyed TCB");
+	}
+
+	if(tcb != NULL){
+		/* The app and sched list should be empty when there is no task running */
+		app_derefer(tcb_get_app(tcb));
+	}
+
+	/* Disable scheduler */
+	MMR_IRQ_MASK &= ~IRQ_SCHEDULER;
+	
+	/* Inform the mapper that this PE is ready to halt */
+	int pe_halted[] = {PE_HALTED, MMR_NI_CONFIG};
+	sys_kernel_writepipe(
+		pe_halted, 
+		sizeof(pe_halted), 
+		tl_get_task(tl), 
+		tl_get_addr(tl)
+	);
+
+	return 0;
+}
+
+int sys_end_simulation(tcb_t *tcb)
+{
+	if(tcb_get_id(tcb) >> 8 != 0)
+		return -EACCES;
+
+	MMR_END_SIM = 1;
 	return 0;
 }

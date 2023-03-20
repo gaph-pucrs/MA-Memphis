@@ -339,3 +339,8 @@ void tm_clear_app(int id)
 		entry = list_find(&_tms, &id, _tm_find_app_fnc);
 	}
 }
+
+bool tm_empty()
+{
+	return list_empty(&_tms);
+}

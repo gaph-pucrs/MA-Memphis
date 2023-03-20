@@ -21,6 +21,7 @@
 #define MMR_IRQ_STATUS				(*(volatile unsigned int*)0x20000020U)
 #define MMR_TIME_SLICE 				(*(volatile unsigned int*)0x20000060U)
 #define MMR_TASK_TERMINATED			(*(volatile unsigned int*)0x20000070U)	//!< Signals that a task terminated
+#define MMR_END_SIM 				(*(volatile unsigned int*)0x20000080U)
 #define MMR_CLOCK_HOLD				(*(volatile unsigned int*)0x20000090U)	//!< Clock hold register
 #define MMR_NI_CONFIG				(*(volatile unsigned int*)0x20000140U)	//!< Net address
 #define MMR_DMNI_SIZE 				(*(volatile unsigned int*)0x20000200U)	//!< Size of the packet to read

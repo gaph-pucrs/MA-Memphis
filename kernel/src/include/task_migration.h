@@ -143,3 +143,11 @@ void tm_abort_task(int id, int addr);
  * @param id Application ID
  */
 void tm_clear_app(int id);
+
+/**
+ * @brief Checks if the migrated app list is empty
+ * 
+ * @return true Is empty
+ * @return false Not empty
+ */
+bool tm_empty();

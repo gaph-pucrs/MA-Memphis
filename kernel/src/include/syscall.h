@@ -240,3 +240,23 @@ int sys_close(int file);
  * @return int 0
  */
 int sys_get_ctx(tcb_t *tcb, mctx_t *ctx);
+
+/**
+ * @brief Halts the execution
+ * 
+ * @details In fact, this function will stop the scheduler, free resources, and inform the mapper it is ready to indeed halt
+ * 
+ * @param tl Task location of the halter (mapper) task
+ * 
+ * @return int 0 case success, EAGAIN if should retry, EFAULT if impossible to halt.
+ */
+int sys_halt(tl_t *tl);
+
+/**
+ * @brief Ends the simulation
+ * 
+ * @param tcb TCB of the requester task
+ * 
+ * @return int 0 if success, EACCES if not permitted
+ */
+int sys_end_simulation(tcb_t *tcb);

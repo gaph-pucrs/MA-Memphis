@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <memphis/services.h>
 
@@ -355,4 +356,28 @@ tl_t *tcb_get_mapper(tcb_t *tcb)
 void tcb_set_ret(tcb_t *tcb, int ret)
 {
 	tcb->registers[HAL_REG_A0] = ret;
+}
+
+size_t tcb_size()
+{
+	return list_get_size(&_tcbs);
+}
+
+int tcb_destroy_management(tcb_t *requester)
+{
+	list_entry_t *entry = list_front(&_tcbs);
+	bool err = false;
+
+	while(entry != NULL){
+		tcb_t *tcb = list_get_data(entry);
+		if(tcb != requester){
+			if(tcb->id >> 8 != 0)
+				err = true;
+
+			tcb_terminate(tcb);
+		}
+		entry = list_next(entry);
+	}
+
+	return err ? EFAULT : 0;	
 }

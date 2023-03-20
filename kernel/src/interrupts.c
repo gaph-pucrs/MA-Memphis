@@ -27,6 +27,8 @@
 #include "mmr.h"
 #include "llm.h"
 
+tl_t *halter = NULL;
+
 tcb_t *isr_isr(unsigned status)
 {
 	// puts("INT");
@@ -166,6 +168,8 @@ bool isr_handle_broadcast(bcast_t *packet)
 			return isr_abort_task(task_field);
 		case APP_TERMINATED:
 			return isr_app_terminated(task_field);
+		case HALT_PE:
+			return isr_halt_pe(task_field, addr_field);
 		default:
 			printf(
 				"ERROR: unknown broadcast %x at time %d\n", 
@@ -1021,5 +1025,21 @@ bool isr_abort_task(int id)
 bool isr_app_terminated(int id)
 {
 	tm_clear_app(id);
-	return false;
+
+	if(halter == NULL)
+		return false;
+
+	return !sys_halt(halter);
+}
+
+bool isr_halt_pe(int task, int addr)
+{
+	/* Halt this PE */
+	/* We can only halt when all resources are released */
+	/* This allow us to check for memory leaks! */
+
+	halter = malloc(sizeof(tl_t));
+	tl_set(halter, task, addr);
+
+	return !sys_halt(halter);
 }
