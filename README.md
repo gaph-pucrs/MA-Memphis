@@ -107,15 +107,15 @@ memphis scenario example_testcase example_scenario.yaml
 
 ## Simulating
 
-To simulate the generated model, run the simulation in the generated scenario folder for a chosen time limit (here the example is 50 ms):
+To simulate the generated model, run the simulation in the generated scenario folder:
 
 ```console
-memphis simulate example_testcase/example_scenario 60
+memphis simulate example_testcase/example_scenario
 ```
 
 ## Evaluating and Debugging
 
-When the `memphis simulate` command executes, it runs the simulation and opens the graphical debugger. To avoid opening the debugger (for example in remote execution), insert the `--nogui` argument.
+When the `memphis simulate` command executes, it runs the simulation and opens the graphical debugger. To avoid opening the debugger (for example in remote access), insert the `--nogui` argument.
 To open manually after a simulation is already done, run:
 
 ```console
@@ -162,6 +162,16 @@ Check the [GraphicalDebugger](https://github.com/gaph-pucrs/GraphicalDebugger) r
 A [video](https://youtu.be/nvgtvFcCc60) in portuguese is available showing all features of the Debugger.
 
 # Acknowledgements
+
+* Monitoring framework
+```
+Dalzotto, A. E., Borges, C. S., Ruaro, M., and Moraes, F. G. (2022). Non-intrusive Monitoring Framework for NoC-based Many-Cores. In Proceedings of the Brazilian Symposium on Computing Systems Engineering (SBESC), pages 1-7.
+```
+
+* Migration heuristic
+```
+Dalzotto, A. E., Borges, C. S., Ruaro, M., and Moraes, F. G. (2022). Leveraging NoC-based Many-core Performance Through Runtime Mapping Defragmentation. In Proceedings of the International Conference on Electronics, Circuits, and Systems (ICECS), pages 1-6.
+```
 
 * Mapping heuristic
 ```
