@@ -28,6 +28,8 @@ typedef struct _map {
 	pe_t *pes;
 	
 	list_t apps;
+	bool finished;
+	unsigned finished_cnt;
 } map_t;
 
 void map_init(map_t *mapper);
@@ -53,3 +55,7 @@ void map_request_service(map_t *mapper, int address, unsigned tag, int requester
 void map_migration_map(map_t *mapper, int id);
 
 void map_task_migrated(map_t *mapper, int id);
+
+void map_request_finish(map_t *mapper);
+
+void map_pe_halted(map_t *mapper, int address);

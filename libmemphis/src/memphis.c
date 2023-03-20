@@ -155,3 +155,8 @@ size_t memphis_get_max_tasks(size_t *total)
 
 	return _ctx.PE_SLOTS;
 }
+
+int memphis_halt()
+{
+	return __internal_syscall(SYS_halt, 0, 0, 0, 0, 0, 0, 0);
+}

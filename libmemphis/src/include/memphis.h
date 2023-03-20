@@ -31,7 +31,8 @@ enum _syscall {
 	SYS_brall,
 	SYS_monptr,
 	SYS_brtgt,
-	SYS_getctx
+	SYS_getctx,
+	SYS_halt
 };
 
 /**
@@ -165,3 +166,10 @@ size_t memphis_get_nprocs(size_t *x, size_t *y);
  * @return size_t Number of maximum local tasks
  */
 size_t memphis_get_max_tasks(size_t *total);
+
+/**
+ * @brief Halts the simulation
+ * 
+ * @return int 0 success, EACCES if not allowed
+ */
+int memphis_halt();

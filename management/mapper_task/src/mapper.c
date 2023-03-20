@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <memphis.h>
 #include <memphis/services.h>
@@ -41,6 +42,9 @@ void map_init(map_t *mapper)
 		pe_init(&(mapper->pes[i]), MAX_TASKS, map_idx_to_coord(i));
 
 	list_init(&(mapper->apps));
+
+	mapper->finished = false;
+	mapper->finished_cnt = 0;
 }
 
 void _map_do(map_t *mapper, app_t *app)
@@ -410,6 +414,11 @@ void _map_terminate_app(map_t *mapper, app_t *app)
 	list_entry_t *entry = list_find(&(mapper->apps), app, NULL);
 	list_remove(&(mapper->apps), entry);
 	free(app);
+
+	if(mapper->finished && list_get_size(&(mapper->apps)) == 1){
+		/* Broadcast a request for a termination procedure */
+		memphis_br_send_all((memphis_get_addr() << 16) | getpid(), HALT_PE);
+	}
 }
 
 void _map_verify_pending(map_t *mapper)
@@ -640,4 +649,18 @@ void map_task_migrated(map_t *mapper, int id)
 
 	/* Mark as migration finished */
 	task_release(task);
+}
+
+void map_request_finish(map_t *mapper)
+{
+	mapper->finished = true;
+}
+
+void map_pe_halted(map_t *mapper, int address)
+{
+	mapper->finished_cnt++;
+
+	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
+	if(mapper->finished_cnt == N_PE)
+		memphis_halt();
 }
