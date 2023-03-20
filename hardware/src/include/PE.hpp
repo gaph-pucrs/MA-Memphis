@@ -56,6 +56,8 @@ SC_MODULE(PE) {
 	sc_out<uint8_t>		br_id_svc_out[NPORT - 1];
 	sc_out<uint8_t>		br_ksvc_out[NPORT - 1];
 
+	sc_signal<sc_uint<32>>	tick_counter;
+
 	RiscV			cpu;
 	ram			* 	mem;
 	DMNI 			dmni;
@@ -83,7 +85,6 @@ private:
 	sc_signal<sc_uint<32>> 	time_slice;
 	sc_signal<bool> 		write_enable;
 	sc_signal<sc_uint<32>>	tick_counter_local;
-	sc_signal<sc_uint<32>>	tick_counter;
 	sc_signal<sc_uint<8>>	current_page;
 
 	/* CPU */

@@ -24,7 +24,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	path(path_)
 {
 	mem_peripheral.write(0);
-	end_sim_reg.write(0x00000001);
+	end_sim_reg.write(0);
 
 	shift_mem_page = (unsigned char) (log10(PAGE_SIZE_BYTES)/log10(2));
 
@@ -373,7 +373,7 @@ void PE::comb_assignments(){
 	write_enable.write(((cpu_mem_write_byte_enable_reg.read() != 0)) ? 1  : 0 );
 	cpu_enable_ram.write(((cpu_mem_address.read()(30,28 ) == 0)) ? 1  : 0 );
 	dmni_enable_internal_ram.write(1);
-	end_sim_reg.write((((cpu_mem_address_reg.read() == END_SIM) && (write_enable.read() == 1))) ? 0x00000000 : 0x00000001);	
+	end_sim_reg.write((((cpu_mem_address_reg.read() == END_SIM) && (write_enable.read() == 1))) ? (int)cpu_mem_data_write_reg.read() : 0);	
 	
 	br_cfg_payload = cpu_mem_address_reg.read() == BR_PAYLOAD && write_enable;
 	br_cfg_address = cpu_mem_address_reg.read() == BR_TARGET && write_enable;
@@ -568,9 +568,7 @@ void PE::sequential_attr(){
 }
 
 void PE::end_of_simulation(){
-	if (end_sim_reg.read() == 0x00000000){
-		cout << "END OF ALL APPLICATIONS!!!" << endl;
-		cout << "Simulation time: " << (float) ((tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
+	if (end_sim_reg.read() == 1){
 		sc_stop();
 	}
 }

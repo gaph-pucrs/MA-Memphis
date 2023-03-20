@@ -33,13 +33,9 @@ def scenario_build(platform_path, testcase_folder, scenario_file):
 	scenario.copy()
 	scenario.build()
 
-def simulate(debugger_path, scenario_folder, time_limit, nogui):
+def simulate(debugger_path, scenario_folder, nogui):
 	if not exists(scenario_folder):
 		raise Exception("Scenario folder {} not found.".format(scenario_folder))
-
-	time_limit = int(time_limit)
-	if time_limit < 0:
-		raise Exception("Time limit of {} should be positive.".format(time_limit))
 
 	try:
 		remove_tree("{}/log".format(scenario_folder))
@@ -49,7 +45,7 @@ def simulate(debugger_path, scenario_folder, time_limit, nogui):
 	except:
 		pass
 
-	simulation = Popen(["{}/memphis".format(scenario_folder), "-c", "{}".format(time_limit)])
+	simulation = Popen(["{}/memphis".format(scenario_folder)])
 	if not nogui:
 		debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])
 
@@ -60,7 +56,7 @@ def simulate(debugger_path, scenario_folder, time_limit, nogui):
 	except KeyboardInterrupt:
 		pass
 
-def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, time_limit, nogui):
+def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, nogui):
 	testcase_build(platform_path, testcase_file)
 
 	testcase_name = testcase_file.split(".")
@@ -75,7 +71,7 @@ def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, time
 	scenario_name = scenario_name.split("/")
 	scenario_name = scenario_name[len(scenario_name) - 1]
 
-	simulate(debugger_path, "{}/{}".format(testcase_name, scenario_name), time_limit, nogui)
+	simulate(debugger_path, "{}/{}".format(testcase_name, scenario_name), nogui)
 
 def debug(debugger_path, scenario_folder):
 	if not exists(scenario_folder):
@@ -102,13 +98,11 @@ if __name__ == "__main__":
 
 	sim_parser = subparsers.add_parser("simulate", help="Simulate a scenario")
 	sim_parser.add_argument("SCENARIO_FOLDER", help="Path to generated scenario folder")
-	sim_parser.add_argument("TIME_LIMIT", help="Simulation time limit in milliseconds")
 	sim_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
 
 	all_parser = subparsers.add_parser("all", help="Simulate a scenario")
 	all_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
 	all_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
-	all_parser.add_argument("TIME_LIMIT", help="Simulation time limit in milliseconds")
 	all_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
 
 	dbg_parser = subparsers.add_parser("debug", help="Runs the debugger on a previous simulation")
@@ -163,20 +157,16 @@ if __name__ == "__main__":
 	if option == "scenario" or option == "all":
 		scenario_file = args.SCENARIO_FILE
 	
-	time_limit = ""
-	if option == "simulate" or option == "all":
-		time_limit = args.TIME_LIMIT
-
 	try:
 		if option == "testcase":
 			testcase_build(PLATFORM_PATH, testcase_file)
 		elif option == "scenario":
 			scenario_build(PLATFORM_PATH, testcase_folder, scenario_file)
 		elif option == "simulate":
-			simulate(DEBUGGER_PATH, scenario_folder, time_limit, nogui)
+			simulate(DEBUGGER_PATH, scenario_folder, nogui)
 		else:
 			# all
-			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, time_limit, nogui)
+			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, nogui)
 	except Exception as ex:
 		sys.exit("\nERROR: {}".format(ex))
 

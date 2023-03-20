@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
 
 using namespace std;
 
@@ -59,8 +60,8 @@ SC_MODULE(test_bench) {
 	std::string path;
 	
 	SC_HAS_PROCESS(test_bench);
-	test_bench(sc_module_name name_, const char *filename_= "output_master.txt", std::string program_path = "") :
-    sc_module(name_), filename(filename_)
+	test_bench(sc_module_name name_, std::string program_path = "") :
+    sc_module(name_)
     {
 		path = program_path.substr(0, program_path.find_last_of("/"));
 		fp = 0;
@@ -213,44 +214,19 @@ SC_MODULE(test_bench) {
 		}
 					
 	}
-	private:
-		const char *filename;
 };
 
 
 #ifndef MTI_SYSTEMC
 
 int sc_main(int argc, char *argv[]){
-	int time_to_run=0;
-	int i;
-	const char *filename = "output_master.txt";
-	
-	if(argc<3){
-		cout << "Sintax: " << argv[0] << " -c <milisecons to execute> [-o <output filename>]" << endl;
-		exit(EXIT_FAILURE);
-	}
-	
-	for (i = 1; i < argc; i++){/* Check for a switch (leading "-"). */
-		if (argv[i][0] == '-') {/* Use the next character to decide what to do. */
-			switch (argv[i][1]){
-				case 'c':
-					time_to_run = atoi(argv[++i]);
-				break;
-				case 'o':
-					filename = argv[++i];
-					cout << filename << endl;
-				break;
-				default:
-					cout << "Sintax: " << argv[0] << "-c <milisecons to execute> [-o <output name file>]" << endl;
-					exit(EXIT_FAILURE);
-				break;
-			}
-		}
-	}
-	
-	
-	test_bench tb("testbench",filename, argv[0]);
-	sc_start(time_to_run,SC_MS);
+	test_bench tb("testbench", argv[0]);
+	auto then = chrono::high_resolution_clock::now();
+	sc_start();
+	auto now = chrono::high_resolution_clock::now();
+	auto diff = now - then;
+	cout << "Simulation time: " << (float) ((tb.MPSoC->pe[0]->tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
+	cout << "Wall time: " << chrono::duration_cast<chrono::duration<double>>(diff).count() << "s" << endl;
   	return 0;
 }
 #endif
