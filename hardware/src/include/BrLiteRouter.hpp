@@ -82,7 +82,7 @@ public:
 
 private:
 	static const uint8_t CAM_SIZE = 16;
-	static const uint16_t CLEAR_INTERVAL = 200;
+	static const uint16_t CLEAR_INTERVAL = 220;
 
 	typedef struct _table {
 		sc_signal<bool>		used;
