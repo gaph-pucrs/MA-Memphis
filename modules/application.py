@@ -66,12 +66,7 @@ class Application:
 
 	def build(self):
 		NCPU = cpu_count()
-  
-		# CFLAGS = ""
-  
-		# for definition in self.definitions:
-			# CFLAGS = CFLAGS + "-D"+str(list(definition.keys())[0])+"="+str(list(definition.values())[0])+" "
-  
+    
 		make_env = environ.copy()
 		# make_env["CFLAGS"] = CFLAGS
 		try:
