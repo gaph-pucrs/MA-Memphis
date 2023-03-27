@@ -30,7 +30,7 @@ class Scenario:
 		tc_yaml = safe_load(open("{}/{}.yaml".format(self.testcase_path, tc_name), "r"))
 		self.page_size		= tc_yaml["hw"]["page_size_KB"]*1024
 
-		self.management = Management(yaml["management"], self.platform_path, self.testcase_path)
+		self.management = Management(yaml["management"], self.platform_path, self.base_dir, self.testcase_path)
 
 		self.applications = []
 		instances = {}

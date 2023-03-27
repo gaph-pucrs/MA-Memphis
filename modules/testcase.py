@@ -35,7 +35,7 @@ class Testcase:
 		if self.__is_obsolete():
 			remove_tree(self.base_dir)
 
-		makedirs(self.base_dir+"/management", exist_ok=True)
+		makedirs(self.base_dir, exist_ok=True)
 		copyfile(self.base, self.file)
 
 		self.libs.copy()
