@@ -13,9 +13,10 @@
 
 #include "DMNI.hpp"
 
-DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_) :
+DMNI::DMNI(sc_module_name name_, regmetadeflit address_router_, std::string path_) :
 	sc_module(name_), 
-	address_router(address_router_)
+	address_router(address_router_),
+	path(path_)
 {
 
 	SC_METHOD(arbiter);
@@ -232,6 +233,7 @@ void DMNI::buffer_control(){
 void DMNI::receive()
 {
 	if(reset){
+		tick_cnt = 0;
 		first.write(0);
 		last.write(0);
 		payload_size.write(0);
@@ -245,6 +247,8 @@ void DMNI::receive()
 		}
 		return;
 	}
+
+	tick_cnt++;
 
 	sc_uint<4> intr_counter_temp = intr_count.read();
 
@@ -269,12 +273,26 @@ void DMNI::receive()
 				is_header[last.read()] = 0;
 				payload_size.write(data_in.read() - 1);
 				SR.write(DATA);
+				flit_cntr = 2;
 			break;
 
 			case DATA:
+				flit_cntr++;
+				if(flit_cntr == 3)
+					is_delivery = (data_in.read() == 1);
+				else if(flit_cntr == 5)
+					consumer = data_in.read();
+				else if(flit_cntr == 7)
+					timestamp = data_in.read();
+
 				is_header[last.read()] = 0;
 				if (payload_size.read() == 0){
 					SR.write(HEADER);
+					if(is_delivery){
+						fstream dmni_log(path+"/debug/dmni.log", fstream::out | fstream::app);
+						dmni_log << tick_cnt << '\t' << (tick_cnt - timestamp) << '\t' << consumer << endl;
+						dmni_log.flush();
+					}
 				} else {
 					payload_size.write(payload_size.read() - 1);
 				}

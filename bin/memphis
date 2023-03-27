@@ -42,6 +42,7 @@ def simulate(debugger_path, scenario_folder, nogui):
 		makedirs("{}/log".format(scenario_folder))
 		open("{}/debug/scheduling_report.txt", 'w').close()
 		open("{}/debug/traffic_router.txt", 'w').close()
+		open("{}/debug/dmni.log", 'w').close()
 	except:
 		pass
 

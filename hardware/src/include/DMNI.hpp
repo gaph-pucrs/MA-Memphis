@@ -14,6 +14,7 @@
 #pragma once
 
 #include <systemc>
+#include <fstream>
 
 #include "standards.h"
 
@@ -70,13 +71,19 @@ public:
 	sc_in<uint32_t>			br_payload;
 
 	SC_HAS_PROCESS(DMNI);
-	DMNI(sc_module_name name_, regmetadeflit address_router_ = 0);
+	DMNI(sc_module_name name_, regmetadeflit address_router_ = 0, std::string path_ = "");
 
 private:
 	static const uint8_t BUFFER_SIZE = 16; /* Changing size implies changing the number of bits of first and last */
 	static const uint8_t DMNI_TIMER = 16;
 	static const uint8_t WORD_SIZE = 4;
 	static const uint8_t TASK_PER_PE = (MEMORY_SIZE_BYTES-PAGE_SIZE_BYTES)/PAGE_SIZE_BYTES;
+
+	unsigned tick_cnt;
+	unsigned timestamp;
+	unsigned flit_cntr;
+	int consumer;
+	bool is_delivery;
 
 	enum dmni_state {
 		WAIT, 
@@ -106,6 +113,8 @@ private:
 	};
 
 	regmetadeflit address_router;
+
+	std::string path;
 
 	sc_signal<dmni_state>	 DMNI_Send, DMNI_Receive;
 	sc_signal<state_noc>	 SR;
