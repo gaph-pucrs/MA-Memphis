@@ -219,10 +219,36 @@ SC_MODULE(test_bench) {
 
 #ifndef MTI_SYSTEMC
 
-int sc_main(int argc, char *argv[]){
+int sc_main(int argc, char *argv[])
+{
+	int timeout = -1;
+
+	if(argc == 3){
+		for(int i = 0; i < argc; i++){
+			if(argv[i][0] == '-'){
+				switch(argv[i][1]){
+					case 't':
+						timeout = std::stoi(argv[++i]);
+						break;
+					default:
+						cout << "Syntax: " << argv[0] << " [-t <milliseconds timeout>]" << endl;
+						exit(-1);
+				}
+			}
+		}
+	} else if(argc > 3){
+		cout << "Syntax: " << argv[0] << " [-t <milliseconds timeout>]" << endl;
+		exit(-1);
+	}
+
 	test_bench tb("testbench", argv[0]);
 	auto then = chrono::high_resolution_clock::now();
-	sc_start();
+	
+	if(timeout != -1)
+		sc_start(timeout, SC_MS);
+	else
+		sc_start();
+
 	auto now = chrono::high_resolution_clock::now();
 	auto diff = now - then;
 	cout << endl << "Simulation time: " << (float) ((tb.MPSoC->pe[0]->tick_counter.read() * 10.0f) / 1000.0f / 1000.0f) << "ms" << endl;
