@@ -81,7 +81,9 @@ private:
 
 	unsigned tick_cnt;
 	unsigned timestamp;
+	unsigned noc_time;
 	unsigned flit_cntr;
+	int producer;
 	int consumer;
 	bool is_delivery;
 

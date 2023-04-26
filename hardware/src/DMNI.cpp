@@ -274,23 +274,37 @@ void DMNI::receive()
 				payload_size.write(data_in.read() - 1);
 				SR.write(DATA);
 				flit_cntr = 2;
+				noc_time = tick_cnt;
 			break;
 
 			case DATA:
 				flit_cntr++;
-				if(flit_cntr == 3)
+				if(flit_cntr == 3) {
 					is_delivery = (data_in.read() == 1);
-				else if(flit_cntr == 5)
+				} else if(flit_cntr == 4){
+					producer = data_in.read();
+				} else if(flit_cntr == 5){
 					consumer = data_in.read();
-				else if(flit_cntr == 7)
+				} else if(flit_cntr == 7){
 					timestamp = data_in.read();
+				}
 
 				is_header[last.read()] = 0;
 				if (payload_size.read() == 0){
 					SR.write(HEADER);
 					if(is_delivery){
 						fstream dmni_log(path+"/debug/dmni.log", fstream::out | fstream::app);
-						dmni_log << tick_cnt << '\t' << (tick_cnt - timestamp) << '\t' << consumer << endl;
+						dmni_log << 
+							tick_cnt << 
+							'\t' << 
+							(tick_cnt - timestamp) << 
+							'\t' << 
+							consumer << 
+							'\t' << 
+							producer << 
+							'\t' <<
+							(noc_time - timestamp) <<
+							endl;
 						dmni_log.flush();
 					}
 				} else {
