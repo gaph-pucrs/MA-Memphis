@@ -25,7 +25,7 @@ public:
 	BrLiteBuffer(sc_core::sc_module_name _name);
 
 private:
-	static const uint8_t BR_BUFFER_SIZE = 8;
+	static const uint8_t BR_BUFFER_SIZE = 16;
 
 	typedef struct _buffer {
 		sc_core::sc_signal<uint32_t> payload;
