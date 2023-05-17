@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file llm.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -13,35 +13,69 @@
 
 #include "llm.h"
 
-#include "syscall.h"
-#include "services.h"
+#include <stdlib.h>
 
-void llm_rt(tcb_t *tasks)
+#include <memphis.h>
+#include <memphis/monitor.h>
+#include <memphis/services.h>
+
+#include "mmr.h"
+#include "interrupts.h"
+#include "broadcast.h"
+
+observer_t _observers[MON_MAX];
+
+void llm_init()
 {
-	static unsigned last_rt[PKG_MAX_LOCAL_TASKS];
-	
+	for(int i = 0; i < MON_MAX; i++)
+		_observers[i].addr = -1;
+}
+
+void llm_set_observer(enum MONITOR_TYPE type, int addr)
+{
+	int pe_addr = MMR_NI_CONFIG;
+	uint8_t pe_x = pe_addr >> 8;
+	uint8_t pe_y = pe_addr & 0xFF;
+	uint8_t obs_x = addr >> 8;
+	uint8_t obs_y = addr & 0xFF;
+	uint16_t dist = abs(pe_x - obs_x) + abs(pe_y - obs_y);
+
+	if(_observers[type].addr == -1 || _observers[type].dist > dist){
+		_observers[type].addr = addr;
+		_observers[type].dist = dist;
+	}
+}
+
+void llm_clear_table(int task_id)
+{
+	isr_clear_mon_table(task_id);
+
+	bcast_t packet;
+	packet.service = CLEAR_MON_TABLE;
+	packet.src_id = -1;
+
+	packet.payload = task_id;
+
+	while(!bcast_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL));
+}
+
+bool llm_has_monitor(int mon_id)
+{
+	return (_observers[MON_QOS].addr != -1);
+}
+
+void llm_rt(unsigned *last_monitored, int id, unsigned slack_time, unsigned remaining_exec_time)
+{
 	unsigned now = MMR_TICK_COUNTER;
 
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		int id = tasks[i].id;
+	if(now - (*last_monitored) < MON_INTERVAL_QOS)
+		return;
 
-		if(id == -1 || (id >> 8) == 0 || tasks[i].observer_task == -1 || tasks[i].scheduler.deadline == -1 || tasks[i].proc_to_migrate != -1)
-			continue; /* Don't send MA task status or non-RT tasks or non-existent tasks or tasks marked to migrate */
-
-		if(now - last_rt[i] >= PKG_MONITOR_INTERVAL_QOS){
-			int message[5] = {
-				MONITOR, 
-				id,
-				tasks[i].scheduler.waiting_msg,
-				tasks[i].scheduler.slack_time, 
-				tasks[i].scheduler.remaining_exec_time
-			};
-
-			if(!MMR_DMNI_SEND_ACTIVE){
-				/* Avoid flooding DMNI and hanging too much time in LLM */
-				os_kernel_writepipe(tasks[i].observer_task, tasks[i].observer_address, 5, message);
-				last_rt[i] = now;
-			}
-		}
-	}
+	bcast_t packet;
+	packet.service = MONITOR;
+	packet.src_id = id;
+	packet.payload = slack_time - remaining_exec_time;
+	
+	if(bcast_send(&packet, _observers[MON_QOS].addr, MON_QOS))
+		*last_monitored = now;
 }

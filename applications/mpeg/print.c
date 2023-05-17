@@ -17,18 +17,18 @@ DESCRIPTION: This file contains the task3
 
 typedef int type_DATA; //unsigned
 
-message_t msg1;
 
 int main()
 {
     // unsigned int time_a, time_b;
     int i;
+    type_DATA block[64];
 
     puts("MPEG Task PRINT start:\n");
 
     for(i=0;i<MPEG_FRAMES;i++)
     {
-        memphis_receive(&msg1,idct);
+        memphis_receive(block, sizeof(block), idct);
         //printf("%d\n", memphis_get_tick());
     }
 

@@ -1,73 +1,133 @@
 /**
- * 
+ * MA-Memphis
  * @file task_location.c
- *
- * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * 
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  * 
- * @date June 2016
+ * @date August 2022
  * 
- * @brief Identify where other tasks are allocated.
+ * @brief Controls task locations for messaging and mapping
  */
 
-#include <stddef.h>
-
 #include "task_location.h"
-#include "services.h"
-#include "packet.h"
-#include "syscall.h"
 
-void tl_init(tcb_t *tcb)
+#include <stdlib.h>
+
+#include <memphis.h>
+#include <memphis/services.h>
+
+#include "dmni.h"
+#include "broadcast.h"
+
+bool _tl_find_fnc(void *data, void* cmpval)
 {
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++)
-		tcb->task_location[i] = -1;
+	tl_t *tl = (tl_t*)data;
+	int task = *((int*)cmpval);
+
+	return (tl->task == task);
 }
 
-bool tl_send_allocated(tcb_t *allocated_task)
+tl_t *tl_find(list_t *list, int task)
 {
-	int task_allocated[2] = {TASK_ALLOCATED, allocated_task->id};
-	return os_kernel_writepipe(allocated_task->mapper_task, allocated_task->mapper_address, 2, task_allocated);
+	list_entry_t *entry = list_find(list, &task, _tl_find_fnc);
+
+	if(entry == NULL)
+		return NULL;
+
+	return list_get_data(entry);
 }
 
-void tl_insert_update(tcb_t *tcb, int id, int addr)
+void tl_remove(list_t *list, tl_t *tl)
 {
-	tcb->task_location[id & 0x00FF] = addr;
+	list_entry_t *entry = list_find(list, tl, NULL);
+	
+	if(entry == NULL)
+		return;
+	
+	list_remove(list, entry);
+
+	free(tl);
 }
 
-bool tl_send_terminated(tcb_t *tcb)
+tl_t *tl_emplace_back(list_t *list, int task, int addr)
 {
-	int task_terminated[2] = {TASK_TERMINATED, tcb->id};
-	return os_kernel_writepipe(tcb->mapper_task, tcb->mapper_address, 2, task_terminated);
-}
+	tl_t *tl = malloc(sizeof(tl_t));
+	
+	if(tl == NULL)
+		return NULL;
 
-int tl_search(tcb_t *tcb, int task)
-{
-	return tcb->task_location[task & 0x00FF];
-}
+	tl->task = task;
+	tl->addr = addr;
 
-unsigned int tl_get_len(tcb_t *tcb)
-{
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
-		if(tcb->task_location[i] == -1)
-			return i;
+	if(list_push_back(list, tl) == NULL){
+		free(tl);
+		return NULL;
 	}
-	return PKG_MAX_TASKS_APP;
+
+	return tl;
 }
 
-int *tl_get_ptr(tcb_t *tcb)
+int tl_get_task(tl_t *tl)
 {
-	return tcb->task_location;
+	return tl->task;
 }
 
-void tl_update_local(int id, int addr)
+int tl_get_addr(tl_t *tl)
 {
-	tcb_t *tcbs = tcb_get();
+	return tl->addr;
+}
 
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if((tcbs[i].id & 0xFF00) == (id & 0xFF00)){
-			/* Task of the same app. Update. */
-			tl_insert_update(&(tcbs[i]), id, addr);
-		}
+void tl_send_dav(tl_t *dav, int cons_task, int cons_addr)
+{
+	if(cons_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
+
+		pkt_set_data_av(packet, cons_addr, dav->task, cons_task, dav->addr);
+
+		dmni_send(packet, NULL, 0, false);
+	} else {
+		bcast_t packet;
+
+		packet.service = DATA_AV;
+		packet.src_id = (dav->task & MEMPHIS_KERNEL_MSG) ? -1 : dav->task;
+		packet.payload = ((cons_task & MEMPHIS_KERNEL_MSG) ? -1 : cons_task) & 0xFFFF;
+		packet.payload |= dav->addr << 16;
+		// puts("Sending DATA_AV via BrNoC\n");
+		while(!bcast_send(&packet, cons_addr, BR_SVC_TGT));
 	}
+}
+
+void tl_send_msgreq(tl_t *msgreq, int prod_task, int prod_addr)
+{
+	if(prod_task & MEMPHIS_FORCE_PORT){
+		/* Message directed to peripheral, send via Hermes */
+		packet_t *packet = pkt_slot_get();
+
+		pkt_set_message_request(packet, prod_addr, msgreq->addr, prod_task, msgreq->task);
+
+		// puts("Sending MESSAGE_REQUEST via DMNI");
+
+		dmni_send(packet, NULL, 0, false);
+	} else {
+		bcast_t packet;
+
+		packet.service = MESSAGE_REQUEST;
+		packet.src_id = (msgreq->task & MEMPHIS_KERNEL_MSG) ? -1 : msgreq->task;
+		packet.payload = (
+				(prod_task & MEMPHIS_KERNEL_MSG) ? -1 : prod_task
+			) & 
+			0xFFFF;
+		packet.payload |= msgreq->addr << 16;
+		// puts("Sending MESSAGE_REQUEST via BrNoC");
+		while(!bcast_send(&packet, prod_addr, BR_SVC_TGT));
+	}
+}
+
+void tl_set(tl_t *tl, int task, int addr)
+{
+	tl->task = task;
+	tl->addr = addr;
 }

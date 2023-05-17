@@ -5,7 +5,7 @@
 #include "syn_std.h"
 
 //Message structure of MEMPHIS, provided by api.h
-message_t msg;
+int msg[128];
 
 int main()
 {
@@ -15,14 +15,14 @@ int main()
 	for(int i=0;i<SYNTHETIC_ITERATIONS;i++)
 	{
 
-		memphis_receive(&msg, taskB);
-		memphis_receive(&msg, taskC);
+		memphis_receive(msg, sizeof(msg), taskB);
+		memphis_receive(msg, sizeof(msg), taskC);
 
 	}
 
 	puts("Final message\n");
-	for(int j=0; j<msg.length; j++){
-		printf("%d\n",msg.payload[j]);
+	for(int j=0; j<128; j++){
+		printf("%d\n",msg[j]);
 	}
 
 

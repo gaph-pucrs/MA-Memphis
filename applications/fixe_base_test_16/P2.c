@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -77,7 +77,7 @@ int mult(int a, int b)
 	return res;
 }
 
-int div(int a, int b)
+int div_fixed(int a, int b)
 {
 	int i;
 	int res=0;
@@ -93,7 +93,7 @@ int div(int a, int b)
 		return -1;
 	}
 
-    /*récupère la partie entière du résultat de la division*/
+    /*récupère la partie entière du résultat de la div_fixedision*/
 	entier=a/b;
 
 	/*calcul le résultat entier avec FIXE zéros derrières*/
@@ -153,7 +153,6 @@ int div(int a, int b)
 
 
 
-message_t msg1,msg2;
 
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970
@@ -184,7 +183,7 @@ void calcul_moyenne(int* moyenne)
 		  {
 		     	sum=add(sum,tabdata[j]);
 		  }
-          moyenne[m]=div(sum,data_val);
+          moyenne[m]=div_fixed(sum,data_val);
 	    }
 }
 
@@ -193,20 +192,17 @@ int main()
 {
 	puts("start Processeur 2\n");
 
-    int moyenne[size],i;
+    int moyenne[size];
 
 	calcul_moyenne(moyenne);
 
-    msg1.length=size;
-    for(i=0;i<size;i++)
-         msg1.payload[i]=moyenne[i];
 
     printf("Valeur de la moyenne: %d\n", moyenne[0]);
 
-    memphis_send(&msg1,RMS);
-    memphis_send(&msg1,WRMS);
-    memphis_send(&msg1,GFC);
-    memphis_send(&msg1,XYZ2);
+    memphis_send(moyenne, sizeof(moyenne), RMS);
+	memphis_send(moyenne, sizeof(moyenne), WRMS);
+	memphis_send(moyenne, sizeof(moyenne), GFC);
+	memphis_send(moyenne, sizeof(moyenne), XYZ2);
 
     puts("Communication Processeur 2 finished.\n");
 

@@ -2,6 +2,7 @@
 from distutils.dir_util import copy_tree
 from subprocess import run
 from multiprocessing import cpu_count
+from os import environ
 
 class Hardware:
 	def __init__(self, hw, platform_path, testcase_path):
@@ -10,6 +11,11 @@ class Hardware:
 		self.PKG_N_PE_X 			= hw["mpsoc_dimension"][0]
 		self.PKG_N_PE_Y 			= hw["mpsoc_dimension"][1]
 		self.peripherals			= hw["Peripherals"]
+
+		try:
+			self.definitions = hw["definitions"]
+		except:
+			self.definitions = {}
 
 		self.memory_size = self.PKG_PAGE_SIZE*(self.PKG_MAX_LOCAL_TASKS + 1) # 1 page for kernel
 
@@ -58,7 +64,15 @@ class Hardware:
 
 	def build(self):
 		NCPU = cpu_count()
-		make = run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)])
+		CFLAGS = ""
+  
+		for definition in self.definitions:
+			CFLAGS = CFLAGS + "-D"+str(list(definition.keys())[0])+"="+str(list(definition.values())[0])+" "
+  
+		make_env = environ.copy()
+		make_env["CFLAGS"] = CFLAGS
+
+		make = run(["make", "-C", self.testcase_path+"/hardware", "-j", str(NCPU)], env=make_env)
 		if make.returncode != 0:
 			raise Exception("Error building hardware.")
 
@@ -80,7 +94,7 @@ class HardwareDefinitions:
 		io_pe = 0
 
 		for pe in range(n_pe):
-			if pe == io_list[io_pe][0]:
+			if io_pe < len(io_list) and pe == io_list[io_pe][0]:
 				self.lines.append(str(io_list[io_pe][1])+",")
 				io_pe = io_pe + 1
 			else:

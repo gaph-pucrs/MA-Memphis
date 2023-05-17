@@ -3,71 +3,62 @@ NC   =\033[0m # No Color
 
 TARGET = kernel
 
-ifeq ($(ARCH),)
-	ARCH = mipsi
-endif
-
-CC = mips-elf-gcc
-AS = mips-elf-as
-LD = mips-elf-ld
-OBJDUMP = mips-elf-objdump
-OBJCOPY = mips-elf-objcopy
+CC = riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
 SRCDIR = src
 INCDIR = $(SRCDIR)/include
-DEFDIR = ../include
-HALDIR = hal/$(ARCH)
+HALDIR = hal
 
-LIBDIR = ../lib/src
-INCLIB = $(LIBDIR)/include
+LIBMEMPHISDIR = ../libmemphis/src
+LIBUTILSDIR = ../libmutils/src
+INCMEMPHIS = $(LIBMEMPHISDIR)/include
+INCMUTILS = $(LIBUTILSDIR)/include
 
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
+CFLAGS  = -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -flto -Wall -std=c11 -I$(INCDIR) -I$(INCMEMPHIS) -I$(INCMUTILS) -I$(HALDIR)
+LDFLAGS = --specs=nano.specs -march=rv32im -mabi=ilp32 -nostartfiles -Wl,--section-start=".init"=0,--gc-sections,-flto -L../libmutils -lmutils
 
-CFLAGS = -O2 -Wall -fno-builtin -ffreestanding -G 0 -std=c99 -I$(INCDIR) -I$(DEFDIR) -I$(HALDIR) -I$(INCLIB) --include kernel_definitions.h
-
-CCSRC = $(wildcard $(SRCDIR)/*.c)
+CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(HALDIR)/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
-ASSRC = $(wildcard $(HALDIR)/*.s)
-ASOBJ = $(patsubst %.s,%.o, $(ASSRC))
+ASSRC = $(wildcard $(HALDIR)/*.S)
+ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
 all: $(TARGET).txt $(TARGET).lst
 
 $(TARGET).txt: $(TARGET).bin
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo $< $@ -I elf32-bigmips -O binary
+	@$(OBJCOPY) $< $@ -O binary
 
-$(TARGET).elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
+$(TARGET).elf: $(CCOBJ) $(ASOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET).map -s -N -o $@
+	@$(CC) $^ -Wl,-Map=$(TARGET).map -N -o $@ $(LDFLAGS)
 
-$(TARGET).lst: $(TARGET)_debug.elf
+$(TARGET).lst: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJDUMP) -S $< > $@
-
-$(TARGET)_debug.elf: $(CCOBJ) $(ASOBJ) $(LIBOBJ)
-	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(LD) $^ --section-start=".init"=0 -Map $(TARGET)_debug.map -s -N -o $@
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(HALDIR)/%.o: $(HALDIR)/%.s
+$(HALDIR)/%.o: $(HALDIR)/%.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(AS) $< -o $@ --defsym sp_addr=$(PAGE_SP_INIT)
+	@$(CC) -c $< -o $@ -Dsp_addr=$(PAGE_SP_INIT) $(CFLAGS) -march=rv32im_zicsr
 
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../lib
+$(HALDIR)/%.o: $(HALDIR)/%.c
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS)
 
 clean:
 	@printf "Cleaning up\n"
-	@rm -rf *.o
+	@rm -rf src/*.o
+	@rm -rf hal/*.o
 	@rm -rf *.bin
 	@rm -rf *.map
 	@rm -rf *.lst

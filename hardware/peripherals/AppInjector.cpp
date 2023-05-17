@@ -8,6 +8,8 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
+#include <array>
+
 #include "AppInjector.hpp"
 
 /* VHDL integration */
@@ -127,6 +129,10 @@ void AppInjector::monitor_new_app()
 
 					monitor_state = MONITOR_WAIT_TIME;
 					// std::cout << "AppInj: app found. Will wait time" << std::endl;
+				} else {
+					/* End of applications: Send a message to the mapper task so we can end the simulation when all tasks finish */
+					request_finish();
+					monitor_state = MONITOR_SEND_FINISH;
 				}
 			} else {
 				std::cout << "Unable to open file " << path << "/" << "app_start.txt" << std::endl;
@@ -163,6 +169,10 @@ void AppInjector::monitor_new_app()
 				}
 			}
 			break;
+		case MONITOR_SEND_FINISH:
+			if(send_pkt_state == SEND_FINISHED)
+				monitor_state = MONITOR_IDLE;
+			break;
 		}
 	}
 }
@@ -193,6 +203,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 		packet.push_back(0);
 
 		packet.push_back(NEW_APP);				/* Protocol: NEW_APP */
+		packet.push_back(APP_INJECTOR_ADDRESS);
 
 		std::string line;
 		std::getline(repository, line);			/* Task cnt */
@@ -207,12 +218,13 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 			std::getline(repository, line);		/* data */
 			std::getline(repository, line);		/* bss */
 			std::getline(repository, line);		/* addr */
+			std::getline(repository, line);		/* entry point */
 		}
 
 		static_mapping.clear();
 
-		/* Base length is 2 flits per task + 2 header flits */
-		unsigned message_len = task_cnt * 2 + 2;
+		/* Base length is 2 flits per task + 3 header flits */
+		unsigned message_len = task_cnt * 2 + 3;
 
 		for(unsigned i = 0; i < task_cnt; i++){
 			int successor = 0;
@@ -228,7 +240,7 @@ void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std
 
 		/* Fill previous flits */
 		packet[1] = packet_size - 2;
-		packet[8] = message_len;
+		packet[8] = message_len << 2;
 
 		// for(unsigned i = 0; i < packet_size; i++){
 		// 	std::cout << hex << packet[i] << std::endl;
@@ -316,6 +328,9 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		std::getline(repository, line);
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
+		std::getline(repository, line);
+		unsigned entry_point = std::stoul(line, nullptr, 16);
+		// std::cout << "Entry point: " << bss_size << std::endl;
 
 		std::getline(repository, line);
 		unsigned init_addr = std::stoul(line, nullptr, 16);
@@ -346,7 +361,7 @@ void AppInjector::task_allocation_loader(unsigned id, unsigned addr, unsigned ma
 		packet.push_back(data_size);
 		packet.push_back(txt_size);
 		packet.push_back(bss_size);
-		packet.push_back(0);
+		packet.push_back(entry_point);
 
 		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
 			std::getline(repository, line);
@@ -548,7 +563,7 @@ void AppInjector::send_packet(){
 						std::cout << "ERROR: packet has an NULL pointer at time " << tick_cnt <<  std::endl;
 					}
 				}
-			} else if(monitor_state == MONITOR_SEND_NEW_APP){
+			} else if(monitor_state == MONITOR_SEND_NEW_APP || monitor_state == MONITOR_SEND_FINISH){
 				/* Send a packet synchronously: DATA_AV -> MESSAGE_REQUEST -> MESSAGE_DELIVERY */
 				if(credit_in.read()){
 					/* Can send */
@@ -653,4 +668,28 @@ void AppInjector::send_packet(){
 			break;
 		}
 	}
+}
+
+void AppInjector::request_finish(){
+		std::cout << "AppInjector: No more applications to load" << std::endl;
+
+		unsigned packet_size = CONSTANT_PACKET_SIZE + 1;
+
+		packet.clear();
+
+		packet.push_back(mapper_address);		/* Header: mapper task address */
+		packet.push_back(packet_size - 2);		/* Payload size */
+		packet.push_back(MESSAGE_DELIVERY);		/* Service */
+		packet.push_back(APP_INJECTOR_ADDRESS);	/* producer_task */
+		packet.push_back(0x0000);				/* consumer_task: mapper task id */
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(4);					/* Message length */
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(0);
+		packet.push_back(0);
+
+		packet.push_back(REQUEST_FINISH);		/* Protocol */
 }

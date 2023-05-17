@@ -4,14 +4,14 @@
 
 Install the compiler tools (build-essential) and git, 
 ```console
-# apt update
-# apt install build-essential git
+apt update
+apt install build-essential git
 ```
 
 ## Arch (pacman/aur distros)
 
 Run:
 ```console
-# pacman -Syu
-# pacman -S base-devel coreutils --needed
+pacman -Syu
+pacman -S base-devel coreutils --needed
 ```

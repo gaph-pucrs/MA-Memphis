@@ -28,7 +28,6 @@ unsigned int vlc_array[128] = { // array containing the compressed data stream
                                  0xa7,0x3c,0x73,0xb6,0x31,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
-message_t msg1;
 
 int main(){
 
@@ -39,16 +38,13 @@ int main(){
    //printf("%d\n", memphis_get_tick());
 
 
-   for(i=0; i<128; i++)
-        msg1.payload[i] = vlc_array[i];
 
 
-    msg1.length = 128;
 
     for(i=0;i<MPEG_FRAMES;i++)                          // send 8 times the array to task 2
 	   {
 		   time_a = memphis_get_tick();
-		   memphis_send(&msg1,ivlc);
+		   memphis_send(vlc_array, sizeof(vlc_array), ivlc);
 		   time_b = memphis_get_tick();
 
            printf("TI: %d\n", time_a);

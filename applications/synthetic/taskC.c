@@ -5,7 +5,7 @@
 #include "syn_std.h"
 
 //MEMPHIS message structure
-message_t msg;
+int msg[128];
 
 int main()
 {
@@ -15,11 +15,11 @@ int main()
 	for(int i=0;i<SYNTHETIC_ITERATIONS;i++)
 	{
 
-		memphis_receive(&msg, taskA);
+		memphis_receive(msg, sizeof(msg), taskA);
 
-		compute((unsigned int*)&msg.payload);
+		compute((unsigned int*)msg);
 
-		memphis_send(&msg,taskD);
+		memphis_send(msg, sizeof(msg), taskD);
 	}
 
     puts("Task C finished at time\nm");

@@ -1,32 +1,36 @@
-/*
- * prod.c
- *
- *  Created on: 07/03/2013
- *      Author: mruaro
+/**
+ * MA-Memphis
+ * @file prod.c
+ * 
+ * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2013
+ * 
+ * @brief Producer task of a Producer-Consumer test application 
  */
 
-#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "prod_cons_std.h"
 
-message_t msg;
+#include <memphis.h>
+
+#include "prod_cons_std.h"
 
 int main()
 {
-	int i;
+	puts("Inicio da aplicacao prod");
 
-	puts("Inicio da aplicacao prod\n");
+	int *msg = malloc(PROD_CONS_MSG_SIZE*sizeof(int));
 
-	for(i=0;i<PKG_MAX_MSG_SIZE;i++) msg.payload[i]=i;
-	msg.length = PKG_MAX_MSG_SIZE;
+	for(int i = 0; i < PROD_CONS_MSG_SIZE; i++) 
+		msg[i] = i;
 
-	msg.payload[9]=0xBA;
-
-	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		memphis_send(&msg, cons);
+	for(int i = 0; i < PROD_CONS_ITERATIONS; i++){
+		memphis_send(msg, PROD_CONS_MSG_SIZE*sizeof(int), cons);
 	}
 
-	puts("Fim da aplicacao prod\n");
+	puts("Fim da aplicacao prod");
 	return 0;
 }

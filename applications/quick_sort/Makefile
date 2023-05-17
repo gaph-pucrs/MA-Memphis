@@ -7,45 +7,30 @@ SRC = $(wildcard $(SRCDIR)/*.c)
 TARGET = $(patsubst %.c, %.txt, $(SRC))
 ELFS = $(patsubst %.c, %.elf, $(SRC))
 
-INCLIB = ../../lib/src/include
+CC = riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99 -I$(INCLIB) --include id_tasks.h
-CC		= mips-elf-gcc
-AS		= mips-elf-as
-LD		= mips-elf-ld
-OBJCOPY	= mips-elf-objcopy
-
-LIBDIR = ../../lib/src
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
-
-BOOTDIR = ../../bootloader/mipsi
-BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
-BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
+CFLAGS	+= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c99
+LDFLAGS += -march=rv32im -mabi=ilp32 -Wl,--gc-sections -lmemphis -lmutils
 
 all: $(TARGET) $(ELFS)
 
 $(SRCDIR)/%.txt: $(SRCDIR)/%.bin
 	@printf "${GREEN}Dumping task: %s ...${NC}\n" "$<"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(SRCDIR)/%.bin: $(SRCDIR)/%.elf
 	@printf "${GREEN}Generating binary for task: %s ...${NC}\n" "$<"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
-$(SRCDIR)/%.elf: $(SRCDIR)/%.o $(BOOTOBJ) $(LIBOBJ)
+$(SRCDIR)/%.elf: $(SRCDIR)/%.o $(LIBOBJ)
 	@printf "${GREEN}Linking task: %s ...${NC}\n" "$<"
-	@$(LD) $^ --section-start=".init"=0 -s -N -o $@
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${GREEN}Compiling task: %s ...${NC}\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
-
-$(BOOTDIR)/%.o: $(BOOTDIR)/%.s
-	@make -C $(BOOTDIR)
-
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../../lib
 
 clean:
 	@printf "Cleaning up\n"
@@ -55,3 +40,5 @@ clean:
 	@rm -rf *.lst
 	@rm -rf *.txt
 	@rm -rf *.elf
+
+.PHONY: clean

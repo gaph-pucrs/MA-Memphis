@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_control.h
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -16,46 +16,41 @@
 
 #pragma once
 
-#include "pipe.h"
-#include "message_request.h"
-#include "data_available.h"
-#include "task_scheduler.h"
-#include "mmr.h"
+#include <mutils/list.h>
+
 #include "hal.h"
+#include "paging.h"
+#include "task_location.h"
+#include "application.h"
+#include "task_scheduler.h"
+#include "ipipe.h"
+#include "opipe.h"
 
 /** @brief This structure stores information of the running tasks */
 typedef struct _tcb {
-	unsigned int registers[HAL_MAX_REGISTERS];	//!< Register bank
-	unsigned int pc;							//!< Register file
-	unsigned int offset;						//!< Initial address of the task code in page
+	unsigned registers[HAL_MAX_REGISTERS];	//!< Register bank
+	void *pc;								//!< Program counter content
+	page_t *page;							//!< Pointer to the page offset control structure
+	
+	int id;					//!< TCB identifier
+	size_t text_size;		//!< Memory TEXT section size in bytes
+	size_t data_size;		//!< Memory DATA section size in bytes
+	size_t bss_size;		//!< Memory BSS section size in bytes
+	int proc_to_migrate;	//!< Address of the processor to migrate
 
-	int id;							//!< TCB identifier
-	unsigned int text_lenght;		//!< Memory TEXT section lenght in bytes
-	unsigned int data_lenght;		//!< Memory DATA section lenght in bytes
-	unsigned int bss_lenght;		//!< Memory BSS section lenght in bytes
+	void *heap_end;							//!< Address of the heap section end
 
-	int mapper_address;
-	int mapper_task;
-	int observer_address;
-	int observer_task;
+	tl_t mapper;
+	list_t message_requests;	//!< List of message requests
+	list_t data_avs;			//!< List of data available messages
 
-	int proc_to_migrate;	//!< Processor to migrate the task
+	app_t *app;				//!< Pointer to the app structure containing task location
+	sched_t *scheduler;	//!< Pointer to the scheduling control structure
+	ipipe_t *pipe_in;		//!< Pointer storage for inbound messages
+	opipe_t *pipe_out;		//!< Temporary buffer for outbound messages
 
-	int task_location[PKG_MAX_TASKS_APP];	//!< Location of app tasks
-
-	pipe_t pipe;											//!< Temporary buffer for outbound messages.
-	message_request_t message_request[MR_MAX];	//!< Message request array
-	data_av_fifo_t data_av;									//!< Data available fifo
-
-	scheduler_t scheduler;	//!< Scheduling control structure
-
-	bool called_exit;
+	bool called_exit;		//!< Flags that the task has exited
 } tcb_t;
-
-/**
- * @brief Idle function.
- */
-void tcb_idle_task();
 
 /**
  * @brief Initializes the TCB structures
@@ -63,85 +58,99 @@ void tcb_idle_task();
 void tcb_init();
 
 /**
- * @brief Gets the TCB array
+ * @brief Pushes a TCB to the list
  * 
- * @return Pointer to the first element of the TCB array.
+ * @param tcb Pointer to the TCB
+ * @return list_entry_t* Pointer to the list entry
  */
-tcb_t *tcb_get();
+list_entry_t *tcb_push_back(tcb_t *tcb);
 
 /**
- * @brief Gets the idle task TCB
+ * @brief Finds a TCB
  * 
- * @return Pointer to the idle task TCB
+ * @param task ID of the task
+ * @return tcb_t* Pointer to a TCB
  */
-tcb_t *tcb_get_idle();
-
-/**
- * @brief Searches for the TCB of a given task ID
- * 
- * @param task The ID of the task.
- * 
- * @return Pointer to the TCB of the task.
- */
-tcb_t *tcb_search(int task);
-
-/**
- * @brief Searches for a free TCB
- * 
- * @return Pointer to the free TCB. NULL case it's full.
- */
-tcb_t *tcb_free_get();
+tcb_t *tcb_find(int task);
 
 /**
  * @brief Clears the TCB to allocate a new task
  * 
  * @param tcb Pointer to the TCB
  * @param id ID of the task
- * @param code_sz Size of the code section
- * @param data_sz Size of the data section
- * @param bss_sz Size of the BSS section
+ * @param text_size Size of the code section
+ * @param data_size Size of the data section
+ * @param bss_size Size of the BSS section
  * @param mapper_task ID of the mapper task
  * @param mapper_addr Address of the mapper task
+ * @param entry_point Starting execution address
  */
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr);
+void tcb_alloc(
+	tcb_t *tcb, 
+	int id, 
+	size_t text_size, 
+	size_t data_size, 
+	size_t bss_size, 
+	int mapper_task, 
+	int mapper_addr, 
+	void *entry_point
+);
 
 /**
- * @brief Clears the TCB to allocate a migrated task
+ * @brief Verifies the stack of a task
  * 
  * @param tcb Pointer to the TCB
- * @param id ID of the task
- * @param code_sz Size of the code section
- * @param mapper_tak ID of the mapper task
- * @param mapper_addr Address of the mapper task
+ * @return true If the stack is OK
+ * @return false If the stack is colliding with heap
  */
-void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr);
+bool tcb_check_stack(tcb_t *tcb);
 
 /**
- * @brief Gets the pointer to the message variable
+ * @brief Aborts a task
  * 
- * @param tcb Pointer to the TCB
- * 
- * @return Pointer to the message structure
+ * @param tcb Pointer to the TCB to terminate
  */
-message_t *tcb_get_message(tcb_t *tcb);
+void tcb_abort_task(tcb_t *tcb);
 
 /**
- * @brief Gets the offset of a task
+ * @brief Removes a TCB
  * 
  * @param tcb Pointer to the TCB
- * 
- * @return Address of the task offset
  */
-unsigned int tcb_get_offset(tcb_t *tcb);
+void tcb_remove(tcb_t *tcb);
 
 /**
- * @brief Gets the application ID of a running task
+ * @brief Gets the output pipe structure
  * 
  * @param tcb Pointer to the TCB
  * 
- * @return The ID of the application
+ * @return opipe_t* Pointer to the PIPE. NULL if not present.
  */
-int tcb_get_appid(tcb_t *tcb);
+opipe_t *tcb_get_opipe(tcb_t *tcb);
+
+/**
+ * @brief Terminates a task after exit
+ * 
+ * @param tcb Pointer to the TCB to terminate
+ */
+void tcb_terminate(tcb_t *tcb);
+
+/**
+ * @brief Gets the application of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * @return app_t* Pointer to the task
+ */
+app_t *tcb_get_app(tcb_t *tcb);
+
+/**
+ * @brief Gets the pinter to the input pipe
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return ipipe_t* Pointer to the input pipe
+ */
+ipipe_t *tcb_get_ipipe(tcb_t *tcb);
 
 /**
  * @brief Identifies if the process need to be migrated
@@ -151,6 +160,58 @@ int tcb_get_appid(tcb_t *tcb);
  * @return True if needs to be migrated, otherwise false.
  */
 bool tcb_need_migration(tcb_t *tcb);
+
+/**
+ * @brief Creates an output pipe structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return opipe_t* Pointer to the created pipe
+ */
+opipe_t *tcb_create_opipe(tcb_t *tcb);
+
+/**
+ * @brief Destroys the output pipe
+ * 
+ * @details The message buffer is not freed here. Check DMNI functions.
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tcb_destroy_opipe(tcb_t *tcb);
+
+/**
+ * @brief Gets the list of message requests
+ * 
+ * @param tcb Pointer to the TCB
+ * @return list_t* Pointer to the list
+ */
+list_t *tcb_get_msgreqs(tcb_t *tcb);
+
+/**
+ * @brief Gets the list of data available
+ * 
+ * @param tcb Pointer to the TCB
+ * @return list_t* Pointer to the list
+ */
+list_t *tcb_get_davs(tcb_t *tcb);
+
+/**
+ * @brief Sends a task allocated message
+ * 
+ * @param tcb Pointer to the TCB
+ * @return true If should schedule
+ * @return false If should not schedule
+ */
+bool tcb_send_allocated(tcb_t *tcb);
+
+/**
+ * @brief Gets the offset of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return Address of the task offset
+ */
+void *tcb_get_offset(tcb_t *tcb);
 
 /**
  * @brief Gets the address to migrate to
@@ -174,9 +235,9 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr);
  * 
  * @param tcb Pointer to the TCB
  * 
- * @return Value of the pc
+ * @return void* Value of the pc
  */
-unsigned int tcb_get_pc(tcb_t *tcb);
+void *tcb_get_pc(tcb_t *tcb);
 
 /**
  * @brief Gets the stack pointer of a task
@@ -197,57 +258,55 @@ unsigned int tcb_get_sp(tcb_t *tcb);
 int tcb_get_id(tcb_t *tcb);
 
 /**
- * @brief Gets a register from the task
+ * @brief Gets a pointer to the array of registers
  * 
  * @param tcb Pointer to the TCB
- * @param idx Index of the register
- * 
- * @return Value of the register
+ * @return unsigned* Array of registers
  */
-unsigned int tcb_get_reg(tcb_t *tcb, int idx);
+unsigned *tcb_get_regs(tcb_t *tcb);
 
 /**
- * @brief Gets the pointer to the message request
+ * @brief Gets the size of the text section
  * 
  * @param tcb Pointer to the TCB
  * 
- * @return Pointer to the message request array
+ * @return Size of the text section
  */
-message_request_t *tcb_get_mr(tcb_t *tcb);
+size_t tcb_get_text_size(tcb_t *tcb);
 
 /**
- * @brief Clears the TCB and make it ready to receive a new task
+ * @brief Gets the size of the data section
  * 
  * @param tcb Pointer to the TCB
+ * 
+ * @return Size of the data
  */
-void tcb_clear(tcb_t *tcb);
+size_t tcb_get_data_size(tcb_t *tcb);
 
 /**
- * @brief Gets the length of the code/text section
+ * @brief Sets the data segment length
  * 
  * @param tcb Pointer to the TCB
- * 
- * @return Length of the code
+ * @param data_size Size of the data segment
  */
-unsigned int tcb_get_code_length(tcb_t *tcb);
+void tcb_set_data_size(tcb_t *tcb, size_t data_size);
 
 /**
- * @brief Gets the length of the data section
+ * @brief Gets the size of the bss section
  * 
  * @param tcb Pointer to the TCB
  * 
- * @return Length of the data
+ * @return Size of the bss
  */
-unsigned int tcb_get_data_length(tcb_t *tcb);
+size_t tcb_get_bss_size(tcb_t *tcb);
 
 /**
- * @brief Gets the length of the bss section
+ * @brief Sets the bss segment size
  * 
  * @param tcb Pointer to the TCB
- * 
- * @return Length of the bss
+ * @param bss_size Size of the bss segment
  */
-unsigned int tcb_get_bss_length(tcb_t *tcb);
+void tcb_set_bss_size(tcb_t *tcb, size_t bss_size);
 
 /**
  * @brief Sets the program counter of a task
@@ -257,7 +316,7 @@ unsigned int tcb_get_bss_length(tcb_t *tcb);
  * @param tcb Pointer to the TCB
  * @param pc Address to write to PC
  */
-void tcb_set_pc(tcb_t *tcb, unsigned int pc);
+void tcb_set_pc(tcb_t *tcb, void *pc);
 
 /**
  * @brief Sets the TCB as called exit
@@ -276,3 +335,83 @@ void tcb_set_called_exit(tcb_t *tcb);
  * @return True if called exit
  */
 bool tcb_has_called_exit(tcb_t *tcb);
+
+/**
+ * @brief Gets the current TCB heap end
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return void* heap end address
+ */
+void *tcb_get_heap_end(tcb_t *tcb);
+
+/**
+ * @brief Increments the heap
+ * 
+ * @param tcb Pointer to the TCB
+ * @param addr New heap final address 
+ */
+void tcb_set_brk(tcb_t *tcb, void *addr);
+
+/**
+ * @brief Sets the scheduler of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param sched Pointer to the scheduler
+ */
+void tcb_set_sched(tcb_t *tcb, sched_t *sched);
+
+/**
+ * @brief Creates an input pipe structure
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return ipipe_t* Pointer to the created pipe
+ */
+ipipe_t *tcb_create_ipipe(tcb_t *tcb);
+
+/**
+ * @brief Destroys the input pipe
+ * 
+ * @param tcb Pointer to the TCB
+ */
+void tcb_destroy_ipipe(tcb_t *tcb);
+
+/**
+ * @brief Gets the scheduler pointer
+ * 
+ * @param tcb Pointer to the tcb
+ * @return sched_t* Pointer to the scheduler
+ */
+sched_t *tcb_get_sched(tcb_t *tcb);
+
+/**
+ * @brief Gets the mapper location
+ * 
+ * @param tcb Pointer to the TCB
+ * @return tl_t* Pointer to the task location
+ */
+tl_t *tcb_get_mapper(tcb_t *tcb);
+
+/**
+ * @brief Sets the return value of a task
+ * 
+ * @param tcb Pointer to the TCB
+ * @param ret Return value
+ */
+void tcb_set_ret(tcb_t *tcb, int ret);
+
+/**
+ * @brief Gets the number of tasks in the PE
+ * 
+ * @return size_t Number of tasks
+ */
+size_t tcb_size();
+
+/**
+ * @brief Destroy all management task TCBs, leaving only the requester
+ * 
+ * @param requester TCB of the action requester
+ * @return int 0 if success, EFAULT if destroyed a non-management TCB
+ */
+int tcb_destroy_management(tcb_t *requester);

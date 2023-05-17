@@ -37,6 +37,7 @@ DESCRIPTION: This file contains the task1
 #include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
@@ -461,12 +462,11 @@ void ivlc_func(type_DATA *block, short int comp, short int lx, type_DATA *buffer
   return;
 }
 
-message_t msg1;
 
 int main()
 {
 	// unsigned int time_a, time_b;
-	int i,j;
+	int j;
 
 	type_DATA vlc_array[128];
 	type_DATA block[64];
@@ -477,21 +477,14 @@ int main()
 	for(j=0;j<MPEG_FRAMES;j++)
 	{
 
-		memphis_receive(&msg1,start);
+		memphis_receive(vlc_array, sizeof(vlc_array), start);
 
-		for(i=0; i<msg1.length; i++)
-			vlc_array[i] = msg1.payload[i];
-
-		for(i=0; i<64; i++)
-			block[i] = 0;
+    memset(block, 0, sizeof(block));
 
 		ivlc_func(block, 0, 8, vlc_array);	    // codifica RLE-VLC (returns the number of bits in the produced stream)
 
-		msg1.length = 64;
-		for(i=0; i<msg1.length; i++)
-		   msg1.payload[i] = block[i];
 
-        memphis_send(&msg1,iquant);
+        memphis_send(block, sizeof(block), iquant);
 
 	}
 

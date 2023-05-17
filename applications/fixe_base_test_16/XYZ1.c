@@ -40,7 +40,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -91,7 +91,7 @@ int sommeXYZ(int* moyenne,int* tabref)
 }
 
 
-message_t msg1,msg2;
+int msg1[size], msg2[3];
 
 /*int tabdata[data]={490000,490000,489990,489990,489980,489980,489970,489970,
 					489960,489960,489950,489950,489940,489940,489930,489930};*/
@@ -110,20 +110,18 @@ int main()
 	// int i;
 	puts("start XYZ1 1\n");
 
-	memphis_receive(&msg1,P1);
+	memphis_receive(msg1, sizeof(msg1), P1);
 
-    msg2.length=3;
-
-    msg2.payload[0]=sommeXYZ((int*)msg1.payload,tabrefX);
-    msg2.payload[1]=sommeXYZ((int*)msg1.payload,tabrefY);
-    msg2.payload[2]=sommeXYZ((int*)msg1.payload,tabrefZ);
+    msg2[0]=sommeXYZ(msg1, tabrefX);
+    msg2[1]=sommeXYZ(msg1, tabrefY);
+    msg2[2]=sommeXYZ(msg1, tabrefZ);
     // Echo("XYZ :");
     // for(i=0;i<3;i++)
     //      Echo(fixetoa(msg2.payload[i]));
 
-    memphis_send(&msg2,LAB1);
-    memphis_send(&msg2,DXYZ);
-    memphis_send(&msg2,RGB1);
+    memphis_send(msg2, sizeof(msg2), LAB1);
+    memphis_send(msg2, sizeof(msg2), DXYZ);
+    memphis_send(msg2, sizeof(msg2), RGB1);
 
 	puts("Communication XYZ1 finished.\n");
 

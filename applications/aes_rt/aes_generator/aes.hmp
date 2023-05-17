@@ -1,0 +1,24 @@
+[project name]
+aes
+[tasks per pe]
+1
+[processor description]
+sc
+[noc buffer size]
+8
+[noc routing algorithm]
+xy
+[mapping]
+WithoutLoad
+[dimensions]
+4
+4
+[cluster size]
+4
+4
+[masters location]
+LB
+[global master]
+0
+[application]
+aes

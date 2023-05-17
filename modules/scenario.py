@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 from yaml import safe_load
 from os import makedirs
-from distutils.dir_util import copy_tree
+from distutils.dir_util import remove_tree
 from shutil import copyfile, copy
 from management import Management
 from application import Application
 from repository import Start
+from os.path import exists
+from filecmp import cmp
 
 class Scenario:
 	def __init__(self, platform_path, testcase_path, scenario_file):
@@ -26,48 +28,45 @@ class Scenario:
 		tc_name = tc_name[len(tc_name) - 1]
 
 		tc_yaml = safe_load(open("{}/{}.yaml".format(self.testcase_path, tc_name), "r"))
-		self.max_tasks_app	= tc_yaml["sw"]["max_tasks_app"]
 		self.page_size		= tc_yaml["hw"]["page_size_KB"]*1024
-		self.stack_size		= tc_yaml["hw"]["stack_size"]
 
-		self.management = Management(yaml["management"], self.platform_path, self.testcase_path)
+		self.management = Management(yaml["management"], self.platform_path, self.base_dir, self.testcase_path)
 
-		app_names = []
-		self.app_instances = []
-		self.applications = {}
+		self.applications = []
+		instances = {}
 
 		try:
 			for app in yaml["apps"]:
-				app_names.append(app["name"])
-
-				start_time_ms = 0
+				app_name = app["name"]
 				try:
-					start_time_ms = int(app["start_time_ms"])
+					instances[app_name] += 1
 				except:
-					pass
+					instances[app_name] = 0
+     
+				self.applications.append(Application(app, app_name, instances[app_name], self.platform_path, self.base_dir, self.testcase_path))
 
-				self.app_instances.append((app, start_time_ms))
-
-			self.app_instances.sort(key=lambda x: x[1])
-
-			app_names = set(app_names)
+			self.applications.sort(key=lambda x: x.start_ms)
 		except:
 			pass
 		
-		for app in app_names:
-			self.applications[app] = Application(app, self.platform_path, self.testcase_path)
-		
 	def copy(self):
+		if self.__is_obsolete():
+			remove_tree(self.base_dir)
+
 		makedirs(self.base_dir+"/debug/pipe", exist_ok=True)
 		makedirs(self.base_dir+"/debug/request", exist_ok=True)
 		makedirs(self.base_dir+"/log", exist_ok=True)
+		makedirs(self.base_dir+"/flit_sniffer", exist_ok=True)
 		makedirs(self.base_dir+"/management", exist_ok=True)
 		makedirs(self.base_dir+"/applications", exist_ok=True)
+		makedirs(self.base_dir+"/libmemphis/src/include", exist_ok=True)
+		makedirs(self.base_dir+"/libmutils/src/include", exist_ok=True)
 
 		copy("{}/hardware/memphis".format(self.testcase_path), "{}/memphis".format(self.base_dir))
 		copyfile("{}/kernel/kernel.txt".format(self.testcase_path), "{}/bootrom.txt".format(self.base_dir))
 
 		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
+		copyfile(self.base, self.file)
 		copyfile("{}/services.cfg".format(self.testcase_path), "{}/debug/services.cfg".format(self.base_dir))
 		copyfile("{}/cpu.cfg".format(self.testcase_path), "{}/debug/cpu.cfg".format(self.base_dir))
 		copyfile("{}/platform.cfg".format(self.testcase_path), "{}/debug/platform.cfg".format(self.base_dir))
@@ -76,25 +75,23 @@ class Scenario:
 		self.management.copy()
 
 		for app in self.applications:
-			self.applications[app].copy()
+			app.copy()
 
 	def build(self):
 		self.management.build()
 		for app in self.applications:
-			self.applications[app].build()
+			app.build()
 
-		self.management.check_count(self.max_tasks_app)
+		# self.management.check_size(self.page_size, self.stack_size)
+		self.management.check_size(self.page_size, 0)
 		for app in self.applications:
-			self.applications[app].check_count(self.max_tasks_app)
-
-		self.management.check_size(self.page_size, self.stack_size)
-		for app in self.applications:
-			self.applications[app].check_size(self.page_size, self.stack_size)
+			app.check_size(self.page_size, 0)
+			# self.applications[app].check_size(self.page_size, self.stack_size)
 
 		self.management.generate_repo(self.base_dir)
 
 		for app in self.applications:
-			self.applications[app].generate_repo(self.base_dir)
+			app.generate_repo()
 
 		self.management.generate_start(self.base_dir)
 		self.__generate_app_start()		
@@ -102,32 +99,25 @@ class Scenario:
 	def __generate_app_start(self):
 		start = Start()
 
-		for app in self.app_instances:
-			name = app[0]["name"]
-			start.add(name, "App name")
+		for app in self.applications:
+			start.add(app.get_full_name(), "App name")
 			
-			start.add(app[1], "Start time (ms)")
+			start.add(app.start_ms, "Start time (ms)")
 
-			tasks = self.applications[name].get_tasks()
+			tasks = app.get_tasks()
 			task_cnt = len(tasks)
 			start.add(task_cnt, "Number of tasks")
 
-			static_mapping = []
-			try:
-				static_mapping = app[0]["static_mapping"]
-			except:
-				pass # This means that the application not has any task mapped statically
-
-			for task in static_mapping:
+			for task in app.mapping:
 				if task not in tasks:
-					raise Exception("Task {} in static_mapping list not present in application {}".format(task, name))
+					raise Exception("Task {} in static_mapping list not present in application {}".format(task, app.app_name))
 		
 			for task in tasks:
 				address = -1
 				map_comment = ""
-				if task in static_mapping:
-					addr_x = static_mapping[task][0]
-					addr_y = static_mapping[task][1]
+				if task in app.mapping:
+					addr_x = app.mapping[task][0]
+					addr_y = app.mapping[task][1]
 					address = addr_x << 8 | addr_y
 					map_comment = "statically mapped to PE {}x{}".format(addr_x, addr_y)
 				else:
@@ -145,11 +135,10 @@ class Scenario:
 
 		app_id = 1
 
-		for app in self.app_instances:
-			name = app[0]["name"]
-			app_lines.append("{}\t{}\n".format(name, app_id))
+		for app in self.applications:
+			app_lines.append("{}\t{}\n".format(app.get_full_name(), app_id))
 			
-			tasks = self.applications[name].get_tasks()
+			tasks = app.get_tasks()
 			for t in range(len(tasks)):
 				task_lines.append("{} {}\n".format(tasks[t], app_id << 8 | t))
 
@@ -174,4 +163,11 @@ class Scenario:
 
 		cfg.write("END_app_name_relation\n")
 
-		cfg.close()		
+		cfg.close()
+  
+	def __is_obsolete(self):
+		if exists(self.file):
+			if not cmp(self.base, self.file):
+				return True
+		
+		return False

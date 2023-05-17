@@ -6,16 +6,15 @@ int main()
 {
 
 int j;
-message_t msg;
+int msg[128];
 
 //Echo(strcat("b,AU,",itoa(GetTick())));
 
 
-	for(j=0;j<128;j++) msg.payload[j]=j;
+	for(j=0;j<128;j++) msg[j]=j;
 
 	/*Comm SDRAM 1280*/
-	msg.length=128;
-	for(j=0;j<10;j++) memphis_receive(&msg,SDRAM_0);
+	for(j=0;j<10;j++) memphis_receive(msg, sizeof(msg),SDRAM_0);
 	//Echo(strcat("r,MPEG_m18(1280),",itoa(GetTick())));
 	//Echo(strcat(strcat(strcat("i,",itoa(i)),","),itoa(GetTick())));
 

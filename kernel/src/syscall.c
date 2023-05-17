@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file syscall.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -11,142 +11,249 @@
  * @brief Defines the syscall procedures of the kernel.
  */
 
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "syscall.h"
-#include "services.h"
-#include "calls.h"
-#include "task_location.h"
-#include "task_migration.h"
-#include "pending_service.h"
+
+#include <stdio.h>
+// #include <string.h>
+
+#include <machine/syscall.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include <memphis/services.h>
+
 #include "interrupts.h"
+#include "broadcast.h"
+#include "pending_msg.h"
+#include "pending_service.h"
+#include "task_migration.h"
+#include "mmr.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
+bool task_terminated;
 
-int os_syscall(unsigned int service, unsigned int a1, unsigned int a2, unsigned int a3)
+tcb_t *sys_syscall(
+	unsigned arg1, 
+	unsigned arg2, 
+	unsigned arg3, 
+	unsigned arg4, 
+	unsigned arg5, 
+	unsigned arg6, 
+	unsigned arg7, 
+	unsigned number
+)
 {
-	// puts("Syscall called\n");
+	// printf("syscall(%d, %d, %d, %d, %d)\n", number, arg1, arg2, arg3, arg4);
+
+	int ret = 0;
 	schedule_after_syscall = false;
-	switch(service){
-		case EXIT:
-			return os_exit(a1);
-		case WRITEPIPE:
-			return os_writepipe(a1, a2, a3);
-		case READPIPE:
-			return os_readpipe(a1, a2, a3);
-		case GETTICK:
-			return os_get_tick();
-		case REALTIME:
-			return os_realtime(a1, a2, a3);
-		case GETLOCATION:
-			return os_get_location();
-		case GETID:
-			return os_get_id();
-		case SCALL_PUTC:
-			return os_putc(a1);
-		case SCALL_PUTS:
-			return os_puts((char*)a1);
-		default:
-			printf("ERROR: Unknown service %x\n", service);
-			return 0;
+	task_terminated = false;
+
+	tcb_t *current = sched_get_current_tcb();
+
+	if(tcb_check_stack(current)){
+		printf(
+			"Task id %d aborted due to stack overflow\n", 
+			tcb_get_id(current)
+		);
+
+		tcb_abort_task(current);
+
+		schedule_after_syscall = true;
+		task_terminated = true;
+	} else {
+		switch(number){
+			case SYS_writepipe:
+				ret = sys_writepipe(current, (void*)arg1, arg2, arg3, arg4);
+				break;
+			case SYS_readpipe:
+				ret = sys_readpipe(current, (void*)arg1, arg2, arg3, arg4);
+				break;
+			case SYS_gettick:
+				ret = sys_get_tick();
+				break;
+			case SYS_realtime:
+				ret = sys_realtime(current, arg1, arg2, arg3);
+				break;
+			case SYS_getlocation:
+				ret = sys_get_location();
+				break;
+			case SYS_brall:
+				ret = sys_br_send_all(current, arg1, arg2);
+				break;
+			case SYS_brtgt:
+				ret = sys_br_send_tgt(current, arg1, arg2, arg3);
+				break;
+			case SYS_monptr:
+				ret = sys_mon_ptr(current, (unsigned*)arg1, arg2);
+				break;
+			case SYS_getctx:
+				ret = sys_get_ctx(current, (mctx_t*)arg1);
+				break;
+			case SYS_halt:
+				ret = sys_end_simulation(current);
+				break;
+			case SYS_close:
+				ret = sys_close(arg1);
+				break;
+			case SYS_write:
+				ret = sys_write(current, arg1, (char*)arg2, arg3);
+				break;
+			case SYS_fstat:
+				ret = sys_fstat(current, arg1, (struct stat*)arg2);
+				break;
+			case SYS_exit:
+				ret = sys_exit(current, arg1);
+				break;
+			case SYS_getpid:
+				ret = sys_getpid(current);
+				break;
+			case SYS_brk:
+				ret = sys_brk(current, (void*)arg1);
+				break;
+			default:
+				printf("ERROR: Unknown syscall %x\n", number);
+				ret = 0;
+				break;
+		}
 	}
+	
+	if(!task_terminated){
+		// printf("Setting return value %d\n", ret);
+		tcb_set_ret(current, ret);
+	}
+
+	schedule_after_syscall |= (MMR_IRQ_STATUS & MMR_IRQ_MASK & IRQ_SCHEDULER);
+	if(schedule_after_syscall){
+		sched_run();
+		return sched_get_current_tcb();
+	}
+
+	return current;
 }
 
-bool os_exit(int status)
+int sys_exit(tcb_t *tcb, int status)
 {
+	printf("Task id %d terminated with status %d\n", tcb_get_id(tcb), status);
+
 	schedule_after_syscall = true;
 
-	tcb_t *current = sched_get_current();
+	if(tcb_get_opipe(tcb) != NULL){
+		/* Don't erase task with message in pipe */
+		tcb_set_called_exit(tcb);
+		sched_t *sched = tcb_get_sched(tcb);
+		sched_set_wait_msgreq(sched);
+		return -EAGAIN;
+	}
 
-	current->called_exit = true;
+	tcb_terminate(tcb);
+	task_terminated = true;
 
-	/* Avoid sending a packet while DMNI is busy */
-	/* Don't erase task with message in pipe */
-	if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))
-		return false;
-
-	/* Send TASK_TERMINATED */
-	tl_send_terminated(current);
-
-	printf("Task id %d terminated with status %d\n", current->id, status);
-	MMR_TASK_TERMINATED = current->id;
-
-	sched_clear(current);
-
-	tcb_clear(current);
-
-	return true;
+	return 0;
 }
 
-bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
+int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 {
-	tcb_t *current = sched_get_current();
+	const int prod_task = tcb_get_id(tcb);
+
+	if((cons_task & 0xFFFF0000) && prod_task >> 8 != 0){
+		puts(
+			"ERROR: Unauthorized message to kernel/peripheral from task with app id > 0"
+		);
+		return -EACCES;
+	}
 
 	int cons_addr;
-	if(cons_task & 0x80000000){
+	if((cons_task & MEMPHIS_FORCE_PORT)){
 		/* Message directed to peripheral */
-		cons_task &= 0xE000FFFF;
+		cons_task &= (MEMPHIS_FORCE_PORT | 0x60000000 | 0x0000FFFF);
 		cons_addr = cons_task;
-	} else if(cons_task & 0x10000000){
+	} else if((cons_task & MEMPHIS_KERNEL_MSG)){
 		/* Message directed to kernel */
-		cons_task &= 0x1000FFFF;
+		cons_task &= (MEMPHIS_KERNEL_MSG | 0x0000FFFF);
 		cons_addr = cons_task & 0x0000FFFF;
 	} else {
 		/* Send to task of the same app */
 		cons_task &= 0x000000FF;
-		cons_addr = tl_search(current, cons_task);
-		cons_task |= (current->id & 0x0000FF00);
-		// printf("Trying to write pipe from %d to %d at %d\n", current->id, cons_task, cons_addr);
 
-		/* Check if consumer task is allocated */
-		if(cons_addr == -1){
-			/* Task is blocked until a TASK_RELEASE packet is received */
-			sched_block(current);
-			schedule_after_syscall = 1;
-			return false;
+		app_t *app = tcb_get_app(tcb);
+		if(app == NULL){
+			puts("ERROR: app not found");
+			return -EINVAL;
 		}
+
+		cons_addr = app_get_address(app, cons_task);
+		if(cons_addr == -1){
+			puts("ERROR: task not found");
+			return -EINVAL;
+		}
+
+		cons_task |= (prod_task & 0x0000FF00);
 	}
 
 	/* Points the message in the task page. Address composition: offset + msg address */
-	// putsv("Message at virtual address ", msg_ptr);
-	message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
-	// putsv("Message at physical address ", (int)message);
-	// putsv("Value 9 of message = ", message->msg[9]);
-	// putsv("Message length = ", message->length);
-
-	/* Test if the application passed a invalid message lenght */
-	if(message->length > PKG_MAX_MSG_SIZE){
-		printf("ERROR: Message length of %d must be lower than PKG_MAX_MSG_SIZE\n", message->length);
-		while(1);
+	if(buf == NULL){
+		puts("ERROR: message pointer is null");
+		return -EINVAL;
 	}
 
-	/* Searches if there is a message request to the produced message */
-	message_request_t *request = mr_peek(current, cons_task);
+	/* Sets real address of message buffer */
+	buf = (void*)((unsigned)buf | (unsigned)tcb_get_offset(tcb));
 
-	if(request){	/* Message request found! */
-		// puts("MR Found!\n");
-		if(request->requester_address == MMR_NI_CONFIG){ 
+	/* Searches if there is a message request to the produced message */
+	list_t *msgreqs = tcb_get_msgreqs(tcb);
+	tl_t *request = tl_find(msgreqs, cons_task);
+
+	if(request != NULL){
+		/* Message request found! */
+		int req_addr = tl_get_addr(request);
+		if(req_addr == MMR_NI_CONFIG){
 			/* Local consumer */
-			if(cons_task & 0x10000000){
+			if(cons_task & MEMPHIS_KERNEL_MSG){
 				/* Message directed to kernel. No TCB to write to */
 				/* This should NEVER happen because it means the kernel made a request without receiving a DATA_AV */
-				puts("ERROR: Kernel made a request without receiving DATA_AV!\n");
-				while(1);
-				return false;
+				puts(
+					"ERROR: Kernel made a request without receiving DATA_AV!"
+				);
+				return -EBADMSG;
 			} else {
 				/* Writes to the consumer page address */
-				tcb_t *cons_tcb = tcb_search(cons_task);
-				message_t *msg_dst = tcb_get_message(cons_tcb);
+				tcb_t *cons_tcb = tcb_find(cons_task);
 
-				pipe_transfer(message, msg_dst);
+				if(cons_tcb == NULL){
+					puts("ERROR: consumer tcb not found");
+					return -EBADMSG;
+				}
+
+				ipipe_t *dst = tcb_get_ipipe(cons_tcb);
+
+				if(dst == NULL){
+					puts(
+						"ERROR: there is no buffer allocated to transfer message"
+					);
+					return -EBADMSG;
+				}
+
+				int result = ipipe_transfer(
+					dst, 
+					tcb_get_offset(cons_tcb), 
+					buf, 
+					size
+				);
+
+				if(result != size){
+					puts(
+						"ERROR: faulty destination ipipe"
+					);
+					return -EBADMSG;
+				}
 
 				/* Remove the message request from buffer */
-				mr_pop(request, current->id);
+				tl_remove(msgreqs, request);
 
 				/* Release consumer task */
-				sched_release_wait(cons_tcb);
+				sched_t *sched = tcb_get_sched(cons_tcb);
+				sched_release_wait(sched);
 
 				if(tcb_need_migration(cons_tcb)){
 					tm_migrate(cons_tcb);
@@ -154,305 +261,618 @@ bool os_writepipe(unsigned int msg_ptr, int cons_task, bool sync)
 				}
 			}
 		} else {
-			// puts("Remote consumer\n");
 			/* Remote consumer */
-
 			/* Send a MESSAGE_DELIVERY */
 
 			/* Deadlock avoidance: avoid sending a packet when the DMNI is busy */
 			/* Also, don't send a message if the previous is still in pipe */
-			if(MMR_DMNI_SEND_ACTIVE || pipe_is_full(current))
-				return false;
+			if(tcb_get_opipe(tcb) != NULL){
+				sched_t *sched = tcb_get_sched(tcb);
+				sched_set_wait_msgreq(sched);
+				schedule_after_syscall = true;
+				return -EAGAIN;
+			}
+
+			if(MMR_DMNI_SEND_ACTIVE){
+				schedule_after_syscall = true;
+				return -EAGAIN;
+			}
+
+			opipe_t *opipe = tcb_create_opipe(tcb);
+
+			if(opipe == NULL){
+				puts("ERROR: not enough memory for opipe");
+				return -ENOMEM;
+			}
 
 			/* Insert the message in the pipe to avoid overwrite by task */
-			pipe_push(current, message, cons_task);
-			// puts("Pushed pipe\n");
+			int result = opipe_push(opipe, buf, size, prod_task, cons_task);
+
+			if(result != size){
+				puts("ERROR: not enough memory for opipe message");
+				return -ENOMEM;
+			}
 
 			/* Send through NoC */
-			pipe_t *pipe = pipe_pop(current, cons_task);
-			// putsv("Popped message length = ", pipe->message.length);
-			
-			pipe_send(sched_get_current_id(), cons_task, request->requester_address, pipe);
-			// puts("Sent through NoC\n");
+			opipe_send(
+				opipe, 
+				prod_task, 
+				req_addr
+			);
+
+			tcb_destroy_opipe(tcb);
 			
 			/* Remove the message request from buffer */
-			mr_pop(request, current->id);
-			// puts("Request popped\n");
+			tl_remove(msgreqs, request);
 		}
-	} else if(!pipe_is_full(current) && !MMR_DMNI_SEND_ACTIVE){	/* Pipe is free */
-		// puts("MR NOT found!\n");
+	} else if(tcb_get_opipe(tcb) == NULL){
+		/* Pipe is free */
 		if(sync){
-			// puts("Sync!\n");
-			int prod_task = sched_get_current_id();
 			if(cons_addr == MMR_NI_CONFIG){
 				/* Local consumer */
-				if(cons_task & 0x10000000){
+				if(cons_task & MEMPHIS_KERNEL_MSG){
 					/* Message directed to kernel. No TCB to write to */
 					/* We can bypass the need to kernel answer if a request */
-					schedule_after_syscall = os_kernel_syscall(message->payload, message->length);
-					return true;
+					schedule_after_syscall = sys_kernel_syscall(buf, size);
+					return 0;
 				} else {
 					/* Insert a DATA_AV to consumer table */
-					tcb_t *cons_tcb = tcb_search(cons_task);
+					tcb_t *cons_tcb = tcb_find(cons_task);
 
 					/* Insert DATA_AV to the consumer TCB */
-					data_av_insert(cons_tcb, prod_task, MMR_NI_CONFIG);
+					list_t *davs = tcb_get_davs(cons_tcb);
+					tl_t *dav = tl_emplace_back(davs, prod_task, MMR_NI_CONFIG);
+
+					if(dav == NULL){
+						puts("ERROR: could not allocate memory for DAV entry");
+						return -EAGAIN;
+					}
 					
 					/* If consumer waiting for a DATA_AV, release the task */
-					if(sched_is_waiting_data_av(cons_tcb))
-						sched_release_wait(cons_tcb);
+					sched_t *sched = tcb_get_sched(cons_tcb);
+					if(sched_is_waiting_dav(sched))
+						sched_release_wait(sched);
 				}
 			} else {
 				/* Send DATA_AV to consumer PE */
-				data_av_send(cons_task, prod_task, cons_addr, MMR_NI_CONFIG);
+				tl_t dav;
+				tl_set(&dav, prod_task, MMR_NI_CONFIG);
+				
+				tl_send_dav(&dav, cons_task, cons_addr);
 			}
 		}
 
 		/* Please use SSend to send Kernel/Peripheral messages or it can be stuck in pipe forever */
 		/* Store message in Pipe. Will be sent when a REQUEST is received */
-		pipe_push(current, message, cons_task);
-		// puts("Pushed to pipe!\n");
+		opipe_t *opipe = tcb_create_opipe(tcb);
 
+		int result = opipe_push(opipe, buf, size, prod_task, cons_task);
+
+		if(result != size){
+			puts("ERROR: not enough memory for opipe message");
+			return -ENOMEM;
+		}
+		// puts("Pushed to pipe!");
 	} else {
-		/* DMNI busy sending message or pipe full */
-		if(pipe_is_full(current)){
-			// puts("Request not found and pipe is full. Will wait until consumed!\n");
-			/* In this case, we must wait for a message request to release the pipe */
-			sched_set_wait_request(current);
-			schedule_after_syscall = 1;
-		} /* else: the DMNI is sending the older message. Must retry */
+		/* Pipe full */
+
+		// puts("Request not found and pipe is full. Will wait until consumed!");
+		/* In this case, we must wait for a message request to release the pipe */
+		sched_t *sched = tcb_get_sched(tcb);
+		sched_set_wait_msgreq(sched);
+		schedule_after_syscall = 1;
 		
-		return false;
+		return -EAGAIN;
 	}
 
-	return true;
+	return size;
 }
 
-bool os_readpipe(unsigned int msg_ptr, int prod_task, bool sync)
+int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 {
-	tcb_t *current = sched_get_current();
-	int cons_task = sched_get_current_id();
+	// puts("Calling readpipe");
+	ipipe_t *ipipe = tcb_get_ipipe(tcb);
+	// printf("ipipe is at addr %p\n", ipipe);
+	if(ipipe != NULL){
+		if(ipipe_is_read(ipipe)){
+			// puts("Returning from readpipe");
+			int ret = ipipe_get_size(ipipe);
+			tcb_destroy_ipipe(tcb);
+			return ret;
+		}
+
+		/* This should never happen, but is here just in case */
+		puts("ERROR: ipipe is not null but was not read");
+		return -EAGAIN;
+	}
+
+	if(buf == NULL){
+		puts("ERROR: msg is null");
+		return -EINVAL;
+	}
+
+	const int cons_task = tcb_get_id(tcb);
 
 	int prod_addr;
 	if(!sync){	/* Not synced READ must define the producer */
-		prod_task |= (cons_task & 0xFF00);
-		prod_addr = tl_search(current, prod_task);
-		// putsvsv("Trying to read from task ", prod_task, " at address ", prod_addr);
+		prod_task &= 0x000000FF;
 
-		/* Test if the producer task is not allocated */
-		if(prod_addr == -1){
-			/* Task is blocked until its a TASK_RELEASE packet */
-			sched_block(current);
-
-			return false;
+		app_t *app = tcb_get_app(tcb);
+		if(app == NULL){
+			puts("ERROR: app not found");
+			return -EINVAL;
 		}
 
-		// printf("Readpipe: trying to read from task %d with address %d\n", prod_task, prod_addr);
-		
+		prod_addr = app_get_address(app, prod_task);
+		if(prod_addr == -1){
+			puts("ERROR: task not found");
+			return -EINVAL;
+		}
+
+		prod_task |= (cons_task & 0xFF00);
+
+		// printf("Trying to read from task %x at address %x\n", prod_task, prod_addr);
+		// printf("Readpipe: trying to read from task %x with address %x\n", prod_task, prod_addr);
 	} else {
 		/* Synced READ, must see what applications have data available for it */
-		data_av_t *data_av = data_av_peek(current);
+		list_t *davs = tcb_get_davs(tcb);
+		list_entry_t *front = list_front(davs);
+		tl_t *dav = NULL;
 		
-		if(!data_av){	/* No data available for requesting */
+		if(front != NULL)
+			dav = list_get_data(front);
+		
+		if(dav == NULL){	/* No data available for requesting */
 			/* Block task and wait for DATA_AV packet */
-			sched_set_wait_data_av(current);
+			sched_t *sched = tcb_get_sched(tcb);
+			sched_set_wait_dav(sched);
 			schedule_after_syscall = 1;
-
-			return false;
+			return -EAGAIN;
 		}
 
-		prod_task = data_av->requester;
-		prod_addr = data_av->requester_addr;
-		// putsvsv("Readpipe: received DATA_AV from task ", prod_task, " with address ", prod_addr);
+		prod_task = tl_get_task(dav);
+		prod_addr = tl_get_addr(dav);
+		// printf("Readpipe: received DATA_AV from task %x with address %x\n", prod_task, prod_addr);
 	}
 
-	if(prod_addr == MMR_NI_CONFIG){	/* Local producer */
-		if(prod_task & 0x10000000){
+	if(prod_addr == MMR_NI_CONFIG){
+		/* Local producer */
+		if(prod_task & MEMPHIS_KERNEL_MSG){
 			// puts("Received DATA_AV from LOCAL Kernel!\n");
 			/* Message from Kernel. No request needed */
 			/* Search for the kernel-produced message */
-			pending_msg_t *msg = pending_msg_search(cons_task);
-	
+			opipe_t *pending = pmsg_find(cons_task);
+
 			/* Store it like a MESSAGE_DELIVERY */
-			message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
+			buf = (void*)((unsigned)buf | (unsigned)tcb_get_offset(tcb));
 			
 			// putsv("Message length is ", msg->size);
 			// putsv("First word is ", msg->message[0]);
-			message->length = msg->size;
+			int result = opipe_transfer(pending, buf, size);
 
-			memcpy(message->payload, msg->message, msg->size * sizeof(message->payload[0]));
-			
-			/* Free pending message */
-			msg->task = -1;
-
-			/* Remove pending DATA_AV */
-			data_av_pop(current);
-
-			/* Add a new data available if kernel has message to this task */
-			if(pending_msg_search(cons_task) != NULL){
-				/* Add a new to the last position of the FIFO */
-				data_av_insert(current, 0x10000000 | MMR_NI_CONFIG, MMR_NI_CONFIG);
+			if(result <= 0){
+				puts("ERROR: could not read from pipe");
+				return -EBADMSG;
 			}
 
-			return true;
+			opipe_pop(pending);
+			pmsg_remove(pending);
+
+			/* Remove pending DATA_AV */
+			list_t *davs = tcb_get_davs(tcb);
+			tl_t *dav = list_get_data(list_front(davs));
+			tl_remove(davs, dav);
+
+			/* Add a new data available if kernel has message to this task */
+			if(pmsg_find(cons_task) != NULL){
+				/* Add a new to the last position of the FIFO */
+				tl_emplace_back(davs, prod_task, prod_addr);
+			}
+
+			return size;
 		} else {
 			// puts("Local producer\n");
 			/* Get the producer TCB */
-			tcb_t *prod_tcb = tcb_search(prod_task);
+			tcb_t *prod_tcb = tcb_find(prod_task);
+
+			if(prod_tcb == NULL){
+				puts("ERROR: PROD TCB NOT FOUND ON READPIPE");
+				return -EBADMSG;
+			}
 
 			/* Searches if the message is in PIPE (local producer) */
-			pipe_t *pipe = pipe_pop(prod_tcb, cons_task);
+			opipe_t *opipe = tcb_get_opipe(prod_tcb);
 
-			if(!pipe){
+			if(opipe == NULL || opipe_get_cons_task(opipe) != cons_task){
 				/* Stores the request into the message request table */
-				mr_insert(prod_tcb, cons_task, MMR_NI_CONFIG);
-
+				list_t *msgreqs = tcb_get_msgreqs(prod_tcb);
+				tl_emplace_back(msgreqs, cons_task, MMR_NI_CONFIG);
 			} else {
 				/* Message was found in pipe, writes to the consumer page address (local producer) */
-				message_t *message = (message_t*)(tcb_get_offset(current) | msg_ptr);
-				message_t *msg_src = pipe_get_message(pipe);
+				buf = (void*)((unsigned)buf | (unsigned)tcb_get_offset(tcb));
 
-				pipe_transfer(msg_src, message);
+				int result = opipe_transfer(opipe, buf, size);
 
-				if(sched_is_waiting_request(prod_tcb))
-					sched_release_wait(prod_tcb);
+				if(result <= 0){
+					puts("ERROR: could not read from pipe");
+					return -EBADMSG;
+				}
 
-				return true;
+				opipe_pop(opipe);
+				tcb_destroy_opipe(prod_tcb);
+
+				sched_t *sched = tcb_get_sched(prod_tcb);
+
+				if(sched_is_waiting_msgreq(sched)){
+					sched_release_wait(sched);
+					if(tcb_has_called_exit(prod_tcb))
+						tcb_terminate(prod_tcb);
+				}
+
+				return result;
 			}
 		}
 	} else { /* Remote producer : Sends the message request */
 		// puts("Remote producer\n");
-		/* Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process */
-		if(MMR_DMNI_SEND_ACTIVE)
-			return false;
 		
 		if(sync){
 			/* DATA_AV is processed, erase it */
-			data_av_pop(current);
+			list_t *davs = tcb_get_davs(tcb);
+			tl_t *dav = list_get_data(list_front(davs));
+			tl_remove(davs, dav);
 		}
 
 		/* Send the message request through NoC */
-		mr_send(prod_task, cons_task, prod_addr, MMR_NI_CONFIG);
-		// puts("Sent request\n");
+		tl_t msgreq;
+		tl_set(&msgreq, cons_task, MMR_NI_CONFIG);
+
+		tl_send_msgreq(&msgreq, prod_task, prod_addr);
+		// puts("Sent request");
 	}
 
+	/* Stores the message pointer to receive */
+	ipipe = tcb_create_ipipe(tcb);
+	
+	if(ipipe == NULL){
+		puts("FATAL");
+		while(true);
+	}
+	// printf("Allocated ipipe at %p\n", current->pipe_in);
+	ipipe_set(ipipe, buf, size);
+	// printf("Set ipipe to %p size %d\n", ipipe->buf, ipipe->size);
+
 	/* Sets task as waiting blocking its execution, it will execute again when the message is produced by a WRITEPIPE or incoming MSG_DELIVERY */
-	sched_set_wait_delivery(current);
+	sched_t *sched = tcb_get_sched(tcb);
+	sched_set_wait_msgdlvr(sched);
 	schedule_after_syscall = 1;
 
-	return true;
+	return -EAGAIN;
 }
 
-unsigned int os_get_tick()	
+unsigned int sys_get_tick()	
 {	
 	return MMR_TICK_COUNTER;	
 }
 
-bool os_realtime(unsigned int period, int deadline, unsigned int exec_time)
+int sys_realtime(tcb_t *tcb, unsigned period, int deadline, unsigned exec_time)
 {
-	tcb_t *current = sched_get_current();
-	sched_real_time_task(current, period, deadline, exec_time);
+	sched_t *sched = tcb_get_sched(tcb);
+	sched_real_time_task(sched, period, deadline, exec_time);
 
 	schedule_after_syscall = 1;
 
-	return true;
+	return 0;
 }
 
-bool os_kernel_syscall(unsigned int *message, int length)
+bool sys_kernel_syscall(unsigned *message, int length)
 {
 	/* Process it like a syscall */
 	switch(message[0]){
 		case TASK_RELEASE:
 			// putsv("will call release with ntasks=", message[4]);
-			return os_task_release(
+			return isr_task_release(
 				message[1], 
 				message[2], 
-				message[3], 
-				message[4], 
-				(int*)&message[5]
+				(int*)&message[3]
 			);
-		case TASK_MIGRATION:
-			return os_task_migration(message[1], message[2]);
-		case RELEASE_PERIPHERAL:
-			return os_release_peripheral();
 		default:
-			printf("ERROR: Unknown service %x inside MESSAGE_DELIVERY", message[0]);
+			printf(
+				"ERROR: Unknown service %x inside MESSAGE_DELIVERY\n", 
+				message[0]
+			);
 			return false;
 	}
 }
 
-bool os_kernel_writepipe(int task, int addr, int size, int *msg)
+bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr)
 {
 	/* Send data available only if target task hasn't received data available from this source */
-	bool send_data_av = (pending_msg_search(task) == NULL);
+	bool send_data_av = (pmsg_find(cons_task) == NULL);
 
-	/* Avoid overwriting pending messages */
-	while(MMR_DMNI_SEND_ACTIVE);
-
-	// putsvsv("Kernel writing pending message to task ", task, " with size ", size);
+	// printf("Kernel writing pending message to task %d with size %d\n", task, size);
 	/* Insert message in kernel output message buffer */
-	pending_msg_push(task, size, msg);
+	int result = pmsg_emplace_back(buf, size, cons_task);
+
+	if(result != size){
+		puts("FATAL: cant write to kernel pipe");
+		while(1);
+	}
 
 	if(send_data_av){
 		/* Check if local consumer / migrated task */
 		tcb_t *cons_tcb = NULL;
-		if(addr == MMR_NI_CONFIG){
-			cons_tcb = tcb_search(task);
-			if(!cons_tcb)
-				addr = tm_get_migrated_addr(task);
+		if(cons_addr == MMR_NI_CONFIG){
+			cons_tcb = tcb_find(cons_task);
+			if(cons_tcb == NULL){
+				tl_t *tl = tm_find(cons_task);
+				if(tl == NULL){
+					puts("FATAL: task migrated not found");
+					while(true);
+				}
+				cons_addr = tl_get_addr(tl);
+			}
 		}
 
-		if(cons_tcb){
+		if(cons_tcb != NULL){
 			/* Insert the packet to TCB */
-			data_av_insert(cons_tcb, 0x10000000 | MMR_NI_CONFIG, MMR_NI_CONFIG);
+			list_t *davs = tcb_get_davs(cons_tcb);
+			tl_emplace_back(davs, MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, MMR_NI_CONFIG);
 
 			/* If the consumer task is waiting for a DATA_AV, release it */
-			if(sched_is_waiting_data_av(cons_tcb)){
-				sched_release_wait(cons_tcb);
+			sched_t *sched = tcb_get_sched(cons_tcb);
+			if(sched_is_waiting_dav(sched)){
+				sched_release_wait(sched);
 				return sched_is_idle();
 			}
 		} else {
 			/* Send data available to the right processor */
-			data_av_send(task, 0x10000000 | MMR_NI_CONFIG, addr, MMR_NI_CONFIG);
+			tl_t dav;
+			tl_set(&dav, MEMPHIS_KERNEL_MSG | MMR_NI_CONFIG, MMR_NI_CONFIG);
+
+			tl_send_dav(&dav, cons_task, cons_addr);
 		}
 	}
 
 	return false;
 }
 
-bool os_release_peripheral()
+bool sys_release_peripheral()
 {
 	MMR_MEM_REG_PERIPHERALS = 1;
-	puts("Peripherals released\n");
+	// puts("Peripherals released\n");
 	return false;
 }
 
-int os_get_location()
+int sys_get_location()
 {
 	return MMR_NI_CONFIG;
 }
 
-int os_get_id()
+int sys_getpid(tcb_t *tcb)
 {
-	return sched_get_current()->id;
+	return tcb_get_id(tcb);
 }
 
-int os_putc(char c)
+int sys_br_send_all(tcb_t *tcb, uint32_t payload, uint8_t ksvc)
 {
-	MMR_UART_CHAR = c;
+	int prod_task = tcb_get_id(tcb);
+	
+	if(prod_task >> 8 != 0)	/* AppID should be 0 */
+		return -EINVAL;
+
+	bcast_t packet;
+	packet.service = ksvc;
+	packet.src_id = prod_task;
+	packet.payload = payload;
+
+	if(!bcast_send(&packet, MMR_NI_CONFIG, BR_SVC_ALL)){
+		schedule_after_syscall = true;
+		return -EAGAIN;
+	}
+		
+	packet.src_addr = MMR_NI_CONFIG;
+	schedule_after_syscall = isr_handle_broadcast(&packet);
+	return 0;
+}
+
+int sys_br_send_tgt(tcb_t *tcb, uint32_t payload, uint16_t target, uint8_t ksvc)
+{
+	int prod_task = tcb_get_id(tcb);
+	
+	if(prod_task >> 8 != 0)	/* AppID should be 0 */
+		return -EINVAL;
+
+	bcast_t packet;
+	packet.service = ksvc;
+	packet.src_id = prod_task;
+	packet.payload = payload;
+
+	if(target == MMR_NI_CONFIG){
+		packet.src_addr = MMR_NI_CONFIG;
+		schedule_after_syscall = isr_handle_broadcast(&packet);
+		return 0;
+	}
+
+	if(!bcast_send(&packet, target, BR_SVC_TGT)){
+		schedule_after_syscall = true;
+		return -EAGAIN;
+	}
 
 	return 0;
 }
 
-int os_puts(char *str)
+int sys_mon_ptr(tcb_t *tcb, unsigned* table, enum MONITOR_TYPE type)
 {
-	tcb_t *current = sched_get_current();
-	int id = sched_get_current_id();
-	int addr = MMR_NI_CONFIG;
-	char *msg_ptr = (char*)(tcb_get_offset(current) | (unsigned int)str);
-	printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
-	puts(msg_ptr);
-	puts("\n");
+	if(tcb_get_id(tcb) >> 8 != 0)	/* AppID should be 0 */
+		return -EINVAL;
 
+	if(table == NULL){
+		printf("ERROR: Table is null.\n");
+		return -EINVAL;
+	}
+
+	table = (unsigned*)((unsigned)table | (unsigned)tcb_get_offset(tcb));
+
+	switch(type){
+		case MON_QOS:
+			MMR_MON_PTR_QOS = (unsigned)table;
+			break;
+		case MON_PWR:
+			MMR_MON_PTR_PWR = (unsigned)table;
+			break;
+		case MON_2:
+			MMR_MON_PTR_2 = (unsigned)table;
+			break;
+		case MON_3:
+			MMR_MON_PTR_3 = (unsigned)table;
+			break;
+		case MON_4:
+			MMR_MON_PTR_4 = (unsigned)table;
+			break;
+		default:
+			return -EINVAL;
+	}
+
+	return 0;
+}
+
+int sys_brk(tcb_t *tcb, void *addr)
+{
+	// printf("brk(%u)\n", addr);
+	void *heap_end = tcb_get_heap_end(tcb);
+
+	if(addr == NULL || addr == heap_end){
+		// printf("Returning %u\n", heap_end);
+		return (int)heap_end;
+	}
+
+	// if(addr < heap_end)
+	// 	return addr;
+
+	unsigned sp = tcb_get_sp(tcb);
+
+	if((unsigned)addr > sp){
+		fprintf(
+			stderr, 
+			"Heap and stack collision in task %d\n", 
+			tcb_get_id(tcb)
+		);
+		return -1;
+	}
+
+	// printf("Growing heap from %u to %u\n", heap_end, (unsigned)addr);
+
+	tcb_set_brk(tcb, addr);
+
+	return (int)addr;
+}
+
+int sys_write(tcb_t *tcb, int file, char *buf, int nbytes)
+{
+	if(file != STDOUT_FILENO && file != STDERR_FILENO)
+		return -EBADF;
+
+	if(buf == NULL){
+		printf("ERROR: buffer is null\n");
+		return -EINVAL;
+	}
+
+	buf = (char*)((unsigned)tcb_get_offset(tcb) | (unsigned)buf);
+
+
+	int rv = 0;
+	if(nbytes == 1 && buf[0] == '\n'){
+		rv = write(file, buf, nbytes);
+	} else {
+		int id = tcb_get_id(tcb);
+		int addr = MMR_NI_CONFIG;
+
+		printf("$$$_%dx%d_%d_%d_", addr >> 8, addr & 0xFF, id >> 8, id & 0xFF);
+		fflush(stdout);
+
+		rv = write(file, buf, nbytes);
+	}
+
+	if(rv == -1)
+		return -errno;
+
+	return rv;
+}
+
+int sys_fstat(tcb_t *tcb, int file, struct stat *st)
+{
+	if(st == NULL){
+		printf("ERROR: st is null");
+		return false;
+	}
+
+	st = (struct stat*)((unsigned)tcb_get_offset(tcb) | (unsigned)st);
+	int ret = fstat(file, st);
+
+	if(ret == -1)
+		return -errno;
+
+	return ret;
+}
+
+int sys_close(int file)
+{
+	return -EBADF;
+}
+
+int sys_get_ctx(tcb_t *tcb, mctx_t *ctx)
+{
+	mctx_t *real_ptr = (mctx_t*)((unsigned)tcb_get_offset(tcb) | (unsigned)ctx);
+	real_ptr->PE_X_CNT = MMR_N_PE_X;
+	real_ptr->PE_Y_CNT = MMR_N_PE_Y;
+	real_ptr->PE_CNT = real_ptr->PE_X_CNT * real_ptr->PE_Y_CNT;
+	real_ptr->PE_SLOTS = MMR_MAX_LOCAL_TASKS;
+	real_ptr->MC_SLOTS = real_ptr->PE_SLOTS * real_ptr->PE_CNT;
+
+	return 0;
+}
+
+int sys_halt(tl_t *tl)
+{
+	/* Check if there are migrated tasks in the list and halt later */
+	if(!(tm_empty() && psvc_empty())){
+		puts("DEBUG: Not halting now due to task migration");
+		return EAGAIN;
+	}
+
+	tcb_t *tcb = tcb_find(tl_get_task(tl));
+	if(tcb != NULL && tcb_size() > 1){
+		/* Check if error or if it has other management tasks */
+		int ret = tcb_destroy_management(tcb);
+		if(ret == EFAULT)
+			puts("WARN: possible memory leak in non-destroyed TCB");
+	}
+
+	if(tcb != NULL){
+		/* The app and sched list should be empty when there is no task running */
+		app_derefer(tcb_get_app(tcb));
+	}
+
+	/* Disable scheduler */
+	MMR_IRQ_MASK &= ~IRQ_SCHEDULER;
+	
+	/* Inform the mapper that this PE is ready to halt */
+	int pe_halted[] = {PE_HALTED, MMR_NI_CONFIG};
+	sys_kernel_writepipe(
+		pe_halted, 
+		sizeof(pe_halted), 
+		tl_get_task(tl), 
+		tl_get_addr(tl)
+	);
+
+	return 0;
+}
+
+int sys_end_simulation(tcb_t *tcb)
+{
+	if(tcb_get_id(tcb) >> 8 != 0)
+		return -EACCES;
+
+	MMR_END_SIM = 1;
 	return 0;
 }

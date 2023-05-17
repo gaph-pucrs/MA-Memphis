@@ -59,7 +59,6 @@ typedef int type_DATA; //unsigned
 
 int out;
 
-message_t msg1;
 
 
 /* iclip table */
@@ -225,7 +224,7 @@ void idct_func(type_DATA *block,int lx)
 int main()
 {
     // unsigned int time_a, time_b;
-    int i,j;
+    int j;
     type_DATA block[64];
 
 
@@ -234,19 +233,14 @@ int main()
 
     for(j=0;j<MPEG_FRAMES;j++)
     {
-        memphis_receive(&msg1,iquant);
+        memphis_receive(block, sizeof(block), iquant);
 
-        for(i=0;i<msg1.length;i++)
-            block[i] = msg1.payload[i];
 
         idct_func(block, 8);  // 8x8 Blocks
 
-        msg1.length = 64;
-        for(i=0; i<msg1.length; i++)
-            msg1.payload[i] = block[i];
 
 
-        memphis_send(&msg1,print);
+        memphis_send(block, sizeof(block), print);
 
     }
 

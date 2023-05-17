@@ -11,89 +11,52 @@
  * @brief Migration decider functions
  */
 
-#include <stddef.h>
-#include <stdio.h>
-#include <memphis.h>
-
 #include "migration.h"
-#include "services.h"
 
-void migration_init(migration_task_t *tasks)
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <memphis.h>
+#include <memphis/services.h>
+
+typedef struct _mt {
+	int id;
+	int missed_cnt;
+} mt_t;
+
+bool _mt_cmp_fnc(void *data, void *cmpval)
 {
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++)
-		tasks[i].id = -1;
+	mt_t *task = (mt_t*)data;
+	int id = *((int*)cmpval);
+
+	return (task->id == id);
 }
 
-void migration_check_rt(migration_task_t *tasks, oda_t *actuator, int id, int remaining)
+void mt_check_rt(lru_t *tasks, oda_t *actuator, int id, int remaining)
 {
 	if(remaining < 0){
-		migration_task_t *task = migration_search_task(tasks, id);
-		if(task == NULL)
-			task = migration_task_insert(tasks, id);
+		mt_t *task = lru_use(tasks, &id, _mt_cmp_fnc);
+
+		if(task == NULL){
+			task = malloc(sizeof(mt_t));
+			task->id = id;
+			task->missed_cnt = 0;
+			mt_t *old_task = lru_replace(tasks, task);
+			free(old_task);
+		}
+
+		task->missed_cnt++;
 		
-		migration_task_inc_miss(tasks, task);
-		if(oda_is_enabled(actuator) && migration_task_get_miss(task) >= 3){
-			migration_task_clear(task);
-			message_t msg;
-			msg.payload[0] = TASK_MIGRATION_MAP;
-			msg.payload[1] = id;
-			msg.length = 2;
+		if(oda_is_enabled(actuator) && task->missed_cnt >= 3){
+			task->missed_cnt = 0;
+
+			int msg[] = {
+				TASK_MIGRATION_MAP,
+				id
+			};
 			printf("Requesting migration for task %d\n", id);
 
-			memphis_send_any(&msg, actuator->id);
+			memphis_send_any(msg, sizeof(msg), oda_get_id(actuator));
 		}
 	}
-}
-
-migration_task_t *migration_search_task(migration_task_t *tasks, int id)
-{
-	migration_task_t *task = NULL;
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		if(tasks[i].id == id){
-			task = &tasks[i];
-			break;
-		}
-	}
-	return task;
-}
-
-migration_task_t *migration_task_insert(migration_task_t *tasks, int id)
-{
-	migration_task_t *task = NULL;
-
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		if(tasks[i].id == -1){
-			task = &tasks[i];
-			break;
-		} else if(task == NULL || task[i].lru_cnt > task->lru_cnt){
-			task = &tasks[i];
-		}
-	}
-
-	task->id = id;
-	task->missed_cnt = 0;
-
-	return task;
-}
-
-void migration_task_inc_miss(migration_task_t *tasks, migration_task_t *task)
-{
-	task->missed_cnt++;
-
-	for(int i = 0; i < PKG_PENDING_SVC_MAX; i++){
-		if(task[i].id != -1)
-			task[i].lru_cnt++;
-	}
-
-	task->lru_cnt = 1;
-}
-
-int migration_task_get_miss(migration_task_t *task)
-{
-	return task->missed_cnt;
-}
-
-void migration_task_clear(migration_task_t *task)
-{
-	task->missed_cnt = 0;
 }

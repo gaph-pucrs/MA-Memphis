@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file pending_service.h
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -13,87 +13,40 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <mutils/list.h>
 
 #include "packet.h"
 
 /**
- * @brief FIFO data structure for pending services
- */
-typedef struct _pending_svc {
-	packet_t buffer[PKG_PENDING_SVC_MAX];	//!<pending services array declaration
-	unsigned char head;
-	unsigned char tail;
-	bool empty;
-	bool full;
-} pending_svc_t;
-
-/**
- * @brief Pending message information. This is a 'lightweight' pipe for kernel
- */
-typedef struct _pending_msg {
-	int task;
-	int size;
-	int message[PKG_MAX_KERNEL_MSG_LEN];
-} pending_msg_t;
-
-/**
  * @brief Initialize the pending service structures
  */
-void pending_svc_init();
-
-/**
- * @brief Initialize the pending message structures
- */
-void pending_msg_init();
+void psvc_init();
 
 /**
  * @brief Adds a service to pending structure
  * 
  * @param packet Pointer to service packet
  *
- * @return True if sucess
+ * @return list_entry_t* Pointer to entry
  */
-bool pending_svc_push(const volatile packet_t *packet);
+list_entry_t *psvc_push_back(packet_t *packet);
 
 /**
- * @brief Adds a service to pending structure
+ * @brief Gets the first element from the fifo
  * 
- * @param task ID of the target task
- * @param size Length of the message
- * @param msg Pointer to the message
- *
- * @return True if sucess
+ * @return packet_t* Pointer to a packet
  */
-bool pending_msg_push(int task, int size, int *msg);
+packet_t *psvc_front();
 
 /**
- * @brief Gets the next pending service and remove from the buffer
- * 
- * @return Pointer to the next service. NULL if no service is pending.
+ * @brief Removes the first element from the FIFO
  */
-packet_t *pending_svc_pop();
+void psvc_pop_front();
 
 /**
- * @brief Gets a pending message pointer
+ * @brief Checks if there are no more pending services
  * 
- * @param id ID of the target task
- * 
- * @return Pointer to the structure found. NULL if no corresponding id
+ * @return true No more pending services
+ * @return false Has pending services
  */
-pending_msg_t *pending_msg_search(int id);
-
-/**
- * @brief Sends a kernel pending message
- * 
- * @param msg Pointer to the message structure
- * @param addr Address of the consumer task
- */ 
-void pending_msg_send(pending_msg_t *msg, int addr);
-
-/**
- * @brief Gets a message pointer based on the message service (index 0)
- * 
- * @param svc Service of the desired message
- */
-pending_msg_t *pending_msg_search_svc(int svc);
+bool psvc_empty();

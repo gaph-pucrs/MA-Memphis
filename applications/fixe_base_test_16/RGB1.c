@@ -41,7 +41,7 @@ int mult(int a, int b)
 	}
 	cpt2--;
 
-	/*divise a et b en conséquence lorsque ceux-ci sont trop grand*/
+	/*div_fixedise a et b en conséquence lorsque ceux-ci sont trop grand*/
 	/*on sacrifie en précision pour pouvoir effectuer le calcul*/
 	while((cpt1+cpt2)>=PU-1)
 	{
@@ -81,7 +81,7 @@ int mult(int a, int b)
 
 
 
-message_t msg1,msg2;
+int msg1[3];
 
 
 void rgb(int* sum,int* RGB)
@@ -98,14 +98,10 @@ int main()
 {
 	puts("start RGB1\n");
 
-	int RGB[3],i;
-	memphis_receive(&msg1,XYZ1);
+	int RGB[3];
+	memphis_receive(msg1, sizeof(msg1), XYZ1);
 	
-	rgb((int*)msg1.payload,RGB);
-
-    msg2.length=3;
-    for(i=0;i<3;i++)
-         msg2.payload[i]=RGB[i];
+	rgb(msg1, RGB);
 
     // Echo("Valeur de RGB :");
     // for(i=0;i<3;i++)
@@ -113,7 +109,7 @@ int main()
 	// 	Echo(fixetoa(RGB[i]));
 	// }
 
-    memphis_send(&msg2,DRGB);
+    memphis_send(RGB, sizeof(RGB), DRGB);
 
     puts("Communication RGB1 finished.\n");
 

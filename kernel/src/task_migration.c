@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_migration.c
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -12,228 +12,338 @@
  */
 
 #include "task_migration.h"
-#include "services.h"
-#include "packet.h"
-#include "task_location.h"
-#include "stdio.h"
 
-typedef struct _tm_ring_t {
-	migrated_task_t tasks[PKG_MAX_LOCAL_TASKS];
-	int tail;
-} tm_ring_t;
+#include <stdlib.h>
+#include <stdio.h>
 
-tm_ring_t migrated_tasks;
+#include <memphis.h>
+#include <memphis/services.h>
+
+#include "broadcast.h"
+#include "dmni.h"
+#include "mmr.h"
+
+list_t _tms;
 
 void tm_init()
 {
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		migrated_tasks.tasks[i].task = -1;
-	}
-	migrated_tasks.tail = 0;
+	list_init(&_tms);
 }
 
-void tm_add(int task, int addr)
+tl_t *tm_find(int task)
 {
-	migrated_tasks.tasks[migrated_tasks.tail].task = task;
-	migrated_tasks.tasks[migrated_tasks.tail].addr = addr;
-	migrated_tasks.tail++;
-	migrated_tasks.tail %= PKG_MAX_LOCAL_TASKS;
+	return tl_find(&_tms, task);
 }
 
-int tm_get_migrated_addr(int task)
+tl_t *tm_emplace_back(int task, int addr)
 {
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(migrated_tasks.tasks[i].task == task)
-			return migrated_tasks.tasks[i].addr;
+	tl_t *tl = malloc(sizeof(tl_t));
+
+	if(tl == NULL)
+		return NULL;
+
+	tl_set(tl, task, addr);
+
+	list_entry_t *entry = list_push_back(&_tms, tl);
+
+	if(entry == NULL){
+		free(tl);
+		return NULL;
 	}
-	return -1;
+
+	return tl;
 }
 
 void tm_migrate(tcb_t *tcb)
 {
 	/* Get target address */
-	int migrate_addr = tcb_get_migrate_addr(tcb);
+	int addr = tcb_get_migrate_addr(tcb);
+	int id = tcb_get_id(tcb);
 
-	tm_add(tcb_get_id(tcb), migrate_addr);
-
-	/* Update task location of tasks of the same app running locally */
-	tl_update_local(tcb_get_id(tcb), migrate_addr);
+	tl_t *tm = tm_emplace_back(id, addr);
+	if(tm == NULL){
+		puts("WARNING: not enough memory, not migrating.");
+		return;
+	}
 
 	/* Send base TCB info */
-	// puts("Sending migration TCB\n");
-	tm_send_tcb(tcb, migrate_addr);
-	/* Send task location array (only what is needed) */
-	// puts("Sending migration task location\n");
-	tm_send_tl(tcb, migrate_addr);
-	/* Send message request array (only what is needed) */
-	// puts("Sending migration message request\n");
-	tm_send_mr(tcb, migrate_addr);
+	// puts("Sending migration TCB");
+	tm_send_tcb(tcb, id, addr);
+	/* Send task location array */
+	// puts("Sending migration app (task location)");
+	app_t *app = tcb_get_app(tcb);
+	tm_send_app(tcb, app, id, addr);
 	/* Send data available fifo */
-	// puts("Sending migration data available\n");
-	tm_send_data_av(tcb, migrate_addr);
+	// puts("Sending migration task location (DATA_AV)");
+	tm_send_tl(tcb, tcb_get_davs(tcb), MIGRATION_DATA_AV, id, addr);
+	/* Send message request array (only what is needed) */
+	// puts("Sending migration task location (MESSAGE_REQUEST)");
+	tm_send_tl(tcb, tcb_get_msgreqs(tcb), MIGRATION_MSG_REQUEST, id, addr);
 	/* Send pipe */
-	// puts("Sending migration pipe\n");
-	tm_send_pipe(tcb, migrate_addr);
-	/* Send stack */
-	// puts("Sending migration stack\n");
-	tm_send_stack(tcb, migrate_addr);
+	// puts("Sending migration pipe");
+	tm_send_opipe(tcb, id, addr);
 	/* Send data and BSS */
-	// puts("Sending migration data and bss\n");
-	tm_send_data_bss(tcb, migrate_addr);
+	// puts("Sending migration data and bss");
+	tm_send_data_bss(tcb, id, addr);
+	/* Send heap */
+	// puts("Sending migration heap");
+	tm_send_heap(tcb, id, addr);
+	/* Send stack */
+	// puts("Sending migration stack");
+	tm_send_stack(tcb, id, addr);
+	/* Send scheduler data */
+	// puts("Sending migration scheduler");
+	tm_send_sched(tcb, id, addr);
 	
 	/* Code (.text) is in another function */
-	printf("Task id %d migrated at time %d to processor %x\n", tcb_get_id(tcb), MMR_TICK_COUNTER, migrate_addr);
-
-	sched_clear(tcb);
-	tcb_clear(tcb);
+	printf(
+		"Task id %d migrated at time %d to processor %x\n", 
+		id, 
+		MMR_TICK_COUNTER, 
+		addr
+	);
+	
+	/* Update task location of tasks of the same app running locally */
+	app_update(app, id, addr);
+	tcb_remove(tcb);
 }
 
-void tm_send_code(tcb_t *tcb)
+void tm_send_text(tcb_t *tcb, int id, int addr)
 {
 	packet_t *packet = pkt_slot_get();
 
-	packet->header = tcb_get_migrate_addr(tcb);
-	packet->service = MIGRATION_CODE;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->code_size = tcb_get_code_length(tcb);
-	packet->mapper_task = tcb->mapper_task;
-	packet->mapper_address = tcb->mapper_address;
+	tl_t *mapper = tcb_get_mapper(tcb);
+	size_t text_size = tcb_get_text_size(tcb);
 
-	pkt_send(packet, (unsigned int*)tcb_get_offset(tcb), tcb_get_code_length(tcb)/4);
+	pkt_set_migration_code(
+		packet, 
+		addr, 
+		id, 
+		text_size, 
+		tl_get_task(mapper), 
+		tl_get_addr(mapper)
+	);
+
+	/* Align */
+	text_size = (text_size + 3) & ~3;
+
+	void *offset = tcb_get_offset(tcb);
+	dmni_send(packet, offset, text_size >> 2, false);
 }
 
-void tm_send_tcb(tcb_t *tcb, int addr)
+void tm_send_tcb(tcb_t *tcb, int id, int addr)
 {
 	/* Send TCB */
 	packet_t *packet = pkt_slot_get();
 
-	/* Task info */
-	packet->header = addr;
-	packet->service = MIGRATION_TCB;
-	packet->task_ID = tcb_get_id(tcb);
+	unsigned received = 0;
+	ipipe_t *ipipe = tcb_get_ipipe(tcb);
+	if(ipipe != NULL){
+		received = ipipe_get_size(ipipe);
+		tcb_destroy_ipipe(tcb);
+	}
 
-	/* RT constraints */
-	packet->period = sched_get_period(tcb);
-	packet->deadline = sched_get_deadline(tcb);
+	pkt_set_migration_tcb(
+		packet, 
+		addr, 
+		id, 
+		tcb_get_pc(tcb),
+		received
+	);
 
-	packet->insert_request = tcb->observer_task;
-
-	packet->execution_time = sched_get_exec_time(tcb);
-
-	packet->request_size = tcb->observer_address;
-
-	/* Registers */
-	packet->program_counter = tcb_get_pc(tcb);
-
-	pkt_send(packet, tcb->registers, HAL_MAX_REGISTERS);
+	dmni_send(packet, tcb_get_regs(tcb), HAL_MAX_REGISTERS, false);
 }
 
-void tm_send_tl(tcb_t *tcb, int addr)
+void tm_send_app(tcb_t *tcb, app_t *app, int id, int addr)
 {
+	size_t task_cnt = app_get_task_cnt(app);
+
 	packet_t *packet = pkt_slot_get();
 
-	packet->header = addr;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->service = MIGRATION_TASK_LOCATION;
-	packet->request_size = tl_get_len(tcb);
+	pkt_set_migration_app(packet, addr, id, task_cnt);
 
-	pkt_send(packet, (unsigned int*)tl_get_ptr(tcb), packet->request_size);
+	dmni_send(packet, app_get_locations(app), task_cnt, false);
 }
 
-void tm_send_mr(tcb_t *tcb, int addr)
+void tm_send_tl(tcb_t *tcb, list_t *list, unsigned service, int id, int addr)
 {
-	unsigned int mr_len = mr_defrag(tcb);
+	size_t size = list_get_size(list);
 
-	if(mr_len){
-		// puts("Will send message request");
-		packet_t *packet = pkt_slot_get();
+	if(size == 0)
+		return;	/* No data available to migrate */
 
-		packet->header = addr;
-		packet->service = MIGRATION_MSG_REQUEST;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->request_size = mr_len;
-
-		pkt_send(packet, (unsigned int*)tcb_get_mr(tcb), mr_len*sizeof(message_request_t)/sizeof(unsigned int));
+	tl_t *vect = list_vectorize(list, sizeof(tl_t));
+	
+	if(vect == NULL){
+		puts("FATAL: could not allocate memory for TL vector");
+		while(1);
 	}
+
+	list_clear(list);
+	list = NULL;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_tl(packet, addr, service, id, size);
+
+	dmni_send(packet, vect, (size*sizeof(tl_t)) >> 2, true);
 }
 
-void tm_send_data_av(tcb_t *tcb, int addr)
+void tm_send_opipe(tcb_t *tcb, int id, int addr)
 {
-	unsigned int data_av_len = data_av_get_len_head_end(tcb);
+	opipe_t *opipe = tcb_get_opipe(tcb);
 
-	if(data_av_len){
-		// puts("will send data_av migrate part 1\n");
-		packet_t *packet = pkt_slot_get();
+	if(opipe == NULL)
+		return;
+	
+	// puts("Will send pipe migration\n");
+	packet_t *packet = pkt_slot_get();
 
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_DATA_AV;
-		packet->request_size = data_av_len;
+	size_t size;
+	void* buf = opipe_get_buf(opipe, &size);
 
-		pkt_send(packet, (unsigned int*)data_av_get_buffer_head(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
-	}
+	pkt_set_migration_pipe(
+		packet,
+		addr, 
+		id, 
+		opipe_get_cons_task(opipe),
+		size
+	);
 
-	data_av_len = data_av_get_len_start_tail(tcb);
+	size_t align_size = (size + 3) & ~3;
 
-	if(data_av_len){
-		// puts("will send data_av migrate part 2\n");
-		packet_t *packet = pkt_slot_get();
+	dmni_send(packet, buf, align_size >> 2, true);
 
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_DATA_AV;
-		packet->request_size = data_av_len;
-
-		pkt_send(packet, (unsigned int*)data_av_get_buffer_start(tcb), data_av_len*sizeof(data_av_t)/sizeof(unsigned int));
-	}
+	tcb_destroy_opipe(tcb);
 }
 
-void tm_send_pipe(tcb_t *tcb, int addr)
-{
-	if(pipe_is_full(tcb)){
-		// puts("Will send pipe migration\n");
-		packet_t *packet = pkt_slot_get();
-
-		packet->header = addr;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->service = MIGRATION_PIPE;
-		packet->consumer_task = pipe_get_cons_task(tcb);
-		packet->msg_lenght = pipe_get_message_len(tcb);
-
-		pkt_send(packet, (unsigned int *)tcb->pipe.message.payload, packet->msg_lenght);
-	}
-}
-
-void tm_send_stack(tcb_t *tcb, int addr)
+void tm_send_stack(tcb_t *tcb, int id, int addr)
 {
 	/* Get the stack pointer */
-	unsigned int stack_len = PKG_PAGE_SIZE - tcb_get_sp(tcb);
+	size_t stack_size = MMR_PAGE_SIZE - tcb_get_sp(tcb);
 
-	/* Align to 32 bits */
-	while(stack_len % 4)
-		stack_len++;
+	if(stack_size == 0)
+		return;
 
-	if(stack_len){
-		packet_t *packet = pkt_slot_get();
+	/* Align */
+	stack_size = (stack_size + 3) & ~3;
 
 		packet->header = addr;
 		packet->service = MIGRATION_STACK;
 		packet->task_ID = tcb_get_id(tcb);
 		packet->stack_size = stack_len;
 
-		pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + PKG_PAGE_SIZE - stack_len), stack_len/4);
-	}
+	pkt_set_migration_stack(packet, addr, id, stack_size);
+
+	dmni_send(
+		packet, 
+		tcb_get_offset(tcb) + MMR_PAGE_SIZE - stack_size, 
+		stack_size >> 2, 
+		false
+	);
 }
 
-void tm_send_data_bss(tcb_t *tcb, int addr)
+void tm_send_heap(tcb_t *tcb, int id, int addr)
+{
+	/* Get the stack pointer */
+	void *heap_start = (void*)(
+		tcb_get_text_size(tcb) + 
+		tcb_get_data_size(tcb) + 
+		tcb_get_bss_size(tcb)
+	);
+	void *heap_end = tcb_get_heap_end(tcb);
+	size_t heap_size = heap_end - heap_start;
+
+	if(heap_size == 0)
+		return;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_heap(packet, addr, id, heap_size);
+
+	/* Align to 32 bits */
+	heap_size = (heap_size + 3) & ~3;
+
+	dmni_send(
+		packet, 
+		tcb_get_offset(tcb) + (unsigned)heap_start, 
+		heap_size >> 2,
+		false
+	);
+}
+
+void tm_send_data_bss(tcb_t *tcb, int id, int addr)
+{
+	size_t data_size = tcb_get_data_size(tcb);
+	size_t bss_size = tcb_get_bss_size(tcb);
+	size_t total_size = data_size + bss_size;
+
+	if(total_size == 0)
+		return;
+
+	packet_t *packet = pkt_slot_get();
+
+	pkt_set_migration_data_bss(packet, addr, id, data_size, bss_size);
+
+	total_size = (total_size + 3) & ~3;
+
+	dmni_send(
+		packet, 
+		tcb_get_offset(tcb) + tcb_get_text_size(tcb), 
+		total_size >> 2,
+		false
+	);
+}
+
+void tm_send_sched(tcb_t *tcb, int id, int addr)
 {
 	packet_t *packet = pkt_slot_get();
 
-	packet->header = addr;
-	packet->service = MIGRATION_DATA_BSS;
-	packet->task_ID = tcb_get_id(tcb);
-	packet->data_size = tcb_get_data_length(tcb);
-	packet->bss_size = tcb_get_bss_length(tcb);
+	sched_t *sched = tcb_get_sched(tcb);
+	pkt_set_migration_sched(
+		packet, 
+		addr, 
+		id, 
+		sched_get_period(sched), 
+		sched_get_deadline(sched), 
+		sched_get_waiting_msg(sched), 
+		sched_get_exec_time(sched)
+	);
 
-	pkt_send(packet, (unsigned int*)(tcb_get_offset(tcb) + tcb_get_code_length(tcb)), (packet->data_size + packet->bss_size)/4);
+	dmni_send(packet, NULL, 0, false);
+}
+
+void tm_abort_task(int id, int addr)
+{
+	bcast_t packet;
+
+	packet.service = ABORT_TASK;
+	packet.src_id = -1;
+	packet.payload = id;
+	while(!bcast_send(&packet, addr, BR_SVC_TGT));
+}
+
+bool _tm_find_app_fnc(void *data, void* cmpval)
+{
+	tl_t *tl = (tl_t*)data;
+	int app_id = *((int*)cmpval);
+
+	return (((tl->task >> 8) & 0xFF) == app_id);
+}
+
+void tm_clear_app(int id)
+{
+	list_entry_t *entry = list_find(&_tms, &id, _tm_find_app_fnc);
+	while(entry != NULL){
+		tl_t *tl = list_get_data(entry);
+		// printf("************* Removed task %d from migration\n", tl->task);
+		list_remove(&_tms, entry);
+		free(tl);
+		entry = list_find(&_tms, &id, _tm_find_app_fnc);
+	}
+}
+
+bool tm_empty()
+{
+	return list_empty(&_tms);
 }

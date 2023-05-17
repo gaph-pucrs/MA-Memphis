@@ -13,6 +13,16 @@
 
 #pragma once
 
-#include <oda.h>
+#include <memphis/oda.h>
 
-void rt_check(oda_t *decider, int id, int waiting_msg, int slack_time, int remaining_time);
+/**
+ * @brief Verifies for a missed deadline in the observed task
+ * 
+ * @details
+ * Forwards to the decider if deadline is missed
+ * 
+ * @param decider Pointer to the decider structure
+ * @param id ID of the observed task
+ * @param rt_diff Difference between slack time and remaining execution time
+ */
+void rt_check(oda_t *decider, int id, int rt_diff);

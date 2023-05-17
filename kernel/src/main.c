@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file main.c
  *
  * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
@@ -16,33 +16,32 @@
 #include "pending_service.h"
 #include "task_migration.h"
 #include "stdio.h"
+#include "llm.h"
+#include "interrupts.h"
+#include "pending_msg.h"
+#include "paging.h"
+#include "application.h"
 
 int main()
 {
-    hal_disable_interrupts();
-
 	printf("Initializing PE %x\n", MMR_NI_CONFIG);
 
+	page_init();
+	app_init();
+	tcb_init();
+	sched_init();
+	pmsg_init();
+	psvc_init();
+	tm_init();
+	llm_init();
 	pkt_init();
 
-	tcb_init();
-
-	pending_svc_init();
-	pending_msg_init();
-
-	sched_init();
-
-	tm_init();
-
 	MMR_IRQ_MASK = (
-		MMR_IRQ_SCHEDULER | 
-		MMR_IRQ_NOC | 
-		MMR_IRQ_PENDING_SERVICE | 
-		MMR_IRQ_SLACK_TIME
+		IRQ_BRNOC |
+		IRQ_SCHEDULER | 
+		IRQ_NOC | 
+		IRQ_PENDING_SERVICE
 	);
 	
-	hal_run_task((void*)sched_get_current());
-
-	while(true);
 	return 0;
 }

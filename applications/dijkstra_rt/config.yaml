@@ -1,0 +1,23 @@
+ctg:
+  dijkstra_0:
+    successors:
+      - "print"
+  dijkstra_1:
+    successors:
+      - "print"
+  dijkstra_2:
+    successors:
+      - "print"
+  dijkstra_3:
+    successors:
+      - "print"
+  dijkstra_4:
+    successors:
+      - "print"
+  divider:
+    successors:
+      - "dijkstra_0"
+      - "dijkstra_1"
+      - "dijkstra_2"
+      - "dijkstra_3"
+      - "dijkstra_4"
