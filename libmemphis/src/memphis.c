@@ -160,3 +160,21 @@ int memphis_halt()
 {
 	return __internal_syscall(SYS_halt, 0, 0, 0, 0, 0, 0, 0);
 }
+
+int memphis_send_raw(unsigned *msg, unsigned length)
+{
+	int ret = 0;
+	do {
+		ret = __internal_syscall(SYS_rawsend, 2, (long)msg, length, 0, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
+}
+
+int memphis_receive_raw(unsigned *msg, unsigned length)
+{
+	int ret = 0;
+	do {
+		ret = syscall_errno(SYS_rawrecv, 2, (long)msg, length, 0, 0, 0, 0);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
+}

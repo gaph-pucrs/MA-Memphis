@@ -26,7 +26,7 @@
 void dmni_read(void *payload_address, size_t payload_size);
 
 /**
- * @brief Abstracts thte DMNI programming for writing data to NoC and copy from memory.
+ * @brief Abstracts the DMNI programming for writing data to NoC and copy from memory.
  * 
  * @param packet Pointer to the packet to send
  * @param payload Pointer to the payload to send, NULL if none

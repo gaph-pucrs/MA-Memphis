@@ -182,6 +182,34 @@ bool isr_handle_broadcast(bcast_t *packet)
 
 bool isr_handle_pkt(volatile packet_t *packet)
 {
+	tcb_t *raw_receiver = tcb_has_raw_recv();
+
+	if(raw_receiver != NULL){
+		unsigned recv_len;
+		unsigned *buf = tcb_get_raw_recv(raw_receiver, recv_len);
+
+		if(packet->payload_size + 2 > recv_len){
+			printf("FATAL: Not enough memory in raw receiver. DMNI will hang.\n");
+			while(1);
+		}
+
+		unsigned *real_buf = (unsigned*)((unsigned)buf | (unsigned)tcb_get_offset(raw_receiver));
+
+		/* Save the 13 flits of already read packet */
+		memcpy(buf, (void*)packet, PKT_SIZE*sizeof(unsigned));
+
+		unsigned remaining = packet->payload_size + 2 - PKT_SIZE;
+		if(remaining > 0)
+			dmni_read(&buf[PKT_SIZE], remaining);
+
+		tcb_set_raw_receiver(raw_receiver, buf, remaining + PKT_SIZE);
+
+		sched_t *sched = tcb_get_sched(raw_receiver);
+		sched_release_wait(sched);
+		
+		return true;
+	}
+
 	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:

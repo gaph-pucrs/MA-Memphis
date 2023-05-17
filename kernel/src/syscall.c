@@ -111,6 +111,12 @@ tcb_t *sys_syscall(
 			case SYS_brk:
 				ret = sys_brk(current, (void*)arg1);
 				break;
+			case SYS_rawsend:
+				ret = sys_rawsend(current, (unsigned*)arg1, arg2);
+				break;
+			case SYS_rawrecv:
+				ret = sys_rawrecv(current, (unsigned*)arg1, arg2);
+				break;
 			default:
 				printf("ERROR: Unknown syscall %x\n", number);
 				ret = 0;
@@ -874,4 +880,45 @@ int sys_end_simulation(tcb_t *tcb)
 
 	MMR_END_SIM = 1;
 	return 0;
+}
+
+int sys_rawsend(tcb_t *tcb, unsigned *buf, unsigned length)
+{
+	if(MMR_DMNI_SEND_ACTIVE)
+		return -EAGAIN;
+
+	buf = (unsigned*)((unsigned)buf | (unsigned)tcb_get_offset(tcb));
+	
+	/* Custom DMNI operation. Do not use dmni_send */
+	MMR_DMNI_SIZE = length;
+	MMR_DMNI_ADDRESS = (unsigned)message;
+
+	MMR_DMNI_SIZE_2 = 0;
+	MMR_DMNI_ADDRESS_2 = 0;
+
+	MMR_DMNI_OP = DMNI_READ;
+	MMR_DMNI_START = 1;
+
+	/* Blocking send */
+	while(MMR_DMNI_SEND_ACTIVE);
+
+	return length;
+}
+
+int sys_rawrecv(tcb_t *tcb, unsigned *buf, unsigned length)
+{
+	unsigned recv_len;
+	unsigned *recv_buf = tcb_get_raw_recv(tcb, &recv_len);
+	if(recv_len > 0){
+		/* Message received! Return. */
+		tcb_set_raw_receiver(tcb, NULL, 0);
+		return recv_len;
+	}
+
+	schedule_after_syscall = true;
+	sched_t *sched = tcb_get_sched(tcb);
+	sched_set_wait_msgdlvr(sched);
+	tcb_set_raw_receiver(tcb, buf, length);
+
+	return -EAGAIN;
 }

@@ -50,6 +50,9 @@ typedef struct _tcb {
 	opipe_t *pipe_out;		//!< Temporary buffer for outbound messages
 
 	bool called_exit;		//!< Flags that the task has exited
+
+	unsigned raw_recv;
+	unsigned *raw_recv_ptr;
 } tcb_t;
 
 /**
@@ -415,3 +418,29 @@ size_t tcb_size();
  * @return int 0 if success, EFAULT if destroyed a non-management TCB
  */
 int tcb_destroy_management(tcb_t *requester);
+
+/**
+ * @brief Sets a task to be the receiver of a raw message
+ * 
+ * @param tcb Pointer to the task TCB
+ * @param buf Pointer to where the message will be stored
+ * @param length Maximum received message length (in flits)
+ */
+void tcb_set_raw_receiver(tcb_t *tcb, unsigned *buf, unsigned length);
+
+/**
+ * @brief Gets pointer to the first task set as a raw receiver
+ * 
+ * @return tcb_t* Pointer to a TCB that is registered as a raw receiver. NULL if no TCB is registered.
+ */
+tcb_t *tcb_has_raw_recv();
+
+/**
+ * @brief Gets the buffer and length of raw receiver
+ * 
+ * @param tcb Pointer to the TCB
+ * @param len Pointer to store the message length
+ * 
+ * @return unsigned* Pointer to message buf
+ */
+unsigned *tcb_get_raw_recv(tcb_t *tcb, unsigned *len);

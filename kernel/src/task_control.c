@@ -44,6 +44,13 @@ bool _tcb_find_fnc(void *data, void *cmpval)
     return (tcb->id == task);
 }
 
+bool _tcb_find_raw_fnc(void *data, void *cmpval)
+{
+    tcb_t *tcb = (tcb_t*)data;
+
+    return (tcb->raw_recv > 0);
+}
+
 tcb_t *tcb_find(int task)
 {
 	list_entry_t *entry = list_find(&_tcbs, &task, _tcb_find_fnc);
@@ -109,6 +116,8 @@ void tcb_alloc(
 	tcb->pipe_in = NULL;
 	tcb->pipe_out = NULL;
 
+	tcb->raw_recv = 0;
+	tcb->raw_recv_ptr = NULL;
 	tcb->called_exit = false;
 
 	/**
@@ -379,5 +388,29 @@ int tcb_destroy_management(tcb_t *requester)
 		entry = list_next(entry);
 	}
 
-	return err ? EFAULT : 0;	
+	return err ? EFAULT : 0;
+}
+
+void tcb_set_raw_receiver(tcb_t *tcb, unsigned *buf, unsigned length)
+{
+	tcb->raw_recv = length;
+	tcb->raw_recv_ptr = buf;
+}
+
+tcb_t *tcb_get_raw_receiver()
+{
+	list_entry_t *entry = list_find(&_tcbs, NULL, _tcb_find_raw_fnc);
+
+    if(entry == NULL)
+        return NULL;
+
+    return list_get_data(entry);
+}
+
+unsigned *tcb_get_raw_recv(tcb_t *tcb, unsigned *len)
+{
+	if(len != NULL)
+		*len = tcb->raw_recv;
+	
+	return tcb->raw_recv_ptr;
 }

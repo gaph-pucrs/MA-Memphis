@@ -260,3 +260,24 @@ int sys_halt(tl_t *tl);
  * @return int 0 if success, EACCES if not permitted
  */
 int sys_end_simulation(tcb_t *tcb);
+
+/**
+ * @brief Sends a message without following protocols
+ * 
+ * @param tcb Pointer to the TCB sending the message
+ * @param buf Pointer to the message buffer in task memory space
+ * @param length Length of the message to send in 32-bit flits
+ * 
+ * @return int number of flits written. EAGAIN to retry when DMNI is busy.
+ */
+int sys_rawsend(tcb_t *tcb, unsigned *buf, unsigned length);
+
+/**
+ * @brief Sets the task to receive a message without following protocols
+ * 
+ * @param tcb
+ * @param length Length of the buffer to save the message in 32-bit flits
+ * 
+ * @return 1
+ */
+int sys_rawrecv(tcb_t *tcb, unsigned *buf, unsigned length);
