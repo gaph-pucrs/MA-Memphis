@@ -18,6 +18,8 @@
 
 #include <stdbool.h>
 
+static const unsigned int PKT_SIZE = 13; //!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
+
 /**
  * @brief This structure is to be filled by the software when needed to send a 
  * packet, or that will be read when the packet is received.

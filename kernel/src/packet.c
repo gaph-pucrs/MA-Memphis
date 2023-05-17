@@ -27,10 +27,6 @@ enum {
 
 pkt_slot_t pkt_slots[PKT_SLOTS];		//!< Packet send control.
 
-// unsigned int global_inst = 0;			//!<Global CPU instructions counter
-
-const unsigned int PKT_SIZE = 13; //!<Constant Service Header size, based on the structure ServiceHeader. If you change it, please change the same define within app_injector.h
-
 void pkt_init()
 {
 	for(int i = 0; i < PKT_SLOTS; i++)

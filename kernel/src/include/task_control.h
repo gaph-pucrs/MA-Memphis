@@ -47,6 +47,7 @@ typedef struct _tcb {
 
 	scheduler_t scheduler;	//!< Scheduling control structure
 
+	unsigned raw_recv;
 	bool called_exit;
 } tcb_t;
 
@@ -274,3 +275,27 @@ void tcb_set_called_exit(tcb_t *tcb);
  * @return True if called exit
  */
 bool tcb_has_called_exit(tcb_t *tcb);
+
+/**
+ * @brief Sets a task to be the receiver of a raw message
+ * 
+ * @param tcb Pointer to the task TCB
+ * @param length Maximum received message length (in flits)
+ */
+void tcb_set_raw_receiver(tcb_t *tcb, unsigned length);
+
+/**
+ * @brief Gets pointer to the first task set as a raw receiver
+ * 
+ * @return tcb_t* Pointer to a TCB that is registered as a raw receiver. NULL if not TCB is registered.
+ */
+tcb_t *tcb_get_raw_receiver();
+
+/**
+ * @brief Gets the maximum length of a raw receiver
+ * 
+ * @param tcb Pointer to the TCB
+ * 
+ * @return unsigned Maximum length
+ */
+unsigned tcb_get_raw_length(tcb_t *tcb);
