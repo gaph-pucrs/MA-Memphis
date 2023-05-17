@@ -18,7 +18,7 @@
 #include "RiscV.hpp"
 #include "FlitSniffer.hpp"
 #include "DMNI.hpp"
-#include "router_cc.h"
+#include "RouterCCwrapped2.h"
 #include "ram.h"
 #include "BrLiteRouter.hpp"
 #include "BrLiteBuffer.hpp"
@@ -61,7 +61,7 @@ SC_MODULE(PE) {
 	RiscV			cpu;
 	ram			* 	mem;
 	DMNI 			dmni;
-	router_cc 	*	router;
+	RouterCCwrapped 	*	router;
 	BrLiteRouter	br_router;
 	BrLiteBuffer	br_buffer;
 	BrLiteControl	br_control;

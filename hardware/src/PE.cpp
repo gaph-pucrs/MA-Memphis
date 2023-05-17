@@ -111,9 +111,9 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sniffers[LOCAL]->data_i(data_in_ni);
 #endif
 
-	router = new router_cc("router",router_address, path);
+	router = new RouterCCwrapped("router",router_address, path);
 	router->clock(clock);
-	router->reset_n(reset_n);
+	router->reset(reset);
 	router->tx[EAST](tx[EAST]);
 	router->tx[WEST](tx[WEST]);
 	router->tx[NORTH](tx[NORTH]);

@@ -27,6 +27,7 @@ class Hardware:
 	def copy(self):
 		copy_tree(self.platform_path+"/hardware", self.testcase_path+"/hardware", update=1)
 		self.generate_definitions()
+		self.generate_pkg()
 
 	def generate_definitions(self):
 		definitions = HardwareDefinitions()
@@ -48,6 +49,16 @@ class Hardware:
 		definitions.add_io_list(io_list, self.PKG_N_PE)
 
 		definitions.write(self.testcase_path+"/hardware/definitions.h")
+
+	def generate_pkg(self):
+		definitions = PkgDefinitions()
+		definitions.define("PAGE_SIZE_BYTES", str(self.PKG_PAGE_SIZE*1024))
+		definitions.define("MEMORY_SIZE_BYTES", str(self.memory_size*1024))
+		definitions.define("NUMBER_PROCESSORS_X", str(self.PKG_N_PE_X))
+		definitions.define("NUMBER_PROCESSORS_Y", str(self.PKG_N_PE_Y))
+		definitions.define("NUMBER_PROCESSORS", str(self.PKG_N_PE))
+
+		definitions.write(self.testcase_path+"/hardware/src/hemps_pkg.vhd")
 
 	def port_code(self, char):
 		if char == 'E':
@@ -103,6 +114,24 @@ class HardwareDefinitions:
 		self.lines.append("};\n")
 
 	def write(self, path):
+		file = open(path, "w")
+		file.writelines(self.lines)
+		file.close()
+
+class PkgDefinitions:
+	def __init__(self):
+		self.lines = []
+		self.lines.append("library IEEE;\n")
+		self.lines.append("use IEEE.Std_Logic_1164.all;\n")
+		self.lines.append("use IEEE.std_logic_unsigned.all;\n")
+		self.lines.append("use IEEE.std_logic_arith.all;\n")
+		self.lines.append("package hemps_pkg is\n")
+
+	def define(self, key, value):
+		self.lines.append("constant {} : integer := {};\n".format(key, value))
+
+	def write(self, path):
+		self.lines.append("end hemps_pkg;\n")
 		file = open(path, "w")
 		file.writelines(self.lines)
 		file.close()

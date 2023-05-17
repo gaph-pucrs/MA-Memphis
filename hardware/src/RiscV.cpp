@@ -15,10 +15,6 @@
 
 #include "RiscV.hpp"
 
-#ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(RiscV);
-#endif
-
 const uint8_t RiscV::PAGE_SHIFT = (unsigned char)(log2(PAGE_SIZE_BYTES));
 
 RiscV::RiscV(sc_module_name name_, half_flit_t router_addr_) : 

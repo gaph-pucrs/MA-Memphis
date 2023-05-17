@@ -113,45 +113,7 @@ SC_MODULE(test_bench) {
 		sprintf(aux, "%s/log_energy.txt", path.c_str());
 		// Open a file called aux deferred on append mode
 		fp = fopen (aux, "w+");
-		fclose (fp);	
-
-		for(int j=0;j<N_PE;j++){
-			//Store in aux the c's string way, in address how many char were builded
-			sprintf(aux, "%s/log_energy.txt", path.c_str());
-			// Open a file called aux deferred on append mode
-			fp = fopen (aux, "a");
-			
-			sprintf(aux, "router %d port EAST flits %d ", j, MPSoC-> pe[j]->router->wire_EAST);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "port WEST flits %d ",MPSoC-> pe[j] ->router->wire_WEST);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "port NORTH flits %d ",MPSoC-> pe[j] ->router->wire_NORTH);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "port SOUTH flits %d ",MPSoC-> pe[j] ->router->wire_SOUTH);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "port LOCAL flits %d ",MPSoC-> pe[j] ->router->wire_LOCAL);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "TOTAL flits %d ",MPSoC-> pe[j] ->router->total_flits);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "NUMBER pck %d ",MPSoC-> pe[j] ->router->mySwitchControl->number_pck);
-			fprintf(fp,"%s",aux);
-
-
-			sprintf(aux, "fluxo 0 = %d ", MPSoC-> pe[j]  ->router->fluxo_0);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 1 = %d ",MPSoC-> pe[j]->router->fluxo_1);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 2 =  %d ",MPSoC-> pe[j]->router->fluxo_2);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 3 = %d ",MPSoC-> pe[j]->router->fluxo_3);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 4 = %d ",MPSoC-> pe[j]->router->fluxo_4);
-			fprintf(fp,"%s",aux);
-			sprintf(aux, "fluxo 5 = %d\n",MPSoC-> pe[j]->router->fluxo_5);
-			fprintf(fp,"%s",aux);
-			fclose (fp);
-					
-		}
+		fclose (fp);
 		
 		for(int j=0;j<N_PE;j++)
 		{

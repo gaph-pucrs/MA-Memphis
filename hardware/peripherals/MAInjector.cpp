@@ -15,11 +15,6 @@
 #include <iostream>
 #include <fstream>
 
-/* This line enables the integration with vhdl */
-#ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(MAInjector);
-#endif
-
 MAInjector::MAInjector(sc_module_name _name, std::string _path) :
 	sc_module(_name),
 	path(_path)

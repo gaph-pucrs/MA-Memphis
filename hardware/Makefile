@@ -1,6 +1,7 @@
 COR  =\033[0;32m
 NC   =\033[0m # No Color
 
+LIB = work
 TARGET = memphis
 
 SRCDIR = src
@@ -9,26 +10,44 @@ INCDIR = $(SRCDIR)/include
 PERINC = $(PERDIR)/include
 INCLUDE = -I$(INCDIR) -I$(PERINC) -I.
 
-CXX = g++
-CXXFLAGS = -Wall -O3 -fpermissive $(INCLUDE) --include definitions.h `pkg-config --cflags systemc`
-LDFLAGS = `pkg-config --libs systemc`
+CXX = sccom
+CXXFLAGS = -nologo -Wall -O2 -std=c++11 -g $(INCLUDE) --include definitions.h
 
-SRC = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(PERDIR)/*.cpp)
-OBJ = $(patsubst %.cpp, %.o, $(SRC))
+VHDC = vcom
+VHDFLAGS = -2008
 
-all: $(TARGET)
+all: vmap link
 
-$(TARGET): $(OBJ)
-	@printf "${COR}Linking %s ...${NC}\n" "$@"
-	@$(CXX) $^ -o $@ $(LDFLAGS)
-	
-$(SRCDIR)/%.o: $(SRCDIR)/%.cpp
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CFLAGS) $(CXXFLAGS)
-	
-$(PERDIR)/%.o: $(PERDIR)/%.cpp
-	@printf "${COR}Compiling %s...${NC}\n" "$(dir $<)$*.cpp"
-	@$(CXX) -c $< -o $@ $(CFLAGS) $(CXXFLAGS)
+link: sc vhd
+	@$(CXX) -work $(LIB) -link
+
+sc:
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteBuffer.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteControl.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/BrLiteRouter.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/DMNI.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/ram.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g peripherals/AppInjector.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g peripherals/MAInjector.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/PE.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/RiscV.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/Memphis.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/test_bench.cpp
+	@$(CXX) -nologo -work $(LIB) $(INCLUDE) -std=c++11 -g src/RouterCCwrapped2.cpp
+
+vhd:
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) src/hemps_pkg.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/standards.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_buffer.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_crossbar.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/Hermes_switchcontrol.vhd
+	@$(VHDC) -quiet -work $(LIB) $(VHDFLAGS) vhdl/RouterCC.vhd
+
+vmap: vlib
+	@vmap $(LIB) $(LIB)
+
+vlib:
+	@vlib $(LIB)
 
 clean:
 	@printf "Cleaning up\n"

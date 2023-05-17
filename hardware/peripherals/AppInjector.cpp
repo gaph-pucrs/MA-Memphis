@@ -12,11 +12,6 @@
 
 #include "AppInjector.hpp"
 
-/* VHDL integration */
-#ifdef MTI_SYSTEMC
-SC_MODULE_EXPORT(AppInjector);
-#endif
-
 AppInjector::AppInjector(sc_module_name _name, std::string _path) : 
 	sc_module(_name),
 	path(_path)
