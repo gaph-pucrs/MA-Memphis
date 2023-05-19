@@ -8,6 +8,8 @@
  *  Description: This injector abstracts a external memory that sends new applications to the many-core system
  */
 
+#include <array>
+
 #include "MAInjector.hpp"
 
 #include <iostream>
@@ -182,8 +184,12 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		std::getline(repo, line);
 		unsigned bss_size = std::stoul(line, nullptr, 16);
 		// std::cout << "Bss size: " << bss_size << std::endl;
+
+		std::getline(repo, line);
+		unsigned entry_point = std::stoul(line, nullptr, 16);
+		// std::cout << "Entry point: " << entry_point << std::endl;
 		
-		unsigned packet_size = (txt_size + data_size)/4 + CONSTANT_PACKET_SIZE;
+		unsigned packet_size = ((txt_size + data_size) >> 2) + CONSTANT_PACKET_SIZE;
 		
 		packet.clear();
 		packet.reserve(packet_size);
@@ -200,12 +206,12 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 		packet.push_back(data_size);			/* Data section size */
 		packet.push_back(txt_size);				/* Text section size */
 		packet.push_back(bss_size);				/* BSS section size */
-		packet.push_back(0);
+		packet.push_back(entry_point);			/* Entry point address */
 
 		// std::cout << "PACKET SIZE: " << packet.size() << std::endl;
 
 		/* Assembles payload */
-		for(unsigned i = 0; i < (txt_size+data_size)/4; i++){
+		for(unsigned i = 0; i < (txt_size+data_size) >> 2; i++){
 			std::getline(repo, line);
 			// std::cout << line << std::endl;
 			packet.push_back(std::stoul(line, nullptr, 16));
@@ -219,8 +225,8 @@ void MAInjector::task_load(std::string task, int id, int address, int mapper_id,
 
 void MAInjector::ma_load()
 {
-	/* Message length is type_tag + static_map per task + 0 (no comm) per task + 2 header flits */
-	unsigned message_len = tasks.size()*3 + 2;
+	/* Message length is type_tag + static_map per task + 0 (no comm) per task + 3 header flits */
+	unsigned message_len = tasks.size()*3 + 3;
 
 	/* Memphis packet + message protocol (type + size) + task address */
 	unsigned packet_size = CONSTANT_PACKET_SIZE + message_len;
@@ -236,13 +242,14 @@ void MAInjector::ma_load()
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
-	packet.push_back(message_len);	/* Message length */
+	packet.push_back(message_len << 2);		/* Message length */
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
 	packet.push_back(0);
 
 	packet.push_back(NEW_APP);			/* Protocol: MA_ALLOCATION */
+	packet.push_back(MA_INJECTOR_ADDRESS);		/* Task injector */
 	packet.push_back(tasks.size());		/* Task count */
 
 	for(unsigned i = 0; i < tasks.size(); i++){

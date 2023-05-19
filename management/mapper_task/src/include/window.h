@@ -2,7 +2,7 @@
  * MA-Memphis
  * @file window.h
  *
- * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  * 
@@ -15,68 +15,22 @@
 
 #include <stdbool.h>
 
-#include "processor.h"
-#include "app.h"
+#include "processing_element.h"
 
-typedef struct _window {
+typedef struct _wdo {
 	int x;
 	int y;
 
 	int wx;
 	int wy;
-} window_t;
+} wdo_t;
 
-/**
- * @brief Searches for a window where an application can be mapped
- * 
- * @param window Pointer to a window structure
- * @param processors Array of processors
- * @param app Pointer to the app to map in the window
- */
-void window_search(window_t *window, processor_t *processors, app_t *app);
+void wdo_init(wdo_t *window, int x, int y, int wx, int wy);
 
-/**
- * @brief Searches a window to map based on a central position
- * 
- * @details The desired center should be set inside the app structure
- * 
- * @param window Pointer to the window
- * @param processors Array of processors
- * @param app Pointer to the app to map in the window
- * @param req_pages Number of available pages to search for in the window
- * @param wx Starting size of the window in X
- * @param wy Starting size of the window in Y
- */
-void window_set_from_center(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy);
+void wdo_from_center(wdo_t *window, pe_t *pes, int req_slots);
 
-/**
- * @brief Searches a window to map based on the last searched window
- * 
- * @param window Pointer to the window
- * @param processors Array of processors
- * @param app Pointer to the app to map in the window
- * @param req_pages Number of available pages to search for in the window
- * @param wx Starting size of the window in X
- * @param wy Starting size of the window in Y
- */
-void window_set_from_last(window_t *window, processor_t *processors, app_t *app, unsigned req_pages, int wx, int wy);
+bool wdo_has_slots(wdo_t *window, pe_t *pes, int req_slots);
 
-/**
- * @brief Iterates the window
- * 
- * @details This is based on the many-core size and the stride
- * 
- * @param window Pointer to the window
- */
-void window_next(window_t *window);
+void wdo_slide(wdo_t *window);
 
-/**
- * @brief Verifies if the window has a minimum number of pages available
- * 
- * @param window Pointer to the window
- * @param processors Array of processors
- * @param req_pages Number of required available pages
- * 
- * @return True if the window has the req_pages
- */
-bool window_has_pages(window_t *window, processor_t *processors, int req_pages);
+void wdo_from_last(wdo_t *window, pe_t *pes, int req_slots);

@@ -11,25 +11,25 @@
  * @brief Real-time observer functions
  */
 
-#include <memphis.h>
+#include "rt.h"
+
 #include <stdio.h>
 
-#include "rt.h"
-#include "services.h"
+#include <memphis.h>
+#include <memphis/services.h>
 
-void rt_check(oda_t *decider, int id, int waiting_msg, int slack_time, int remaining_time)
+void rt_check(oda_t *decider, int id, int rt_diff)
 {
-	// Echo("Waiting = "); Echo(itoa(waiting_msg)); Echo("Slack = "); Echo(itoa(slack_time)); Echo(" Exec = "); Echo(itoa(exec_time)); Echo(" Remaining = "); Echo(itoa(remaining_time));
-	if(!waiting_msg && remaining_time > slack_time){
+	if(rt_diff < 0){
 		printf("Deadline violation detected in task %d\n", id);
 
 		if(oda_is_enabled(decider)){
-			message_t msg;
-			msg.payload[0] = OBSERVE_PACKET;
-			msg.payload[1] = id;
-			msg.payload[2] = slack_time - remaining_time; /* Quantify deadline miss */
-			msg.length = 3;
-			memphis_send_any(&msg, decider->id);
+			int msg[] = {
+				OBSERVE_PACKET,
+				id,
+				rt_diff
+			};
+			memphis_send_any(msg, sizeof(msg), oda_get_id(decider));
 		}
 	}
 }

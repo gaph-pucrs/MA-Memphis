@@ -12,35 +12,38 @@
  */
 
 #include <stdio.h>
+
 #include <memphis.h>
+#include <memphis/services.h>
 
 #include "migration.h"
-#include "services.h"
-#include "tag.h"
+
+#define MSG_LEN 3
 
 int main()
 {
-	static message_t msg;
+	static int msg[MSG_LEN];
 
 	printf("Migration started at %d\n", memphis_get_tick());
 	
-	migration_task_t tasks[PKG_PENDING_SVC_MAX];
-	migration_init(tasks);
+	size_t pe_cnt = memphis_get_nprocs(NULL, NULL);
+
+	lru_t tasks;
+	lru_init(&tasks, pe_cnt);
 
 	oda_t actuator;
 	oda_init(&actuator);
 	oda_request_service(&actuator, ODA_ACT | A_MIGRATION);
 
 	while(true){
-		memphis_receive_any(&msg);
-		switch(msg.payload[0]){
-		case OBSERVE_PACKET:
-			// Echo("Hello, received observe packet\n");
-			migration_check_rt(tasks, &actuator, msg.payload[1], msg.payload[2]);
-			break;
-		case SERVICE_PROVIDER:
-			oda_service_provider(&actuator, msg.payload[1], msg.payload[2]);
-			break;
+		memphis_receive_any(msg, sizeof(msg));
+		switch(msg[0]){
+			case OBSERVE_PACKET:
+				mt_check_rt(&tasks, &actuator, msg[1], msg[2]);
+				break;
+			case SERVICE_PROVIDER:
+				oda_service_provider(&actuator, msg[1], msg[2]);
+				break;
 		}
 	}
 

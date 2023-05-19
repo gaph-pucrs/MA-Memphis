@@ -6,8 +6,8 @@ Application-Managed Many-core Modeling Platform for Heterogenous SoCs
 
 MA-Memphis is a platform derived from [Memphis](https://github.com/gaph-pucrs/Memphis), which is based on [HeMPS](https://github.com/gaph-pucrs/hemps). 
 MA-Memphis is a full many-core model with:
-* SystemC-modeled hardware
-* C Kernel
+* SystemC-modeled hardware (some parts can use VHDL)
+* C Kernel and application library with newlib
 * Standard set of applications
 * Standard set of Management Application
 * Scenario generation
@@ -25,7 +25,7 @@ It is possible to use the WSL to run MA-Memphis platform under Windows.
 ### Pre-requisites
 
 * GCC (base development packages, check [how to acquire GCC](/docs/gcc.md))
-* mips-elf-gcc (to compile OS and applications, check [how to acquire MIPS cross-compiler](/docs/mips.md))
+* riscv64-elf-gcc (to build OS, Memphis library and applications, check [how to acquire RISCV cross-compiler](/docs/riscv.md))
 * SystemC (to compile hardware model, check [how to acquire SystemC](/docs/systemc.md))
 * Python and needed libraries (to generate platform, check [how to acquire Python](/docs/python.md))
 * Graphical Debugger (optional, check [how to acquire Debugger](/docs/Debugger.md))
@@ -37,8 +37,8 @@ The master branch is the latest release without development commits.
 In this example we chose the home directory.
 
 ```console
-$ cd ~
-$ git clone https://github.com/gaph-pucrs/MA-Memphis.git
+cd ~
+git clone https://github.com/gaph-pucrs/MA-Memphis.git
 ```
 
 Export the environment variables:
@@ -47,7 +47,7 @@ Export the environment variables:
 
 Here we do it persistently with .bashrc. Remember to close and reopen the terminal after running: 
 ```console
-$ echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/build_env/bin:\${PATH}\n" >> ~/.bashrc
+echo -e "# MA-Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/bin:\${PATH}\n" >> ~/.bashrc
 ```
 
 ## Generating the model
@@ -56,11 +56,8 @@ MA-Memphis separates the _testcase_ from the _scenario_.
 A testcase contains a description of the hardware and operating system of the platform.
 Create a new yaml file (here the example name will be example_testcase.yaml) in the sandbox folder containing:
 ```yaml
-sw:                         # Operating System properties
-  max_tasks_app: 10         # Maximum number of tasks per application allowed
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
-  stack_size: 1024          # Size reserved for the stack (in bytes)
   tasks_per_PE: 4           # Maximum number of tasks in the same PE (will define memory size)
   mpsoc_dimension: [3,3]    # Dimension of the many-core
   Peripherals:              # Attached peripherals
@@ -70,10 +67,11 @@ hw:                         # Hardware properties
     - name: MAINJECTOR      # Mandatory MA Injector peripheral
       pe: 0,0               # is connected at border PE 0,0
       port: S               # Connected at port SOUTH. Note to use a border port.
-
+  definitions:              # Optional list of definitions to be passed to hardware build
+    - FLIT_SNIFFER: 1       # Add this line to enable detailed flit report
 ```
 
-**WARNING:** The VHDL model supported by Memphis is still not validated with MA-Memphis.
+**WARNING:** The VHDL model supported by Memphis is still not entirely validated with MA-Memphis.
 
 The scenario contains a description of the applications that will be evaluated in the platform.
 Create a yaml file (in this example we will use the name example_scenario.yaml) that contains:
@@ -91,33 +89,36 @@ apps:                       # Application properties
     start_time_ms: 5        # Application start time. When absent is 0. Should be manually sorted.
     static_mapping:         # Optional static mapping
       prod: [1,1]           # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
+    definitions:            # Optional list of definitions to be passed to application build
+      - PROD_CONS_MSG_SIZE: 64
+      - PROD_CONS_ITERATIONS: 100
 ```
 
 After creating the description of the testcase and the scenario, the testcase should be generated:
 ```console
-$ memphis testcase example_testcase.yaml
+memphis testcase example_testcase.yaml
 ```
 
 Then, the scenario should be generated inside the testcase folder that was created by `memphis testcase`:
 ```console
-$ memphis scenario example_testcase example_scenario.yaml 
+memphis scenario example_testcase example_scenario.yaml 
 ```
 
 ## Simulating
 
-To simulate the generated model, run the simulation in the generated scenario folder for a chosen time limit (here the example is 50 ms):
+To simulate the generated model, run the simulation in the generated scenario folder:
 
 ```console
-$ memphis simulate example_testcase/example_scenario 50
+memphis simulate example_testcase/example_scenario
 ```
 
 ## Evaluating and Debugging
 
-When the `memphis simulate` command executes, it runs the simulation and opens the graphical debugger. To avoid opening the debugger (for example in remote execution), insert the `--nogui` argument.
+When the `memphis simulate` command executes, it runs the simulation and opens the graphical debugger. To avoid opening the debugger (for example in remote access), insert the `--nogui` argument.
 To open manually after a simulation is already done, run:
 
 ```console
-$ memphis debug example_testcase/example_scenario
+memphis debug example_testcase/example_scenario
 ```
 
 ### Main window
@@ -161,6 +162,21 @@ A [video](https://youtu.be/nvgtvFcCc60) in portuguese is available showing all f
 
 # Acknowledgements
 
+* Monitoring framework
+```
+Dalzotto, A. E., Borges, C. S., Ruaro, M., and Moraes, F. G. (2022). Non-intrusive Monitoring Framework for NoC-based Many-Cores. In Proceedings of the Brazilian Symposium on Computing Systems Engineering (SBESC), pages 1-7.
+```
+
+* Migration heuristic
+```
+Dalzotto, A. E., Borges, C. S., Ruaro, M., and Moraes, F. G. (2022). Leveraging NoC-based Many-core Performance Through Runtime Mapping Defragmentation. In Proceedings of the International Conference on Electronics, Circuits, and Systems (ICECS), pages 1-6.
+```
+
+* Mapping heuristic
+```
+Dalzotto, A. E., Ruaro, M., Erthal, L. V., and Moraes, F. G. (2021). Dynamic Mapping for Many-cores using Management Application Organization. In Proceedings of the International Conference on Electronics, Circuits, and Systems (ICECS), pages 1-6.
+```
+
 * MA-Memphis
 ```
 Dalzotto, A. E., Ruaro, M., Erthal, L. V., and Moraes, F. G. (2021). Management Application - a New Approach to Control Many-Core Systems. In Proceedings of the Symposium on Integrated Circuits and Systems Design (SBCCI), pages 1-6.
@@ -174,6 +190,11 @@ Ruaro, M., Santana, A., Jantsch, A., and Moraes, F. G. (2021). Modular and Distr
 * Memphis
 ```
 Ruaro, M., Caimi, L. L., Fochi, V., and Moraes, F. G. (2019). Memphis: a framework for heterogeneous many-core SoCs generation and validation. Design Automation for Embedded Systems, 23(3-4):103-122.
+```
+
+* BrNoC
+```
+Wachter, E., Caimi, L. L., Fochi, V., Munhoz, D., & Moraes, F. G. (2017). BrNoC: A broadcast NoC for control messages in many-core systems. Microelectronics Journal, 68:69-77.
 ```
 
 * Scheduler

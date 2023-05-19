@@ -1,35 +1,40 @@
-/*
- * cons.c
- *
- *  Created on: 07/03/2013
- *      Author: mruaro
+/**
+ * MA-Memphis
+ * @file cons.c
+ * 
+ * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
+ * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
+ * 
+ * @date March 2013
+ * 
+ * @brief Consumer task of a Producer-Consumer test application 
  */
 
-#include <memphis.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "prod_cons_std.h"
 
-message_t msg;
+#include <memphis.h>
+
+#include "prod_cons_std.h"
 
 int main()
 {
-	int i;
-	unsigned int time[PROD_CONS_ITERATIONS];
+	unsigned *time = malloc(PROD_CONS_ITERATIONS*sizeof(unsigned));
+	int *msg = malloc(PROD_CONS_MSG_SIZE*sizeof(int));
 
-	puts("Inicio da aplicacao cons\n");
+	puts("Inicio da aplicacao cons");
 
-	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		memphis_receive(&msg, prod);
+	for(int i = 0; i < PROD_CONS_ITERATIONS; i++){
+		memphis_receive(msg, PROD_CONS_MSG_SIZE*sizeof(int), prod);
 		time[i] = memphis_get_tick();
 	}
 
-
-	for(i=0; i<PROD_CONS_ITERATIONS; i++){
-		printf("%d\n",time[i]);
+	for(int i = 0; i < PROD_CONS_ITERATIONS; i++){
+		printf("%d\n", time[i]);
 	}
 
-	puts("Fim da aplicacao cons\n");
+	puts("Fim da aplicacao cons");
 
 	return 0;
 }

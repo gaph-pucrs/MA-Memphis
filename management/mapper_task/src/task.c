@@ -1,93 +1,190 @@
-/**
- * MA-Memphis
- * @file task.c
- *
- * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
- * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
- * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
- * 
- * @date March 2021
- * 
- * @brief Task structures for the mapper
- */
-
-#include <stddef.h>
-
 #include "task.h"
 
-task_t *task_get_free(task_t *tasks)
+#include <memphis.h>
+
+#include "mapper.h"
+#include "window.h"
+
+void task_init(task_t *task, int appid, int taskid, unsigned tag)
 {
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++)
-		if(tasks[i].id == -1)
-			return &tasks[i];
+	task->id = (appid << 8) | taskid;
+	task->tag = tag;
 
-	return NULL;
-}
-
-void task_init(task_t *tasks)
-{
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS*PKG_N_PE; i++){
-		tasks[i].id = -1;
-		tasks[i].pred_cnt = 0;
-		tasks[i].succ_cnt = 0;
-		tasks[i].processor = NULL;
-		tasks[i].old_proc = NULL;
-		for(int j = 0; j < PKG_MAX_TASKS_APP - 1; j++){
-			tasks[i].predecessors[j] = NULL;
-			tasks[i].successors[j] = NULL;
-		}
-	}
-}
-
-void task_order_successors(task_t *order[], unsigned *ordered, unsigned *order_idx)
-{
-	while(*ordered < *order_idx){
-		task_t *predecessor = order[*ordered];
-		for(int i = 0; i < predecessor->succ_cnt; i++){
-			/* Check if successor is not ordered yet */
-			task_t *successor = predecessor->successors[i];
-			if(!task_is_ordered(successor, order, *order_idx))
-				order[(*order_idx)++] = successor;
-		}
-		(*ordered)++;
-	}
-}
-
-bool task_is_ordered(task_t *task, task_t *order[], unsigned order_cnt)
-{
-	bool task_ordered = false;
-	for(int i = 0; i < order_cnt; i++){
-		if(order[i] == task){
-			task_ordered = true;
-			break;
-		}
-	}
-	return task_ordered;
-}
-
-processor_t *task_terminate(task_t *task)
-{
-	task->id = -1;
-
-	/* Deallocate successors */
-	for(int i = 0; i < task->succ_cnt; i++)
-		task->successors[i] = NULL;
-
-	task->succ_cnt = 0;
+	task->pe = NULL;
+	task->old_pe = NULL;
 	
-	for(int i = 0; i < task->pred_cnt; i++)
-		task->predecessors[i] = NULL;
+	list_init(&(task->preds));
+	list_init(&(task->succs));
 
-	task->pred_cnt = 0;
+	task->status = TASK_STATUS_BLOCKED;
+}
 
-	processor_remove_task(task->processor, task);
+int task_comm_push_back(task_t *vertex, task_t *succ)
+{
+	list_entry_t *succ_entry = list_push_back(&(vertex->succs), succ);
+	list_entry_t *pred_entry = list_push_back(&(succ->preds), vertex);
 
-	task->processor = NULL;
+	return (succ_entry == NULL || pred_entry == NULL);
+}
 
-	if(task->status == MIGRATING){
-		/* The task finished with a migration request on the fly */
-		return task->old_proc;
+bool task_set_pe(task_t *task, pe_t *pe)
+{
+	task->pe = pe;
+	return pe_add_pending(pe);
+}
+
+pe_t *task_get_pe(task_t *task)
+{
+	return task->pe;
+}
+
+pe_t *task_get_old_pe(task_t *task)
+{
+	return task->old_pe;
+}
+
+list_t *task_get_succs(task_t *task)
+{
+	return &(task->succs);
+}
+
+list_t *task_get_preds(task_t *task)
+{
+	return &(task->preds);
+}
+
+list_t *task_get_order(task_t *task, list_t *order)
+{
+	list_entry_t *succ = list_front(&(task->succs));
+	while(succ != NULL){
+		task_t *succ_task = list_get_data(succ);
+		if(list_find(order, succ_task, NULL) == NULL){
+			list_entry_t *pushed = list_push_back(order, succ_task);
+			if(pushed == NULL){
+				/**
+				 * @todo
+				 * Clear remainings
+				 */
+				return NULL;
+			}
+		}
+
+		succ = list_next(succ);
 	}
+
+	return order;
+}
+
+pe_t *task_map(task_t *task, pe_t *pes, wdo_t *window)
+{
+	unsigned cost = -1; 	/* Start at infinite cost */
+	pe_t *sel = NULL;
+	pe_t *old = task->pe;	/* Current mapped PE */
 	
-	return NULL;
+	size_t PE_SLOTS = memphis_get_max_tasks(NULL);
+	for(int x = window->x; x < window->x + window->wx; x++){
+		for(int y = window->y; y < window->y + window->wy; y++){	/* Traverse Y first */
+			pe_t *pe = &(pes[map_xy_to_idx(x, y)]);
+			
+			int is_old_pe = (pe == old);
+			int free_slots = pe_get_slots(pe) + is_old_pe;	/* Add a free page in the current mapped */
+
+			if(free_slots == 0)	/* Skip full PEs */
+				continue;
+
+			const int appid = task->id >> 8;
+			int same_app_allocated = 0;
+			list_t *mapped = pe_get_mapped(pe);
+			list_entry_t *entry = list_front(mapped);
+			while(entry != NULL){
+				task_t *mapped = list_get_data(entry);
+				if(mapped && mapped->id >> 8 == appid)
+					same_app_allocated++;
+
+				entry = list_next(entry);
+			}
+			same_app_allocated -= is_old_pe;
+
+			unsigned c = 0;
+			/* 1st: Keep tasks from different apps apart from each other */
+			c += (PE_SLOTS - (free_slots + same_app_allocated)) << 2;
+
+			/* 2nd: Keep tasks from the same app apart */
+			c += same_app_allocated << 1;
+
+			/* 3rd: Add a cost for each hop in successor tasks */
+			entry = list_front(&(task->succs));
+			while(entry != NULL){
+				task_t *succ = list_get_data(entry);
+				if(succ->pe != NULL)
+					c += map_manhattan(pe_get_addr(pe), pe_get_addr(succ->pe));
+
+				entry = list_next(entry);
+			}
+
+			/* 4th: Add a cost for each hop in predecessor tasks */
+			entry = list_front(&(task->preds));
+			while(entry != NULL){
+				task_t *pred = list_get_data(entry);
+				if(pred->pe != NULL)
+					c += map_manhattan(pe_get_addr(pe), pe_get_addr(pred->pe));
+
+				entry = list_next(entry);
+			}
+
+			if(c == 0){
+				return pe;
+			} else if(c < cost){
+				cost = c;
+				sel = pe;
+			}
+		}
+	}
+
+	return sel;
+}
+
+int task_get_id(task_t *task)
+{
+	return task->id;
+}
+
+void task_release(task_t *task)
+{
+	task->status = TASK_STATUS_RUNNING;
+	task->old_pe = NULL;
+}
+
+pe_t *task_destroy(task_t *task)
+{
+	list_destroy(&(task->preds));
+	list_destroy(&(task->succs));
+
+	task->status = TASK_STATUS_TERMINATED;
+
+	return task->old_pe;
+}
+
+bool task_is_allocated(task_t *task)
+{
+	return (task->status != TASK_STATUS_TERMINATED);
+}
+
+bool task_is_migrating(task_t *task)
+{
+	return (task->status == TASK_STATUS_MIGRATING);
+}
+
+unsigned task_get_tag(task_t *task)
+{
+	return task->tag;
+}
+
+list_entry_t *task_migrate(task_t *task, pe_t *pe)
+{
+	task->old_pe = task->pe;
+	task->pe = pe;
+	task->status = TASK_STATUS_MIGRATING;
+	pe_add_pending(pe);
+	return pe_task_push_back(pe, task);
 }

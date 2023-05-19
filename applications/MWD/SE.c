@@ -2,21 +2,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-message_t msg;
+int msg[128];
 
 int main()
 {
 
 int j;
 
-	for(j=0;j<128;j++) msg.payload[j]=j;
+	for(j=0;j<128;j++) msg[j]=j;
 
 	/*Comm MEM3 640*/
-	msg.length=128;
-	for(j=0;j<5;j++) memphis_receive(&msg,MEM3);
+	for(j=0;j<5;j++) memphis_receive(msg, sizeof(msg), MEM3);
 	/*Comm BLEND 640*/
-	msg.length=128;
-	for(j=0;j<5;j++) memphis_send(&msg,BLEND);
+	for(j=0;j<5;j++) memphis_send(msg, sizeof(msg), BLEND);
 
 return 0;
 

@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../synthetic1/syn_std.h"
+#include "syn_std.h"
 
-message_t msg;
+int msg[30];
 
 int main()
 {
@@ -16,22 +16,21 @@ int main()
 
 for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	
-	msg.length = 30;
-	for(j=0;j<30;j++) msg.payload[j]=i;
+	for(j=0;j<30;j++) msg[j]=i;
 
-	memphis_receive(&msg,taskA);
+	memphis_receive(msg, sizeof(msg), taskA);
 	
 	for(t=0;t<1000;t++){
 	}
 	
-	memphis_send(&msg,taskD);
+	memphis_send(msg, sizeof(msg), taskD);
 	
-	memphis_receive(&msg,taskB);
+	memphis_receive(msg, sizeof(msg), taskB);
 	
 	for(t=0;t<1000;t++){
 	}
 	
-	memphis_send(&msg,taskE);
+	memphis_send(msg, sizeof(msg), taskE);
 
 }
     //printf("%d\n", memphis_get_tick());

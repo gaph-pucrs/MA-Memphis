@@ -1,0 +1,35 @@
+ctg:
+  aes_master:
+    successors:
+      - "aes_slave1"
+      - "aes_slave2"
+      - "aes_slave3"
+      - "aes_slave4"
+      - "aes_slave5"
+      - "aes_slave6"
+      - "aes_slave7"
+      - "aes_slave8"
+  aes_slave1:
+    successors:
+      - "aes_master"
+  aes_slave2:
+    successors:
+      - "aes_master"
+  aes_slave3:
+    successors:
+      - "aes_master"
+  aes_slave4:
+    successors:
+      - "aes_master"
+  aes_slave5:
+    successors:
+      - "aes_master"
+  aes_slave6:
+    successors:
+      - "aes_master"
+  aes_slave7:
+    successors:
+      - "aes_master"
+  aes_slave8:
+    successors:
+      - "aes_master"

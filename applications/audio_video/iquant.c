@@ -43,8 +43,6 @@
 
 typedef int type_DATA; //unsigned
 
-message_t msg1;
-
 unsigned char intramatrix[64] = { 8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24,
 		27, 29, 34, 37, 19, 22, 26, 27, 29, 34, 34, 38, 22, 22, 26, 27, 29, 34,
 		37, 40, 22, 26, 27, 29, 32, 35, 40, 48, 26, 27, 29, 32, 35, 40, 48, 58,
@@ -74,36 +72,25 @@ void iquant_(type_DATA *src, int lx, int dc_prec, int mquant) {
 		src[offs + 7] ^= 1;
 }
 
-int main() {
-	// unsigned int time_a, time_b;
-	int i, j;
-
+int main()
+{
 	// type_DATA clk_count;
 	type_DATA block[64];
 
-	puts("Task IQUANT start:\n");
+	puts("Task IQUANT start:");
 
-	memphis_real_time(AUDIO_VIDEO_PERIOD, IQUANT_deadline, IQUANT_exe_time);
-
-	for (j = 0; j < FRAMES; j++) {
-		
-		memphis_receive(&msg1, ivlc);
-
-		for (i = 0; i < msg1.length; i++)
-			block[i] = msg1.payload[i];
+	for(int j = 0; j < FRAMES; j++){
+		memphis_receive(block, sizeof(block), ivlc);
+		unsigned then = memphis_get_tick();
 
 		iquant_(block, 8, 0, 1); // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
 
-		msg1.length = 64;
-		for (i = 0; i < msg1.length; i++)
-			msg1.payload[i] = block[i];
-
-		memphis_send(&msg1, idct);
-		
+		memphis_send(block, sizeof(block), idct);
+		unsigned now = memphis_get_tick();
+		printf("%u\n", now - then);
 	}
 
-	puts("End Task IQUANT\n");
+	puts("End Task IQUANT");
 
 	return 0;
 }
-

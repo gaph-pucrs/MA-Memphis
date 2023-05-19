@@ -1,86 +1,94 @@
 /**
- * 
+ * MA-Memphis
  * @file task_location.h
- *
- * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
+ * 
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  * 
- * @date June 2016
+ * @date August 2022
  * 
- * @brief Identify where other tasks are allocated.
+ * @brief Controls task locations for messaging and mapping
  */
 
 #pragma once
 
-#include "task_control.h"
+#include <mutils/list.h>
 
 /**
- * @brief Initialize the app's tasks locations structure.
- * 
- * @param tcb Pointer to the TCB that will be initialized
+ * @brief Structure to associate task and location 
  */
-void tl_init(tcb_t *tcb);
-
-/** 
- * @brief Sends a TASK_ALLOCATED to the mapper
- * 
- * @param allocated_task Pointer to the TCB of the allocated task
- * 
- * @return True if should schedule
- */
-bool tl_send_allocated(tcb_t *allocated_task);
+typedef struct _tl {
+    int task;
+    int addr;
+} tl_t;
 
 /**
- * @brief Updates a single task location
+ * @brief Finds a task location based on a task ID
  * 
- * @param tcb Pointer to the TCB
- * @param id ID of the task to update
- * @param addr Location of the task to update
+ * @param list Pointer to a list (DATA_AV/MESSAGE_REQUEST)
+ * @param task ID of the task
+ * @return tl_t* Pointer to the task location, NULL if none
  */
-void tl_insert_update(tcb_t *tcb, int id, int addr);
-
-/** 
- * @brief Sends a task terminated packet to the mapper
- * 
- * @param tcb Pointer of the terminated TCB
- * 
- * @return True if should schedule
- */
-bool tl_send_terminated(tcb_t *tcb);
+tl_t *tl_find(list_t *list, int task);
 
 /**
- * @brief Gets the location of a task
+ * @brief Removes a task location from a list
  * 
- * @param tcb Searcher TCB
- * @param task Searched task ID
- * 
- * @return Address of the task, or -1 case not found
+ * @param list Pointer to a list (DATA_AV/MESSAGE_REQUEST)
+ * @param tl Pointer to the task location
  */
-int tl_search(tcb_t *tcb, int task);
+void tl_remove(list_t *list, tl_t *tl);
 
 /**
- * @brief Gets the number of tasks of the app
+ * @brief Constructs and adds a task location to a list
  * 
- * @param tcb Pointer to the TCB
- * 
- * @return Number of tasks in the task location array
+ * @param list Pointer to a list (DATA_AV/MESSAGE_REQUEST)
+ * @param task ID of the task
+ * @param addr Address of the task
+ * @return tl_t* Pointer to the added task location, NULL if failure
  */
-unsigned int tl_get_len(tcb_t *tcb);
+tl_t *tl_emplace_back(list_t *list, int task, int addr);
 
 /**
- * @brief Gets the pointer to the task location array
+ * @brief Gets a task from a task location
  * 
- * @param tcb Pointer to the TCB
- * 
- * @return Address of the task location array
+ * @param tl Pointer to a task location
+ * @return int ID of the task
  */
-int *tl_get_ptr(tcb_t *tcb);
+int tl_get_task(tl_t *tl);
 
 /**
- * @brief Update all local tasks of an app with a new location of a task
+ * @brief Gets an address from a task location
  * 
- * @param id Complete ID of the task that has migrated
- * @param addr New address of the application
+ * @param tl Pointer to a task location
+ * @return int Adress of the task
  */
-void tl_update_local(int id, int addr);
+int tl_get_addr(tl_t *tl);
+
+/**
+ * @brief Sends a data available
+ * 
+ * @param dav Pointer to the data available task location
+ * @param cons_task ID of the consumer task
+ * @param cons_addr Address of the consumer task
+ */
+void tl_send_dav(tl_t *dav, int cons_task, int cons_addr);
+
+/**
+ * @brief Sends a message request
+ * 
+ * @param msgreq Pointer to the message request task location
+ * @param prod_task ID of the producer task
+ * @param prod_addr Address of the producer task
+ */
+void tl_send_msgreq(tl_t *msgreq, int prod_task, int prod_addr);
+
+/**
+ * @brief Sets a task location
+ * 
+ * @param tl Pointer to the task location
+ * @param task ID of the task
+ * @param addr Address of the task
+ */
+void tl_set(tl_t *tl, int task, int addr);

@@ -5,26 +5,18 @@ TARGET = migration_task
 
 SRCDIR = src
 INCDIR = src/include
-INCLIB = ../../lib/src/include
-INCDEF = ../../include
-INCMAN = ../
+INCLIB = ../../libmemphis/src/include
+INCUTILS = ../../libmutils/src/include
 
-CFLAGS	= -O2 -Wall -ffreestanding -fno-builtin -G 0 -std=c99  -I$(INCDIR) -I$(INCLIB) -I$(INCDEF) -I$(INCMAN) --include id_tasks.h --include kernel_definitions.h
-CC		= mips-elf-gcc
-AS		= mips-elf-as
-LD		= mips-elf-ld
-OBJDUMP	= mips-elf-objdump
-OBJCOPY	= mips-elf-objcopy
+CC = riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
-LIBDIR = ../../lib/src
-INCLIB = $(LIBDIR)/include
+LIBDIR = ../../libmemphis
+UTILDIR = ../../libmutils
 
-LIBSRC = $(wildcard $(LIBDIR)/*.c)
-LIBOBJ = $(patsubst %.c, %.o, $(LIBSRC))
-
-BOOTDIR = ../../bootloader/mipsi
-BOOTSRC = $(wildcard $(BOOTDIR)/*.s)
-BOOTOBJ = $(patsubst %.s, %.o, $(BOOTSRC))
+CFLAGS	+= -march=rv32im -mabi=ilp32 -Os -fdata-sections -ffunction-sections -Wall -std=c11 -I$(INCDIR)
+LDFLAGS += -march=rv32im -mabi=ilp32 -Wl,--gc-sections -lmemphis -lmutils
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 OBJ = $(patsubst %.c, %.o, $(SRC))
@@ -33,42 +25,30 @@ all: $(TARGET).txt $(TARGET).lst
 
 $(TARGET).txt: $(TARGET).bin
 	@printf "${BLUE}Dumping task: %s ...${NC}\n" "$(TARGET)"
-	@hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+	@hexdump -v -e '1/4 "%08x" "\n"' $< > $@
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${BLUE}Generating binary for task: %s ...${NC}\n" "$(TARGET)"
-	@$(OBJCOPY) -R .MIPS.abiflags -R .reginfo -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
-$(TARGET).elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
+$(TARGET).elf: $(OBJ) $(LIBOBJ)
 	@printf "${BLUE}Linking task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD) --section-start=".init"=0 -Map $(TARGET).map -s -N -o $@ $^
+	@$(CC) -Wl,-Map=$(TARGET).map -o $@ $^ $(LDFLAGS)
 
-$(TARGET).lst: $(TARGET)_debug.elf
+$(TARGET).lst: $(TARGET).elf
 	@printf "${BLUE}Listing task: %s ...${NC}\n" "$(TARGET)"
 	@$(OBJDUMP) -S $< > $@
-
-$(TARGET)_debug.elf: $(OBJ) $(BOOTOBJ) $(LIBOBJ)
-	@printf "${BLUE}Linking debug task: %s ...${NC}\n" "$(TARGET)"
-	@$(LD) --section-start=".init"=0 -Map $(TARGET)_debug.map -o $@ $^
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	@printf "${BLUE}Compiling task: %s ...${NC}\n" "$*.c"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(BOOTDIR)/%.o: $(BOOTDIR)/%.s
-	@make -C $(BOOTDIR)
-
-$(LIBDIR)/%.o: $(LIBDIR)/%.c
-	@make -C ../../lib
-
 clean:
-	@rm $(TARGET).elf
-	@rm $(TARGET).txt
-	@rm $(TARGET).map
-	@rm $(TARGET).lst
-	@rm $(TARGET).bin
-	@rm $(TARGET)_debug.map
-	@rm $(TARGET)_debug.elf
-	@rm $(SRCDIR)/*.o
+	@rm -f $(SRCDIR)/*.o
+	@rm -f $(TARGET).bin
+	@rm -f $(TARGET).elf
+	@rm -f $(TARGET).lst
+	@rm -f $(TARGET).map
+	@rm -f $(TARGET).txt
 
 .PHONY: clean

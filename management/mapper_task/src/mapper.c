@@ -2,7 +2,7 @@
  * MA-Memphis
  * @file mapper.c
  *
- * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * @author Angelo Elias Dal Zotto (angelo.dalzotto@edu.pucrs.br)
  * GAPH - Hardware Design Support Group (https://corfu.pucrs.br/)
  * PUCRS - Pontifical Catholic University of Rio Grande do Sul (http://pucrs.br/)
  * 
@@ -11,378 +11,656 @@
  * @brief Main mapper functions
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <memphis.h>
-
 #include "mapper.h"
-#include "sliding_window.h"
-#include "services.h"
-#include "tag.h"
 
-void map_init(mapper_t *mapper)
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include <memphis.h>
+#include <memphis/services.h>
+
+#include "window.h"
+
+void map_init(map_t *mapper)
 {
-	mapper->pending_task_cnt = 0;
-
-	mapper->pending_map_app = NULL;
-
-	mapper->fail_map_cnt = 0;
-
-	mapper->available_slots = PKG_MAX_LOCAL_TASKS*PKG_N_PE;
 	mapper->appid_cnt = 0;
 
-	app_init(mapper->apps);
-	task_init(mapper->tasks);
-	processor_init(mapper->processors);
-}
+	const size_t MAX_TASKS = memphis_get_max_tasks(&(mapper->slots));
+	
+	mapper->pending = NULL;
 
-void map_new_app(mapper_t *mapper, unsigned task_cnt, int *descriptor, int *communication)
-{
-	printf("New app received at %d\n", memphis_get_tick());
-	// printf("App ID: %d\n", mapper->appid_cnt);
-	// printf("Task cnt: %d\n", task_cnt);
+	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
+	mapper->pes = malloc(N_PE * sizeof(pe_t));
 
-	if(task_cnt > mapper->available_slots){
-		puts("No available slots.\n");
-
-		/* Save pending app descriptor and try to map on TASK_RELEASE */
-		mapper->pending_task_cnt = task_cnt;
-		
-		memcpy(mapper->pending_descr, descriptor, task_cnt * 2 * sizeof(mapper->pending_descr[0]));
-
-		int comm_i = 0;
-		/* Copy the communication dependence list */
-		for(int i = 0; i < task_cnt; i++){
-			/* For all tasks, keep copying until signaled for next task */
-			int successor;
-			do {
-				successor = communication[comm_i];
-				mapper->pending_comm[comm_i] = communication[comm_i];
-				comm_i++;
-			} while(successor > 0);
-		}
-	} else {
-		map_try_mapping(mapper, mapper->appid_cnt, task_cnt, descriptor, communication, mapper->processors);
+	if(mapper->pes == NULL){
+		puts("FATAL: not enough memory");
+		return;
 	}
+
+	for(int i = 0; i < N_PE; i++)
+		pe_init(&(mapper->pes[i]), MAX_TASKS, map_idx_to_coord(i));
+
+	list_init(&(mapper->apps));
+
+	mapper->finished = false;
+	mapper->finished_cnt = 0;
 }
 
-unsigned map_try_static(app_t *app, processor_t *processors)
+void _map_do(map_t *mapper, app_t *app)
 {
-	unsigned fail_cnt = 0;
-	app->has_static_tasks = false;
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
 
-	/* First check for static mapping availability */
-	for(int i = 0; i < app->task_cnt; i++){
-		processor_t *processor = app->task[i]->processor;
-		if(processor){
-			/* Statically mapped task found */
-			app->has_static_tasks = true;
+	/* Only map statically if there is any */
+	unsigned static_cnt = 0;
+	unsigned center_x = 0;
+	unsigned center_y = 0;
+	if(app_has_static(app)){
+		/* 1st phase: static mapping */
+		for(int i = 0; i < task_cnt; i++){
+			pe_t *pe = task_get_pe(&tasks[i]);
 
-			/* This is needed because more than 1 task can be statically mapped to the same processor */
-			processor->pending_map_cnt++;
-			if(processor->pending_map_cnt > processor->free_page_cnt){
-				printf("No available pages for statically mapped task %d\n", app->task[i]->id);
-				if(!processors[i].failed_map){
-					fail_cnt++;
-					processors[i].failed_map = true;
+			if(pe != NULL){
+				list_entry_t *entry = pe_task_push_back(pe, &tasks[i]);
+
+				if(entry == NULL){
+					puts("FATAL: not enough memory");
+					/**
+					 * @todo
+					 * Destroy app
+					 * Destroy tasks
+					 * Deallocate pending
+					 */
+					return;
 				}
+
+				int addr = pe_get_addr(pe);
+				center_x += addr >> 8;
+				center_y += addr & 0xFF;
+				static_cnt++;
 			}
 		}
+
+		center_x /= static_cnt;
+		center_y /= static_cnt;
 	}
 
-	return fail_cnt;
-}
+	/* Avoid mapping when there is no dynamically allocated task */
+	if(static_cnt != task_cnt){
+		/* 2nd phase: sliding window map */
 
-void map_static_tasks(app_t *app, processor_t *processors)
-{
-	unsigned static_cnt = 0;
-	app->center_x = 0;
-	app->center_y = 0;
+		/* 1st step: select a window */
+		int wx = MAP_MIN_WX;
+		int wy = MAP_MIN_WY;
 
-	/* First map statically mapped tasks */
-	for(int i = 0; i < app->task_cnt; i++){
-		processor_t *processor = app->task[i]->processor;
-		if(processor){
-			// printf("Statically mapped task %d at address %x\n", app->task[i]->id, processor->addr);
-			processor->pending_map_cnt = 0;
-			processor_add_task(processor, app->task[i]);
-			app->center_x += processor->addr >> 8;
-			app->center_y += processor->addr & 0xFF;
-			static_cnt++;
+		/* Pre-growth due to minimum size */
+		size_t PE_SLOTS = memphis_get_max_tasks(NULL);
+		while(wx*wy*PE_SLOTS < task_cnt){
+			if(wy <= wx){
+				wy++;	/* Prefer to have y greater than x because window slides in x-axis */
+			} else {
+				wx++;
+			}
 		}
-	}
 
-	/* Will not divide by 0. Function only called on has_static_tasks == true */
-	app->center_x /= static_cnt;
-	app->center_y /= static_cnt;
-}
+		size_t PE_X_CNT;
+		size_t PE_Y_CNT;
+		memphis_get_nprocs(&PE_X_CNT, &PE_Y_CNT);
 
-void map_task_allocated(mapper_t *mapper, int id)
-{
-	// printf("Received task allocated from id %d\n", id);
+		if(wx > PE_X_CNT)
+			wx = PE_X_CNT;
 
-	int appid = id >> 8;
+		if(wy > PE_Y_CNT)
+			wy = PE_Y_CNT;
 
-	app_t *app = app_search(mapper->apps, appid);
-	app->allocated_cnt++;
-
-	if(app->allocated_cnt == app->task_cnt){
-		/* All tasks allocated, send task release */
-		printf("Sending TASK_RELEASE at time %d for app %d\n", memphis_get_tick(), app->id);
-
-		map_task_release(mapper, app);
-		map_app_mapping_complete(app);
-		mapper->appid_cnt++;
-	}
-}
-
-void map_task_release(mapper_t *mapper, app_t *app)
-{
-	/* Assemble and send task release */
-	message_t msg;
-	msg.payload[0] = TASK_RELEASE;
-	// msg.payload[1] = appid_shift | i;
-	// msg.payload[2] = observer_task;
-	// msg.payload[3] = observer_address;
-	msg.payload[4] = app->task_cnt;
-
-	for(int i = 0; i < app->task_cnt; i++)
-		msg.payload[i + 5] = app->task[i]->processor->addr;
-	
-	msg.length = app->task_cnt + 5;
-
-	int appid_shift = app->id << 8;
-	for(int i = 0; i < app->task_cnt; i++){
-		/* Tell kernel to populate the proper task by sending the ID */
-		msg.payload[1] = appid_shift | i;
-
-		task_t *observer = map_nearest_tag(mapper, &(mapper->apps[0]), msg.payload[i + 5], (ODA_OBSERVE | O_QOS));
-
-		if(observer == NULL || app->id == 0){
-			msg.payload[2] = -1;
-			msg.payload[3] = -1;
+		wdo_t window;
+		if(static_cnt != 0){
+			/* Set the window based on the center of the statically mapped tasks */
+			wdo_init(&window, center_x - wx/2, center_y - wy/2, wx, wy);
+			wdo_from_center(&window, mapper->pes, task_cnt);
 		} else {
-			msg.payload[2] = observer->id;
-			msg.payload[3] = observer->processor->addr;
+			/* Set the window based on the last one selected */
+			static bool initialized = false;
+			static int last_x;
+			static int last_y;
+			
+			if(wx != MAP_MIN_WX || wy != MAP_MIN_WY || !initialized){
+				last_x = PE_X_CNT - wx;
+				last_y = PE_Y_CNT - wy;
+				initialized = true;
+			}
 
-			// Echo("Picked observer id: "); Echo(itoa(observer->id)); Echo(" at "); Echo(itoa(observer->processor->addr));
+			wdo_init(&window, last_x, last_y, wx, wy);
+			wdo_from_last(&window, mapper->pes, task_cnt);
 		}
 
-		/* Send message directed to kernel at task address */
-		memphis_send_any(&msg, MEMPHIS_KERNEL_MSG | msg.payload[i + 5]);
+		/* 2nd step: get the mapping order */
+		list_t *ordered_tasks = app_get_order(app);
 
-		/* Mark task as running */
-		app->task[i]->status = RUNNING;
-	}
-}
-
-void map_app_mapping_complete(app_t *app)
-{
-	message_t msg;
-	msg.payload[0] = APP_MAPPING_COMPLETE;
-	msg.length = 1;
-	if(app->id == 0){
-		memphis_send_any(&msg, MAINJECTOR);
-
-		msg.payload[0] = RELEASE_PERIPHERAL;
-		msg.length = 1;
-		memphis_send_any(&msg, (APP_INJECTOR & ~0xE0000000) | MEMPHIS_KERNEL_MSG);
-	} else {
-		memphis_send_any(&msg, APP_INJECTOR);
-	}
-}
-
-void map_task_terminated(mapper_t *mapper, int id)
-{
-	// printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
-
-	int appid = id >> 8;
-	int taskid = id & 0xFF;
-
-	app_t *app = app_search(mapper->apps, appid);
-	processor_t *processor = app->task[taskid]->processor;
-
-	/* Terminate task */
-	processor_t *old_proc = task_terminate(app->task[taskid]);
-	if(old_proc){
-		/* The task finished with a migration request on the fly */
-		mapper->available_slots++;
-		processor_remove_task(old_proc, app->task[taskid]);
-	}
-	
-	/* Deallocate task from app */
-	app->task[taskid] = NULL;
-	app->allocated_cnt--;
-
-	/* Deallocate task from mapper */
-	mapper->available_slots++;
-
-	/* All tasks terminated, terminate app */
-	if(app->allocated_cnt == 0){
-		printf("App %d terminated at time %d\n", app->id, memphis_get_tick());
-		app->id = -1;
-	}
-
-	if(mapper->pending_task_cnt > 0 && mapper->available_slots >= mapper->pending_task_cnt){
-		/* Pending NEW_APP and resources freed. Map pending application which isn't built yet */
-		map_try_mapping(mapper, mapper->appid_cnt, mapper->pending_task_cnt, mapper->pending_descr, mapper->pending_comm, mapper->processors);
-		mapper->pending_task_cnt = 0;
-	} else if(
-		processor->failed_map &&													/* Pending static map at desired PE */
-		processor->free_page_cnt >= processor->pending_map_cnt	/* All slots needed in this processor are freed! */
-	){
-		processor->failed_map = false;
-		mapper->fail_map_cnt--;
-		if(mapper->fail_map_cnt == 0){
-			/* All needed processor slots are freed. Map and allocate now */
-			map_static_tasks(mapper->pending_map_app, mapper->processors);
-
-			sw_map_app(mapper->pending_map_app, mapper->processors);
-
-			/* Send task allocation to injector */
-			map_task_allocation(mapper->pending_map_app, mapper->processors);
-
-			map_set_score(mapper->pending_map_app, mapper->processors);
-
-			mapper->pending_map_app = NULL;
-
-			mapper->available_slots -= app->task_cnt;
+		if(ordered_tasks == NULL){
+			puts("FATAL: not enough memory");
+			/**
+			 * @todo
+			 * Destroy app
+			 * Destroy tasks
+			 * Unnalocate pending
+			 */
+			return;
 		}
-	}
-}
 
-void map_set_score(app_t *app, processor_t *processors)
-{
+		/* 3rd step: map with the least communication cost and most parallelism */
+		list_entry_t *entry = list_front(ordered_tasks);
+		while(entry != NULL){
+			task_t *task = list_get_data(entry);
+			pe_t *pe = task_get_pe(task);
+			if(pe == NULL){	/* Skip tasks already mapped */
+				pe_t *pe = task_map(task, mapper->pes, &window);
+
+				task_set_pe(task, pe);
+				pe_task_push_back(pe, task);
+			}
+
+			entry = list_next(entry);
+		}
+
+		list_destroy(ordered_tasks);
+		free(ordered_tasks);
+	}
+
+	/* Send allocation message */
+	size_t out_size = (task_cnt * 2 + 1) << 2;
+	int *out_msg = malloc(out_size);
+	out_msg[0] = APP_ALLOCATION_REQUEST;
+	int *payload = &(out_msg[1]);
+	for(int i = 0; i < task_cnt; i++){
+		payload[i*2] = task_get_id(&tasks[i]);
+		pe_t *pe = task_get_pe(&tasks[i]);
+		payload[i*2 + 1] = pe_get_addr(pe);
+	}
+
+	memphis_send_any(out_msg, out_size, app_get_injector(app));
+
+	free(out_msg);
+	out_msg = NULL;
+
+	/* Now compute the mapping score */
 	unsigned edges = 0;
 	unsigned cost = 0;
-	for(int i = 0; i < app->task_cnt; i++){
-		task_t *predecessor = app->task[i];
-		for(int j = 0; j < predecessor->succ_cnt; j++){
-			task_t *successor = predecessor->successors[j];
-			cost += map_manhattan_distance(predecessor->processor->addr, successor->processor->addr);
+	for(int i = 0; i < task_cnt; i++){
+		task_t *vertex = &(tasks[i]);
+		pe_t *vertex_pe = task_get_pe(vertex);
+
+		list_t *succs = task_get_succs(vertex);
+		list_entry_t *succ = list_front(succs);
+		while(succ != NULL){
+			task_t *succ_task = list_get_data(succ);
+			pe_t *succ_pe = task_get_pe(succ_task);
+			cost += map_manhattan(pe_get_addr(vertex_pe), pe_get_addr(succ_pe));
 			edges++;
+
+			succ = list_next(succ);
 		}
 	}
-	unsigned score = edges ? cost * 100 / edges : 0; /* Careful with division by zero */
-	printf("Mapped with score %u at %d\n", score, memphis_get_tick());
-	app->mapping_score = score;
-}
 
-void map_task_allocation(app_t *app, processor_t *processors)
-{
-	// puts("Mapping success! Requesting task allocation.\n");
+	/* Single precision is enough */
+	float score = (edges > 0) ? ((float)cost / (float)edges) : 0; /* Careful with division by zero */
+	
+	/* Printf with 2 decimal places and avoid linking to float printf */
+	printf("Mapped with score %u.%u at %u\n", (int)score, (int)((int)(score*100.0) - ((int)score)*100), memphis_get_tick());
 
-	/* Ask injector for task allocation */
-	message_t msg;
+	app_set_score(app, score);
 
-	msg.payload[0] = APP_ALLOCATION_REQUEST;
-	unsigned int *payload = &msg.payload[1];
-
-	for(int i = 0; i < app->task_cnt; i++){
-		payload[i*2] = app->task[i]->id;
-		payload[i*2 + 1] = app->task[i]->processor->addr;
-	}
-
-	msg.length = app->task_cnt * 2 + 1;
-
-	if(app->id == 0)
-		memphis_send_any(&msg, MAINJECTOR);
-	else
-		memphis_send_any(&msg, APP_INJECTOR);
-}
-
-void map_try_mapping(mapper_t *mapper, int appid, int task_cnt, int *descr, int *comm, processor_t *processors)
-{
-	// puts("Mapping application...\n");
-		
-	app_t *app = app_get_free(mapper->apps);
-	app_build(app, mapper->appid_cnt, task_cnt, descr, comm, mapper->tasks, processors);
-
-	/* 1st phase: static mapping */
-	mapper->fail_map_cnt = map_try_static(app, processors);
-
-	if(!mapper->fail_map_cnt){
-		/* 2nd phase: dynamic mapping (guaranteed to suceed) */
-		if(app->has_static_tasks)
-			map_static_tasks(app, processors);
-
-		if(mapper->appid_cnt != 0)
-			sw_map_app(app, processors);
-
-		/* Send task allocation to injector */
-		map_task_allocation(app, processors);
-
-		map_set_score(app, processors);
-		
+	/* Management app has special requirements */
+	if(mapper->appid_cnt == 0){
 		/* Mapper task is already allocated */
-		if(mapper->appid_cnt == 0){
-			app->allocated_cnt++;
-			/* Check if mapper task is the only MA task */
-			if(app->allocated_cnt == app->task_cnt){
-				map_app_mapping_complete(app);
-				mapper->appid_cnt++;
-			}
-		}
-		
-		mapper->available_slots -= app->task_cnt;
-	} else {
-		mapper->pending_map_app = app;
-	}
-}
+		unsigned allocated = app_allocated(app);
 
-task_t *map_nearest_tag(mapper_t *mapper, app_t *ma, int address, unsigned tag)
-{
-	task_t *oda = NULL;
-	unsigned distance = -1;
-
-	/* Search all Management tasks */
-	/* Don't break if task id is -1 because MA IDs could be reused in the future */
-	for(int i = 0; i < PKG_MAX_TASKS_APP; i++){
-		if(ma->task[i] != NULL){
-			// Echo("Trying MA id "); Echo(itoa(ma->task[i]->id)); Echo("\n");
-			// Echo("Task tag is "); Echo(itoa(ma->task[i]->type_tag)); Echo("\n");
-
-			if((ma->task[i]->type_tag & tag) == tag){
-				/* Tag found! Check distance */
-				unsigned new_dist = map_manhattan_distance(address, ma->task[i]->processor->addr);
-				if(new_dist < distance){
-					distance = new_dist;
-					oda = ma->task[i];
-				}
-			}
+		/* Check if mapper task is the only MA task */
+		if(allocated == task_cnt){
+			/* Then finish mapping */
+			app_mapping_complete(app);
+			mapper->appid_cnt++;
 		}
 	}
 
-	return oda;
+	mapper->slots -= task_cnt;
+	list_push_back(&(mapper->apps), app);
 }
 
-unsigned map_manhattan_distance(int source, int target)
+void map_new_app(map_t *mapper, int injector, size_t task_cnt, int *descriptor, int *communication)
 {
-	int src_x = source >> 8;
-	int src_y = source & 0xFF;
+	printf("New app received at %u from %x\n", memphis_get_tick(), injector);
 
-	int tgt_x = target >> 8;
-	int tgt_y = target & 0xFF;
+	app_t *app = malloc(sizeof(app_t));
 
-	int dist_x = abs(src_x - tgt_x);
-	int dist_y = abs(src_y - tgt_y);
+	if(app == NULL){
+		puts("FATAL: not enough memory");
+		return;
+	}
+
+	task_t *tasks = app_init(app, mapper->appid_cnt, injector, task_cnt, descriptor, communication);
+	if(tasks == NULL){
+		puts("FATAL: not enough memory");
+		return;
+	}
+
+	/* Search for statically mapped tasks */
+	unsigned failed_cnt = 0;
+	bool has_static = false;
+	for(int i = 0; i < task_cnt; i++){
+		int pe_addr = descriptor[i * MAP_DESCR_ENTRY_LEN];
+		if(pe_addr != -1){
+			int pe_idx = map_coord_to_idx(pe_addr);
+			failed_cnt += task_set_pe(&tasks[i], &(mapper->pes[pe_idx]));
+			has_static = true;
+		}
+	}
+
+	app_set_has_static(app, has_static);
+
+	/* Check if it will be mapped now or later */
+	if(task_cnt > mapper->slots || failed_cnt > 0){
+		puts("No available slots");
+
+		app_set_failed(app, failed_cnt);
+		mapper->pending = app;
+		return;
+	}
+
+	/* Finally do the mapping */
+	_map_do(mapper, app);
+}
+
+int map_coord_to_idx(int coord)
+{
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return (coord >> 8) + (coord & 0xFF) * PE_X_CNT;
+}
+
+int map_idx_to_coord(int idx)
+{
+	size_t PE_X_CNT;
+	memphis_get_nprocs(&PE_X_CNT, NULL);
+	return ((idx % PE_X_CNT) << 8) | (idx / PE_X_CNT);
+}
+
+int map_xy_to_idx(int x, int y)
+{
+	size_t PE_Y_CNT;
+	memphis_get_nprocs(NULL, &PE_Y_CNT);
+	return x + y*PE_Y_CNT;
+}
+
+unsigned map_manhattan(int a, int b)
+{
+	int a_x = a >> 8;
+	int a_y = a & 0xFF;
+	int b_x = b >> 8;
+	int b_y = b & 0xFF;
+
+	int dist_x = abs(a_x - b_x);
+	int dist_y = abs(a_y - b_y);
 
 	return dist_x + dist_y;
 }
 
-void map_request_service(mapper_t *mapper, int address, unsigned tag, int requester)
+app_t *_map_find_app(map_t *mapper, int appid)
 {
-	task_t *oda = map_nearest_tag(mapper, &mapper->apps[0], address, tag);
+	list_entry_t *entry = list_find(&(mapper->apps), &appid, app_find_fnc);
 
-	int id = -1;
-	if(oda != NULL)
-		id = oda->id;
+	if(entry == NULL)
+		return NULL;
+
+	return list_get_data(entry);
+}
+
+void map_task_allocated(map_t *mapper, int id)
+{
+	printf("Received task allocated from id %d\n", id);
+
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
+
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
+		return;
+	}
+
+	size_t alloc_cnt = app_add_allocated(app);
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
+	if(alloc_cnt != task_cnt)
+		return;
+
+	/* All tasks allocated, send task release */
+	printf("Sending TASK_RELEASE at time %d for app %d\n", memphis_get_tick(), appid);
+
+	/* Assemble and send task release */
+	const size_t msg_size = (task_cnt + 3) << 2;
+	int *out_msg = malloc(msg_size);
+
+	out_msg[0] = TASK_RELEASE;
+	// out_msg[1] = appid_shift | i;
+	out_msg[2] = task_cnt;
+
+	for(int i = 0; i < task_cnt; i++){
+		task_t *task = &(tasks[i]);
+
+		/* Mark task as running */
+		task_release(task);
+
+		pe_t *pe = task_get_pe(task);
+		int addr = pe_get_addr(pe);
+		out_msg[i + 3] = addr;
+	}
+
+	const int appid_shift = appid << 8;
+	for(int i = 0; i < task_cnt; i++){
+		/* Tell kernel to populate the proper task by sending the ID */
+		out_msg[1] = appid_shift | i;
+
+		/* Send message directed to kernel at task address */
+		memphis_send_any(out_msg, msg_size, MEMPHIS_KERNEL_MSG | out_msg[i + 3]);
+	}
+
+	free(out_msg);
+	out_msg = NULL;
+
+	app_mapping_complete(app);
+	mapper->appid_cnt++;
+}
+
+void _map_release_resources(map_t *mapper, task_t *task)
+{
+	pe_t *pe = task_get_pe(task);
+	mapper->slots++;
+	if(pe_task_remove(pe, task) && mapper->pending != NULL)
+		app_rem_failed(mapper->pending);
+
+	pe_t *old_pe = task_destroy(task);
+	if(old_pe != NULL){
+		/* The task finished with a migration request on the fly */
+		mapper->slots++;
+		if(pe_task_remove(old_pe, task) && mapper->pending != NULL)
+			app_rem_failed(mapper->pending);
+	}
+}
+
+app_t *_map_terminate_task(map_t *mapper, int id)
+{
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
 	
-	message_t msg;
-	msg.payload[0] = SERVICE_PROVIDER;
-	msg.payload[1] = tag;
-	msg.payload[2] = id;
-	msg.length = 3;
-	memphis_send_any(&msg, requester);
+	if(app == NULL)
+		return NULL;
+
+	task_t *task = app_get_task(app, id & 0xFF);
+
+	if(task == NULL)
+		return NULL;
+
+	_map_release_resources(mapper, task);
+
+	return app;
+}
+
+void _map_terminate_app(map_t *mapper, app_t *app)
+{
+	printf("App %d terminated at time %d\n", app_get_id(app), memphis_get_tick());
+	app_terminated(app);	/* Broadcast app termination to clear migration table */
+	app_destroy(app);
+	list_entry_t *entry = list_find(&(mapper->apps), app, NULL);
+	list_remove(&(mapper->apps), entry);
+	free(app);
+
+	if(mapper->finished && list_get_size(&(mapper->apps)) == 1){
+		/* Broadcast a request for a termination procedure */
+		memphis_br_send_all((memphis_get_addr() << 16) | getpid(), HALT_PE);
+	}
+}
+
+void _map_verify_pending(map_t *mapper)
+{
+	/* There is a pending application which could not be allocated before */
+	size_t task_cnt;
+	app_get_tasks(mapper->pending, &task_cnt);
+	if(mapper->slots < task_cnt)
+		return;
+
+	/* Able to map unless it was due to static mapping not available */
+	unsigned failed_cnt = app_get_failed(mapper->pending);
+	if(failed_cnt != 0)
+		return;
+
+	/* Application is able to map (enough slots) and static mapping is OK */
+	_map_do(mapper, mapper->pending);
+	mapper->pending = NULL;
+}
+
+void map_task_terminated(map_t *mapper, int id)
+{
+	printf("Received task terminated from id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_terminate_task(mapper, id);
+
+	if(app == NULL){
+		puts("WARNING: task no found. Ignoring.");
+		return;
+	}
+
+	size_t alloc_cnt = app_rem_allocated(app);
+
+	/* All tasks terminated, terminate app */
+	if(alloc_cnt == 0)
+		_map_terminate_app(mapper, app);
+
+	if(mapper->pending != NULL)
+		_map_verify_pending(mapper);
+}
+
+void map_task_aborted(map_t *mapper, int id)
+{
+	printf("Received task aborted from id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_terminate_task(mapper, id);
+
+	if(app == NULL){
+		puts("WARNING: task no found. Ignoring.");
+		return;
+	}
+
+	size_t alloc_cnt = app_rem_allocated(app);
+
+	/* All tasks terminated, terminate app */
+	if(alloc_cnt != 0){
+		/* There are tasks still running */
+		int appid_shift = app_get_id(app) << 8;
+		size_t task_cnt;
+		task_t *tasks = app_get_tasks(app, &task_cnt);
+
+		for(int i = 0; i < task_cnt; i++){
+			task_t *task = &tasks[i];
+			if(task_is_allocated(task)){
+				/* Task is running and needs to be aborted */
+				pe_t *pe = task_is_migrating(task) ? task_get_old_pe(task) : task_get_pe(task);
+				int addr = pe_get_addr(pe);
+				uint32_t payload = appid_shift | i;
+				memphis_br_send_tgt(payload, addr, ABORT_TASK);
+
+				/* End task */
+				_map_release_resources(mapper, task);
+			}
+		}
+	}
+
+	_map_terminate_app(mapper, app);
+
+	if(mapper->pending != NULL)
+		_map_verify_pending(mapper);
+}
+
+void map_request_service(map_t *mapper, int address, unsigned tag, int requester)
+{
+	int oda = -1;
+	unsigned distance = -1;
+	// printf("Task %d @%d is requesting for tag %u\n", requester, address, tag);
+
+	/* Search all Management tasks */
+	list_entry_t *entry = list_front(&(mapper->apps));
+	app_t *ma = list_get_data(entry);
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(ma, &task_cnt);
+
+	for(int i = 0; i < task_cnt; i++){
+		task_t *task = &(tasks[i]);
+		if((task_get_tag(task) & tag) != tag)
+			continue;
+
+		pe_t *pe = task_get_pe(task);
+		unsigned d = map_manhattan(address, pe_get_addr(pe));
+		if(d < distance){
+			distance = d;
+			oda = i;
+		}
+	}
+	
+	int out_msg[] = {
+		SERVICE_PROVIDER, 
+		tag, 
+		oda
+	};
+	
+	memphis_send_any(out_msg, sizeof(out_msg), requester);
+}
+
+void map_migration_map(map_t *mapper, int id)
+{
+	printf("Received migration request to task id %d at time %d\n", id, memphis_get_tick());
+
+	const int appid = id >> 8;
+	app_t *app = _map_find_app(mapper, appid);
+	
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
+		return;
+	}
+
+	const int taskid = id & 0xFF;
+	task_t *task = app_get_task(app, taskid);
+
+	if(task == NULL || !task_is_allocated(task)){
+		puts("WARNING: Task not found. Ignoring.");
+		return;
+	}
+
+	if(task_is_migrating(task)){
+		puts("WARNING: Task is already migrating. Ignoring.");
+		return;
+	}
+
+	pe_t *old_pe = task_get_pe(task);
+	// unsigned then = memphis_get_tick();
+
+	/* Compute the window center */
+	unsigned center_x = 0;
+	unsigned center_y = 0;
+
+	size_t task_cnt;
+	task_t *tasks = app_get_tasks(app, &task_cnt);
+	
+	if(task_cnt > 1){
+		for(int i = 0; i < task_cnt; i++){
+			if(i == taskid)
+				continue;	/* Disregard the task to migrate */
+
+			pe_t *pe = task_get_pe(&(tasks[i]));
+			const int addr = pe_get_addr(pe);
+			center_x += (addr >> 8);
+			center_y += (addr & 0xFF);
+		}
+		center_x /= (task_cnt - 1);
+		center_y /= (task_cnt - 1);
+	}
+
+	/* Temporarily release current processor */
+	pe_task_remove(old_pe, task);
+	
+	/* Get window from this center (able to grow) */
+	wdo_t window;
+	wdo_init(&window, center_x - MAP_MIN_WX/2, center_y - MAP_MIN_WX/2, MAP_MIN_WX, MAP_MIN_WX);
+	wdo_from_center(&window, mapper->pes, 1);
+
+	/* Reallocate resource */
+	task_set_pe(task, old_pe);			/* Needed because PE push back changes pending mappings */
+	pe_task_push_back(old_pe, task);
+
+	/* Map to the specific window */
+	pe_t *pe = task_map(task, mapper->pes, &window);
+
+	// unsigned now = memphis_get_tick(); 
+	// printf("Ticks of mapping task for migration = %d\n", now-then);
+
+	/* Check if migrating to current pe */
+	if(pe == old_pe){
+		puts("WARNING: Task is in the same PE as the target. Will not migrate.");
+		return;
+	}
+
+	const int addr = pe_get_addr(pe);
+	printf("Migrating task to address %d\n", addr);
+
+	/* Allocate on target pe */
+	list_entry_t *entry = task_migrate(task, pe);
+	if(entry == NULL){
+		puts("ERROR: not enough memory");
+		return;
+	}
+	mapper->slots--;
+
+	/* Migrate the task */
+	uint32_t payload = 0;
+	payload |= (addr << 16);
+	payload |= (id & 0xFFFF);
+	memphis_br_send_tgt(payload, pe_get_addr(old_pe), TASK_MIGRATION);
+}
+
+void map_task_migrated(map_t *mapper, int id)
+{
+	printf("Received migration completed to task id %d at time %d\n", id, memphis_get_tick());
+
+	app_t *app = _map_find_app(mapper, id >> 8);
+	if(app == NULL){
+		puts("WARNING: App not found. Ignoring.");
+		return;
+	}
+
+	task_t *task = app_get_task(app, id & 0xFF);
+	if(task == NULL){
+		puts("WARNING: Task not found. Ignoring.");
+		return;
+	}
+
+	/* Free old processor resources */
+	pe_t *old_pe = task_get_old_pe(task);
+	pe_task_remove(old_pe, task);
+	mapper->slots++;
+
+	/* Mark as migration finished */
+	task_release(task);
+}
+
+void map_request_finish(map_t *mapper)
+{
+	mapper->finished = true;
+}
+
+void map_pe_halted(map_t *mapper, int address)
+{
+	mapper->finished_cnt++;
+
+	const size_t N_PE = memphis_get_nprocs(NULL, NULL);
+	if(mapper->finished_cnt == N_PE)
+		memphis_halt();
 }

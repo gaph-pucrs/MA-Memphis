@@ -1,5 +1,5 @@
 /**
- * 
+ * MA-Memphis
  * @file task_control.c
  *
  * @author Marcelo Ruaro (marcelo.ruaro@acad.pucrs.br)
@@ -11,128 +11,234 @@
  * @brief This module defines the task control block (TCB) functions.
  */
 
-#include <stddef.h>
-
 #include "task_control.h"
-#include "hal.h"
-#include "stdio.h"
 
-tcb_t idle_tcb;						//!< TCB pointer used to run idle task
-tcb_t tcbs[PKG_MAX_LOCAL_TASKS];	//!< TCB array
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
-void tcb_idle_task()
-{
-	while(true)
-		MMR_CLOCK_HOLD = 1;
-}
+#include <memphis/services.h>
+
+#include "mmr.h"
+#include "llm.h"
+#include "syscall.h"
+
+list_t _tcbs;
 
 void tcb_init()
 {
-	idle_tcb.pc = (unsigned int)&tcb_idle_task;
-	idle_tcb.id = 0;
-	idle_tcb.offset = 0;
-	idle_tcb.proc_to_migrate = -1;
-	idle_tcb.observer_task = -1;
-	idle_tcb.observer_address = -1;
-	idle_tcb.called_exit = false;
-	idle_tcb.registers[HAL_REG_SP] = PKG_PAGE_SIZE;
+	list_init(&_tcbs);
+}
 
-	for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		tcbs[i].id = -1;
-		tcbs[i].pc = 0;
-		tcbs[i].offset = PKG_PAGE_SIZE * (i + 1);
-		tcbs[i].proc_to_migrate = -1;
-		tcbs[i].called_exit = false;
+list_entry_t *tcb_push_back(tcb_t *tcb)
+{
+	return list_push_back(&_tcbs, tcb);
+}
+
+bool _tcb_find_fnc(void *data, void *cmpval)
+{
+    tcb_t *tcb = (tcb_t*)data;
+    int task = *((int*)cmpval);
+
+    return (tcb->id == task);
+}
+
+tcb_t *tcb_find(int task)
+{
+	list_entry_t *entry = list_find(&_tcbs, &task, _tcb_find_fnc);
+
+    if(entry == NULL)
+        return NULL;
+
+    return list_get_data(entry);
+}
+
+void tcb_alloc(
+	tcb_t *tcb, 
+	int id, 
+	size_t text_size, 
+	size_t data_size, 
+	size_t bss_size, 
+	int mapper_task, 
+	int mapper_addr, 
+	void *entry_point
+)
+{
+	memset(tcb->registers, 0, HAL_MAX_REGISTERS * sizeof(int));
+	tcb->registers[HAL_REG_SP] = MMR_PAGE_SIZE - (sizeof(int) << 1);
+	tcb->pc = entry_point;
+
+	tcb->page = page_acquire();
+
+	if(tcb->page == NULL){
+		puts("FATAL: no free pages found");
+		while(true);
 	}
-}
-
-tcb_t *tcb_get()
-{
-	return tcbs;
-}
-
-tcb_t *tcb_get_idle()
-{
-	return &idle_tcb;
-}
-
-tcb_t *tcb_search(int task)
-{
-    for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-    	if(tcbs[i].id == task)
-    		return &tcbs[i];
-	}
-
-    return NULL;
-}
-
-tcb_t* tcb_free_get()
-{
-    for(int i = 0; i < PKG_MAX_LOCAL_TASKS; i++){
-		if(tcbs[i].id == -1)
-			return &tcbs[i];
-	}
-
-    puts("ERROR - no FREE TCB\n");
-    while(1);
-    return NULL;
-}
-
-void tcb_alloc(tcb_t *tcb, int id, unsigned int code_sz, unsigned int data_sz, unsigned int bss_sz, int mapper_task, int mapper_addr)
-{
-	tcb->pc = 0;
 
 	tcb->id = id;
-	tcb->text_lenght = code_sz;
-	tcb->data_lenght = data_sz;
-	tcb->bss_lenght = bss_sz;
-
-	tcb->mapper_address = mapper_addr;
-	tcb->mapper_task = mapper_task;
-	tcb->observer_address = -1;
-	tcb->observer_task = -1;
-
+	tcb->text_size = text_size;
+	tcb->data_size = data_size;
+	tcb->bss_size = bss_size;
 	tcb->proc_to_migrate = -1;
+	
+	tcb->heap_end = (void*)(text_size + data_size + bss_size);
 
-	tcb->scheduler.status = SCHED_BLOCKED;
-	tcb->scheduler.remaining_exec_time = SCHED_MAX_TIME_SLICE;
+	tl_set(&(tcb->mapper), mapper_task, mapper_addr);
+	list_init(&(tcb->message_requests));
+	list_init(&(tcb->data_avs));
+
+	int appid = id >> 8;
+	tcb->app = app_find(appid);
+
+	if(tcb->app == NULL){
+		/* App is not present, create it */
+		tcb->app = app_emplace_back(appid);
+
+		if(tcb->app == NULL){
+			puts("FATAL: could not allocate app");
+			while(true);
+		}
+	}
+
+	app_refer(tcb->app);
+
+	/* Scheduler is created upon task release */
+	tcb->scheduler = NULL;
+
+	tcb->pipe_in = NULL;
+	tcb->pipe_out = NULL;
 
 	tcb->called_exit = false;
+
+	/**
+	 * @todo
+	 * 0(sp) = argc = 0
+	 * 4(sp) = argv = 0
+	 */
 }
 
-void tcb_alloc_migrated(tcb_t *tcb, int id, unsigned int code_sz, int mapper_task, int mapper_addr)
+bool tcb_check_stack(tcb_t *tcb)
 {
-	tcb->scheduler.status = SCHED_MIGRATING;
-	tcb->id = id;
-	tcb->text_lenght = code_sz;
-	tcb->proc_to_migrate = -1;
-	tcb->mapper_task = mapper_task;
-	tcb->mapper_address = mapper_addr;
-
-	tcb->proc_to_migrate = -1;
-
-	tcb->scheduler.status = SCHED_MIGRATING;
-	tcb->called_exit = false;
+	// printf("Checking stack pointer %u against heap %d\n", tcb_get_sp(current), tcb_get_heap_end(current));
+	return (tcb->registers[HAL_REG_SP] < (unsigned)tcb->heap_end);
 }
 
-message_t *tcb_get_message(tcb_t *tcb)
+void _tcb_send_aborted(tcb_t *tcb)
 {
-	return (message_t*)(tcb_get_offset(tcb) | tcb->registers[HAL_REG_A1]);
+	int task_aborted[] = {TASK_ABORTED, tcb->id};
+	sys_kernel_writepipe(
+		task_aborted, 
+		sizeof(task_aborted), 
+		tl_get_task(&(tcb->mapper)), 
+		tl_get_addr(&(tcb->mapper))
+	);
 }
 
-unsigned int tcb_get_offset(tcb_t *tcb)
+void tcb_abort_task(tcb_t *tcb)
 {
-	return tcb->offset;
+	/* Send TASK_ABORTED */
+	_tcb_send_aborted(tcb);
+
+	tcb_remove(tcb);
 }
 
-int tcb_get_appid(tcb_t *tcb)
+void tcb_remove(tcb_t *tcb)
 {
-	return tcb->id >> 8;
+	/* Clear task from monitor tables */
+	llm_clear_table(tcb->id & 0xFFFF);
+
+	app_derefer(tcb->app);
+
+	page_release(tcb->page);
+
+	sched_remove(tcb->scheduler);
+
+	list_entry_t *entry = list_find(&_tcbs, tcb, NULL);
+	if(entry != NULL)
+		list_remove(&_tcbs, entry);
+
+	MMR_TASK_TERMINATED = tcb->id;
+
+	free(tcb);
+}
+
+opipe_t *tcb_get_opipe(tcb_t *tcb)
+{
+	return tcb->pipe_out;
+}
+
+bool _tcb_send_terminated(tcb_t *tcb)
+{
+	int task_terminated[] = {TASK_TERMINATED, tcb->id};
+	return sys_kernel_writepipe(
+		task_terminated, 
+		sizeof(task_terminated),
+		tl_get_task(&(tcb->mapper)), 
+		tl_get_addr(&(tcb->mapper))
+	);
+}
+
+void tcb_terminate(tcb_t *tcb)
+{
+	/* Send TASK_TERMINATED */
+	_tcb_send_terminated(tcb);
+
+	tcb_remove(tcb);
+}
+
+app_t *tcb_get_app(tcb_t *tcb)
+{
+	return tcb->app;
+}
+
+ipipe_t *tcb_get_ipipe(tcb_t *tcb)
+{
+	return tcb->pipe_in;
 }
 
 bool tcb_need_migration(tcb_t *tcb)
 {
-	return tcb->proc_to_migrate != -1;
+	return (tcb->proc_to_migrate != -1);
+}
+
+opipe_t *tcb_create_opipe(tcb_t *tcb)
+{
+	tcb->pipe_out = malloc(sizeof(opipe_t));
+	return tcb->pipe_out;
+}
+
+void tcb_destroy_opipe(tcb_t *tcb)
+{
+	free(tcb->pipe_out);
+	tcb->pipe_out = NULL;
+	/* Note: the actual message is not freed here. Check DMNI */
+}
+
+list_t *tcb_get_msgreqs(tcb_t *tcb)
+{
+	return &(tcb->message_requests);
+}
+
+list_t *tcb_get_davs(tcb_t *tcb)
+{
+	return &(tcb->data_avs);
+}
+
+bool tcb_send_allocated(tcb_t *tcb)
+{
+	int task_allocated[] = {TASK_ALLOCATED, tcb->id};
+	return sys_kernel_writepipe(
+		task_allocated, 
+		sizeof(task_allocated),
+		tl_get_task(&(tcb->mapper)), 
+		tl_get_addr(&(tcb->mapper))
+	);
+}
+
+void *tcb_get_offset(tcb_t *tcb)
+{
+	return page_get_offset(tcb->page);
 }
 
 int tcb_get_migrate_addr(tcb_t *tcb)
@@ -145,9 +251,9 @@ void tcb_set_migrate_addr(tcb_t *tcb, int addr)
 	tcb->proc_to_migrate = addr;
 }
 
-unsigned int tcb_get_pc(tcb_t *tcb)
+void *tcb_get_pc(tcb_t *tcb)
 {
-	return tcb->pc - tcb->offset;
+	return tcb->pc;
 }
 
 unsigned int tcb_get_sp(tcb_t *tcb)
@@ -160,41 +266,39 @@ int tcb_get_id(tcb_t *tcb)
 	return tcb->id;
 }
 
-unsigned int tcb_get_reg(tcb_t *tcb, int idx)
+unsigned *tcb_get_regs(tcb_t *tcb)
 {
-	return tcb->registers[idx];
+	return tcb->registers;
 }
 
-message_request_t *tcb_get_mr(tcb_t *tcb)
+size_t tcb_get_text_size(tcb_t *tcb)
 {
-	return tcb->message_request;
+	return tcb->text_size;
 }
 
-void tcb_clear(tcb_t *tcb)
+size_t tcb_get_data_size(tcb_t *tcb)
 {
-	tcb->pc = 0;
-	tcb->id = -1;
-	tcb->proc_to_migrate = -1;
+	return tcb->data_size;
 }
 
-unsigned int tcb_get_code_length(tcb_t *tcb)
+void tcb_set_data_size(tcb_t *tcb, size_t data_size)
 {
-	return tcb->text_lenght;
+	tcb->data_size = data_size;
 }
 
-unsigned int tcb_get_data_length(tcb_t *tcb)
+size_t tcb_get_bss_size(tcb_t *tcb)
 {
-	return tcb->data_lenght;
+	return tcb->bss_size;
 }
 
-unsigned int tcb_get_bss_length(tcb_t *tcb)
+void tcb_set_bss_size(tcb_t *tcb, size_t bss_size)
 {
-	return tcb->bss_lenght;
+	tcb->bss_size = bss_size;
 }
 
-void tcb_set_pc(tcb_t *tcb, unsigned int pc)
+void tcb_set_pc(tcb_t *tcb, void *pc)
 {
-	tcb->pc = pc + tcb->offset;
+	tcb->pc = pc;
 }
 
 void tcb_set_called_exit(tcb_t *tcb)
@@ -205,4 +309,75 @@ void tcb_set_called_exit(tcb_t *tcb)
 bool tcb_has_called_exit(tcb_t *tcb)
 {
 	return tcb->called_exit;
+}
+
+void *tcb_get_heap_end(tcb_t *tcb)
+{
+	return tcb->heap_end;
+}
+
+void tcb_set_brk(tcb_t *tcb, void *addr)
+{
+	tcb->heap_end = addr;
+}
+
+void tcb_set_sched(tcb_t *tcb, sched_t *sched)
+{
+	tcb->scheduler = sched;
+}
+
+ipipe_t *tcb_create_ipipe(tcb_t *tcb)
+{
+	tcb->pipe_in = malloc(sizeof(ipipe_t));
+
+	if(tcb->pipe_in == NULL)
+		return NULL;
+
+	ipipe_init(tcb->pipe_in);
+	return tcb->pipe_in;
+}
+
+void tcb_destroy_ipipe(tcb_t *tcb)
+{
+	free(tcb->pipe_in);
+	tcb->pipe_in = NULL;
+}
+
+sched_t *tcb_get_sched(tcb_t *tcb)
+{
+	return tcb->scheduler;
+}
+
+tl_t *tcb_get_mapper(tcb_t *tcb)
+{
+	return &(tcb->mapper);
+}
+
+void tcb_set_ret(tcb_t *tcb, int ret)
+{
+	tcb->registers[HAL_REG_A0] = ret;
+}
+
+size_t tcb_size()
+{
+	return list_get_size(&_tcbs);
+}
+
+int tcb_destroy_management(tcb_t *requester)
+{
+	list_entry_t *entry = list_front(&_tcbs);
+	bool err = false;
+
+	while(entry != NULL){
+		tcb_t *tcb = list_get_data(entry);
+		if(tcb != requester){
+			if(tcb->id >> 8 != 0)
+				err = true;
+
+			tcb_terminate(tcb);
+		}
+		entry = list_next(entry);
+	}
+
+	return err ? EFAULT : 0;	
 }

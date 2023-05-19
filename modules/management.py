@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 from distutils.dir_util import copy_tree
 from distutils.file_util import copy_file
-from os import makedirs
+from os import environ, getcwd
 from subprocess import run, check_output
 from multiprocessing import cpu_count
 from descriptor import Descriptor
 from repository import Repository, Start
 
 class Management:
-	def __init__(self, management, platform_path, testcase_path):
+	def __init__(self, management, platform_path, scenario_path, testcase_path):
 		self.management = management
-		self.platform_path = platform_path
 		self.testcase_path = testcase_path
 
 		self.tasks = []
@@ -22,11 +21,12 @@ class Management:
 		
 		self.unique_tasks = set(self.task_names)
 
-	def copy(self):
-		makedirs(self.testcase_path+"/management", exist_ok=True)
+		self.source_path = "{}/management".format(platform_path)
+		self.base_path = "{}/management".format(scenario_path)
 
+	def copy(self):
 		for task in self.unique_tasks:
-			copy_tree(self.platform_path+"/management/"+task, self.testcase_path+"/management/"+task, update=1)
+			copy_tree("{}/{}".format(self.source_path, task), "{}/{}".format(self.base_path, task), update=1)
 
 		self.generate_ids()
 
@@ -62,33 +62,46 @@ class Management:
 		if output_tasks[0] != "mapper_task":
 			raise Exception("Mapper task must be the first in the management list")
 
-		ids.write(self.testcase_path+"/management/id_tasks.h")
+		ids.write("{}/id_tasks.h".format(self.base_path))
 
 	def build(self):
 		NCPU = cpu_count()
+
+		make_env = environ.copy()
+		# make_env["CFLAGS"] = CFLAGS
+		try:
+			inc_path = make_env["C_INCLUDE_PATH"]
+		except:
+			inc_path = ""
+		
+		CFLAGS = ""
+		make_env["C_INCLUDE_PATH"] = "{}/{}/include:{}".format(getcwd(), self.testcase_path, inc_path)
+		make_env["CFLAGS"] = CFLAGS+"--include ../id_tasks.h"
+
+		make_env["LDFLAGS"] = "-L{}/{}/lib --specs=nano.specs -Wl,-Ttext=0 -u _getpid".format(getcwd(), self.testcase_path)
+
 		for task in self.unique_tasks:
-			make = run(["make", "-C", self.testcase_path+"/management/"+task, "-j", str(NCPU)])
+			make = run(["make", "-C", "{}/{}".format(self.base_path, task), "-j", str(NCPU)], env=make_env)
 			if make.returncode != 0:
 				raise Exception("Error build MA task {}.".format(task))
-
-	def check_count(self, max_tasks_app):
-		if len(self.tasks) > max_tasks_app:
-			raise Exception("Number of management tasks exceeds the maximum allowed (max_tasks_app).")
 
 	def check_size(self, page_size, stack_size):
 		self.text_sizes = {}
 		self.data_sizes = {}
 		self.bss_sizes	= {}
+		self.entry_points = {}
 
 		for task in self.unique_tasks:
-			path = "{}/management/{}/{}.elf".format(self.testcase_path, task, task)
+			path = "{}/{}/{}.elf".format(self.base_path, task, task)
 
-			out = check_output(["mips-elf-size", path]).split(b'\n')[1].split(b'\t')
+			out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
 
 			self.data_sizes[task] = int(out[1])
 			self.text_sizes[task] = self.__get_txt_size(task)*4 - self.data_sizes[task]
 			self.bss_sizes[task] = int(out[2])
 
+			out = check_output(["riscv64-elf-readelf", path, "-h"]).split(b'\n')[10].split(b' ')[-1]
+			self.entry_points[task] = int(out, 16)
 			
 		print("\n********************* MA page size report *********************")
 		for task in self.unique_tasks:
@@ -103,7 +116,7 @@ class Management:
 		for task in self.unique_tasks:
 			repo = Repository()
 
-			descr = Descriptor(self.testcase_path+"/management/"+task+"/config.yaml", task)
+			descr = Descriptor("{}/{}/config.yaml".format(self.base_path, task), task)
 
 			task_type = descr.get_type()
 			repo.add(task_type, "Task type tag")
@@ -111,16 +124,17 @@ class Management:
 			repo.add(self.text_sizes[task], "txt size")
 			repo.add(self.data_sizes[task], "data size")
 			repo.add(self.bss_sizes[task], "bss size")
+			repo.add(self.entry_points[task], "entry point")
 
-			task_hex = open(self.testcase_path+"/management/"+task+"/"+task+".txt", "r")
+			task_hex = open("{}/{}/{}.txt".format(self.base_path, task, task), "r")
 
 			for line in task_hex:
 				repo.add(int(line, 16), "")
 
 			task_hex.close()
 
-			repo.write(scenario_path+"/management/"+task+".txt")
-			repo.write_debug(scenario_path+"/management/"+task+"_debug.txt")
+			repo.write("{}/{}.txt".format(self.base_path, task))
+			repo.write_debug("{}/{}_debug.txt".format(self.base_path, task))
 
 	def generate_start(self, scenario_path):
 		start = Start()
@@ -139,14 +153,14 @@ class Management:
 			except:
 				raise Exception("All management tasks must be STATICALLY MAPPED")			
 		
-		start.write(scenario_path+"/ma_start.txt")
-		start.write_debug(scenario_path+"/ma_start_debug.txt")
+		start.write("{}/ma_start.txt".format(scenario_path))
+		start.write_debug("{}/ma_start_debug.txt".format(scenario_path))
 
 	def get_tasks(self):
 		return self.task_names
 
 	def __get_txt_size(self, task):
-		return sum(1 for line in open(self.testcase_path+"/management/"+task+"/"+task+".txt"))
+		return sum(1 for line in open("{}/{}/{}.txt".format(self.base_path, task, task)))
 
 
 class ManagementIds:

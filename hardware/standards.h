@@ -11,6 +11,15 @@
 #include <systemc.h>
 #include <math.h>
 
+enum MONITOR_TABLES {
+	MON_TABLE_QOS,
+	MON_TABLE_PWR,
+	MON_TABLE_2,
+	MON_TABLE_3,
+	MON_TABLE_4,
+	MON_TABLE_MAX
+};
+
 #define EAST 	0
 #define WEST 	1
 #define NORTH 	2
@@ -27,9 +36,12 @@
 // Memory map constants.
 #define DEBUG 					0x20000000
 #define UART_CHAR				0x20000004
+#define DEBUG_LEN				0x20000008
+#define DEBUG_START				0x2000000C
 #define IRQ_MASK 				0x20000010
 #define IRQ_STATUS_ADDR 		0x20000020
 #define TIME_SLICE_ADDR 		0x20000060
+#define TASK_TERMINATED 		0x20000070
 #define CLOCK_HOLD 				0x20000090
 #define END_SIM 				0x20000080
 #define NET_ADDRESS 			0x20000140
@@ -57,7 +69,31 @@
 //Kernel pending service FIFO
 #define PENDING_SERVICE_INTR	0x20000400
 
-#define MEM_REG_PERIPHERALS 0x20000500
+#define MEM_REG_PERIPHERALS 	0x20000500
+
+#define BR_LOCAL_BUSY			0x20000600
+#define BR_PAYLOAD				0x20000604
+#define BR_TARGET				0x20000608
+#define BR_SERVICE				0x2000060C
+#define BR_START				0x20000610
+#define BR_HAS_MESSAGE			0x20000614
+#define BR_READ_PAYLOAD			0x20000618
+#define MON_PTR_QOS				0x2000061C
+#define MON_PTR_PWR				0x20000620
+#define MON_PTR_2				0x20000624
+#define MON_PTR_3				0x20000628
+#define MON_PTR_4				0x2000062C
+#define BR_PRODUCER				0x20000630
+#define DMNI_CLEAR_MONITOR		0x20000634
+#define BR_READ_PRODUCER		0x20000638
+#define BR_KSVC					0x2000063C
+#define BR_READ_KSVC			0x20000640
+#define BR_POP					0x20000644
+
+#define MMR_PAGE_SIZE			0x20000648
+#define MMR_MAX_LOCAL_TASKS		0x2000064C
+#define MMR_N_PE_X      		0x20000650
+#define MMR_N_PE_Y      		0x20000654
 
 #define SLACK_MONITOR_WINDOW 	50000
 

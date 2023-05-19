@@ -2,28 +2,28 @@
 
 ## Overview
 
-The image below pictures an overview of the Memphis base platform.
-Note that the MA-Memphis does NOT have the Manager PE (M<sub>PE</sub>), thus all cores run the same simplified Kernel as the Memphis Slave PE (S<sub>PE</sub>).
+The image below pictures an overview of the MA-Memphis platform.
 
-![Memphis](fig/Memphis.png)
+![Memphis](fig/MA-Memphis.png)
 
 The many-core is composed of:
 * **GPPC:** The GPPC contains a set of identical PEs that execute general purpose applications. 
   Each PE of the GPPC region contains:
-	* **PE:** The standard version of Mephis adopts the [Plasma](https://opencores.org/projects/plasma) processor, with a MIPS I-compatible ISA. 
+	* **CPU:** The standard version of Mephis adopts a RISC-V (RV32IM_zicsr) processor.
   	A low integration effort is required to replace this processor with a different architecture.
-	Besides the connection to the local memory, the processor has a connection to the DMNI enabling the management of the data transfers using the NoC;
+	Besides the connection to the local memory, the processor has a connection to the DMNI enabling the management of the data transfers using the NoCs;
 	* **DMNI:** The Direct Memory Network Interface merges two hardware modules: NI (Network Interface) and DMA (Direct Memory Access);
   	The advantage of the DMNI compared to the traditional PE implementation (NI+DMA) is a specialized module that directly connects the NoC router to the internal memory;
-	* **Local Memory:** The local memory is a true dual-port scratchpad memory, storing code and instructions.
+	* **Scratchpad memory:** The local memory is a true dual-port scratchpad memory, storing code and instructions.
   	The goal of using this memory model is to reduce the power consumption related to cache controllers and NoC traffic (transfer of cache lines).
 	If some application requires a larger memory space than the one available in the local memory, it is possible to have shared memories connected to the system as peripherals;
-	* **NoC Router:** Memphis adopts the Hermes Network-on-Chip comprising the the PS (Packet Switching) router of the figure above.
+	* **Packet-Switching:** Memphis adopts the Hermes Network-on-Chip comprising the the PS (Packet Switching) router of the figure above.
   	The main features of the wormhole PS router are: XY routing, round-robin arbitration, input buffering, credit-based flow control.
+	* **BrNoC Router:** A lighter version of the BrNoC with removed unicast, the BrLite. This broadcast-based NoC sends message to TARGET or ALL PEs. It also has a set of 5 monitoring message classes dinamically configured by the platform to provide real-time monitoring without interfering in running user tasks. 
 * **Peripherals:** Peripherals provide I/O interface or hardware acceleration for tasks running on the GPPC region. 
-Examples of peripherals include shared memories, accelerators for image processing, communication protocols (e.g., Ethernet, USB), and Application Injectors (AppInj).
-The system requires at least one peripheral, the AppInj.
-This peripheral is responsible for transmitting applications to be executed in the GPPC.
+Examples of peripherals include shared memories, accelerators for image processing, communication protocols (e.g., Ethernet, USB), and Application Injectors.
+The system requires at least two peripheral, the Application Injector and the MA Injector.
+These peripherals are responsible for transmitting applications and the management application to be executed in the GPPC, repectively.
 
 ## Peripherals
 
