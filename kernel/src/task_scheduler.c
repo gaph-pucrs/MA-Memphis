@@ -464,9 +464,6 @@ void sched_real_time_task(sched_t *sched, unsigned period, int deadline, unsigne
 
 		sched->status = SCHED_READY;
 
-		if(task->scheduler.status != SCHED_MIGRATING)
-			task->scheduler.status = SCHED_READY;
-
 	} else {
 		cpu_utilization -= sched->utilization;
 	}

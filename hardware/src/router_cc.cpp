@@ -85,10 +85,6 @@ void router_cc::traffic_monitor(){
 
 					case 5:
 
-						if(payload[i] - payload_counter[i] == 12 && service[i] == 0x20){
-							fakesvc[i] = data_in[i].read();
-						}
-
 						if (payload_counter[i] == 0 ){
 							
 							//Store in aux the C's string way

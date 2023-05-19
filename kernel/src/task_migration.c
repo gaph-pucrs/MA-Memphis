@@ -228,10 +228,7 @@ void tm_send_stack(tcb_t *tcb, int id, int addr)
 	/* Align */
 	stack_size = (stack_size + 3) & ~3;
 
-		packet->header = addr;
-		packet->service = MIGRATION_STACK;
-		packet->task_ID = tcb_get_id(tcb);
-		packet->stack_size = stack_len;
+	packet_t *packet = pkt_slot_get();
 
 	pkt_set_migration_stack(packet, addr, id, stack_size);
 

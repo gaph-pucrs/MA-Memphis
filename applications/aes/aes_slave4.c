@@ -29,8 +29,6 @@ int main()
 	printf("task AES SLAVE %d started at %d\n", getpid(), memphis_get_tick());
 	aes_key_setup(key, key_schedule, 256);    
     
-	memphis_real_time(DEADLINE, DEADLINE, EXEC_TIME);
-
     while(flag){
 		memphis_receive(msg, AES_BLOCK_SIZE, aes_master);
 			

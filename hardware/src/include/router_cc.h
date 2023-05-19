@@ -56,7 +56,6 @@ SC_MODULE(router_cc){
 	unsigned int service[NPORT];
 	unsigned int task_id[NPORT];
 	unsigned int consumer_id[NPORT];
-	unsigned int fakesvc[NPORT];
 	void traffic_monitor();
 
 

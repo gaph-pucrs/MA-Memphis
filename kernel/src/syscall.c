@@ -471,7 +471,6 @@ int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
 
 			return size;
 		} else {
-			// puts("Local producer\n");
 			/* Get the producer TCB */
 			tcb_t *prod_tcb = tcb_find(prod_task);
 
