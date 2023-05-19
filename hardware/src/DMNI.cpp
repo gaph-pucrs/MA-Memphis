@@ -292,6 +292,8 @@ void DMNI::receive()
 				is_header[last.read()] = 0;
 				if (payload_size.read() == 0){
 					SR.write(HEADER);
+				
+				#if DMNI_LOG != 0
 					if(is_delivery){
 						fstream dmni_log(path+"/debug/dmni.log", fstream::out | fstream::app);
 						dmni_log << 
@@ -307,6 +309,7 @@ void DMNI::receive()
 							endl;
 						dmni_log.flush();
 					}
+				#endif
 				} else {
 					payload_size.write(payload_size.read() - 1);
 				}

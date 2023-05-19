@@ -108,7 +108,7 @@ SC_MODULE(test_bench) {
 		SC_THREAD(resetGenerator);
 	}
 	~test_bench(){
-
+	#if LOG_ENERGY != 0
 		//Store in aux the c's string way, in address how many char were builded
 		sprintf(aux, "%s/log_energy.txt", path.c_str());
 		// Open a file called aux deferred on append mode
@@ -212,7 +212,7 @@ SC_MODULE(test_bench) {
 			fclose (fp);
 
 		}
-					
+	#endif					
 	}
 };
 

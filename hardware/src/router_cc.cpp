@@ -18,8 +18,6 @@
 
 void router_cc::traffic_monitor(){
 	int i;
-	char aux[255];
-	FILE *fp;
 
 	if(reset_n.read() == 0){
 		for(i = 0; i < NPORT; i++) {
@@ -85,9 +83,10 @@ void router_cc::traffic_monitor(){
 
 					case 5:
 
-						if (payload_counter[i] == 0 ){
-							
+						if (payload_counter[i] == 0 ){						
+						#if TRAFFIC_DEBUG != 0
 							//Store in aux the C's string way
+							char aux[255];
 							sprintf(aux, "%s/debug/traffic_router.txt", path.c_str());
 
 							//unsigned int aux2 = (unsigned int)address;
@@ -99,6 +98,7 @@ void router_cc::traffic_monitor(){
 
 
 							// Open a file called "aux" deferred on append mode
+							FILE *fp;
 							fp = fopen (aux, "a");
 
 							if (service[i] != 0x40 && service[i] != 0x70 && service[i] != 0x23 && service[i] != 0x00 && service[i] != 0x01 && service[i] != 0x31){
@@ -113,6 +113,7 @@ void router_cc::traffic_monitor(){
 
 							fprintf(fp,"%s",aux);
 							fclose (fp);
+						#endif
 
 							bandwidth_allocation[i] = 0;
 							SM_traffic_monitor[i] = 0;

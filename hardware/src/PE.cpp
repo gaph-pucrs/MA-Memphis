@@ -91,7 +91,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_payload(br_payload_out_local);
 	dmni.clear_task(br_dmni_clear);
 
-#ifdef FLIT_SNIFFER
+#if FLIT_SNIFFER != 0
 	for(int i = 0; i < LOCAL; i++){
 		sniffers.push_back(new FlitSniffer(string("sniffer"+to_string(i)).c_str(), address_, i, path_));
 		sniffers[i]->clock_i(clock);
@@ -230,10 +230,12 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	
 	SC_METHOD(sequential_attr);
 	sensitive << clock.pos() << reset.pos();
-	
+
+#if LOG_INSTR !=0
 	SC_METHOD(log_process);
 	sensitive << clock.pos() << reset.pos();
-	
+#endif	
+
 	SC_METHOD(comb_assignments);
 	sensitive << cpu_mem_address << dmni_mem_address << cpu_mem_address_reg << write_enable;
 	sensitive << cpu_mem_data_write_reg << irq_mask_reg << irq_status;
@@ -424,10 +426,8 @@ void PE::reset_n_attr(){
 	reset_n.write(!reset.read());
 }
 
-void PE::sequential_attr(){
-
-	FILE *fp;
-
+void PE::sequential_attr()
+{
 	if (reset.read() == 1) {
 		cpu_mem_address_reg.write(0);
 		cpu_mem_data_write_reg.write(0);
@@ -482,7 +482,10 @@ void PE::sequential_attr(){
 		if (cpu_mem_address_reg.read() == DEBUG && write_enable.read() == 1){
 			debug_data = cpu_mem_data_write_reg.read();
 		}
+
+	#if UART_DEBUG != 0
 		if (cpu_mem_address_reg.read() == DEBUG_START && write_enable.read() == 1){
+			FILE *fp;
 			sprintf(aux, "%s/log/log%dx%d.txt", path.c_str(), (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 
@@ -494,11 +497,13 @@ void PE::sequential_attr(){
 			fclose (fp);
 		}
 		if (cpu_mem_address_reg.read() == UART_CHAR && write_enable.read() == 1){
+			FILE *fp;
 			sprintf(aux, "%s/log/log%dx%d.txt", path.c_str(), (unsigned int) router_address.range(15,8), (unsigned int) router_address.range(7,0));
 			fp = fopen (aux, "a");
 			fprintf(fp, "%c", (char)cpu_mem_data_write_reg.read());
 			fclose (fp);
 		}
+	#endif
 
 		//************ NEW DEBBUG AND REPORT logs - they are used by Memphis Debbuger Tool********
 		if (write_enable.read()==1){
@@ -509,51 +514,61 @@ void PE::sequential_attr(){
 			}
 				
 			/* TASK_TERMINATED report implementation */
+		#if TRAFFIC_DEBUG != 0
 			if(cpu_mem_address_reg.read() == TASK_TERMINATED){
+				FILE *fp;
 				sprintf(aux, "%s/debug/traffic_router.txt", path.c_str());
 				fp = fopen(aux, "a");
 				fprintf(fp, "%d\t%d\t%x\t%d\t%d\t%d\t%d\t%d\n", (unsigned int)tick_counter.read(), (unsigned int)router_address, 0x70, 0, 0, 4*2, -1, (unsigned int)cpu_mem_data_write_reg.read());
 				fclose(fp);
 			}
+		#endif
 
 			//************** Scheduling report implementation *******************
+		#if REPORT_SCHED != 0
 			if (cpu_mem_address_reg.read() == SCHEDULING_REPORT) {
+				FILE *fp;
 				sprintf(aux, "%s/debug/scheduling_report.txt", path.c_str());
 				fp = fopen (aux, "a");
 				sprintf(aux, "%d\t%d\t%d\n", (unsigned int)router_address, (unsigned int)cpu_mem_data_write_reg.read(), (unsigned int)tick_counter.read());
 				fprintf(fp,"%s",aux);
 				fclose (fp);
 			}
+		#endif
 			//**********************************************************************
 
 			//************** PIPE and request debug implementation *******************
+		#if PIPE_DEBUG != 0
 			if (cpu_mem_address_reg.read() == ADD_PIPE_DEBUG ) {
+				FILE *fp;
 				sprintf(aux, "%s/debug/pipe/%d.txt", path.c_str(), (unsigned int)router_address);
 				fp = fopen (aux, "a");
 				sprintf(aux, "add\t%d\t%d\t%d\n", (unsigned int)(cpu_mem_data_write_reg.read() >> 16), (unsigned int)(cpu_mem_data_write_reg.read() & 0xFFFF), (unsigned int)tick_counter.read());
 				fprintf(fp,"%s",aux);
 				fclose (fp);
-
 			} else if (cpu_mem_address_reg.read() == REM_PIPE_DEBUG ) {
+				FILE *fp;
 				sprintf(aux, "%s/debug/pipe/%d.txt", path.c_str(), (unsigned int)router_address);
 				fp = fopen (aux, "a");
 				sprintf(aux, "rem\t%d\t%d\t%d\n", (unsigned int)(cpu_mem_data_write_reg.read() >> 16), (unsigned int)(cpu_mem_data_write_reg.read() & 0xFFFF), (unsigned int)tick_counter.read());
 				fprintf(fp,"%s",aux);
 				fclose (fp);
 			} else if (cpu_mem_address_reg.read() == ADD_REQUEST_DEBUG ) {
+				FILE *fp;
 				sprintf(aux, "%s/debug/request/%d.txt", path.c_str(), (unsigned int)router_address);
 				fp = fopen (aux, "a");
 				sprintf(aux, "add\t%d\t%d\t%d\n", (unsigned int)(cpu_mem_data_write_reg.read() >> 16), (unsigned int)(cpu_mem_data_write_reg.read() & 0xFFFF), (unsigned int)tick_counter.read());
 				fprintf(fp,"%s",aux);
 				fclose (fp);
-
 			} else if (cpu_mem_address_reg.read() == REM_REQUEST_DEBUG ) {
+				FILE *fp;
 				sprintf(aux, "%s/debug/request/%d.txt", path.c_str(), (unsigned int)router_address);
 				fp = fopen (aux, "a");
 				sprintf(aux, "rem\t%d\t%d\t%d\n", (unsigned int)(cpu_mem_data_write_reg.read() >> 16), (unsigned int)(cpu_mem_data_write_reg.read() & 0xFFFF), (unsigned int)tick_counter.read());
 				fprintf(fp,"%s",aux);
 				fclose (fp);
 			}
+		#endif
 		}
 		//**********************************************************************
 
@@ -574,6 +589,7 @@ void PE::end_of_simulation(){
 }
 
 void PE::log_process(){
+#if LOG_INSTR != 0
 	if (reset.read() == 1) {
 		log_interaction=1;
 		instant_instructions = 0;		
@@ -687,6 +703,7 @@ void PE::log_process(){
 			log_interaction++;
 		}
 	}
+#endif
 }
 
 
