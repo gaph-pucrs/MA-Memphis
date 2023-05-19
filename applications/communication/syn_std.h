@@ -9,7 +9,7 @@
 #define SYN_STD_H_
 
 #ifndef SYNTHETIC_ITERATIONS
-	#define SYNTHETIC_ITERATIONS	500
+	#define SYNTHETIC_ITERATIONS	100
 #endif
 
 
