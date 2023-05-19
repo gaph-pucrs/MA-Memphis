@@ -1,0 +1,11 @@
+ctg:
+  taskA:
+    successors:
+      - "taskB"
+      - "taskC"
+  taskB:
+    successors:
+      - "taskD"
+  taskC:
+    successors:
+      - "taskD"
