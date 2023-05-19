@@ -58,7 +58,6 @@ Create a new yaml file (here the example name will be example_testcase.yaml) in 
 ```yaml
 hw:                         # Hardware properties
   page_size_KB: 32          # Size of each memory page (maximum task size)
-  stack_size: 1024          # Size reserved for the stack (in bytes)
   tasks_per_PE: 4           # Maximum number of tasks in the same PE (will define memory size)
   mpsoc_dimension: [3,3]    # Dimension of the many-core
   Peripherals:              # Attached peripherals
