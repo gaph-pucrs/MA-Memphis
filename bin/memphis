@@ -47,9 +47,9 @@ def simulate(debugger_path, scenario_folder, timeout, nogui):
 		pass
 
 	if(timeout == -1):
-		simulation = Popen(["{}/memphis".format(scenario_folder)])
+		simulation = Popen(["{}/../hardware/memphis".format(scenario_folder), scenario_folder])
 	else:
-		simulation = Popen(["{}/memphis".format(scenario_folder), '-t', str(timeout)])
+		simulation = Popen(["{}/../hardware/memphis".format(scenario_folder), scenario_folder, '-t', str(timeout)])
 
 	if not nogui:
 		debugger = Popen(["java", "-jar", "{}/Memphis_Debugger.jar".format(DEBUGGER_PATH), "{}/debug/platform.cfg".format(scenario_folder)])

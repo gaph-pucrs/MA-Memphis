@@ -61,9 +61,9 @@ SC_MODULE(test_bench) {
 	
 	SC_HAS_PROCESS(test_bench);
 	test_bench(sc_module_name name_, std::string program_path = "") :
-    sc_module(name_)
+    	sc_module(name_),
+		path(program_path)
     {
-		path = program_path.substr(0, program_path.find_last_of("/"));
 		fp = 0;
 
 		MPSoC = new Memphis("Memphis", path);
@@ -223,25 +223,26 @@ int sc_main(int argc, char *argv[])
 {
 	int timeout = -1;
 
-	if(argc == 3){
-		for(int i = 0; i < argc; i++){
-			if(argv[i][0] == '-'){
-				switch(argv[i][1]){
-					case 't':
-						timeout = std::stoi(argv[++i]);
-						break;
-					default:
-						cout << "Syntax: " << argv[0] << " [-t <milliseconds timeout>]" << endl;
-						exit(-1);
-				}
-			}
-		}
-	} else if(argc > 3){
-		cout << "Syntax: " << argv[0] << " [-t <milliseconds timeout>]" << endl;
+	if(argc < 2 || argc > 4){
+		cout << "Syntax: " << argv[0] << " scenario_folder [-t <milliseconds timeout>]" << endl;
 		exit(-1);
 	}
 
-	test_bench tb("testbench", argv[0]);
+	
+	for(int i = 2; i < argc; i++){
+		if(argv[i][0] == '-'){
+			switch(argv[i][1]){
+				case 't':
+					timeout = std::stoi(argv[++i]);
+					break;
+				default:
+					cout << "Syntax: " << argv[0] << " scenario_folder [-t <milliseconds timeout>]" << endl;
+					exit(-1);
+			}
+		}
+	}
+
+	test_bench tb("testbench", argv[1]);
 	auto then = chrono::high_resolution_clock::now();
 	
 	if(timeout != -1)

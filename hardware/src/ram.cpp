@@ -24,7 +24,7 @@ void ram::load_ram(){
 	int i = 0;
 
 	char ram_path[255];
-	sprintf(ram_path, "%s/bootrom.txt", path.c_str());
+	sprintf(ram_path, "%s/../kernel/kernel.txt", path.c_str());
 	ifstream repo_file (ram_path);
 
 	if (repo_file.is_open()) {
