@@ -25,7 +25,13 @@ int main()
 
 	while(memphis_get_tick() < MAL_TRIGGER_START); /* @todo memphis_yield() to yield its slack time to scheduler */
 
+	uint32_t then = 0;
+	uint32_t now;
 	do {
+		do {
+			now = memphis_get_tick();
+		} while((now - then) < MAL_MSG_INTERVAL);
+		then = now;
 		memphis_send(msg, MAL_MSG_SIZE*sizeof(int), consumer);
 	} while(memphis_get_tick() < MAL_TRIGGER_END);
 
