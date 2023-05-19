@@ -117,7 +117,7 @@ class Application:
 				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
 		print("********** End {} page size report **********".format(self.app_name.center(20)))
 
-	def generate_repo(self):
+	def generate_repo(self, repodebug):
 		repo = Repository()
 
 		repo.add(len(self.tasks), "Number of tasks of application {}".format(self.app_name))
@@ -157,7 +157,8 @@ class Application:
 			task_hex.close()
 
 		repo.write("{}/{}.txt".format(self.base_path, self.get_full_name()))
-		repo.write_debug("{}/{}_debug.txt".format(self.base_path, self.get_full_name()))
+		if repodebug:
+			repo.write_debug("{}/{}_debug.txt".format(self.base_path, self.get_full_name()))
 
 	def get_tasks(self):
 		return self.tasks

@@ -112,7 +112,7 @@ class Management:
 				raise Exception("Task {} memory usage of {} is bigger than page size of {}".format(task, size, page_size))
 		print("******************* End MA page size report *******************")
 
-	def generate_repo(self, scenario_path):
+	def generate_repo(self, repodebug):
 		for task in self.unique_tasks:
 			repo = Repository()
 
@@ -134,9 +134,10 @@ class Management:
 			task_hex.close()
 
 			repo.write("{}/{}.txt".format(self.base_path, task))
-			repo.write_debug("{}/{}_debug.txt".format(self.base_path, task))
+			if repodebug:
+				repo.write_debug("{}/{}_debug.txt".format(self.base_path, task))
 
-	def generate_start(self, scenario_path):
+	def generate_start(self, scenario_path, repodebug):
 		start = Start()
 
 		for task in self.tasks:
@@ -154,7 +155,8 @@ class Management:
 				raise Exception("All management tasks must be STATICALLY MAPPED")			
 		
 		start.write("{}/ma_start.txt".format(scenario_path))
-		start.write_debug("{}/ma_start_debug.txt".format(scenario_path))
+		if repodebug:
+			start.write_debug("{}/ma_start_debug.txt".format(scenario_path))
 
 	def get_tasks(self):
 		return self.task_names

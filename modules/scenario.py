@@ -77,7 +77,7 @@ class Scenario:
 		for app in self.applications:
 			app.copy()
 
-	def build(self):
+	def build(self, repodebug):
 		self.management.build()
 		for app in self.applications:
 			app.build()
@@ -88,15 +88,15 @@ class Scenario:
 			app.check_size(self.page_size, 0)
 			# self.applications[app].check_size(self.page_size, self.stack_size)
 
-		self.management.generate_repo(self.base_dir)
+		self.management.generate_repo(repodebug)
 
 		for app in self.applications:
-			app.generate_repo()
+			app.generate_repo(repodebug)
 
-		self.management.generate_start(self.base_dir)
-		self.__generate_app_start()		
+		self.management.generate_start(self.base_dir, repodebug)
+		self.__generate_app_start(repodebug)
 
-	def __generate_app_start(self):
+	def __generate_app_start(self, repodebug):
 		start = Start()
 
 		for app in self.applications:
@@ -126,7 +126,8 @@ class Scenario:
 				start.add(str(address), "Task {} is {}".format(task, map_comment))
 		
 		start.write(self.base_dir+"/app_start.txt")
-		start.write_debug(self.base_dir+"/app_start_debug.txt")
+		if repodebug:
+			start.write_debug(self.base_dir+"/app_start_debug.txt")
 
 	def __append_platform(self):
 
