@@ -631,6 +631,11 @@ bool isr_task_release(int id, int task_cnt, int *task_location)
 	/* Get task to release */
 	tcb_t *tcb = tcb_find(id);
 
+	if(tcb == NULL){
+		printf("Task not found to release\n");
+		return false;
+	}
+
 	printf("-> TASK RELEASE received to task %d\n", tcb_get_id(tcb));
 	// putsv("-> Task count: ", task_number);
 
