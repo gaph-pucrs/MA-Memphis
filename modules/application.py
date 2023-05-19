@@ -7,30 +7,18 @@ from repository import Repository
 from yaml import safe_load
 
 class Application:
-	def __init__(self, app, app_name, instance, platform_path, scenario_path, testcase_path):
+	def __init__(self, app, app_name, instance, platform_path, base_path, testcase_path):
 		self.app_name = app_name
 		self.testcase_path = testcase_path
-
-		try:
-			self.start_ms = app["start_time_ms"]
-		except:
-			print("Using 0 ms as starting time for app {}".format(self.app_name))
-			self.start_ms = 0
 
 		try:
 			self.definitions = app["definitions"]
 		except:
 			self.definitions = []
    
-		try:
-			self.mapping = app["static_mapping"]
-		except:
-			print("Using pure dinamic mapping for app {}".format(self.app_name))
-			self.mapping = []
-
 		self.instance = instance
 		self.source_path = "{}/applications/{}".format(platform_path, self.app_name)
-		self.base_path = "{}/applications".format(scenario_path)
+		self.base_path = base_path
 		self.app_path = "{}_{}".format(self.app_name, instance)
 
 		try:
@@ -89,7 +77,7 @@ class Application:
 		if make.returncode != 0:
 			raise Exception("Error building application {}.".format(self.app_name))
 
-	def check_size(self, page_size, stack_size):
+	def check_size(self, page_size):
 		self.text_sizes = {}
 		self.data_sizes = {}
 		self.bss_sizes	= {}
@@ -106,11 +94,10 @@ class Application:
 
 			out = check_output(["riscv64-elf-readelf", path, "-h"]).split(b'\n')[10].split(b' ')[-1]
 			self.entry_points[task] = int(out, 16)
-
 			
 		print("\n************ {} page size report ************".format(self.app_name.center(20)))
 		for task in self.tasks:
-			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task] + stack_size
+			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task]
 			if size <= page_size:
 				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(page_size).ljust(6)))
 			else:
@@ -156,12 +143,9 @@ class Application:
 	
 			task_hex.close()
 
-		repo.write("{}/{}.txt".format(self.base_path, self.get_full_name()))
+		repo.write("{}/{}.txt".format(self.base_path, self.app_path))
 		if repodebug:
-			repo.write_debug("{}/{}_debug.txt".format(self.base_path, self.get_full_name()))
-
-	def get_tasks(self):
-		return self.tasks
+			repo.write_debug("{}/{}_debug.txt".format(self.base_path, self.app_path))
 
 	def get_full_name(self):
 		return "{}_{}".format(self.app_name, self.instance)

@@ -16,6 +16,23 @@ def testcase_build(platform_path, testcase_file):
 	tc.copy()
 	tc.build()
 
+def applications_build(platform_path, testcase_folder, applications_file, repodebug):
+	testcase_name = testcase_folder.split("/")
+	testcase_name = testcase_name[len(testcase_name) - 1]
+	testcase_file = testcase_folder+"/"+ testcase_name+".yaml"
+
+	if not exists(testcase_file):
+		raise Exception("Testcase {} not found.".format(testcase_file))
+	
+	if not exists(applications_file):
+		raise Exception("Applications file {} not found.".format(applications_file))
+	
+	sys.path.append(platform_path+"/modules")
+	from applications import Applications
+	apps = Applications(platform_path, testcase_folder, applications_file)
+	apps.copy()
+	apps.build(repodebug)
+
 def scenario_build(platform_path, testcase_folder, scenario_file, skipdebug, repodebug):
 	testcase_name = testcase_folder.split("/")
 	testcase_name = testcase_name[len(testcase_name) - 1]
@@ -97,11 +114,16 @@ if __name__ == "__main__":
 	tc_parser = subparsers.add_parser("testcase", help="Generate a testcase")
 	tc_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
 
+	app_parser = subparsers.add_parser("applications", help="Generate applications")
+	app_parser.add_argument("TESTCASE_FOLDER", help="Path to generated testcase folder")
+	app_parser.add_argument("APPLICATIONS_FILE", help="Path to applications description (yaml)")
+	app_parser.add_argument("--repodebug", action="store_true", help="Generates repository/appstart debug files")
+
 	sc_parser = subparsers.add_parser("scenario", help="Generate a scenario")
 	sc_parser.add_argument("TESTCASE_FOLDER", help="Path to generated testcase folder")
 	sc_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
 	sc_parser.add_argument("--skipdebug", action="store_true", help="Disables debugger configuration")
-	sc_parser.add_argument("--repodebug", action="store_true", help="Generates appstart debug file")
+	sc_parser.add_argument("--repodebug", action="store_true", help="Generates repository/appstart debug files")
 
 	sim_parser = subparsers.add_parser("simulate", help="Simulate a scenario")
 	sim_parser.add_argument("SCENARIO_FOLDER", help="Path to generated scenario folder")
@@ -146,7 +168,7 @@ if __name__ == "__main__":
 
 	skipdebug = False
 	repodebug = False
-	if option == "scenario" or option == "all":
+	if option == "applications" or option == "scenario" or option == "all":
 		try:
 			skipdebug = args.skipdebug
 		except:
@@ -169,7 +191,7 @@ if __name__ == "__main__":
 
 	ENV_PLATFORM_PATH = "MA_MEMPHIS_PATH"
 	PLATFORM_PATH = None
-	if option == "testcase" or option == "scenario" or option == "all":
+	if option == "testcase" or option == "applications" or option == "scenario" or option == "all":
 		PLATFORM_PATH = getenv(ENV_PLATFORM_PATH)
 		if PLATFORM_PATH is None:
 			sys.exit("ERROR: "+ENV_PLATFORM_PATH+" not defined.")
@@ -180,8 +202,12 @@ if __name__ == "__main__":
 		testcase_file = args.TESTCASE_FILE
 	
 	testcase_folder = ""
-	if option == "scenario":
+	if option == "applications" or option == "scenario":
 		testcase_folder = args.TESTCASE_FOLDER
+
+	applications_file = ""
+	if option == "applications":
+		applications_file = args.APPLICATIONS_FILE
 
 	scenario_file = ""
 	if option == "scenario" or option == "all":
@@ -190,6 +216,8 @@ if __name__ == "__main__":
 	try:
 		if option == "testcase":
 			testcase_build(PLATFORM_PATH, testcase_file)
+		elif option == "applications":
+			applications_build(PLATFORM_PATH, testcase_folder, applications_file, repodebug)
 		elif option == "scenario":
 			scenario_build(PLATFORM_PATH, testcase_folder, scenario_file, skipdebug, repodebug)
 		elif option == "simulate":
@@ -199,11 +227,3 @@ if __name__ == "__main__":
 			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, timeout, nogui, skipdebug, repodebug)
 	except Exception as ex:
 		sys.exit("\nERROR: {}".format(ex))
-
-
-	# testcase_file = args.testcase
-
-	# try:
-	# 	testcase_build(PLATFORM_PATH, testcase_file)
-	# except Exception as ex:
-	# 	sys.exit("\nERROR: {}".format(ex))

@@ -2,9 +2,8 @@
 from yaml import safe_load
 from os import makedirs
 from distutils.dir_util import remove_tree
-from shutil import copyfile, copy
+from shutil import copyfile
 from management import Management
-from application import Application
 from repository import Start
 from os.path import exists
 from filecmp import cmp
@@ -32,22 +31,22 @@ class Scenario:
 
 		self.management = Management(yaml["management"], self.platform_path, self.base_dir, self.testcase_path)
 
-		self.applications = []
-		instances = {}
+		# try:
+		# 	self.start_ms = app["start_time_ms"]
+		# except:
+		# 	print("Using 0 ms as starting time for app {}".format(self.app_name))
+		# 	self.start_ms = 0
 
-		try:
-			for app in yaml["apps"]:
-				app_name = app["name"]
-				try:
-					instances[app_name] += 1
-				except:
-					instances[app_name] = 0
-     
-				self.applications.append(Application(app, app_name, instances[app_name], self.platform_path, self.base_dir, self.testcase_path))
+		# try:
+		# 	self.applications.sort(key=lambda x: x.start_ms)
+		# except:
+		# 	pass
 
-			self.applications.sort(key=lambda x: x.start_ms)
-		except:
-			pass
+		# try:
+		# 	self.mapping = app["static_mapping"]
+		# except:
+		# 	print("Using pure dinamic mapping for app {}".format(self.app_name))
+		# 	self.mapping = []
 		
 	def copy(self, skipdebug):
 		if self.__is_obsolete():
@@ -71,24 +70,12 @@ class Scenario:
 
 		self.management.copy()
 
-		for app in self.applications:
-			app.copy()
-
 	def build(self, repodebug):
 		self.management.build()
-		for app in self.applications:
-			app.build()
 
-		# self.management.check_size(self.page_size, self.stack_size)
 		self.management.check_size(self.page_size, 0)
-		for app in self.applications:
-			app.check_size(self.page_size, 0)
-			# self.applications[app].check_size(self.page_size, self.stack_size)
 
 		self.management.generate_repo(repodebug)
-
-		for app in self.applications:
-			app.generate_repo(repodebug)
 
 		self.management.generate_start(self.base_dir, repodebug)
 		self.__generate_app_start(repodebug)
