@@ -49,7 +49,7 @@ class Scenario:
 		except:
 			pass
 		
-	def copy(self):
+	def copy(self, skipdebug):
 		if self.__is_obsolete():
 			remove_tree(self.base_dir)
 
@@ -65,10 +65,12 @@ class Scenario:
 
 		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
 		copyfile(self.base, self.file)
-		copyfile("{}/services.cfg".format(self.testcase_path), "{}/debug/services.cfg".format(self.base_dir))
-		copyfile("{}/cpu.cfg".format(self.testcase_path), "{}/debug/cpu.cfg".format(self.base_dir))
-		copyfile("{}/platform.cfg".format(self.testcase_path), "{}/debug/platform.cfg".format(self.base_dir))
-		self.__append_platform()
+
+		if not skipdebug:
+			copyfile("{}/services.cfg".format(self.testcase_path), "{}/debug/services.cfg".format(self.base_dir))
+			copyfile("{}/cpu.cfg".format(self.testcase_path), "{}/debug/cpu.cfg".format(self.base_dir))
+			copyfile("{}/platform.cfg".format(self.testcase_path), "{}/debug/platform.cfg".format(self.base_dir))
+			self.__append_platform()
 
 		self.management.copy()
 

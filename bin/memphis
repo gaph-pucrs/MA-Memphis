@@ -16,7 +16,7 @@ def testcase_build(platform_path, testcase_file):
 	tc.copy()
 	tc.build()
 
-def scenario_build(platform_path, testcase_folder, scenario_file):
+def scenario_build(platform_path, testcase_folder, scenario_file, skipdebug):
 	testcase_name = testcase_folder.split("/")
 	testcase_name = testcase_name[len(testcase_name) - 1]
 	testcase_file = testcase_folder+"/"+ testcase_name+".yaml"
@@ -30,7 +30,7 @@ def scenario_build(platform_path, testcase_folder, scenario_file):
 	sys.path.append(platform_path+"/modules")
 	from scenario import Scenario
 	scenario = Scenario(platform_path, testcase_folder, scenario_file)
-	scenario.copy()
+	scenario.copy(skipdebug)
 	scenario.build()
 
 def simulate(debugger_path, scenario_folder, timeout, nogui):
@@ -61,7 +61,7 @@ def simulate(debugger_path, scenario_folder, timeout, nogui):
 	except KeyboardInterrupt:
 		pass
 
-def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, timeout, nogui):
+def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, timeout, nogui, skipdebug):
 	testcase_build(platform_path, testcase_file)
 
 	testcase_name = testcase_file.split(".")
@@ -69,7 +69,7 @@ def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, time
 	testcase_name = testcase_name.split("/")
 	testcase_name = testcase_name[len(testcase_name) - 1]
 
-	scenario_build(platform_path, testcase_name, scenario_file)
+	scenario_build(platform_path, testcase_name, scenario_file, skipdebug)
 
 	scenario_name = scenario_file.split(".")
 	scenario_name = scenario_name[len(scenario_name) - 2]
@@ -100,6 +100,7 @@ if __name__ == "__main__":
 	sc_parser = subparsers.add_parser("scenario", help="Generate a scenario")
 	sc_parser.add_argument("TESTCASE_FOLDER", help="Path to generated testcase folder")
 	sc_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
+	sc_parser.add_argument("--skipdebug", action="store_true", help="Disables debugger configuration")
 
 	sim_parser = subparsers.add_parser("simulate", help="Simulate a scenario")
 	sim_parser.add_argument("SCENARIO_FOLDER", help="Path to generated scenario folder")
@@ -109,6 +110,7 @@ if __name__ == "__main__":
 	all_parser = subparsers.add_parser("all", help="Simulate a scenario")
 	all_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
 	all_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
+	all_parser.add_argument("--skipdebug", action="store_true", help="Disables debugger configuration")
 	all_parser.add_argument("--timeout", help="Simulation timeout in milliseconds")
 	all_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
 
@@ -137,6 +139,13 @@ if __name__ == "__main__":
 	if option == "simulate" or option == "all":
 		try:
 			timeout = int(args.timeout)
+		except:
+			pass
+
+	skipdebug = False
+	if option == "scenario" or option == "all":
+		try:
+			skipdebug = args.skipdebug
 		except:
 			pass
 
@@ -175,12 +184,12 @@ if __name__ == "__main__":
 		if option == "testcase":
 			testcase_build(PLATFORM_PATH, testcase_file)
 		elif option == "scenario":
-			scenario_build(PLATFORM_PATH, testcase_folder, scenario_file)
+			scenario_build(PLATFORM_PATH, testcase_folder, scenario_file, skipdebug)
 		elif option == "simulate":
 			simulate(DEBUGGER_PATH, scenario_folder, timeout, nogui)
 		else:
 			# all
-			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, timeout, nogui)
+			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, timeout, nogui, skipdebug)
 	except Exception as ex:
 		sys.exit("\nERROR: {}".format(ex))
 
