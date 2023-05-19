@@ -33,10 +33,15 @@ int main()
 
 	puts("Test sent to all tasks");
 
+	unsigned then = memphis_get_tick();
+
 	for(int j = 0; j < PATTERN_PER_TASK; j++){
 		for(int i = 0; i < TOTAL_TASKS; i++){
 			memphis_receive(&results[j][i], sizeof(int), P[i]);
 		}
+		unsigned now = memphis_get_tick();
+		printf("%u_%u\n", now, now - then);
+		then = now;
 	}
 
 	int smaller = results[0][0];
