@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from yaml import safe_load
-from os import makedirs
+from os import makedirs, listdir
 from distutils.dir_util import remove_tree
 from shutil import copyfile
-from management import Management
 from repository import Start
 from os.path import exists
 from filecmp import cmp
@@ -18,8 +17,8 @@ class Scenario:
 		name = self.base.split(".yaml")[0].split("/")
 		name = name[len(name) - 1]
 
-		self.base_dir = self.testcase_path+"/"+name
-		self.file = self.base_dir+"/"+name+".yaml"
+		self.base_dir = "{}/{}".format(self.testcase_path, name)
+		self.file = "{}/{}.yaml".format(self.base_dir, name)
 
 		yaml = safe_load(open(self.base, "r"))
 
@@ -29,25 +28,30 @@ class Scenario:
 		tc_yaml = safe_load(open("{}/{}.yaml".format(self.testcase_path, tc_name), "r"))
 		self.page_size		= tc_yaml["hw"]["page_size_KB"]*1024
 
-		self.management = Management(yaml["management"], self.platform_path, self.base_dir, self.testcase_path)
+		self.ma_tasks = []
 
-		# try:
-		# 	self.start_ms = app["start_time_ms"]
-		# except:
-		# 	print("Using 0 ms as starting time for app {}".format(self.app_name))
-		# 	self.start_ms = 0
+		for task in yaml["management"]:
+			self.ma_tasks.append(task)
 
-		# try:
-		# 	self.applications.sort(key=lambda x: x.start_ms)
-		# except:
-		# 	pass
+		self.applications = []
+		for app in yaml["apps"]:
+			app_name = app["name"]
+			app_inst = app["instance"]
+			try:
+				start_ms = app["start_time_ms"]
+			except:
+				print("Using 0 ms as starting time for app {}".format(app_name))
+				start_ms = 0
+			try:
+				mapping = app["static_mapping"]
+			except:
+				print("Using dynamic mapping for all tasks of app {}".format(self.app_name))
+				mapping = []
+			app_scen = ("{}_{}".format(app_name, app_inst), start_ms, mapping)
+			self.applications.append(app_scen)
 
-		# try:
-		# 	self.mapping = app["static_mapping"]
-		# except:
-		# 	print("Using pure dinamic mapping for app {}".format(self.app_name))
-		# 	self.mapping = []
-		
+		self.applications.sort(key=lambda x: x[1])
+				
 	def copy(self, skipdebug):
 		if self.__is_obsolete():
 			remove_tree(self.base_dir)
@@ -56,8 +60,6 @@ class Scenario:
 		makedirs(self.base_dir+"/debug/request", exist_ok=True)
 		makedirs(self.base_dir+"/log", exist_ok=True)
 		makedirs(self.base_dir+"/flit_sniffer", exist_ok=True)
-		makedirs(self.base_dir+"/management", exist_ok=True)
-		makedirs(self.base_dir+"/applications", exist_ok=True)
 
 		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
 		copyfile(self.base, self.file)
@@ -68,44 +70,47 @@ class Scenario:
 			copyfile("{}/platform.cfg".format(self.testcase_path), "{}/debug/platform.cfg".format(self.base_dir))
 			self.__append_platform()
 
-		self.management.copy()
-
 	def build(self, repodebug):
-		self.management.build()
-
-		self.management.check_size(self.page_size, 0)
-
-		self.management.generate_repo(repodebug)
-
-		self.management.generate_start(self.base_dir, repodebug)
+		self.__generate_ma_start(repodebug)
 		self.__generate_app_start(repodebug)
 
 	def __generate_app_start(self, repodebug):
 		start = Start()
 
 		for app in self.applications:
-			start.add(app.get_full_name(), "App name")
+			start.add(app[0], "App name")
 			
-			start.add(app.start_ms, "Start time (ms)")
+			start.add(app[1], "Start time (ms)")
 
-			tasks = app.get_tasks()
+			source_path = "{}/applications/{}".format(self.testcase_path, app[0])
+
+			try:
+				files = listdir(source_path)
+			except:
+				raise Exception("Application {} not found or has 0 tasks.".format(self.app_name))
+
+			tasks = []
+			for file in files:
+				if file.endswith(".c"):
+					task = file.split(".")[0]
+					tasks.append(task)
 			task_cnt = len(tasks)
 			start.add(task_cnt, "Number of tasks")
 
-			for task in app.mapping:
+			for task in app[2]:
 				if task not in tasks:
 					raise Exception("Task {} in static_mapping list not present in application {}".format(task, app.app_name))
 		
 			for task in tasks:
 				address = -1
 				map_comment = ""
-				if task in app.mapping:
-					addr_x = app.mapping[task][0]
-					addr_y = app.mapping[task][1]
+				if task in app[2]:
+					addr_x = app[2][task][0]
+					addr_y = app[2][task][1]
 					address = addr_x << 8 | addr_y
 					map_comment = "statically mapped to PE {}x{}".format(addr_x, addr_y)
 				else:
-					map_comment = "dinamically mapped"
+					map_comment = "dynamically mapped"
 				
 				start.add(str(address), "Task {} is {}".format(task, map_comment))
 		
@@ -113,17 +118,49 @@ class Scenario:
 		if repodebug:
 			start.write_debug(self.base_dir+"/app_start_debug.txt")
 
-	def __append_platform(self):
+	def __generate_ma_start(self, repodebug):
+		start = Start()
 
+		for task in self.ma_tasks:
+			name = task["task"]
+			start.add(name, "Task name")
+
+			try:
+				address = task["static_mapping"]
+				addr_x = int(address[0])
+				addr_y = int(address[1])
+				address = addr_x << 8 | addr_y
+				map_comment = "statically mapped to PE {}x{}".format(addr_x, addr_y)
+				start.add(str(address), "Task {} is {}".format(name, map_comment))
+			except:
+				raise Exception("All management tasks must be STATICALLY MAPPED")			
+		
+		start.write("{}/ma_start.txt".format(self.base_dir))
+		if repodebug:
+			start.write_debug("{}/ma_start_debug.txt".format(self.base_dir))
+
+	def __append_platform(self):
 		task_lines = []
 		app_lines = []
 
 		app_id = 1
 
 		for app in self.applications:
-			app_lines.append("{}\t{}\n".format(app.get_full_name(), app_id))
+			app_lines.append("{}\t{}\n".format(app[0], app_id))
 			
-			tasks = app.get_tasks()
+			source_path = "{}/applications/{}".format(self.testcase_path, app[0])
+
+			try:
+				files = listdir(source_path)
+			except:
+				raise Exception("Application {} not found or has 0 tasks.".format(self.app_name))
+			
+			tasks = []
+			for file in files:
+				if file.endswith(".c"):
+					task = file.split(".")[0]
+					tasks.append(task)
+			
 			for t in range(len(tasks)):
 				task_lines.append("{} {}\n".format(tasks[t], app_id << 8 | t))
 
@@ -134,9 +171,8 @@ class Scenario:
 
 		cfg.write("BEGIN_task_name_relation\n")
 
-		ma_tasks = self.management.get_tasks()
-		for t in range(len(ma_tasks)):
-			cfg.write("{} {}\n".format(ma_tasks[t], t))
+		for t in range(len(self.ma_tasks)):
+			cfg.write("{} {}\n".format(self.ma_tasks[t], t))
 
 		cfg.writelines(task_lines)
 		cfg.write("END_task_name_relation\n")

@@ -6,7 +6,7 @@ from os.path import exists
 from distutils.dir_util import remove_tree
 from subprocess import Popen
 
-def testcase_build(platform_path, testcase_file):
+def testcase_build(platform_path, testcase_file, repodebug):
 	if not exists(testcase_file):
 		raise Exception("Testcase {} not found.".format(testcase_file))
 		
@@ -14,7 +14,7 @@ def testcase_build(platform_path, testcase_file):
 	from testcase import Testcase
 	tc = Testcase(platform_path, testcase_file)
 	tc.copy()
-	tc.build()
+	tc.build(repodebug)
 
 def applications_build(platform_path, testcase_folder, applications_file, repodebug):
 	testcase_name = testcase_folder.split("/")
@@ -79,7 +79,7 @@ def simulate(debugger_path, scenario_folder, timeout, nogui):
 		pass
 
 def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, timeout, nogui, skipdebug, repodebug):
-	testcase_build(platform_path, testcase_file)
+	testcase_build(platform_path, testcase_file, repodebug)
 
 	testcase_name = testcase_file.split(".")
 	testcase_name = testcase_name[len(testcase_name) - 2]
@@ -113,6 +113,7 @@ if __name__ == "__main__":
 
 	tc_parser = subparsers.add_parser("testcase", help="Generate a testcase")
 	tc_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
+	tc_parser.add_argument("--repodebug", action="store_true", help="Generates repository/appstart debug files")
 
 	app_parser = subparsers.add_parser("applications", help="Generate applications")
 	app_parser.add_argument("TESTCASE_FOLDER", help="Path to generated testcase folder")
@@ -167,12 +168,14 @@ if __name__ == "__main__":
 			pass
 
 	skipdebug = False
-	repodebug = False
-	if option == "applications" or option == "scenario" or option == "all":
+	if option == "scenario" or option == "all":
 		try:
 			skipdebug = args.skipdebug
 		except:
 			pass
+
+	repodebug = False
+	if option == "testcase" or option == "applications" or option == "scenario" or option == "all":
 		try:
 			repodebug = args.repodebug
 		except:
@@ -215,7 +218,7 @@ if __name__ == "__main__":
  
 	try:
 		if option == "testcase":
-			testcase_build(PLATFORM_PATH, testcase_file)
+			testcase_build(PLATFORM_PATH, testcase_file, repodebug)
 		elif option == "applications":
 			applications_build(PLATFORM_PATH, testcase_folder, applications_file, repodebug)
 		elif option == "scenario":

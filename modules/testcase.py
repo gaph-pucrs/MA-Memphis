@@ -8,6 +8,7 @@ from yaml import safe_load
 from libs import Libs
 from kernel import Kernel
 from hardware import Hardware
+from management import Management
 
 class Testcase:
 	def __init__(self, platform_path, testcase_base):
@@ -29,6 +30,8 @@ class Testcase:
 
 		self.PKG_N_PE_X = yaml["hw"]["mpsoc_dimension"][0]
 		self.PKG_N_PE_Y = yaml["hw"]["mpsoc_dimension"][1]
+
+		self.management = Management(self.platform_path, self.base_dir, yaml["hw"]["page_size_KB"]*1024)
 		
 	def copy(self):
 		# If testcase has been updated, delete to rebuild everything
@@ -41,20 +44,25 @@ class Testcase:
 		self.libs.copy()
 		self.kernel.copy()
 		self.hardware.copy()
+		self.management.copy()
 
 		self.__create_platform()
 		self.__create_services()
 		self.__create_cpu()
 
-	def build(self):
+	def build(self, repodebug):
 		self.libs.build()
 		self.libs.install()
 		
 		self.kernel.build()
+		self.management.build()
 
 		self.hardware.build()
 
 		self.kernel.check_size()
+		self.management.check_size()
+
+		self.management.generate_repo(repodebug)
 
 	def __is_obsolete(self):
 		if exists(self.file):
