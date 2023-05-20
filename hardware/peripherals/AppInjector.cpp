@@ -182,7 +182,7 @@ void AppInjector::monitor_new_app()
  */
 void AppInjector::app_descriptor_loader(std::string name, unsigned task_cnt, std::vector<int>& static_mapping)
 {
-	std::string path = this->path+"/applications/"+name+".txt";
+	std::string path = this->path+"/../applications/"+name+".txt";
 	std::ifstream repository(path);
 
 	if(repository.is_open()){
@@ -284,7 +284,7 @@ std::string AppInjector::get_app_repo_path(unsigned app_id){
 
 		std::getline(repository,line);
 		// std::cout << "APP NAME: " << line << std::endl;
-		return (this->path + "/applications/" + line + ".txt");
+		return (this->path + "/../applications/" + line + ".txt");
 	}
 
 	std::cout << "ERROR: app path not found\n" << std::endl;

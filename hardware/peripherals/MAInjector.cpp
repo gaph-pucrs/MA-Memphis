@@ -166,7 +166,7 @@ void MAInjector::ma_boot()
 void MAInjector::task_load(std::string task, int id, int address, int mapper_id, int mapper_address)
 {
 	std::cout << "Loading task ID " << id << " to PE " << (address >> 8) << "x" << (address & 0xFF) << std::endl;
-	std::string path = this->path+"/management/"+task+".txt";
+	std::string path = this->path+"/../management/"+task+".txt";
 	std::ifstream repo(path);
 
 	if(repo.is_open()){
@@ -253,7 +253,7 @@ void MAInjector::ma_load()
 	packet.push_back(tasks.size());		/* Task count */
 
 	for(unsigned i = 0; i < tasks.size(); i++){
-		std::string path = this->path+"/management/" + tasks[i].first + ".txt";
+		std::string path = this->path+"/../management/" + tasks[i].first + ".txt";
 		std::ifstream repo(path);
 
 		packet.push_back(tasks[i].second);	/* Task Address from ma_start.txt */
