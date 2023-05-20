@@ -78,13 +78,15 @@ def simulate(debugger_path, scenario_folder, timeout, nogui):
 	except KeyboardInterrupt:
 		pass
 
-def memphis_all(platform_path, debugger_path, testcase_file, scenario_file, timeout, nogui, skipdebug, repodebug):
+def memphis_all(platform_path, debugger_path, testcase_file, applications_file, scenario_file, timeout, nogui, skipdebug, repodebug):
 	testcase_build(platform_path, testcase_file, repodebug)
 
 	testcase_name = testcase_file.split(".")
 	testcase_name = testcase_name[len(testcase_name) - 2]
 	testcase_name = testcase_name.split("/")
 	testcase_name = testcase_name[len(testcase_name) - 1]
+
+	applications_build(platform_path, testcase_name, applications_file, repodebug)
 
 	scenario_build(platform_path, testcase_name, scenario_file, skipdebug, repodebug)
 
@@ -133,6 +135,7 @@ if __name__ == "__main__":
 
 	all_parser = subparsers.add_parser("all", help="Simulate a scenario")
 	all_parser.add_argument("TESTCASE_FILE", help="Path to testcase description (yaml)")
+	all_parser.add_argument("APPLICATIONS_FILE", help="Path to applications description (yaml)")
 	all_parser.add_argument("SCENARIO_FILE", help="Path to scenario description (yaml)")
 	all_parser.add_argument("--timeout", help="Simulation timeout in milliseconds")
 	all_parser.add_argument("--nogui", action="store_true", help="Disables graphical debugger")
@@ -209,7 +212,7 @@ if __name__ == "__main__":
 		testcase_folder = args.TESTCASE_FOLDER
 
 	applications_file = ""
-	if option == "applications":
+	if option == "applications" or option == "all":
 		applications_file = args.APPLICATIONS_FILE
 
 	scenario_file = ""
@@ -227,6 +230,6 @@ if __name__ == "__main__":
 			simulate(DEBUGGER_PATH, scenario_folder, timeout, nogui)
 		else:
 			# all
-			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, scenario_file, timeout, nogui, skipdebug, repodebug)
+			memphis_all(PLATFORM_PATH, DEBUGGER_PATH, testcase_file, applications_file, scenario_file, timeout, nogui, skipdebug, repodebug)
 	except Exception as ex:
 		sys.exit("\nERROR: {}".format(ex))
