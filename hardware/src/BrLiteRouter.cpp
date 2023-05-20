@@ -69,8 +69,9 @@ void BrLiteRouter::input()
 				port++;
 				port %= NPORT;
 			}
-
+		#if TRAFFIC_DEBUG != 0
 			log(port);
+		#endif
 			
 			in_state = IN_TEST_SPACE;
 			break;
