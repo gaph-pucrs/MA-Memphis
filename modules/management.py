@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from distutils.dir_util import copy_tree
 from os import environ, getcwd, listdir
+from os.path import isdir
 from subprocess import run, check_output
 from multiprocessing import cpu_count
 from descriptor import Descriptor
@@ -30,6 +31,8 @@ class Management:
 		make_env["LDFLAGS"] = "-L{}/{}/lib --specs=nano.specs -Wl,-Ttext=0 -u _getpid".format(getcwd(), self.testcase_path)
 
 		for task in listdir(self.base_path):
+			if not isdir(task):
+				continue
 			make = run(["make", "-C", "{}/{}".format(self.base_path, task), "-j", str(NCPU)], env=make_env)
 			if make.returncode != 0:
 				raise Exception("Error build MA task {}.".format(task))
@@ -41,6 +44,8 @@ class Management:
 		self.entry_points = {}
 
 		for task in listdir(self.base_path):
+			if not isdir(task):
+				continue
 			path = "{}/{}/{}.elf".format(self.base_path, task, task)
 
 			out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
@@ -54,6 +59,8 @@ class Management:
 			
 		print("\n********************* MA page size report *********************")
 		for task in listdir(self.base_path):
+			if not isdir(task):
+				continue
 			size = self.text_sizes[task] + self.data_sizes[task] + self.bss_sizes[task]
 			if size <= self.page_size:
 				print("Task {} memory usage {}/{} bytes".format(task.rjust(25), str(size).rjust(6), str(self.page_size).ljust(6)))
@@ -63,6 +70,8 @@ class Management:
 
 	def generate_repo(self, repodebug):
 		for task in listdir(self.base_path):
+			if not isdir(task):
+				continue
 			repo = Repository()
 
 			descr = Descriptor("{}/{}/config.yaml".format(self.base_path, task), task)
