@@ -56,3 +56,25 @@ void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free)
 
 	MMR_DMNI_START = 1;
 }
+
+void dmni_send_raw(unsigned *packet, size_t size)
+{
+	/* Wait for DMNI to be released */
+	puts("ATENDE FILHO DA ME");
+	while(MMR_DMNI_SEND_ACTIVE);
+	puts("Vai programar");
+
+	/* Program DMNI */
+	MMR_DMNI_SIZE = size;
+	MMR_DMNI_ADDRESS = (unsigned)packet;
+
+	MMR_DMNI_SIZE_2 = 0;
+	MMR_DMNI_ADDRESS = 0;
+
+	MMR_DMNI_OP = DMNI_READ;
+
+	MMR_DMNI_START = 1;
+
+	while(MMR_DMNI_SEND_ACTIVE);
+	puts("ALO QUENHE");
+}

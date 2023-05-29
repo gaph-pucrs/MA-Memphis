@@ -45,6 +45,24 @@ int memphis_send(void *msg, size_t size, int target_id)
 	return ret;
 }
 
+int memphis_send_raw(void *msg, size_t size)
+{
+	int ret = 0;
+	do {
+		ret = syscall_errno(
+			SYS_sendraw,
+			2, //zero
+			(long)msg, 
+			size, 
+			0, 
+			0,
+			0,
+			0
+		);
+	} while(ret == -1 && errno == EAGAIN);
+	return ret;
+}
+
 int memphis_receive(void *msg, size_t size, int source_id)
 {
 	int ret = 0;

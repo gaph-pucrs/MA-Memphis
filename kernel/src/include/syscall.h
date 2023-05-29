@@ -132,6 +132,8 @@ bool sys_kernel_syscall(unsigned *message, int length);
  */
 bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr);
 
+int sys_sendraw(tcb_t *tcb, void *buf, size_t size);
+
 /**
  * @brief Releases peripherals connected to this PE
  * 

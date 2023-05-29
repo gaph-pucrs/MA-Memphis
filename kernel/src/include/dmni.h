@@ -34,3 +34,5 @@ void dmni_read(void *payload_address, size_t payload_size);
  * @param should_free True if should free the payload after the message is sent
  */
 void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free);
+
+void dmni_send_raw(unsigned *packet, size_t size);
