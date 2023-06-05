@@ -171,6 +171,8 @@ void DMNI::config()
 	if(set_address){
 		address = config_data;
 		address_2 = 0;
+		if(address_router == 1)
+			cout << "[DMNI HW] pointer = " << std::hex << config_data << std::endl;
 	} else if(set_address_2){
 		address_2 = config_data;
 	} else if(set_size){
@@ -413,6 +415,9 @@ void DMNI::send()
 					data_out.write(mem_data_read.read());
 					send_address.write(send_address.read() + WORD_SIZE);
 					send_size.write(send_size.read() - 1);
+
+					if(address_router == 1)
+						cout << "[DMNI HW] " << mem_data_read.read() << endl;
 
 				} else if (send_size_2.read() > 0) {
 

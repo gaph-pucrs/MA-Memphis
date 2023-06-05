@@ -374,7 +374,8 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 
 int sys_sendraw(tcb_t *tcb, void *buf, size_t size)
 {
-	puts("ALO TA CHAMANDO");
+	puts("[Syscall] Entering sendraw routine.");
+	
 	if(size < 13){
 		puts("ERROR: invalid packet size");
 		return -EINVAL;
