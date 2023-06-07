@@ -45,7 +45,7 @@ class Scenario:
 			try:
 				mapping = app["static_mapping"]
 			except:
-				print("Using dynamic mapping for all tasks of app {}".format(self.app_name))
+				print("Using dynamic mapping for all tasks of app {}".format(app_name))
 				mapping = []
 			app_scen = ("{}_{}".format(app_name, app_inst), start_ms, mapping)
 			self.applications.append(app_scen)
