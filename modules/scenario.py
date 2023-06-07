@@ -87,7 +87,7 @@ class Scenario:
 			try:
 				files = listdir(source_path)
 			except:
-				raise Exception("Application {} not found or has 0 tasks.".format(self.app_name))
+				raise Exception("Application {} not found or has 0 tasks.".format(app[0]))
 
 			tasks = []
 			for file in files:
@@ -153,7 +153,7 @@ class Scenario:
 			try:
 				files = listdir(source_path)
 			except:
-				raise Exception("Application {} not found or has 0 tasks.".format(self.app_name))
+				raise Exception("Application {} not found or has 0 tasks.".format(app[0]))
 			
 			tasks = []
 			for file in files:
@@ -172,7 +172,7 @@ class Scenario:
 		cfg.write("BEGIN_task_name_relation\n")
 
 		for t in range(len(self.ma_tasks)):
-			cfg.write("{} {}\n".format(self.ma_tasks[t], t))
+			cfg.write("{} {}\n".format(self.ma_tasks[t]["task"], t))
 
 		cfg.writelines(task_lines)
 		cfg.write("END_task_name_relation\n")
