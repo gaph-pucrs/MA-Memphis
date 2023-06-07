@@ -1,0 +1,13 @@
+ctg:
+  idct:
+    successors:
+      - "print"
+  iquant:
+    successors:
+      - "idct"
+  ivlc:
+    successors:
+      - "iquant"
+  start:
+    successors:
+      - "ivlc"
