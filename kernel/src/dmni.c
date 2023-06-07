@@ -83,3 +83,14 @@ void dmni_send_raw(unsigned *packet, size_t size)
 	while(MMR_DMNI_SEND_ACTIVE);
 	puts("[DMNI] Sent.");
 }
+
+void dmni_drop(unsigned payload_size)
+{
+	printf("Dropping payload - Size = %u\n", payload_size);
+	MMR_DMNI_SIZE = payload_size;
+	MMR_DMNI_OP = DMNI_READ;
+	MMR_DMNI_ADDRESS = 0;
+	MMR_DMNI_START = 1;
+	while(MMR_DMNI_RECEIVE_ACTIVE);
+	printf("Payload dropped\n");
+}

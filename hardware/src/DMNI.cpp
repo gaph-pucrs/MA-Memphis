@@ -329,7 +329,11 @@ void DMNI::receive()
 					intr_counter_temp = intr_counter_temp - 1;
 				}
 				receive_active.write(1);
-				DMNI_Receive.write(COPY_TO_MEM);
+				
+				if(address.read() == 0)
+					DMNI_Receive.write(DROP_MESSAGE);
+				else
+					DMNI_Receive.write(COPY_TO_MEM);
 			}
 		break;
 
@@ -352,6 +356,25 @@ void DMNI::receive()
 			}
 
 		break;
+
+		case DROP_MESSAGE:
+
+			noc_byte_we.write(0);
+			noc_data_write.write(0);
+			recv_address.write(0);
+
+			if (read_av.read() == 1){
+				first.write(first.read() + 1);
+				add_buffer.write(0);
+				
+				recv_size.write(recv_size.read() - 1);
+				if (recv_size.read() == 0){
+					DMNI_Receive.write(END);
+				}	
+			}
+
+		break;
+
 		case END:
 			receive_active.write(0);
 			noc_byte_we.write(0);

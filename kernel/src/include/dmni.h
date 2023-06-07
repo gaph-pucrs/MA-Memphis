@@ -36,3 +36,5 @@ void dmni_read(void *payload_address, size_t payload_size);
 void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free);
 
 void dmni_send_raw(unsigned *packet, size_t size);
+
+void dmni_drop(unsigned size);

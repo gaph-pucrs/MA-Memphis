@@ -4,8 +4,7 @@
 
 int main()
 {
-    while(memphis_get_tick() < 220000);
-
+    
     unsigned int message[21] = {
         
         0x00000202, //target (1x1)
@@ -30,6 +29,21 @@ int main()
         0x00000007,
         0x00000008
     };
+
+    printf("Sending message\n");
+    memphis_send_raw(message, 21);
+    printf("Message sent\n");
+
+    message[13] = 9;
+    message[14] = 10;
+    message[15] = 11;
+    message[16] = 12;
+    message[17] = 13;
+    message[18] = 14;
+    message[19] = 15;
+    message[20] = 16;
+
+    while(memphis_get_tick() < 700000);
 
     printf("Sending message\n");
     memphis_send_raw(message, 21);

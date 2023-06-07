@@ -196,7 +196,8 @@ bool isr_handle_pkt(volatile packet_t *packet)//
 				packet->consumer_task, 
 				packet->producer_task, 
 				packet->insert_request, 
-				packet->msg_length
+				packet->msg_length,
+				packet->payload_size
 			);
 		case DATA_AV:
 			return isr_data_available(
@@ -421,7 +422,7 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 	return force_sched;
 }
 
-bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size)
+bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size, unsigned pkt_payload_size)
 {
 	puts("ISR Delivery");
 	if(cons_task & MEMPHIS_KERNEL_MSG){
@@ -464,20 +465,18 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 
 		if(ipipe == NULL){
 			puts("ERROR: BUFFER NOT ALLOCATED FOR MD");
-			/**
-			 * @todo Create an exception and abort task?
-			 */
-			while(true);
+			printf("Packet payload size = %u\n", pkt_payload_size);
+			unsigned flits_to_drop = (pkt_payload_size-11);
+			dmni_drop(flits_to_drop);
 		}
 		// printf("Message at virtual address %p\n", ipipe->buf);
 
 		int result = ipipe_receive(ipipe, tcb_get_offset(cons_tcb), size);
 		if(result != size){
 			puts("ERROR: buffer failure on message delivery");
-			/** 
-			 * @todo Create an exception and abort task?
-			 */
-			while(true);
+			printf("Packet payload size = %u\n", pkt_payload_size);
+			unsigned flits_to_drop = (pkt_payload_size-11);
+			dmni_drop(flits_to_drop);
 		}
 		// puts("Message read from DMNI");
 

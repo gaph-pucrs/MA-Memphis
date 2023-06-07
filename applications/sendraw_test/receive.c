@@ -8,18 +8,19 @@
 int main()
 {
     unsigned int payload[MSG_LEN];
-    while(1);
 
-    // printf("Receiving message\n");
+    while(memphis_get_tick() < 500000);
 
-    // memphis_receive(payload, MSG_SIZE, send);
-    // printf("Message received\n");
+    printf("Receiving message\n");
 
-    // int i = 0;
-    // while(i < MSG_LEN){
-    //     printf("%u\n", payload[i]);
-    //     i++;
-    // }
+    memphis_receive(payload, MSG_SIZE, send);
+    printf("Message received\n");
+
+    int i = 0;
+    while(i < MSG_LEN){
+        printf("%u\n", payload[i]);
+        i++;
+    }
 
     return 0;
 }
