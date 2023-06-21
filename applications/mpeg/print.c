@@ -26,14 +26,14 @@ int main()
 
     puts("MPEG Task PRINT start:\n");
 
-    unsigned then = memphis_get_tick();
+    // unsigned then = memphis_get_tick();
 
     for(i=0;i<MPEG_FRAMES;i++)
     {
         memphis_receive(block, sizeof(block), idct);
-        unsigned now = memphis_get_tick();
-		printf("%u_%u\n", now, now - then);
-		then = now;
+        // unsigned now = memphis_get_tick();
+		// printf("%u_%u\n", now, now - then);
+		// then = now;
     }
 
     puts("End Task E - MPEG\n");
