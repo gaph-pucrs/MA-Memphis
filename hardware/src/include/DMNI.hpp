@@ -92,6 +92,7 @@ private:
 		LOAD, 
 		COPY_FROM_MEM, 
 		COPY_TO_MEM, 
+		DROP_MESSAGE,
 		END
 	};
 

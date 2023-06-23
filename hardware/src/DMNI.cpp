@@ -171,6 +171,8 @@ void DMNI::config()
 	if(set_address){
 		address = config_data;
 		address_2 = 0;
+		// if(address_router == 1)
+		// 	cout << "[DMNI HW] pointer = " << std::hex << config_data << std::endl;
 	} else if(set_address_2){
 		address_2 = config_data;
 	} else if(set_size){
@@ -327,7 +329,11 @@ void DMNI::receive()
 					intr_counter_temp = intr_counter_temp - 1;
 				}
 				receive_active.write(1);
-				DMNI_Receive.write(COPY_TO_MEM);
+				
+				if(address.read() == 0)
+					DMNI_Receive.write(DROP_MESSAGE);
+				else
+					DMNI_Receive.write(COPY_TO_MEM);
 			}
 		break;
 
@@ -350,6 +356,25 @@ void DMNI::receive()
 			}
 
 		break;
+
+		case DROP_MESSAGE:
+
+			noc_byte_we.write(0);
+			noc_data_write.write(0);
+			recv_address.write(0);
+
+			if (read_av.read() == 1){
+				first.write(first.read() + 1);
+				add_buffer.write(0);
+				
+				recv_size.write(recv_size.read() - 1);
+				if (recv_size.read() == 0){
+					DMNI_Receive.write(END);
+				}	
+			}
+
+		break;
+
 		case END:
 			receive_active.write(0);
 			noc_byte_we.write(0);
@@ -413,6 +438,9 @@ void DMNI::send()
 					data_out.write(mem_data_read.read());
 					send_address.write(send_address.read() + WORD_SIZE);
 					send_size.write(send_size.read() - 1);
+
+					// if(address_router == 1)
+					// 	cout << "[DMNI HW] " << mem_data_read.read() << endl;
 
 				} else if (send_size_2.read() > 0) {
 

@@ -133,6 +133,17 @@ bool sys_kernel_syscall(unsigned *message, int length);
 bool sys_kernel_writepipe(void *buf, size_t size, int cons_task, int cons_addr);
 
 /**
+ * @brief Sends a raw packet
+ * 
+ * @param tcb Pointer to the producer TCB
+ * @param buf Pointer to the packet
+ * @param size Packet size in flits
+ * 
+ * @return 0 if sent the packet, -EINVAL on invalid argument
+ */
+int sys_sendraw(tcb_t *tcb, void *buf, size_t size);
+
+/**
  * @brief Releases peripherals connected to this PE
  * 
  * @return False

@@ -28,6 +28,7 @@
 #include "pending_service.h"
 #include "task_migration.h"
 #include "mmr.h"
+#include "dmni.h"
 
 bool schedule_after_syscall;	//!< Signals the HAL syscall to call scheduler
 bool task_terminated;
@@ -110,6 +111,9 @@ tcb_t *sys_syscall(
 				break;
 			case SYS_brk:
 				ret = sys_brk(current, (void*)arg1);
+				break;
+			case SYS_sendraw:
+				ret = sys_sendraw(current, (void*)arg1, arg2);
 				break;
 			default:
 				printf("ERROR: Unknown syscall %x\n", number);
@@ -366,6 +370,29 @@ int sys_writepipe(tcb_t *tcb, void *buf, size_t size, int cons_task, bool sync)
 	}
 
 	return size;
+}
+
+int sys_sendraw(tcb_t *tcb, void *buf, size_t size)
+{
+	// puts("[Syscall] Entering sendraw routine.");
+	
+	if(size < 13){
+		puts("ERROR: invalid packet size");
+		return -EINVAL;
+	}
+
+	/* Points the message in the task page. Address composition: offset + msg address */
+	if(buf == NULL){
+		puts("ERROR: message pointer is null");
+		return -EINVAL;
+	}
+
+	/* Sets real address of message buffer */
+	buf = (void*)((unsigned)buf | (unsigned)tcb_get_offset(tcb));
+
+	dmni_send_raw(buf, size);
+
+	return 0;
 }
 
 int sys_readpipe(tcb_t *tcb, void *buf, size_t size, int prod_task, bool sync)
