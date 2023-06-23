@@ -60,18 +60,18 @@ void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free)
 void dmni_send_raw(unsigned *packet, size_t size)
 {
 	/* Wait for DMNI to be released */
-	puts("[DMNI] Waiting for DMNI to be released.");
+	// puts("[DMNI] Waiting for DMNI to be released.");
 	while(MMR_DMNI_SEND_ACTIVE);
-	puts("[DMNI] DMNI released, sending.");
+	// puts("[DMNI] DMNI released, sending.");
 
 	/* Program DMNI */
 	MMR_DMNI_SIZE = size;
 	MMR_DMNI_ADDRESS = (unsigned)packet;
 
-	printf("Addr = %x\n", (unsigned)packet);
-	for(int i = 0; i < size; i++){
-		printf("%d\n", packet[i]);
-	}
+	// printf("Addr = %x\n", (unsigned)packet);
+	// for(int i = 0; i < size; i++){
+	// 	printf("%d\n", packet[i]);
+	// }
 
 	MMR_DMNI_SIZE_2 = 0;
 	MMR_DMNI_ADDRESS_2 = 0;
@@ -81,16 +81,16 @@ void dmni_send_raw(unsigned *packet, size_t size)
 	MMR_DMNI_START = 1;
 
 	while(MMR_DMNI_SEND_ACTIVE);
-	puts("[DMNI] Sent.");
+	// puts("[DMNI] Sent.");
 }
 
-void dmni_drop(unsigned payload_size)
+void dmni_drop_payload(unsigned payload_size)
 {
-	printf("Dropping payload - Size = %u\n", payload_size);
+	// printf("Dropping payload - Size = %u\n", payload_size);
 	MMR_DMNI_SIZE = payload_size;
 	MMR_DMNI_OP = DMNI_READ;
 	MMR_DMNI_ADDRESS = 0;
 	MMR_DMNI_START = 1;
 	while(MMR_DMNI_RECEIVE_ACTIVE);
-	printf("Payload dropped\n");
+	// printf("Payload dropped\n");
 }

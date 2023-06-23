@@ -182,7 +182,7 @@ bool isr_handle_broadcast(bcast_t *packet)
 
 bool isr_handle_pkt(volatile packet_t *packet)//
 {
-	printf("Packet received %x\n", packet->service);
+	// printf("Packet received %x\n", packet->service);
 	switch(packet->service){
 		case MESSAGE_REQUEST:
 			return isr_message_request(
@@ -424,7 +424,7 @@ bool isr_message_request(int cons_task, int cons_addr, int prod_task)
 
 bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t size, unsigned pkt_payload_size)
 {
-	puts("ISR Delivery");
+	// puts("ISR Delivery");
 	if(cons_task & MEMPHIS_KERNEL_MSG){
 		/* This message was directed to kernel */
 		size_t align_size = (size + 3) & ~3;
@@ -439,7 +439,7 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 		return ret;
 	} else {
 		/* Get consumer task */
-		printf("Received delivery to task %d with size %d\n", cons_task, size);
+		// printf("Received delivery to task %d with size %d\n", cons_task, size);
 		tcb_t *cons_tcb = tcb_find(cons_task);
 
 		if(cons_tcb == NULL){
@@ -465,18 +465,18 @@ bool isr_message_delivery(int cons_task, int prod_task, int prod_addr, size_t si
 
 		if(ipipe == NULL){
 			puts("ERROR: BUFFER NOT ALLOCATED FOR MD");
-			printf("Packet payload size = %u\n", pkt_payload_size);
+			// printf("Packet payload size = %u\n", pkt_payload_size);
 			unsigned flits_to_drop = (pkt_payload_size-11);
-			dmni_drop(flits_to_drop);
+			dmni_drop_payload(flits_to_drop);
 		}
 		// printf("Message at virtual address %p\n", ipipe->buf);
 
 		int result = ipipe_receive(ipipe, tcb_get_offset(cons_tcb), size);
 		if(result != size){
 			puts("ERROR: buffer failure on message delivery");
-			printf("Packet payload size = %u\n", pkt_payload_size);
+			// printf("Packet payload size = %u\n", pkt_payload_size);
 			unsigned flits_to_drop = (pkt_payload_size-11);
-			dmni_drop(flits_to_drop);
+			dmni_drop_payload(flits_to_drop);
 		}
 		// puts("Message read from DMNI");
 

@@ -26,7 +26,7 @@
 void dmni_read(void *payload_address, size_t payload_size);
 
 /**
- * @brief Abstracts thte DMNI programming for writing data to NoC and copy from memory.
+ * @brief Abstracts the DMNI programming for writing data to NoC and copy from memory.
  * 
  * @param packet Pointer to the packet to send
  * @param payload Pointer to the payload to send, NULL if none
@@ -35,6 +35,17 @@ void dmni_read(void *payload_address, size_t payload_size);
  */
 void dmni_send(packet_t *packet, void *payload, size_t size, bool should_free);
 
+/**
+ * @brief Abstracts the DMNI programming for writing a raw packet to NoC and copy from memory.
+ * 
+ * @param packet Pointer to the packet to send
+ * @param size Size of the packet to send in flits (32-bit)
+ */
 void dmni_send_raw(unsigned *packet, size_t size);
 
-void dmni_drop(unsigned size);
+/**
+ * @brief Requests the DMNI to drop flits from a message payload.
+ * 
+ * @param payload_size Number of flits to drop from packet payload
+ */
+void dmni_drop_payload(unsigned payload_size);

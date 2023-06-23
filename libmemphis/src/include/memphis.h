@@ -67,8 +67,16 @@ int memphis_get_addr();
  */
 int memphis_send(void *msg, size_t size, int target_id);
 
-/*****/
-int memphis_send_raw(void *msg, size_t size);
+/**
+ * @brief Sends a raw packet through Hermes
+ * 
+ * @param pkt Pointer to the packet
+ * @param size Packet size in flits
+ * 
+ * @return 0 on success
+ * 		   -1 on failure and sets errno
+ */
+int memphis_send_raw(void *pkt, size_t size);
 
 /**
  * @brief Sends a message through Hermes

@@ -14,7 +14,7 @@ Add MA_MEMPHIS_PATH and Memphis builders to the PATH:
 $ echo -e "# Memphis\nexport MA_MEMPHIS_PATH=~/MA-Memphis\nexport PATH=\${MA_MEMPHIS_PATH}/bin:\${PATH}\n" >> ~/.bashrc
 ```
 
-Then exit and restart the SSH session.
+Then exit and restart the SSH session or reopen the terminal.
 
 ## Load dependencies
 

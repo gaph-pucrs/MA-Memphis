@@ -45,23 +45,20 @@ int memphis_send(void *msg, size_t size, int target_id)
 	return ret;
 }
 
-int memphis_send_raw(void *msg, size_t size)
+int memphis_send_raw(void *pkt, size_t size)
 {
-	puts("[Memphis API] Calling sendraw syscall.");
-	int ret = 0;
-	do {
-		ret = syscall_errno(
-			SYS_sendraw,
-			2,
-			(long)msg, 
-			size, 
-			0, 
-			0,
-			0,
-			0
-		);
-	} while(ret == -1 && errno == EAGAIN);
-	puts("[Memphis API] Sendraw syscall was called.");
+	// puts("[Memphis API] Calling sendraw syscall.");
+	int ret = syscall_errno(
+		SYS_sendraw,
+		2,
+		(long)pkt,
+		size,
+		0,
+		0,
+		0,
+		0
+	);
+	// puts("[Memphis API] Sendraw syscall was called.");
 	return ret;
 }
 
