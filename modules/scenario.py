@@ -94,6 +94,8 @@ class Scenario:
 				if file.endswith(".c"):
 					task = file.split(".")[0]
 					tasks.append(task)
+
+			tasks.sort()
 			task_cnt = len(tasks)
 			start.add(task_cnt, "Number of tasks")
 
@@ -160,6 +162,8 @@ class Scenario:
 				if file.endswith(".c"):
 					task = file.split(".")[0]
 					tasks.append(task)
+
+			tasks.sort()
 			
 			for t in range(len(tasks)):
 				task_lines.append("{} {}\n".format(tasks[t], app_id << 8 | t))
