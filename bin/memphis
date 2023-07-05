@@ -56,12 +56,13 @@ def simulate(debugger_path, scenario_folder, timeout, nogui):
 
 	try:
 		remove_tree("{}/log".format(scenario_folder))
-		makedirs("{}/log".format(scenario_folder))
-		open("{}/debug/scheduling_report.txt", 'w').close()
-		open("{}/debug/traffic_router.txt", 'w').close()
-		open("{}/debug/dmni.log", 'w').close()
 	except:
 		pass
+
+	makedirs("{}/log".format(scenario_folder))
+	open("{}/debug/scheduling_report.txt".format(scenario_folder), 'w').close()
+	open("{}/debug/traffic_router.txt".format(scenario_folder), 'w').close()
+	open("{}/debug/dmni.log".format(scenario_folder), 'w').close()
 
 	if(timeout == -1):
 		simulation = Popen(["{}/../hardware/memphis".format(scenario_folder), scenario_folder])

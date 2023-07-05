@@ -61,7 +61,6 @@ class Scenario:
 		makedirs(self.base_dir+"/log", exist_ok=True)
 		makedirs(self.base_dir+"/flit_sniffer", exist_ok=True)
 
-		open("{}/debug/traffic_router.txt".format(self.base_dir), "w").close()
 		copyfile(self.base, self.file)
 
 		if not skipdebug:
