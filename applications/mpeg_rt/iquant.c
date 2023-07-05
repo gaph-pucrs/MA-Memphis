@@ -93,7 +93,6 @@ int main()
     type_DATA block[64];
 
 
-    puts("MPEG Task C start: iquant \n");
     //printf("%d\n", memphis_get_tick());
     memphis_real_time(RT_PERIOD, IQUANT_DEADLINE, IQUANT_EXEC_TIME);
     for(j=0;j<MPEG_FRAMES;j++)
@@ -109,7 +108,6 @@ int main()
     }
 
    //printf("%d\n", memphis_get_tick());
-   puts("End Task C- MPEG\n");
 
    return 0;
 }

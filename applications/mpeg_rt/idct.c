@@ -228,7 +228,6 @@ int main()
     type_DATA block[64];
 
 
-    puts("MPEG Task D start: iDCT \n");
     //printf("%d\n", memphis_get_tick());
     memphis_real_time(IDCT_PERIOD, IDCT_DEADLINE, IDCT_EXEC_TIME);
     for(j=0;j<MPEG_FRAMES;j++)
@@ -245,7 +244,6 @@ int main()
     }
 
     //printf("%d\n", memphis_get_tick());
-    puts("End Task D - MPEG\n");
 
     return 0;
 }

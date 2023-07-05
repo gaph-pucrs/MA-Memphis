@@ -471,7 +471,6 @@ int main()
 	type_DATA vlc_array[128];
 	type_DATA block[64];
 
-	puts("MPEG Task B start: iVLC \n");
 	//printf("%d\n", memphis_get_tick());
 	memphis_real_time(RT_PERIOD, IVLC_DEADLINE, IVLC_EXEC_TIME);
 	for(j=0;j<MPEG_FRAMES;j++)
@@ -489,7 +488,6 @@ int main()
 	}
 
 	//printf("%d\n", memphis_get_tick());
-	puts("End Task B - MPEG\n");
 
 	return 0;
 }

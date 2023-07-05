@@ -24,8 +24,6 @@ int main()
     int i;
     type_DATA block[64];
 
-    puts("MPEG Task PRINT start:\n");
-
     // unsigned then = memphis_get_tick();
 
     memphis_real_time(RT_PERIOD, PRINT_DEADLINE, PRINT_EXEC_TIME);
@@ -36,8 +34,6 @@ int main()
 		// printf("%u_%u\n", now, now - then);
 		// then = now;
     }
-
-    puts("End Task E - MPEG\n");
 
     return 0;
 }

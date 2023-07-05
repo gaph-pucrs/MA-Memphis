@@ -33,21 +33,19 @@ int main()
 {
 //    unsigned int time_a, time_b;
 
-	puts("MPEG Task A start:  \n");
 	//printf("%d\n", memphis_get_tick());
 	
 	memphis_real_time(RT_PERIOD, START_DEADLINE, START_EXEC_TIME);
+	// unsigned then = memphis_get_tick();
 	for(int i=0;i<MPEG_FRAMES;i++) {                         // send 8 times the array to task 2{
-		// time_a = memphis_get_tick();
 		memphis_send(vlc_array, sizeof(vlc_array), ivlc);
-		// time_b = memphis_get_tick();
 
-		// printf("TI: %d\n", time_a);
-		// printf("T2: %d\n", time_b);
+		// unsigned now = memphis_get_tick();
+		// printf("T: %d\n", now - then);
+		// then = now;
 	}
 
 	//printf("%d\n", memphis_get_tick());
-	puts("End Task A - MPEG\n");
 
 	return 0;
 }

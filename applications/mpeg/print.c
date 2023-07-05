@@ -20,23 +20,16 @@ typedef int type_DATA; //unsigned
 
 int main()
 {
-    // unsigned int time_a, time_b;
-    int i;
     type_DATA block[64];
 
-    puts("MPEG Task PRINT start:\n");
-
     // unsigned then = memphis_get_tick();
-
-    for(i=0;i<MPEG_FRAMES;i++)
+    for(int i = 0; i < MPEG_FRAMES; i++)
     {
-        memphis_receive(block, sizeof(block), idct);
         // unsigned now = memphis_get_tick();
-		// printf("%u_%u\n", now, now - then);
-		// then = now;
+		// printf("T: %d\n", now - then);
+        memphis_receive(block, sizeof(block), idct);
+        // then = memphis_get_tick();
     }
-
-    puts("End Task E - MPEG\n");
 
     return 0;
 }

@@ -9,15 +9,15 @@
 #define MPEG_STD_H_
 
 #ifndef MPEG_FRAMES
-	#define MPEG_FRAMES				20
+	#define MPEG_FRAMES				       20
 #endif
 
 #ifndef RT_PERIOD
-	#define RT_PERIOD				85000/5
+	#define RT_PERIOD				   120000
 #endif
 
 #ifndef START_EXEC_TIME
-	#define START_EXEC_TIME			10000
+	#define START_EXEC_TIME			      500
 #endif
 
 #ifndef START_DEADLINE
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef IVLC_EXEC_TIME
-	#define IVLC_EXEC_TIME			12000
+	#define IVLC_EXEC_TIME			    81000
 #endif
 
 #ifndef IVLC_DEADLINE
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef IQUANT_EXEC_TIME
-	#define IQUANT_EXEC_TIME		28000
+	#define IQUANT_EXEC_TIME		     8300
 #endif
 
 #ifndef IQUANT_DEADLINE
@@ -41,19 +41,19 @@
 #endif
 
 #ifndef IDCT_PERIOD
-	#define IDCT_PERIOD				RT_PERIOD/5
+	#define IDCT_PERIOD				RT_PERIOD
 #endif
 
 #ifndef IDCT_EXEC_TIME
-	#define IDCT_EXEC_TIME			17000
+	#define IDCT_EXEC_TIME			    10500
 #endif
 
 #ifndef IDCT_DEADLINE
-	#define IDCT_DEADLINE			IDCT_PERIOD
+	#define IDCT_DEADLINE			RT_PERIOD
 #endif
 
 #ifndef PRINT_EXEC_TIME
-	#define PRINT_EXEC_TIME			12000
+	#define PRINT_EXEC_TIME			      500
 #endif
 
 #ifndef PRINT_DEADLINE

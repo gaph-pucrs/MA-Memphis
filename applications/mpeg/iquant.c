@@ -6,7 +6,7 @@ DATE CREATED: 04/04/06
 FILENAME: task2.c
 PROJECT: Network Process Unit
 COPYRIGHT: Software placed into the public domain by the author.
-           Software 'as is' without warranty.  Author liable for nothing.
+					 Software 'as is' without warranty.  Author liable for nothing.
 DESCRIPTION: This file contains the task2
 ---------------------------------------------------------------------*/
 
@@ -47,71 +47,58 @@ typedef int type_DATA; //unsigned
 
 
 unsigned char intramatrix[64]={
-   8, 16, 19, 22, 26, 27, 29, 34,
-  16, 16, 22, 24, 27, 29, 34, 37,
-  19, 22, 26, 27, 29, 34, 34, 38,
-  22, 22, 26, 27, 29, 34, 37, 40,
-  22, 26, 27, 29, 32, 35, 40, 48,
-  26, 27, 29, 32, 35, 40, 48, 58,
-  26, 27, 29, 34, 38, 46, 56, 69,
-  27, 29, 35, 38, 46, 56, 69, 83
+	 8, 16, 19, 22, 26, 27, 29, 34,
+	16, 16, 22, 24, 27, 29, 34, 37,
+	19, 22, 26, 27, 29, 34, 34, 38,
+	22, 22, 26, 27, 29, 34, 37, 40,
+	22, 26, 27, 29, 32, 35, 40, 48,
+	26, 27, 29, 32, 35, 40, 48, 58,
+	26, 27, 29, 34, 38, 46, 56, 69,
+	27, 29, 35, 38, 46, 56, 69, 83
 };
 
 
 /* MPEG-2 inverse quantization */
 void iquant_func(type_DATA *src, int lx, int dc_prec, int mquant)
 {
-  int i, j, val, sum, offs;
+	int i, j, val, sum, offs;
 
-  offs=0;
-  src[0] = src[0] << (3-dc_prec);
-  sum = src[0];
-  for (j=0; j<8; j++)
-  {
-    offs  = j * lx;
-    for (i=0; i<8;i++)
-    {
-      if (j|i)
-      {
-        val = (int)((src[i+offs]*intramatrix[i+j*8]*mquant)>>4);
-        src[i+offs] = (val>2047) ? 2047 : ((val<-2048) ? -2048 : val);
+	offs=0;
+	src[0] = src[0] << (3-dc_prec);
+	sum = src[0];
+	for (j=0; j<8; j++)
+	{
+		offs  = j * lx;
+		for (i=0; i<8;i++)
+		{
+			if (j|i)
+			{
+				val = (int)((src[i+offs]*intramatrix[i+j*8]*mquant)>>4);
+				src[i+offs] = (val>2047) ? 2047 : ((val<-2048) ? -2048 : val);
 				sum += src[i+offs];
-      }
-    }
-  }
-  /* mismatch control */
-  if ((sum&1)==0)
-  src[offs+7] ^= 1;
+			}
+		}
+	}
+	/* mismatch control */
+	if ((sum&1)==0)
+	src[offs+7] ^= 1;
 }
 
 int main()
 {
-    // unsigned int time_a, time_b;
-	int j;
+	type_DATA block[64];
 
-    // type_DATA clk_count;
-    type_DATA block[64];
+	// unsigned then = memphis_get_tick();
+	for(int j = 0; j < MPEG_FRAMES; j++){
+		// unsigned now = memphis_get_tick();
+		// printf("T: %d\n", now - then);
+		memphis_receive(block, sizeof(block), ivlc);
+		// then = memphis_get_tick();
 
+		iquant_func(block, 8, 0, 1);  // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
 
-    puts("MPEG Task C start: iquant \n");
-    //printf("%d\n", memphis_get_tick());
+		memphis_send(block, sizeof(block), idct);
+	}
 
-    for(j=0;j<MPEG_FRAMES;j++)
-    {
-       memphis_receive(block, sizeof(block), ivlc);
-
-
-        iquant_func(block, 8, 0, 1);  // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
-
-
-        memphis_send(block, sizeof(block), idct);
-
-    }
-
-   //printf("%d\n", memphis_get_tick());
-   puts("End Task C- MPEG\n");
-
-   return 0;
+	return 0;
 }
-
-
