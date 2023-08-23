@@ -32,13 +32,13 @@ It is possible to use the WSL to run MA-Memphis platform under Windows.
 
 ### Acquiring MA-Memphis
 
-Clone this repository.
+Clone this repository WITH SUBMODULES.
 The master branch is the latest release without development commits.
 In this example we chose the home directory.
 
 ```console
 cd ~
-git clone https://github.com/gaph-pucrs/MA-Memphis.git
+git clone https://github.com/gaph-pucrs/MA-Memphis.git --recurse-submodules
 ```
 
 Export the environment variables:
