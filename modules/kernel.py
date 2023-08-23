@@ -11,8 +11,8 @@ class Kernel:
 		self.testcase_path = testcase_path
 
 	def copy(self):
-		copy_tree(self.platform_path+"/kernel", self.testcase_path+"/kernel", update=1)
-		copy_file(self.platform_path+"/kernel/Makefile", self.testcase_path+"/kernel/Makefile")
+		copy_tree(self.platform_path+"/MAestro", self.testcase_path+"/MAestro", update=1)
+		copy_file(self.platform_path+"/MAestro/Makefile", self.testcase_path+"/MAestro/Makefile")
 
 	def build(self):
 		NCPU = cpu_count()
@@ -21,7 +21,7 @@ class Kernel:
 			raise Exception("Error building kernel.")
 
 	def check_size(self):
-		path = "{}/kernel/kernel.elf".format(self.testcase_path)
+		path = "{}/MAestro/kernel.elf".format(self.testcase_path)
 
 		out = check_output(["riscv64-elf-size", path]).split(b'\n')[1].split(b'\t')
 
@@ -35,4 +35,4 @@ class Kernel:
 		print("***************** End kernel page size report *****************")
 
 	def __get_txt_size(self):
-		return sum(1 for line in open(self.testcase_path+"/kernel/kernel.txt"))
+		return sum(1 for line in open(self.testcase_path+"/MAestro/kernel.txt"))
