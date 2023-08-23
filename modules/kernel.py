@@ -16,7 +16,7 @@ class Kernel:
 
 	def build(self):
 		NCPU = cpu_count()
-		make = run(["make", "-C", self.testcase_path+"/kernel", "-j", str(NCPU)])
+		make = run(["make", "-C", self.testcase_path+"/MAestro", "-j", str(NCPU)])
 		if make.returncode != 0:
 			raise Exception("Error building kernel.")
 
