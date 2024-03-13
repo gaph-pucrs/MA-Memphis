@@ -79,14 +79,10 @@ Create a yaml file (in this example we will use the name example_scenario.yaml) 
 management:                 # Management application properties
   - task: mapper_task       # The first in this list should ALWAYS be mapper_task
     static_mapping: [0,0]   # All management task should have static mapping defined
-  - task: migration_task    # migration_task is a QoS decider for real-time applications
-    static_mapping: [0,1]   # All management task should have static mapping defined
-  - task: rt_monitor        # rt_monitor is a QoS observer for real-time applications
-    static_mapping: [0,2]   # All management task should have static mapping defined
 apps:                       # Application properties
   - name: synthetic         # Application synthetic
   - name: prod_cons         # Application prod_cons
-    start_time_ms: 5        # Application start time. When absent is 0. Should be manually sorted.
+    start_time_ms: 5        # Application start time. When absent is 0.
     static_mapping:         # Optional static mapping
       prod: [1,1]           # prod task is static mapped to PE 1,1. Other tasks are dynamic mapped.
     definitions:            # Optional list of definitions to be passed to application build
