@@ -42,10 +42,10 @@ void fila::in_proc_FSM(){
 	}
 }
 
-// O ponteiro last é inicializado com o valor zero quando o reset é ativado.
-// Quando o sinal rx é ativado indicando que existe um flit na porta de entrada é
-// verificado se existe espaço na fila para armazená-lo. Se existir espaço na fila o
-// flit recebido é armazenado na posição apontada pelo ponteiro last e o mesmo é
+// O ponteiro last ï¿½ inicializado com o valor zero quando o reset ï¿½ ativado.
+// Quando o sinal rx ï¿½ ativado indicando que existe um flit na porta de entrada ï¿½
+// verificado se existe espaï¿½o na fila para armazenï¿½-lo. Se existir espaï¿½o na fila o
+// flit recebido ï¿½ armazenado na posiï¿½ï¿½o apontada pelo ponteiro last e o mesmo ï¿½
 // incrementado. Quando last atingir o tamanho da fila, ele recebe zero.
 void fila::in_proc_updPtr(){
 	if(reset_n.read()==false){
@@ -64,7 +64,7 @@ void fila::in_proc_updPtr(){
 	}
 }
 
-// disponibiliza o dado para transmissão.
+// disponibiliza o dado para transmissï¿½o.
 void fila::out_proc_data()
 {
 
@@ -72,54 +72,43 @@ void fila::out_proc_data()
 
 }
 
-// Quando sinal reset é ativado a máquina de estados avança para o estado S_INIT.
-// No estado S_INIT os sinais counter_flit (contador de flits do corpo do pacote), h (que
-// indica requisição de chaveamento) e data_av (que indica a existência de flit a ser
-// transmitido) são inicializados com zero. Se existir algum flit na fila, ou seja, os
-// ponteiros first e last apontarem para posições diferentes, a máquina de estados avança
+// Quando sinal reset ï¿½ ativado a mï¿½quina de estados avanï¿½a para o estado S_INIT.
+// No estado S_INIT os sinais h (que
+// indica requisiï¿½ï¿½o de chaveamento) e data_av (que indica a existï¿½ncia de flit a ser
+// transmitido) sï¿½o inicializados com zero. Se existir algum flit na fila, ou seja, os
+// ponteiros first e last apontarem para posiï¿½ï¿½es diferentes, a mï¿½quina de estados avanï¿½a
 // para o estado S_HEADER.
-// No estado S_HEADER é requisitado o chaveamento (h='1'), porque o flit na posição
-// apontada pelo ponteiro first, quando a máquina encontra-se nesse estado, é sempre o
-// header do pacote. A máquina permanece neste estado até que receba a confirmação do
-// chaveamento (ack_h='1') então o sinal h recebe o valor zero e a máquina avança para
+// No estado S_HEADER ï¿½ requisitado o chaveamento (h='1'), porque o flit na posiï¿½ï¿½o
+// apontada pelo ponteiro first, quando a mï¿½quina encontra-se nesse estado, ï¿½ sempre o
+// header do pacote. A mï¿½quina permanece neste estado atï¿½ que receba a confirmaï¿½ï¿½o do
+// chaveamento (ack_h='1') entï¿½o o sinal h recebe o valor zero e a mï¿½quina avanï¿½a para
 // S_SENDHEADER.
-// Em S_SENDHEADER é indicado que existe um flit a ser transmitido (data_av='1'). A máquina de
-// estados permanece em S_SENDHEADER até receber a confirmação da transmissão (data_ack='1')
-// então o ponteiro first aponta para o segundo flit do pacote e avança para o estado S_PAYLOAD.
-// No estado S_PAYLOAD é indicado que existe um flit a ser transmitido (data_av='1') quando
-// é recebida a confirmação da transmissão (data_ack='1') é verificado qual o valor do sinal
-// counter_flit. Se counter_flit é igual a um, a máquina avança para o estado S_END. Caso
-// counter_flit seja igual a zero, o sinal counter_flit é inicializado com o valor do flit, pois
-// este ao número de flits do corpo do pacote. Caso counter_flit seja diferente de um e de zero
-// o mesmo é decrementado e a máquina de estados permanece em S_PAYLOAD enviando o próximo flit
-// do pacote.
-// Em S_END é indicado que o último flit deve ser transmitido (data_av='1') quando é recebida a
-// confirmação da transmissão (data_ack='1') a máquina retorna ao estado S_INIT.
+// Em S_SENDHEADER ï¿½ indicado que existe um flit a ser transmitido (data_av='1'). A mï¿½quina de
+// estados permanece em S_SENDHEADER atï¿½ receber a confirmaï¿½ï¿½o da transmissï¿½o (data_ack='1')
+// entï¿½o o ponteiro first aponta para o segundo flit do pacote e avanï¿½a para o estado S_PAYLOAD.
+// Em S_END ï¿½ indicado que o ï¿½ltimo flit deve ser transmitido (data_av='1') quando ï¿½ recebida a
+// confirmaï¿½ï¿½o da transmissï¿½o (data_ack='1') a mï¿½quina retorna ao estado S_INIT.
 
 void fila::out_proc_FSM(){
 	bool local_ack_h;
 	bool local_data_ack;
 	sc_uint<4> local_first;
 	sc_uint<4> local_last;
-	regflit	local_counter_flit;
 	
 	if(reset_n.read()==false){
 		data_av.write(false);
 		first.write(0);
 		EA.write(S_INIT);
 		h.write(false);
-		counter_flit.write(0);
 	}
 	else{
 		local_ack_h = ack_h.read();
 		local_data_ack = data_ack.read();
 		local_first = first.read();
 		local_last = last.read();
-		local_counter_flit = counter_flit.read();
 				
 		switch(EA.read()){
 			case S_INIT:
-				counter_flit.write(0);
 				h.write(false);
 				data_av.write(false);
 				if(local_first != local_last){ // detectou dado na fila
@@ -144,7 +133,7 @@ void fila::out_proc_FSM(){
 			break;
 
 			case S_SENDHEADER:
-				if(local_data_ack==true){//confirmação do envio do header
+				if(local_data_ack==true){//confirmaï¿½ï¿½o do envio do header
 					//retira o header do buffer e se tem dado no buffer pede envio do mesmo
 					if(local_first==(BUFFER_TAM-1)){
 						first.write(0);
@@ -168,12 +157,7 @@ void fila::out_proc_FSM(){
 			break;
 			  
 			case S_PAYLOAD:
-				if(local_data_ack==true && local_counter_flit!=1){//confirmação do envio de um dado que não é o tail
-					//se counter_flit é zero indica recepção do size do payload
-					if(local_counter_flit == 0)
-						counter_flit.write(buffer_in[local_first]);
-					else
-						counter_flit.write(local_counter_flit - 1);
+				if(local_data_ack==true && !buffer_in[first.read()].bit(32)){//confirmaï¿½ï¿½o do envio de um dado que nï¿½o ï¿½ o tail
 					//retira um dado do buffer e se tem dado no buffer pede envio do mesmo
 					if(local_first == (BUFFER_TAM-1)){
 						first.write(0);
@@ -194,7 +178,7 @@ void fila::out_proc_FSM(){
 					EA.write(S_PAYLOAD);
 				}
 				else{
-					if(local_data_ack==true && local_counter_flit==1){//confirmação do envio do tail
+					if(local_data_ack==true && buffer_in[first.read()].bit(32)){//confirmaï¿½ï¿½o do envio do tail
 						//retira um dado do buffer
 						if(local_first==(BUFFER_TAM-1)){
 							first.write(0);
@@ -207,7 +191,7 @@ void fila::out_proc_FSM(){
 						EA.write(S_END);
 					}
 					else{
-						if(local_first!=local_last){//se tem dado a ser enviado faz a requisição
+						if(local_first!=local_last){//se tem dado a ser enviado faz a requisiï¿½ï¿½o
 							data_av.write(true);
 							EA.write(S_PAYLOAD);
 						}
@@ -223,7 +207,7 @@ void fila::out_proc_FSM(){
 				EA.write(S_END2);
 			break;
 			
-			case S_END2://estado necessario para permitir a liberação da porta antes da solicitação de novo envio
+			case S_END2://estado necessario para permitir a liberaï¿½ï¿½o da porta antes da solicitaï¿½ï¿½o de novo envio
 				data_av.write(false);
 				EA.write(S_INIT);
 			break;

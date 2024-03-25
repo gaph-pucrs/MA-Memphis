@@ -61,6 +61,8 @@ public:
 	sc_in<bool> 			rx;
 	sc_in<regflit>			data_in;
 	sc_out<bool> 			credit_o;
+	sc_out<bool> 			eop_out;
+	sc_in<bool> 			eop_in;
 
 	/* BrNoC Interface (Local port output) */
 	sc_in<bool> 			br_req_mon;
@@ -98,8 +100,7 @@ private:
 
 	enum state_noc {
 		HEADER, 
-		PAYLOAD, 
-		DATA
+		PAYLOAD
 	};
 
 	enum arbiter_state {
@@ -130,8 +131,6 @@ private:
 
 	sc_signal<sc_uint<4>>	first, last;
 	sc_signal<bool>			add_buffer;
-
-	sc_signal<regflit> 		payload_size;
 
 	sc_signal<sc_uint<32>> 	address;
 	sc_signal<sc_uint<32>> 	address_2;

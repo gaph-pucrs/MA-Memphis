@@ -39,11 +39,11 @@ public:
 	sc_in<bool>		reset;
 
 	sc_in<bool>		rx;
-	sc_in<regflit>	data_in;
+	sc_in<sc_uint<TAM_FLIT+1> >	data_in;
 	sc_out<bool>	credit_out;
 
 	sc_out<bool>	tx;
-	sc_out<regflit>	data_out;
+	sc_out<sc_uint<TAM_FLIT+1> >	data_out;
 	sc_in<bool>		credit_in;
 
 	SC_HAS_PROCESS(AppInjector);

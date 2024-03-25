@@ -27,11 +27,11 @@ SC_MODULE(router_cc){
   
   sc_in<bool >			rx[NPORT];
   sc_out<bool >			credit_o[NPORT];
-  sc_out<regflit >		data_out[NPORT];
+  sc_out<sc_uint<TAM_FLIT+1> >		data_out[NPORT];
 
   sc_out<bool >			tx[NPORT];
   sc_in<bool >			credit_i[NPORT];
-  sc_in<regflit >		data_in[NPORT];
+  sc_in<sc_uint<TAM_FLIT+1> >		data_in[NPORT];
   
   sc_signal<bool >		sgn_h[NPORT];
   sc_signal<bool >		sgn_ack_h[NPORT];
@@ -39,10 +39,10 @@ SC_MODULE(router_cc){
   sc_signal<bool >		sgn_sender[NPORT];
   sc_signal<bool >		sgn_data_ack[NPORT];
   sc_signal<reg3 >		incoming;
-  sc_signal<regflit >	data[NPORT];
+  sc_signal<sc_uint<TAM_FLIT+1> >	data[NPORT];
   
   sc_signal<reg_mux >	mux_in, mux_out;
-  sc_signal<regflit >	header;
+  sc_signal<sc_uint<TAM_FLIT+1> >	header;
   sc_signal<bool >		free[NPORT];
 
   //Traffic monitor

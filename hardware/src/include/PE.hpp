@@ -33,11 +33,11 @@ SC_MODULE(PE) {
 
 	/* Hermes NoC interface */
 	sc_out<bool>		tx[NPORT-1];
-	sc_out<regflit>		data_out[NPORT-1];
+	sc_out<sc_uint<TAM_FLIT+1> >		data_out[NPORT-1];
 	sc_in<bool>			credit_i[NPORT-1];
 	
 	sc_in<bool> 		rx[NPORT-1];
-	sc_in<regflit>		data_in[NPORT-1];
+	sc_in<sc_uint<TAM_FLIT+1> >		data_in[NPORT-1];
 	sc_out<bool>		credit_o[NPORT-1];
 
 	sc_in<bool>			br_req_in[NPORT - 1];
@@ -116,11 +116,15 @@ private:
 
 	/* Hermes NoC */
 	sc_signal<bool> 		tx_ni;
+	sc_signal<sc_uint<TAM_FLIT+1> > 		data_out_local;
+	sc_signal<sc_uint<TAM_FLIT+1> > 		data_in_local;
 	sc_signal<regflit> 		data_out_ni;
 	sc_signal<bool> 		credit_i_ni;
 	sc_signal<bool> 		rx_ni;
 	sc_signal<regflit> 		data_in_ni;
 	sc_signal<bool> 		credit_o_ni;
+	sc_signal<bool> 		eop_o_ni;
+	sc_signal<bool> 		eop_i_ni;
 
 	/* DMNI */
 	sc_signal<sc_uint<32>> 	dmni_mem_address;
@@ -251,4 +255,5 @@ private:
 	void end_of_simulation();
 	void update_credit();
 	void br_local_ack();
+	void eop_assignment();
 };

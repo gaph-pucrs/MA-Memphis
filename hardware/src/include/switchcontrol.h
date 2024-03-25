@@ -23,7 +23,7 @@ SC_MODULE(switch_control){
 	sc_in<bool> 		reset;
 	sc_in<bool> 		h[NPORT];
 	sc_out<bool>	 	ack_h[NPORT];
-	sc_in<regflit> 		data[NPORT];
+	sc_in<sc_uint<TAM_FLIT+1> > 		data[NPORT];
 	sc_in<bool>			sender[NPORT];
 	sc_out<bool>		free[NPORT];
 	sc_out<reg_mux> 	mux_in;

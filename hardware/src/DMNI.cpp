@@ -238,7 +238,6 @@ void DMNI::receive()
 		tick_cnt = 0;
 		first.write(0);
 		last.write(0);
-		payload_size.write(0);
 		SR.write(HEADER);
 		add_buffer.write(0);
 		receive_active.write(0);
@@ -268,19 +267,14 @@ void DMNI::receive()
 					cout<<"Master receiving msg "<<endl;
 				}*/
 				is_header[last.read()] = 1;
+				flit_cntr = 1;
+				noc_time = tick_cnt;
 				SR.write(PAYLOAD);
 			break;
 
 			case PAYLOAD:
 				is_header[last.read()] = 0;
-				payload_size.write(data_in.read() - 1);
-				SR.write(DATA);
-				flit_cntr = 2;
-				noc_time = tick_cnt;
-			break;
-
-			case DATA:
-				flit_cntr++;
+				flit_cntr++;				
 				if(flit_cntr == 3) {
 					is_delivery = (data_in.read() == 1);
 				} else if(flit_cntr == 4){
@@ -290,9 +284,7 @@ void DMNI::receive()
 				} else if(flit_cntr == 7){
 					timestamp = data_in.read();
 				}
-
-				is_header[last.read()] = 0;
-				if (payload_size.read() == 0){
+				if (eop_in.read() == 1){
 					SR.write(HEADER);
 					if(is_delivery){
 						fstream dmni_log(path+"/debug/dmni.log", fstream::out | fstream::app);
@@ -309,8 +301,6 @@ void DMNI::receive()
 							endl;
 						dmni_log.flush();
 					}
-				} else {
-					payload_size.write(payload_size.read() - 1);
 				}
 
 			break;
@@ -402,6 +392,7 @@ void DMNI::send()
 		DMNI_Send.write(WAIT);
 		send_active.write(0);
 		tx.write(0);
+		eop_out.write(0);
 		return;
 	}
 
@@ -441,6 +432,8 @@ void DMNI::send()
 
 					// if(address_router == 1)
 					// 	cout << "[DMNI HW] " << mem_data_read.read() << endl;
+					if (send_size.read() == 1 && send_size_2.read() == 0)
+						eop_out.write(1);
 
 				} else if (send_size_2.read() > 0) {
 
@@ -454,8 +447,12 @@ void DMNI::send()
 					}
 					DMNI_Send.write(LOAD);
 
+					if (send_size_2.read() == 1)
+						eop_out.write(1);
+
 				} else {
 					tx.write(0);
+					eop_out.write(0);
 					DMNI_Send.write(END);
 				}
 			} else {
@@ -473,6 +470,7 @@ void DMNI::send()
 		break;
 
 		case END:
+			eop_out.write(0);
 			send_active.write(0);
 			send_address.write(0);
 			send_address_2.write(0);
