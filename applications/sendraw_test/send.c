@@ -12,11 +12,11 @@ int main()
 		0x00000001,	//service (task delivery)
 		257,		//task_ID (app1 task1) -- 257
 		256,		//consumer -- 256
-		0x00000101,	//source pe (1x1)
+		0x00000001,	//source pe (1x1)
 		memphis_get_tick(),	//timestamp
 		0x00000000,
 		32,			//msg_length (payload 32 bytes)
-		0x00000000,
+		0x00000001,
 		0x00000000,
 		0x00000000,
 		0x00000000,
@@ -55,14 +55,12 @@ int main()
 	memphis_send_raw(message, 21);
 	printf("Message sent\n");
 
-	while(memphis_get_tick() < 1400000);
+	while(memphis_get_tick() < 1000000);
 
 	printf("Sending valid message with REQUEST\n");
 	message[8] = 32;
 	memphis_send_raw(message, 21);
 	printf("Message sent\n");
-
-	while(1);
 
 	return 0;
 }

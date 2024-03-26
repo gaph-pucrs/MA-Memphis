@@ -21,17 +21,5 @@ int main()
 		i++;
 	}
 
-	while(memphis_get_tick() < 1000000);
-
-	printf("Receiving message\n");
-	memphis_receive(payload, MSG_SIZE, send);
-	printf("Message received\n");
-
-	i = 0;
-	while(i < MSG_LEN){
-		printf("%u\n", payload[i]);
-		i++;
-	}
-
 	return 0;
 }
