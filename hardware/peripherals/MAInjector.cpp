@@ -333,7 +333,10 @@ void MAInjector::send_packet()
 				if(packet_idx < packet.size()){
 					// std::cout << "Write: " << packet[packet_idx] << std::endl;
 					tx.write(1);
-					data_out.write(packet[packet_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = packet[packet_idx++];
+					tmp.bit(32) = (packet_idx == packet.size());
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_FINISHED;
@@ -358,11 +361,13 @@ void MAInjector::send_packet()
 			if(credit_in.read()){
 				if(aux_idx < CONSTANT_PACKET_SIZE){
 					tx.write(1);
-					data_out.write(aux_pkt[aux_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = aux_pkt[aux_idx++];
+					tmp.bit(32) = (aux_idx == CONSTANT_PACKET_SIZE);
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = WAIT_MSG_REQ;
-					// std::cout << "MAInjector: waiting MESSAGE_REQUEST" << std::endl;
 				}
 			} else {
 				tx.write(0);
@@ -387,7 +392,10 @@ void MAInjector::send_packet()
 			if(credit_in.read()){
 				if(aux_idx < CONSTANT_PACKET_SIZE){
 					tx.write(1);
-					data_out.write(aux_pkt[aux_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = aux_pkt[aux_idx++];
+					tmp.bit(32) = (aux_idx == CONSTANT_PACKET_SIZE);
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_FINISHED;

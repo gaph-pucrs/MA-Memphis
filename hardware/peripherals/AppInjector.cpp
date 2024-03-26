@@ -600,7 +600,10 @@ void AppInjector::send_packet(){
 			if(credit_in.read() == 1){
 				if(aux_idx < CONSTANT_PACKET_SIZE){
 					tx.write(1);
-					data_out.write(aux_pkt[aux_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = aux_pkt[aux_idx++];
+					tmp.bit(32) = (aux_idx == CONSTANT_PACKET_SIZE);
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_WAIT_REQUEST;
@@ -616,7 +619,10 @@ void AppInjector::send_packet(){
 			if(credit_in.read() == 1){
 				if(aux_idx < CONSTANT_PACKET_SIZE){
 					tx.write(1);
-					data_out.write(aux_pkt[aux_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = aux_pkt[aux_idx++];
+					tmp.bit(32) = (aux_idx == CONSTANT_PACKET_SIZE);
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_FINISHED;
@@ -645,7 +651,10 @@ void AppInjector::send_packet(){
 				if(pkt_idx < packet.size()){
 					// std::cout << "Write: " << packet[packet_idx] << std::endl;
 					tx.write(1);
-					data_out.write(packet[pkt_idx++]);
+					sc_uint<TAM_FLIT+1> tmp;
+					tmp.range(31,0) = packet[pkt_idx++];
+					tmp.bit(32) = (pkt_idx == packet.size());
+					data_out.write(tmp);
 				} else {
 					tx.write(0);
 					send_pkt_state = SEND_FINISHED;

@@ -22,25 +22,24 @@ SC_MODULE(fila){
 
   sc_in<bool > clock;
   sc_in<bool > reset_n;
-  sc_in<regflit > data_in;
+  sc_in<sc_uint<TAM_FLIT+1> > data_in;
   sc_in<bool > rx;
   sc_out<bool > credit_o;
   //sc_out<bool > ack_rx;
   sc_out<bool > h;
   sc_in<bool > ack_h;
   sc_out<bool > data_av;
-  sc_out<regflit > data;
+  sc_out<sc_uint<TAM_FLIT+1> > data;
   sc_in<bool > data_ack;
   sc_out<bool > sender;
 
   enum fila_out{S_INIT, S_PAYLOAD, S_SENDHEADER, S_HEADER, S_END, S_END2};
   sc_signal<fila_out > EA, PE;
 
-  regflit buffer_in[BUFFER_TAM];
+  sc_uint<TAM_FLIT+1> buffer_in[BUFFER_TAM];
 
   sc_signal<sc_uint<4> >  first,last;
   sc_signal<bool > tem_espaco_na_fila, auxack_rx;
-  sc_signal<regflit > counter_flit;
 
   void in_proc_FSM();
   void in_proc_updPtr();

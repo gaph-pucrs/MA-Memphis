@@ -32,18 +32,18 @@ SC_MODULE(test_bench) {
 	//IO signals connecting App Injector and Memphis
 	sc_signal<bool>		memphis_injector_tx;
 	sc_signal<bool>		memphis_injector_credit_i;
-	sc_signal<regflit> 	memphis_injector_data_out;
+	sc_signal<sc_uint<TAM_FLIT+1> > 	memphis_injector_data_out;
 	sc_signal<bool>		memphis_injector_rx;
 	sc_signal<bool>		memphis_injector_credit_o;
-	sc_signal<regflit>	memphis_injector_data_in;
+	sc_signal<sc_uint<TAM_FLIT+1> >	memphis_injector_data_in;
 
 	//Create the signals of your IO component here:
 	sc_signal<bool>		memphis_mai_tx;
 	sc_signal<bool>		memphis_mai_credit_i;
-	sc_signal<regflit> 	memphis_mai_data_out;
+	sc_signal<sc_uint<TAM_FLIT+1> > 	memphis_mai_data_out;
 	sc_signal<bool>		memphis_mai_rx;
 	sc_signal<bool>		memphis_mai_credit_o;
-	sc_signal<regflit>	memphis_mai_data_in;
+	sc_signal<sc_uint<TAM_FLIT+1> >	memphis_mai_data_in;
 
 
 	//Clock and Reset processes

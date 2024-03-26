@@ -238,7 +238,6 @@ void DMNI::receive()
 		tick_cnt = 0;
 		first.write(0);
 		last.write(0);
-		payload_size.write(0);
 		SR.write(HEADER);
 		add_buffer.write(0);
 		receive_active.write(0);
@@ -246,6 +245,7 @@ void DMNI::receive()
 		intr_count.write(0);
 		for(int i=0; i<BUFFER_SIZE; i++){ //in vhdl replace by OTHERS=>'0'
 			is_header[i] = 0;
+			is_eop[i] = 0;
 		}
 		return;
 	}
@@ -257,30 +257,39 @@ void DMNI::receive()
 	//Read from NoC
 	if (rx.read() == 1 && slot_available.read() == 1){
 
-		buffer[last.read()].write(data_in.read());
-		add_buffer.write(1);
-		last.write(last.read() + 1);
+		if (SR.read() != INVALID){
+			buffer[last.read()].write(data_in.read());
+			is_eop[last.read()].write(eop_in.read());
+			is_header[last.read()].write(SR.read() == HEADER);
+			add_buffer.write(1);
+			last.write(last.read() + 1);
+		}
 
 		switch (SR.read()) {
 			case HEADER:
-				intr_counter_temp = intr_counter_temp + 1;
-				/*if(address_router == 0){
-					cout<<"Master receiving msg "<<endl;
-				}*/
-				is_header[last.read()] = 1;
-				SR.write(PAYLOAD);
-			break;
-
-			case PAYLOAD:
-				is_header[last.read()] = 0;
-				payload_size.write(data_in.read() - 1);
-				SR.write(DATA);
-				flit_cntr = 2;
 				noc_time = tick_cnt;
+				SR.write(SIZE);
 			break;
-
-			case DATA:
-				flit_cntr++;
+			case SIZE:
+				flit_cntr = 2;
+				if (data_in.read() < 11) {
+					is_eop[last.read() - 1] = 0;
+					is_header[last.read() - 1] = 0;
+					add_buffer.write(0);
+					last.write(last.read() - 1);
+					if (eop_in.read()){
+						is_eop[last.read()] = 0;
+						SR.write(HEADER);
+					} else {
+						SR.write(INVALID);
+					}
+				} else {
+					intr_counter_temp = intr_counter_temp + 1;
+					SR.write(PAYLOAD);
+				}
+				break;
+			case PAYLOAD:
+				flit_cntr++;		
 				if(flit_cntr == 3) {
 					is_delivery = (data_in.read() == 1);
 				} else if(flit_cntr == 4){
@@ -290,9 +299,7 @@ void DMNI::receive()
 				} else if(flit_cntr == 7){
 					timestamp = data_in.read();
 				}
-
-				is_header[last.read()] = 0;
-				if (payload_size.read() == 0){
+				if (eop_in.read() == 1){
 					SR.write(HEADER);
 					if(is_delivery){
 						fstream dmni_log(path+"/debug/dmni.log", fstream::out | fstream::app);
@@ -309,11 +316,13 @@ void DMNI::receive()
 							endl;
 						dmni_log.flush();
 					}
-				} else {
-					payload_size.write(payload_size.read() - 1);
 				}
 
 			break;
+			case INVALID:
+				if (eop_in.read() == 1)
+					SR.write(HEADER);
+				break;
 		}
 	}
 
@@ -323,6 +332,7 @@ void DMNI::receive()
 		case WAIT:
 
 			if (start.read() == 1 && operation.read() == 1){
+				read_flits.write(0);
 				recv_address.write(address.read() - WORD_SIZE);
 				recv_size.write(size.read() - 1);
 				if (is_header[first.read()] == 1 && intr_counter_temp > 0){
@@ -347,8 +357,9 @@ void DMNI::receive()
 				add_buffer.write(0);
 				recv_address.write(recv_address.read() + WORD_SIZE);
 				recv_size.write(recv_size.read() - 1);
+				read_flits.write(read_flits.read() + 1);
 
-				if (recv_size.read() == 0){
+				if (recv_size.read() == 0 || is_eop[first.read()].read()){
 					DMNI_Receive.write(END);
 				}
 			} else {
@@ -368,9 +379,9 @@ void DMNI::receive()
 				add_buffer.write(0);
 				
 				recv_size.write(recv_size.read() - 1);
-				if (recv_size.read() == 0){
+				if (is_eop[first.read()].read() == 0){
 					DMNI_Receive.write(END);
-				}	
+				}
 			}
 
 		break;
@@ -402,6 +413,7 @@ void DMNI::send()
 		DMNI_Send.write(WAIT);
 		send_active.write(0);
 		tx.write(0);
+		eop_out.write(0);
 		return;
 	}
 
@@ -414,9 +426,6 @@ void DMNI::send()
 				send_size_2.write(size_2.read());
 				send_active.write(1);
 				DMNI_Send.write(LOAD);
-				/*if(address_router == 0){
-					cout<<"Master sending msg "<<endl;
-				}*/
 			}
 		break;
 
@@ -441,6 +450,8 @@ void DMNI::send()
 
 					// if(address_router == 1)
 					// 	cout << "[DMNI HW] " << mem_data_read.read() << endl;
+					if (send_size.read() == 1 && send_size_2.read() == 0)
+						eop_out.write(1);
 
 				} else if (send_size_2.read() > 0) {
 
@@ -454,8 +465,12 @@ void DMNI::send()
 					}
 					DMNI_Send.write(LOAD);
 
+					if (send_size_2.read() == 1)
+						eop_out.write(1);
+
 				} else {
 					tx.write(0);
+					eop_out.write(0);
 					DMNI_Send.write(END);
 				}
 			} else {
@@ -473,6 +488,7 @@ void DMNI::send()
 		break;
 
 		case END:
+			eop_out.write(0);
 			send_active.write(0);
 			send_address.write(0);
 			send_address_2.write(0);

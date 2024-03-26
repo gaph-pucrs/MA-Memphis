@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #define MSG_LEN 8 //words
-#define MSG_SIZE (MSG_LEN << 2) //bytes
+#define MSG_SIZE ((MSG_LEN << 2) << 1) //bytes * 2 (headroom)
 
 int main()
 {
@@ -12,11 +12,22 @@ int main()
 	while(memphis_get_tick() < 500000);
 
 	printf("Receiving message\n");
-
 	memphis_receive(payload, MSG_SIZE, send);
 	printf("Message received\n");
 
 	int i = 0;
+	while(i < MSG_LEN){
+		printf("%u\n", payload[i]);
+		i++;
+	}
+
+	while(memphis_get_tick() < 1000000);
+
+	printf("Receiving message\n");
+	memphis_receive(payload, MSG_SIZE, send);
+	printf("Message received\n");
+
+	i = 0;
 	while(i < MSG_LEN){
 		printf("%u\n", payload[i]);
 		i++;

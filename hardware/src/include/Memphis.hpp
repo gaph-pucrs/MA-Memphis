@@ -25,20 +25,20 @@ SC_MODULE(Memphis){
 	/* AppInjector interface */
 	sc_out<bool>		memphis_app_injector_tx;
 	sc_in<bool>			memphis_app_injector_credit_i;
-	sc_out<regflit>		memphis_app_injector_data_out;
+	sc_out<sc_uint<TAM_FLIT+1> >		memphis_app_injector_data_out;
 
 	sc_in<bool>			memphis_app_injector_rx;
 	sc_out<bool>		memphis_app_injector_credit_o;
-	sc_in<regflit>		memphis_app_injector_data_in;
+	sc_in<sc_uint<TAM_FLIT+1> >		memphis_app_injector_data_in;
 
 	/* MAInjector interface */
 	sc_out<bool>		memphis_ma_injector_tx;
 	sc_in<bool>			memphis_ma_injector_credit_i;
-	sc_out<regflit>		memphis_ma_injector_data_out;
+	sc_out<sc_uint<TAM_FLIT+1> >		memphis_ma_injector_data_out;
 
 	sc_in<bool>			memphis_ma_injector_rx;
 	sc_out<bool>		memphis_ma_injector_credit_o;
-	sc_in<regflit>		memphis_ma_injector_data_in;
+	sc_in<sc_uint<TAM_FLIT+1> >		memphis_ma_injector_data_in;
 
 	/* IO interface - Create the IO interface for your component here: */
 	
@@ -50,11 +50,11 @@ SC_MODULE(Memphis){
 private:
 	/* NoC interconnection */
 	sc_signal<bool>		tx[N_PE][NPORT-1];
-	sc_signal<regflit>	data_out[N_PE][NPORT-1];
+	sc_signal<sc_uint<TAM_FLIT+1> >	data_out[N_PE][NPORT-1];
 	sc_signal<bool>		credit_i[N_PE][NPORT-1];
 	
 	sc_signal<bool> 	rx[N_PE][NPORT-1];
-	sc_signal<regflit>	data_in[N_PE][NPORT-1];
+	sc_signal<sc_uint<TAM_FLIT+1> >	data_in[N_PE][NPORT-1];
 	sc_signal<bool>		credit_o[N_PE][NPORT-1];
 
 	/* BrNoC interconnection */

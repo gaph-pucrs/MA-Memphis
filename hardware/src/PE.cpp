@@ -70,6 +70,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.intr(ni_intr);
 	dmni.send_active(dmni_send_active_sig);
 	dmni.receive_active(dmni_receive_active_sig);
+	dmni.read_flits(dmni_receive_flits_sig);
 
 	dmni.mem_address(dmni_mem_address);
 	dmni.mem_data_write(dmni_mem_data_write);
@@ -90,6 +91,8 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.br_address(br_dmni_addr);
 	dmni.br_payload(br_payload_out_local);
 	dmni.clear_task(br_dmni_clear);
+	dmni.eop_out(eop_o_ni);
+	dmni.eop_in(eop_i_ni);
 
 #ifdef FLIT_SNIFFER
 	for(int i = 0; i < LOCAL; i++){
@@ -132,7 +135,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	router->data_out[WEST](data_out[WEST]);
 	router->data_out[NORTH](data_out[NORTH]);
 	router->data_out[SOUTH](data_out[SOUTH]);
-	router->data_out[LOCAL](data_in_ni);
+	router->data_out[LOCAL](data_out_local);
 	router->rx[EAST](rx[EAST]);
 	router->rx[WEST](rx[WEST]);
 	router->rx[NORTH](rx[NORTH]);
@@ -147,7 +150,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	router->data_in[WEST](data_in[WEST]);
 	router->data_in[NORTH](data_in[NORTH]);
 	router->data_in[SOUTH](data_in[SOUTH]);
-	router->data_in[LOCAL](data_out_ni);
+	router->data_in[LOCAL](data_in_local);
 	router->tick_counter(tick_counter);
 
 	br_router.clock(clock);
@@ -227,6 +230,9 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 
 	SC_METHOD(reset_n_attr);
 	sensitive << reset;
+
+	SC_METHOD(eop_assignment);
+	sensitive << data_out_local << data_out_ni << eop_o_ni;
 	
 	SC_METHOD(sequential_attr);
 	sensitive << clock.pos() << reset.pos();
@@ -255,6 +261,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << time_slice;
 	sensitive << irq_status;
 	sensitive << mem_peripheral;
+	sensitive << dmni_receive_flits_sig;
 	sensitive << br_local_busy;
 	sensitive << br_cfg_req_out;
 	sensitive << br_buf_payload_out;
@@ -299,6 +306,9 @@ void PE::mem_mapped_registers(){
 		break;
 		case DMA_SEND_ACTIVE:
 			cpu_mem_data_read.write(dmni_send_active_sig.read());
+		break;
+		case DMA_READ_FLITS:
+			cpu_mem_data_read.write(dmni_receive_flits_sig.read());
 		break;
 		case DMA_RECEIVE_ACTIVE:
 			cpu_mem_data_read.write(dmni_receive_active_sig.read());
@@ -753,4 +763,16 @@ void PE::update_credit()
 		credit_o[NORTH].write(credit_signal[NORTH]);
 	}
   
+}
+
+void PE::eop_assignment()
+{
+	sc_uint<TAM_FLIT+1> tmp;
+	tmp.range(31,0) = data_out_ni.read();
+	tmp.bit(32) = eop_o_ni;
+	data_in_local.write(tmp);
+
+	sc_uint<TAM_FLIT+1> tmp2;
+	data_in_ni.write(data_out_local.read().range(31,0));
+	eop_i_ni.write(data_out_local.read().bit(32));
 }

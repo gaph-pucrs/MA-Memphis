@@ -47,6 +47,7 @@ public:
 	sc_out<bool>			intr;
 	sc_out<bool>			send_active;
 	sc_out<bool>			receive_active;
+	sc_out<sc_uint<32>>		read_flits;
 
 	/* Internal memory interface */
 	sc_out<sc_uint<32>>		mem_address;
@@ -61,6 +62,8 @@ public:
 	sc_in<bool> 			rx;
 	sc_in<regflit>			data_in;
 	sc_out<bool> 			credit_o;
+	sc_out<bool> 			eop_out;
+	sc_in<bool> 			eop_in;
 
 	/* BrNoC Interface (Local port output) */
 	sc_in<bool> 			br_req_mon;
@@ -98,8 +101,9 @@ private:
 
 	enum state_noc {
 		HEADER, 
-		PAYLOAD, 
-		DATA
+		SIZE,
+		PAYLOAD,
+		INVALID
 	};
 
 	enum arbiter_state {
@@ -126,12 +130,11 @@ private:
 
 	sc_signal<sc_uint<32>>	buffer[BUFFER_SIZE];
 	sc_signal<bool >		is_header[BUFFER_SIZE];
+	sc_signal<bool >		is_eop[BUFFER_SIZE];
 	sc_signal<sc_uint<4>>	intr_count;
 
 	sc_signal<sc_uint<4>>	first, last;
 	sc_signal<bool>			add_buffer;
-
-	sc_signal<regflit> 		payload_size;
 
 	sc_signal<sc_uint<32>> 	address;
 	sc_signal<sc_uint<32>> 	address_2;
