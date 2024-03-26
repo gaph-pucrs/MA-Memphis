@@ -47,6 +47,7 @@ public:
 	sc_out<bool>			intr;
 	sc_out<bool>			send_active;
 	sc_out<bool>			receive_active;
+	sc_out<sc_uint<32>>		read_flits;
 
 	/* Internal memory interface */
 	sc_out<sc_uint<32>>		mem_address;
@@ -129,6 +130,7 @@ private:
 
 	sc_signal<sc_uint<32>>	buffer[BUFFER_SIZE];
 	sc_signal<bool >		is_header[BUFFER_SIZE];
+	sc_signal<bool >		is_eop[BUFFER_SIZE];
 	sc_signal<sc_uint<4>>	intr_count;
 
 	sc_signal<sc_uint<4>>	first, last;

@@ -138,6 +138,7 @@ private:
 	sc_signal<bool> 		dmni_enable_internal_ram;
 	sc_signal<bool> 		dmni_send_active_sig;
 	sc_signal<bool> 		dmni_receive_active_sig;
+	sc_signal<sc_uint<32>> 	dmni_receive_flits_sig;
 	sc_signal<sc_uint<30>> 	address_mux;
 	sc_signal<sc_uint<32>> 	cpu_mem_address_reg2;
 	sc_signal<sc_uint<30>> 	addr_a;

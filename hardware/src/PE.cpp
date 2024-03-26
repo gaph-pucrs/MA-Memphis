@@ -70,6 +70,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	dmni.intr(ni_intr);
 	dmni.send_active(dmni_send_active_sig);
 	dmni.receive_active(dmni_receive_active_sig);
+	dmni.read_flits(dmni_receive_flits_sig);
 
 	dmni.mem_address(dmni_mem_address);
 	dmni.mem_data_write(dmni_mem_data_write);
@@ -260,6 +261,7 @@ PE::PE(sc_module_name name_, regaddress address_, std::string path_) :
 	sensitive << time_slice;
 	sensitive << irq_status;
 	sensitive << mem_peripheral;
+	sensitive << dmni_receive_flits_sig;
 	sensitive << br_local_busy;
 	sensitive << br_cfg_req_out;
 	sensitive << br_buf_payload_out;
@@ -304,6 +306,9 @@ void PE::mem_mapped_registers(){
 		break;
 		case DMA_SEND_ACTIVE:
 			cpu_mem_data_read.write(dmni_send_active_sig.read());
+		break;
+		case DMA_READ_FLITS:
+			cpu_mem_data_read.write(dmni_receive_flits_sig.read());
 		break;
 		case DMA_RECEIVE_ACTIVE:
 			cpu_mem_data_read.write(dmni_receive_active_sig.read());

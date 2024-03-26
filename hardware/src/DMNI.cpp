@@ -245,6 +245,7 @@ void DMNI::receive()
 		intr_count.write(0);
 		for(int i=0; i<BUFFER_SIZE; i++){ //in vhdl replace by OTHERS=>'0'
 			is_header[i] = 0;
+			is_eop[i] = 0;
 		}
 		return;
 	}
@@ -258,25 +259,30 @@ void DMNI::receive()
 
 		if (SR.read() != INVALID){
 			buffer[last.read()].write(data_in.read());
+			is_eop[last.read()].write(eop_in.read());
+			is_header[last.read()].write(SR.read() == HEADER);
 			add_buffer.write(1);
 			last.write(last.read() + 1);
 		}
 
 		switch (SR.read()) {
 			case HEADER:
-				is_header[last.read()] = 1;
 				noc_time = tick_cnt;
 				SR.write(SIZE);
 			break;
 			case SIZE:
 				flit_cntr = 2;
-				is_header[last.read()] = 0;
 				if (data_in.read() < 11) {
-
-					last.write(last.read() - 1);
+					is_eop[last.read() - 1] = 0;
 					is_header[last.read() - 1] = 0;
 					add_buffer.write(0);
-					SR.write(INVALID);
+					last.write(last.read() - 1);
+					if (eop_in.read()){
+						is_eop[last.read()] = 0;
+						SR.write(HEADER);
+					} else {
+						SR.write(INVALID);
+					}
 				} else {
 					intr_counter_temp = intr_counter_temp + 1;
 					SR.write(PAYLOAD);
@@ -326,6 +332,7 @@ void DMNI::receive()
 		case WAIT:
 
 			if (start.read() == 1 && operation.read() == 1){
+				read_flits.write(0);
 				recv_address.write(address.read() - WORD_SIZE);
 				recv_size.write(size.read() - 1);
 				if (is_header[first.read()] == 1 && intr_counter_temp > 0){
@@ -350,8 +357,9 @@ void DMNI::receive()
 				add_buffer.write(0);
 				recv_address.write(recv_address.read() + WORD_SIZE);
 				recv_size.write(recv_size.read() - 1);
+				read_flits.write(read_flits.read() + 1);
 
-				if (recv_size.read() == 0){
+				if (recv_size.read() == 0 || is_eop[first.read()].read()){
 					DMNI_Receive.write(END);
 				}
 			} else {
@@ -371,9 +379,9 @@ void DMNI::receive()
 				add_buffer.write(0);
 				
 				recv_size.write(recv_size.read() - 1);
-				if (recv_size.read() == 0){
+				if (is_eop[first.read()].read() == 0){
 					DMNI_Receive.write(END);
-				}	
+				}
 			}
 
 		break;
@@ -418,9 +426,6 @@ void DMNI::send()
 				send_size_2.write(size_2.read());
 				send_active.write(1);
 				DMNI_Send.write(LOAD);
-				/*if(address_router == 0){
-					cout<<"Master sending msg "<<endl;
-				}*/
 			}
 		break;
 
