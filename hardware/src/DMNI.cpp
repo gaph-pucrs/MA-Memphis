@@ -256,25 +256,34 @@ void DMNI::receive()
 	//Read from NoC
 	if (rx.read() == 1 && slot_available.read() == 1){
 
-		buffer[last.read()].write(data_in.read());
-		add_buffer.write(1);
-		last.write(last.read() + 1);
+		if (SR.read() != INVALID){
+			buffer[last.read()].write(data_in.read());
+			add_buffer.write(1);
+			last.write(last.read() + 1);
+		}
 
 		switch (SR.read()) {
 			case HEADER:
-				intr_counter_temp = intr_counter_temp + 1;
-				/*if(address_router == 0){
-					cout<<"Master receiving msg "<<endl;
-				}*/
 				is_header[last.read()] = 1;
-				flit_cntr = 1;
 				noc_time = tick_cnt;
-				SR.write(PAYLOAD);
+				SR.write(SIZE);
 			break;
-
-			case PAYLOAD:
+			case SIZE:
+				flit_cntr = 2;
 				is_header[last.read()] = 0;
-				flit_cntr++;				
+				if (data_in.read() < 11) {
+
+					last.write(last.read() - 1);
+					is_header[last.read() - 1] = 0;
+					add_buffer.write(0);
+					SR.write(INVALID);
+				} else {
+					intr_counter_temp = intr_counter_temp + 1;
+					SR.write(PAYLOAD);
+				}
+				break;
+			case PAYLOAD:
+				flit_cntr++;		
 				if(flit_cntr == 3) {
 					is_delivery = (data_in.read() == 1);
 				} else if(flit_cntr == 4){
@@ -304,6 +313,10 @@ void DMNI::receive()
 				}
 
 			break;
+			case INVALID:
+				if (eop_in.read() == 1)
+					SR.write(HEADER);
+				break;
 		}
 	}
 

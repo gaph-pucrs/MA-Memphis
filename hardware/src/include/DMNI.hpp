@@ -100,7 +100,9 @@ private:
 
 	enum state_noc {
 		HEADER, 
-		PAYLOAD
+		SIZE,
+		PAYLOAD,
+		INVALID
 	};
 
 	enum arbiter_state {
