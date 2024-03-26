@@ -8,7 +8,7 @@ int main()
 	unsigned int message[21] = {
 		
 		0x00000202,	//target (2x2)
-		0x00000013,	//payload size (message header 11 + message payload 8)
+		0x00000003,	//payload size (message header 11 + message payload 8)
 		0x00000001,	//service (task delivery)
 		257,		//task_ID (app1 task1) -- 257
 		256,		//consumer -- 256
@@ -30,7 +30,12 @@ int main()
 		0x00000008
 	};
 
-	printf("Sending message\n");
+	printf("Sending message with invalid payload size\n");
+	memphis_send_raw(message, 21);
+	printf("Message sent\n");
+
+	printf("Sending valid message without REQUEST\n");
+	message[1] = 0x00000013;
 	memphis_send_raw(message, 21);
 	printf("Message sent\n");
 
@@ -45,7 +50,15 @@ int main()
 
 	while(memphis_get_tick() < 700000);
 
-	printf("Sending message\n");
+	printf("Sending message with invalid message length with REQUEST\n");
+	message[8] = 64;
+	memphis_send_raw(message, 21);
+	printf("Message sent\n");
+
+	while(memphis_get_tick() < 1400000);
+
+	printf("Sending valid message with REQUEST\n");
+	message[8] = 32;
 	memphis_send_raw(message, 21);
 	printf("Message sent\n");
 
