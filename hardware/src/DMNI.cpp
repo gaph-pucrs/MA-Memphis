@@ -281,6 +281,7 @@ void DMNI::receive()
 						is_eop[last.read()] = 0;
 						SR.write(HEADER);
 					} else {
+						cout << "[DMNI] Dropping invalid packet size" << endl;
 						SR.write(INVALID);
 					}
 				} else {
@@ -377,9 +378,11 @@ void DMNI::receive()
 			if (read_av.read() == 1){
 				first.write(first.read() + 1);
 				add_buffer.write(0);
+				read_flits.write(read_flits.read() + 1);
 				
 				recv_size.write(recv_size.read() - 1);
-				if (is_eop[first.read()].read() == 0){
+				if (is_eop[first.read()].read()){
+					cout << "[DMNI] Dropped " << read_flits.read() +1 << " flits" << endl;
 					DMNI_Receive.write(END);
 				}
 			}
